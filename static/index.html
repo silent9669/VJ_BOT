@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nihongo Sensei</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">日本語先生</span>
+    <button id="level-chip" type="button" aria-label="Change level">Trình độ</button>
+  </header>
+
+  <div id="level-picker" class="picker-overlay" hidden>
+    <div class="picker-card">
+      <h1>Trình độ hiện tại của bạn?</h1>
+      <p>Chọn để hệ thống dạy theo giáo trình phù hợp.</p>
+      <div class="picker-options">
+        <button type="button" data-level="beginner">Chưa học</button>
+        <button type="button" data-level="N5">N5</button>
+        <button type="button" data-level="N4">N4</button>
+        <button type="button" data-level="N3">N3</button>
+        <button type="button" data-level="N2">N2</button>
+        <button type="button" data-level="N1">N1</button>
+      </div>
+      <p id="picker-error" class="picker-error" hidden></p>
+    </div>
+  </div>
+
+  <div class="layout">
+    <main id="chat-container" aria-label="Chat"></main>
+
+    <aside id="progress-panel" hidden>
+      <h2>進捗 Progress</h2>
+      <div id="progress-content"></div>
+    </aside>
+  </div>
+
+  <footer class="input-bar">
+    <button id="progress-toggle" type="button" aria-label="Toggle progress panel">📊</button>
+    <textarea id="message-input" rows="1" placeholder="メッセージを入力…" aria-label="Message"></textarea>
+    <button id="send-btn" type="button" aria-label="Send">送信</button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
