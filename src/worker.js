@@ -174,6 +174,39 @@ export default {
 
           return jsonResponse({ user_id: userId, level, track, updated_at: now });
         }
+
+        if (request.method === "DELETE") {
+          const userId = url.searchParams.get("user_id");
+          if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+
+          try {
+            await env.DB.prepare("DELETE FROM progress WHERE user_id = ?").bind(userId).run();
+            await env.DB.prepare("DELETE FROM profiles WHERE user_id = ?").bind(userId).run();
+            await env.DB.prepare("DELETE FROM conversations WHERE user_id = ?").bind(userId).run();
+          } catch (e) {
+            console.error("Account delete error:", e);
+          }
+          return jsonResponse({ success: true, message: "Account and all progress data deleted" });
+        }
+      }
+
+      // 2b. Account Delete API
+      if (url.pathname === "/api/account/delete" && (request.method === "POST" || request.method === "DELETE")) {
+        let userId = url.searchParams.get("user_id");
+        if (!userId && request.method === "POST") {
+          const b = await request.json().catch(() => ({}));
+          userId = b.user_id;
+        }
+        if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+
+        try {
+          await env.DB.prepare("DELETE FROM progress WHERE user_id = ?").bind(userId).run();
+          await env.DB.prepare("DELETE FROM profiles WHERE user_id = ?").bind(userId).run();
+          await env.DB.prepare("DELETE FROM conversations WHERE user_id = ?").bind(userId).run();
+        } catch (e) {
+          console.error("Account delete error:", e);
+        }
+        return jsonResponse({ success: true, message: "Account and all learning data deleted" });
       }
 
       // 3. Curriculum API
@@ -336,6 +369,11 @@ export default {
         const userId = url.searchParams.get("user_id");
         if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
 
+        if (request.method === "DELETE") {
+          await env.DB.prepare("DELETE FROM conversations WHERE user_id = ?").bind(userId).run();
+          return jsonResponse({ success: true, message: "Chat history cleared" });
+        }
+
         const rows = await env.DB.prepare("SELECT role, content, timestamp FROM conversations WHERE user_id = ? ORDER BY id ASC LIMIT 50").bind(userId).all();
         return jsonResponse(rows.results || []);
       }
@@ -347,7 +385,7 @@ export default {
         const voice = body.voice || "Aoede";
         if (!text) return jsonResponse({ detail: "text required" }, 400);
 
-        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
+        const apiKey = body.api_key || env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
         const ttsUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         try {
@@ -402,7 +440,7 @@ export default {
           });
         }
 
-        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
+        const apiKey = body.api_key || env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
         let aiEval = null;
 
         try {
@@ -531,7 +569,7 @@ export default {
 
         // 11a. Call Gemini 2.5 Flash
         let botResponse = "";
-        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
+        const apiKey = body.api_key || env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
 
         try {
           const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
@@ -629,6 +667,16 @@ Hướng dẫn trả lời:
     }
 
     // Default: static asset fallback
-    return env.ASSETS.fetch(request);
+    const res = await env.ASSETS.fetch(request);
+    if (url.pathname === "/" || url.pathname.endsWith(".html")) {
+      const newHeaders = new Headers(res.headers);
+      newHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+      return new Response(res.body, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: newHeaders,
+      });
+    }
+    return res;
   }
 };
