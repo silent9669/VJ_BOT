@@ -1,0 +1,30 @@
+{
+  "name": "vj_bot",
+  "version": "1.0.0",
+  "description": "Chatbot dạy tiếng Nhật chủ động cho luyện thi JLPT N5–N1. Bot tự chọn chủ đề theo tiến độ, điểm yếu và lịch sử ôn tập của từng người học, thay vì chỉ trả lời khi được hỏi.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silent9669/VJ_BOT.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/silent9669/VJ_BOT/issues"
+  },
+  "homepage": "https://github.com/silent9669/VJ_BOT#readme",
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.v.5",
+    "anatomy-figures": "^0.1.0",
+    "cf": "^1.0.0-beta.23",
+    "wrangler": "^4.153.0"
+  }
+}

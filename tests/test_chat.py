@@ -91,3 +91,29 @@ async def test_greeting_requires_profile(client):
 
     assert response.status_code == 409
     assert response.json()["detail"] == "profile required"
+
+async def test_chat_fallback_when_llm_not_configured(client, onboard):
+    await onboard("u_offline")
+    from app.main import app
+    from app.services.llm import LLMClient
+
+    app.state.llm_client = LLMClient("")
+    response = await client.post("/api/chat", json={"user_id": "u_offline", "message": "watashi wa gakusei desu"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "Sensei" in data["reply"]
+    assert data["next_topic"]
+
+
+async def test_greeting_fallback_when_llm_not_configured(client, onboard):
+    await onboard("u_offline_greeting")
+    from app.main import app
+    from app.services.llm import LLMClient
+
+    app.state.llm_client = LLMClient("")
+    response = await client.get("/api/chat/greeting", params={"user_id": "u_offline_greeting"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "Sensei" in data["reply"]
+    assert data["next_topic"]
+
