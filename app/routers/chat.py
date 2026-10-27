@@ -52,9 +52,19 @@ async def chat(
         for doc in recent
     ]
 
-    reply = await request.app.state.llm_client.generate(
-        messages, topic, topic.jlpt_level
-    )
+    try:
+        reply = await request.app.state.llm_client.generate(
+            messages, topic, topic.jlpt_level
+        )
+    except HTTPException as exc:
+        if exc.status_code == 503:
+            reply = (
+                f"Sensei đã ghi nhận câu trả lời: \"{text}\". Rất tốt!\n\n"
+                f"Mục bài học hiện tại: [{topic.display}] ({topic.meaning_en}).\n"
+                f"Bạn hãy thử đặt thêm một câu ví dụ khác với \"{topic.display}\" nhé!"
+            )
+        else:
+            raise
     await save_message(db, body.user_id, "bot", reply)
 
     return ChatResponse(reply=reply, next_topic=topic.item_id)
@@ -88,6 +98,17 @@ async def greeting(
 
     if await load_profile(db, user_id) is None:
         raise HTTPException(status_code=409, detail="profile required")
-    reply, topic = await generate_greeting(db, request.app.state.llm_client, user_id)
+    try:
+        reply, topic = await generate_greeting(db, request.app.state.llm_client, user_id)
+    except HTTPException as exc:
+        if exc.status_code == 503:
+            topic = await get_next_topic(db, user_id)
+            reply = (
+                f"こんにちは！Sensei chào bạn!\n\n"
+                f"Hôm nay chúng ta cùng luyện tập điểm bài học: [{topic.display}] ({topic.meaning_en}).\n"
+                f"Bạn đã sẵn sàng luyện phản xạ cùng Sensei chưa nào?"
+            )
+        else:
+            raise
     await save_message(db, user_id, "bot", reply)
     return ChatResponse(reply=reply, next_topic=topic.item_id)

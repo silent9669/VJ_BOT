@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges" width="32" height="32">
+  <rect width="16" height="16" rx="3" fill="#18181b"/>
+  <!-- Hair (Black/Dark Charcoal) -->
+  <rect x="4" y="1" width="8" height="2" fill="#27272a"/>
+  <rect x="3" y="2" width="10" height="3" fill="#09090b"/>
+  <rect x="2" y="3" width="2" height="3" fill="#09090b"/>
+  <rect x="12" y="3" width="2" height="3" fill="#09090b"/>
+  <!-- Face (Skin Tone) -->
+  <rect x="4" y="5" width="8" height="5" fill="#fed7aa"/>
+  <!-- Glasses / Eyes -->
+  <rect x="4" y="6" width="3" height="2" fill="#0284c7"/>
+  <rect x="5" y="6" width="1" height="1" fill="#ffffff"/>
+  <rect x="7" y="7" width="2" height="1" fill="#0284c7"/>
+  <rect x="9" y="6" width="3" height="2" fill="#0284c7"/>
+  <rect x="10" y="6" width="1" height="1" fill="#ffffff"/>
+  <!-- Cheeks & Smile -->
+  <rect x="4" y="9" width="1" height="1" fill="#fca5a5"/>
+  <rect x="11" y="9" width="1" height="1" fill="#fca5a5"/>
+  <rect x="7" y="9" width="2" height="1" fill="#dc2626"/>
+  <!-- Torso & Sensei Tie / Suit -->
+  <rect x="3" y="10" width="10" height="4" fill="#059669"/>
+  <rect x="6" y="10" width="4" height="2" fill="#f8fafc"/>
+  <rect x="7" y="11" width="2" height="4" fill="#dc2626"/>
+  <!-- Feet -->
+  <rect x="4" y="14" width="3" height="2" fill="#18181b"/>
+  <rect x="9" y="14" width="3" height="2" fill="#18181b"/>
+</svg>
