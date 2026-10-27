@@ -5403,3 +5403,36 @@ anatomy-computer {
   background: #b91c1c;
   transform: translateY(-1px);
 }
+
+/* Quiz Level & Test Selectors */
+.quiz-level-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.quiz-lvl-btn, .quiz-test-btn {
+  background: #ffffff;
+  border: 1.5px solid var(--border-dark);
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-dark);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quiz-lvl-btn:hover, .quiz-test-btn:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.quiz-lvl-btn.active, .quiz-test-btn.active {
+  background: var(--ink-dark);
+  color: #ffffff;
+  border-color: var(--ink-dark);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}

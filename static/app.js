@@ -788,20 +788,34 @@ function loadKaiwaPrompt() {
 let currentExamQuestions = [];
 let examQuestionIdx = 0;
 let examScore = 0;
+let activeQuizTestIdx = 0;
 
-function renderQuiz(level = "N5") {
+function renderQuiz(level = "N5", testIdx = 0) {
   activeQuizLevel = level;
+  activeQuizTestIdx = testIdx;
+
   document.querySelectorAll("#quiz-level-picker .quiz-lvl-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.lvl === level);
   });
 
-  const examData = window.JLPT_DATA?.exams?.[level];
-  let questions = [];
-  if (Array.isArray(examData) && examData[0]?.questions) {
-    questions = examData[0].questions;
-  } else if (examData?.questions) {
-    questions = examData.questions;
+  const examList = window.JLPT_DATA?.exams?.[level] || [];
+  const testPicker = document.getElementById("quiz-test-picker");
+  if (testPicker) {
+    testPicker.innerHTML = examList.map((ex, idx) => `
+      <button type="button" class="quiz-test-btn ${idx === testIdx ? 'active' : ''}" data-idx="${idx}">
+        ${ex.title?.split("—")?.[1]?.trim() || `Đề Số 0${idx + 1}`}
+      </button>
+    `).join("");
+
+    testPicker.querySelectorAll(".quiz-test-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        renderQuiz(activeQuizLevel, parseInt(btn.dataset.idx, 10));
+      });
+    });
   }
+
+  const selectedExam = examList[testIdx] || examList[0];
+  let questions = selectedExam?.questions || [];
 
   if (!questions || questions.length === 0) {
     questions = [
@@ -827,13 +841,14 @@ function renderQuiz(level = "N5") {
   currentExamQuestions = questions;
   examQuestionIdx = 0;
   examScore = 0;
-  startExamTimer();
+  const examDuration = selectedExam?.duration_minutes ? selectedExam.duration_minutes * 60 : 1500;
+  startExamTimer(examDuration);
   displayQuizQuestion();
 }
 
-function startExamTimer() {
+function startExamTimer(seconds = 1500) {
   if (examTimerInterval) clearInterval(examTimerInterval);
-  examSecondsRemaining = 1500; // 25 mins
+  examSecondsRemaining = seconds;
 
   const display = document.getElementById("exam-timer-display");
   function tick() {
@@ -847,6 +862,7 @@ function startExamTimer() {
     const s = examSecondsRemaining % 60;
     if (display) display.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
+  tick();
   examTimerInterval = setInterval(tick, 1000);
 }
 
@@ -927,6 +943,18 @@ function handleQuizAnswer(selectedIdx) {
     if (feedbackStatus) feedbackStatus.textContent = "Chưa chính xác ⚠️";
   }
 
+  // Persist answer to progress API / Cloudflare D1
+  fetch("/api/progress/record", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      item_id: `exam-${activeQuizLevel}-t${activeQuizTestIdx + 1}-q${q.id || examQuestionIdx + 1}`,
+      correct: isCorrect,
+      quality: isCorrect ? 4 : 1
+    })
+  }).catch(() => {});
+
   if (feedbackText) feedbackText.textContent = q.explain || q.explanation || "Chính xác theo cấu trúc ngữ pháp JLPT.";
   if (feedbackBox) feedbackBox.hidden = false;
 }
@@ -950,6 +978,8 @@ function finishExam() {
       ? "Xuất sắc! Bạn đã nắm vững cấu trúc đề thi cấp độ này." 
       : "Cố gắng lên nhé! Hãy ôn lại các câu chưa chính xác cùng Sensei.";
   }
+
+  loadProgress();
 }
 
 // ==========================================
@@ -1402,14 +1432,30 @@ function setupEventListeners() {
     });
   }
 
+  function recordCardProgress(quality) {
+    const card = fcDeck[fcIdx];
+    if (!card) return;
+    const isCorrect = quality >= 3;
+    fetch("/api/progress/record", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        item_id: `fc-${activeFcLevel}-${card.front}`,
+        correct: isCorrect,
+        quality: quality
+      })
+    }).catch(() => {});
+  }
+
   const btnFcAgain = document.getElementById("fc-btn-again");
-  if (btnFcAgain) btnFcAgain.addEventListener("click", () => { soundEngine.playError(); nextCard(); });
+  if (btnFcAgain) btnFcAgain.addEventListener("click", () => { soundEngine.playError(); recordCardProgress(1); nextCard(); });
 
   const btnFcGood = document.getElementById("fc-btn-good");
-  if (btnFcGood) btnFcGood.addEventListener("click", () => { soundEngine.playSend(); nextCard(); });
+  if (btnFcGood) btnFcGood.addEventListener("click", () => { soundEngine.playSend(); recordCardProgress(4); nextCard(); });
 
   const btnFcEasy = document.getElementById("fc-btn-easy");
-  if (btnFcEasy) btnFcEasy.addEventListener("click", () => { soundEngine.playCheer(); nextCard(); });
+  if (btnFcEasy) btnFcEasy.addEventListener("click", () => { soundEngine.playCheer(); recordCardProgress(5); nextCard(); });
 
   // Kaiwa Audio Prompt Play
   const btnKaiwaPlay = document.getElementById("btn-kaiwa-play-prompt");
@@ -1420,7 +1466,49 @@ function setupEventListeners() {
     });
   }
 
-  // Kaiwa Web Speech Recognition
+  // Kaiwa User Audio Recording & Web Speech Recognition
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let userAudioBlobUrl = null;
+
+  const btnKaiwaPlayUser = document.getElementById("btn-kaiwa-play-user");
+  if (btnKaiwaPlayUser) {
+    btnKaiwaPlayUser.addEventListener("click", () => {
+      if (userAudioBlobUrl) {
+        const audio = new Audio(userAudioBlobUrl);
+        audio.play().catch(() => {});
+      }
+    });
+  }
+
+  async function startAudioRecording() {
+    if (!navigator.mediaDevices?.getUserMedia) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunks.push(e.data);
+      };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: "audio/webm" });
+        if (userAudioBlobUrl) URL.revokeObjectURL(userAudioBlobUrl);
+        userAudioBlobUrl = URL.createObjectURL(blob);
+        if (btnKaiwaPlayUser) btnKaiwaPlayUser.style.display = "inline-flex";
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.start();
+    } catch {
+      // Audio capture fallback silently
+    }
+  }
+
+  function stopAudioRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      try { mediaRecorder.stop(); } catch {}
+    }
+  }
+
   const btnKaiwaMic = document.getElementById("btn-kaiwa-mic");
   const kaiwaInput = document.getElementById("kaiwa-manual-input");
   const micStatus = document.getElementById("kaiwa-mic-status");
@@ -1435,6 +1523,7 @@ function setupEventListeners() {
       rec.onstart = () => {
         if (micStatus) micStatus.textContent = "🎙️ Đang nghe giọng Nhật của bạn...";
         btnKaiwaMic.style.background = "#fee2e2";
+        startAudioRecording();
       };
 
       rec.onresult = (evt) => {
@@ -1446,15 +1535,17 @@ function setupEventListeners() {
       rec.onerror = () => {
         if (micStatus) micStatus.textContent = "Micro: Chưa nhận diện được";
         btnKaiwaMic.style.background = "";
+        stopAudioRecording();
       };
 
       rec.onend = () => {
         if (micStatus) micStatus.textContent = "Micro: Sẵn sàng";
         btnKaiwaMic.style.background = "";
+        stopAudioRecording();
       };
 
       btnKaiwaMic.addEventListener("click", () => {
-        try { rec.start(); } catch { rec.stop(); }
+        try { rec.start(); } catch { rec.stop(); stopAudioRecording(); }
       });
     } else {
       btnKaiwaMic.addEventListener("click", () => {
@@ -1532,10 +1623,17 @@ function setupEventListeners() {
     });
   }
 
+  // Quiz Level Picker buttons
+  document.querySelectorAll("#quiz-level-picker .quiz-lvl-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      renderQuiz(btn.dataset.lvl, 0);
+    });
+  });
+
   const btnQuizRestart = document.getElementById("btn-quiz-restart");
   if (btnQuizRestart) {
     btnQuizRestart.addEventListener("click", () => {
-      renderQuiz(activeQuizLevel);
+      renderQuiz(activeQuizLevel, activeQuizTestIdx);
     });
   }
 

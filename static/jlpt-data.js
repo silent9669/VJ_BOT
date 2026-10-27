@@ -1505,6 +1505,86 @@ window.JLPT_DATA = {
             "explain": "Bài ghi:「フタ付きの水筒やペットボトルの水だけは飲むことができます」(Chỉ nước trong chai/bình có nắp đậy)."
           }
         ]
+      },
+      {
+        "id": 2,
+        "title": "Đề Thi Thử JLPT N4 — Đề Số 02 (Ngữ pháp & Đọc hiểu thông báo)",
+        "duration_minutes": 25,
+        "pass_threshold": 90,
+        "max_score": 180,
+        "questions": [
+          {
+            "id": 1,
+            "mondai": "Mondai 1: Cách đọc chữ Hán",
+            "type": "kanji",
+            "sentence_jp": "今週の 金曜日 にテストがあります。",
+            "target": "金曜日",
+            "instruction": "Chọn cách đọc đúng của chữ Hán được gạch chân:",
+            "options": [
+              "きんようび",
+              "げつようび",
+              "すいようび",
+              "かようび"
+            ],
+            "answer": 0,
+            "explain": "「金曜日」đọc là「きんようび」(thứ Sáu)."
+          },
+          {
+            "id": 2,
+            "mondai": "Mondai 2: Điền từ vựng ngữ cảnh",
+            "type": "vocab",
+            "sentence_jp": "空が 暗くなって きました。雨が ____ そうです。",
+            "target": "____",
+            "instruction": "Chọn dạng đúng của động từ điền vào chỗ trống:",
+            "options": [
+              "降り",
+              "降る",
+              "降った",
+              "降って"
+            ],
+            "answer": 0,
+            "explain": "Cấu trúc V-bỏ-masu + そうです diễn tả phán đoán sắp xảy ra:「雨が降りそうです」(Trời trông có vẻ sắp mưa)."
+          },
+          {
+            "id": 3,
+            "mondai": "Mondai 3: Xếp sao ngữ pháp ★",
+            "type": "star_grammar",
+            "sentence_jp": "この料理は ____ ____ __★__ ____ つくりました。",
+            "target": "★",
+            "instruction": "Sắp xếp các cụm từ: [1: 新鮮な, 2: 野菜を, 3: 使って, 4: 心を込めて]",
+            "parts": [
+              "1. 新鮮な",
+              "2. 野菜を",
+              "3. 使って",
+              "4. 心を込めて"
+            ],
+            "options": [
+              "新鮮な",
+              "野菜を",
+              "使って",
+              "心を込めて"
+            ],
+            "answer": 2,
+            "explain": "Thứ tự đúng: 新鮮な (1) 野菜を (2) 使って (3) 心を込めて (4) つくりました -> Vị trí ★ là [使って]."
+          },
+          {
+            "id": 4,
+            "mondai": "Mondai 4: Đọc hiểu thông báo",
+            "type": "reading",
+            "passage": "お知らせ：ゴミの収集日について。燃えるゴミは毎週月曜と木曜の朝8時までに出してください。ビン・缶は水曜日の回収となります。祝日も通常通り収集します。",
+            "sentence_jp": "燃えるゴミはいつ出せばいいですか。",
+            "target": "質問",
+            "instruction": "Chọn thời điểm đúng theo thông báo:",
+            "options": [
+              "月曜日と木曜日の朝8時まで",
+              "水曜日の夕方",
+              "毎日いつでも",
+              "火曜日と金曜日の夜"
+            ],
+            "answer": 0,
+            "explain": "Thông báo nêu rõ:「燃えるゴミは毎週月曜と木曜の朝8時までに出してください」."
+          }
+        ]
       }
     ],
     "N3": [
@@ -1585,6 +1665,410 @@ window.JLPT_DATA = {
             ],
             "answer": 0,
             "explain": "Bài viết khẳng định:「雑談こそが新しいアイデアの創出やチームの信頼感向上に寄与している」."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Đề Thi Thử JLPT N3 — Đề Số 02 (Từ vựng Năng động & Văn bản)",
+        "duration_minutes": 30,
+        "pass_threshold": 95,
+        "max_score": 180,
+        "questions": [
+          {
+            "id": 1,
+            "mondai": "Mondai 1: Cách đọc chữ Hán",
+            "type": "kanji",
+            "sentence_jp": "彼は 責任 感がとても強いリーダーです。",
+            "target": "責任",
+            "instruction": "Chọn cách đọc đúng của chữ Hán được gạch chân:",
+            "options": [
+              "せきにん",
+              "せきじん",
+              "せつにん",
+              "さきにん"
+            ],
+            "answer": 0,
+            "explain": "「責任」đọc là「せきにん」(trách nhiệm)."
+          },
+          {
+            "id": 2,
+            "mondai": "Mondai 2: Điền từ vựng ngữ cảnh",
+            "type": "vocab",
+            "sentence_jp": "毎日熱心に練習した結果、日本語が ____ 上手になった。",
+            "target": "____",
+            "instruction": "Chọn phó từ thích hợp nhất điền vào chỗ trống:",
+            "options": [
+              "めきめき",
+              "うっかり",
+              "すっきり",
+              "がっかり"
+            ],
+            "answer": 0,
+            "explain": "「めきめき」diễn tả sự tiến bộ vượt bậc, rõ rệt thấy rõ."
+          },
+          {
+            "id": 3,
+            "mondai": "Mondai 3: Xếp sao ngữ pháp ★",
+            "type": "star_grammar",
+            "sentence_jp": "どんなに ____ ____ __★__ ____ 夢を諦めません。",
+            "target": "★",
+            "instruction": "Sắp xếp: [1: 大変, 2: であっても, 3: 私は, 4: 決して]",
+            "parts": [
+              "1. 大変",
+              "2. であっても",
+              "3. 私は",
+              "4. 決して"
+            ],
+            "options": [
+              "大変",
+              "であっても",
+              "私は",
+              "決して"
+            ],
+            "answer": 3,
+            "explain": "Thứ tự đúng: どんなに 大変 (1) であっても (2) 私は (3) 決して (4) 夢を諦めません -> Vị trí ★ là [決して]."
+          },
+          {
+            "id": 4,
+            "mondai": "Mondai 4: Đọc hiểu văn bản N3",
+            "type": "reading",
+            "passage": "オンライン学習の最大のメリットは時間と場所の自由度にある。しかし、自律的に学習計画を管理できなければ、途中で挫折してしまうリスクも高い。仲間と進捗を共有することが継続の鍵である。",
+            "sentence_jp": "オンライン学習を継続するために何が大切だと述べられていますか。",
+            "target": "質問",
+            "instruction": "Chọn ý đúng nhất theo tác giả:",
+            "options": [
+              "仲間と進捗を共有すること",
+              "毎日休まず10時間勉強すること",
+              "高額な教材を購入すること",
+              "一人だけで静かに集中すること"
+            ],
+            "answer": 0,
+            "explain": "Câu cuối bài khẳng định:「仲間と進捗を共有することが継続の鍵である」(Chia sẻ tiến độ với bạn đồng hành là chìa khóa duy trì)."
+          }
+        ]
+      }
+    ],
+    "N2": [
+      {
+        "id": 1,
+        "title": "Đề Thi Thử JLPT N2 — Đề Số 01 (Chuẩn Đề Thi Thật N2)",
+        "duration_minutes": 35,
+        "pass_threshold": 90,
+        "max_score": 180,
+        "questions": [
+          {
+            "id": 1,
+            "mondai": "Mondai 1: Cách đọc chữ Hán (漢字読み)",
+            "type": "kanji",
+            "sentence_jp": "市場の動向を正確に 把握 する必要があります。",
+            "target": "把握",
+            "instruction": "Chọn cách đọc đúng của chữ Hán được gạch chân:",
+            "options": [
+              "はあく",
+              "はそく",
+              "ばあく",
+              "ぱあく"
+            ],
+            "answer": 0,
+            "explain": "「把握」đọc là「はあく」(nắm bắt, thấu hiểu tường tận)."
+          },
+          {
+            "id": 2,
+            "mondai": "Mondai 2: Điền từ vựng ngữ cảnh (文脈規定)",
+            "type": "vocab",
+            "sentence_jp": "来年度の新規事業予算の ____ はすでに決定している。",
+            "target": "____",
+            "instruction": "Chọn từ thích hợp nhất điền vào chỗ trống:",
+            "options": [
+              "おおよそ",
+              "あやふや",
+              "まちまち",
+              "おのおの"
+            ],
+            "answer": 0,
+            "explain": "「おおよそ」(khoảng chừng, đại khái mức độ) chỉ tổng quan ngân sách."
+          },
+          {
+            "id": 3,
+            "mondai": "Mondai 3: Xếp sao ngữ pháp ★ (文の組み立て)",
+            "type": "star_grammar",
+            "sentence_jp": "今回の成功は、チーム全員の ____ ____ __★__ ____ ならない。",
+            "target": "★",
+            "instruction": "Sắp xếp các cụm từ: [1: 日々の, 2: 努力の, 3: 結晶に, 4: ほかに]",
+            "parts": [
+              "1. 日々の",
+              "2. 努力の",
+              "3. 結晶に",
+              "4. ほかに"
+            ],
+            "options": [
+              "日々の",
+              "努力の",
+              "結晶に",
+              "ほかに"
+            ],
+            "answer": 2,
+            "explain": "Cấu trúc「〜にほかならない」(chính là / không gì khác ngoài). Thứ tự: 日々の (1) 努力の (2) 結晶に (3) ほかに (4) ならない -> Vị trí ★ là [結晶に]."
+          },
+          {
+            "id": 4,
+            "mondai": "Mondai 4: Đọc hiểu văn bản N2 (読解)",
+            "type": "reading",
+            "passage": "ビジネスにおける「報連相（ほうれんそう）」は単なる情報伝達にとどまらない。問題の早期発見や、上司と部下の心理的安全性を醸成するための重要なコミュニケーション基盤として機能しているのである。",
+            "sentence_jp": "筆者によると「報連相」の本来の目的は何ですか。",
+            "target": "質問",
+            "instruction": "Chọn ý đúng nhất theo tác giả:",
+            "options": [
+              "問題の早期発見と心理的安全性の醸成",
+              "部下を監視しミスを罰すること",
+              "毎日の作業時間を増やすこと",
+              "書類の形式を統一すること"
+            ],
+            "answer": 0,
+            "explain": "Tác giả chỉ rõ:「問題の早期発見や、上司と部下の心理的安全性を醸成するための重要なコミュニケーション基盤」."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Đề Thi Thử JLPT N2 — Đề Số 02 (Phân Tích Ngữ Pháp & Biểu Đạt N2)",
+        "duration_minutes": 35,
+        "pass_threshold": 90,
+        "max_score": 180,
+        "questions": [
+          {
+            "id": 1,
+            "mondai": "Mondai 1: Cách đọc chữ Hán (漢字読み)",
+            "type": "kanji",
+            "sentence_jp": "インターネット上には 膨大 なデータが蓄積されています。",
+            "target": "膨大",
+            "instruction": "Chọn cách đọc đúng của chữ Hán được gạch chân:",
+            "options": [
+              "ぼうだい",
+              "ぼうたい",
+              "ばくだい",
+              "ほうだい"
+            ],
+            "answer": 0,
+            "explain": "「膨大」đọc là「ぼうだい」(khổng lồ, cực lớn)."
+          },
+          {
+            "id": 2,
+            "mondai": "Mondai 2: Điền từ vựng ngữ cảnh (文脈規定)",
+            "type": "vocab",
+            "sentence_jp": "実験を行う前に、____ な計画を立てる必要がある。",
+            "target": "____",
+            "instruction": "Chọn từ thích hợp nhất điền vào chỗ trống:",
+            "options": [
+              "綿密",
+              "粗末",
+              "安易",
+              "頑固"
+            ],
+            "answer": 0,
+            "explain": "「綿密」(めんみつ) mang nghĩa tỉ mỉ, chu đáo, cẩn trọng trong kế hoạch."
+          },
+          {
+            "id": 3,
+            "mondai": "Mondai 3: Xếp sao ngữ pháp ★ (文の組み立て)",
+            "type": "star_grammar",
+            "sentence_jp": "会社の規則である以上、この方針に ____ ____ __★__ ____ を得ない。",
+            "target": "★",
+            "instruction": "Sắp xếp các cụm từ: [1: 従わ, 2: ざる, 3: 厳格に, 4: 全員が]",
+            "parts": [
+              "1. 従わ",
+              "2. ざる",
+              "3. 厳格に",
+              "4. 全員が"
+            ],
+            "options": [
+              "従わ",
+              "ざる",
+              "厳格に",
+              "全員が"
+            ],
+            "answer": 1,
+            "explain": "Cấu trúc「V-ない (bỏ ない) + ざるを得ない」(đành phải, buộc phải). Thứ tự: 全員が (4) 厳格に (3) 従わ (1) ざる (2) を得ない -> Vị trí ★ là [ざる]."
+          },
+          {
+            "id": 4,
+            "mondai": "Mondai 4: Đọc hiểu văn bản N2 (読解)",
+            "type": "reading",
+            "passage": "現代社会において「効率性」ばかりを追求すると、予期せぬ変化に対する柔軟性が失われる恐れがある。ある程度の「無駄」や「余白」を残しておくことこそが、イノベーションを生む土壌となるのである。",
+            "sentence_jp": "筆者が主張している最も重要なポイントは何ですか。",
+            "target": "質問",
+            "instruction": "Chọn ý đúng nhất theo tác giả:",
+            "options": [
+              "ある程度の余白や無駄がイノベーションを生む",
+              "効率性だけを極限まで高めるべきだ",
+              "計画的な無駄遣いを推奨している",
+              "柔軟性よりも規則の厳格さが大切だ"
+            ],
+            "answer": 0,
+            "explain": "Tác giả kết luận:「ある程度の『無駄』や『余白』を残しておくことこそが、イノベーションを生む土壌となる」."
+          }
+        ]
+      }
+    ],
+    "N1": [
+      {
+        "id": 1,
+        "title": "Đề Thi Thử JLPT N1 — Đề Số 01 (Đỉnh Cao Thao Lược JLPT N1)",
+        "duration_minutes": 40,
+        "pass_threshold": 100,
+        "max_score": 180,
+        "questions": [
+          {
+            "id": 1,
+            "mondai": "Mondai 1: Cách đọc chữ Hán (漢字読み)",
+            "type": "kanji",
+            "sentence_jp": "犯人は 巧妙 な手口で追跡を逃れた。",
+            "target": "巧妙",
+            "instruction": "Chọn cách đọc đúng của chữ Hán được gạch chân:",
+            "options": [
+              "こうみょう",
+              "きょうみょう",
+              "こうしょう",
+              "ごうみょう"
+            ],
+            "answer": 0,
+            "explain": "「巧妙」đọc là「こうみょう」(tinh vi, khéo léo)."
+          },
+          {
+            "id": 2,
+            "mondai": "Mondai 2: Điền từ vựng ngữ cảnh (文脈規定)",
+            "type": "vocab",
+            "sentence_jp": "今回の新技術開発は、再生可能エネルギー分野において ____ な進歩である。",
+            "target": "____",
+            "instruction": "Chọn từ thích hợp nhất điền vào chỗ trống:",
+            "options": [
+              "画期的",
+              "保守的",
+              "閉鎖的",
+              "機械的"
+            ],
+            "answer": 0,
+            "explain": "「画期的」(がっきてき) nghĩa là mang tính bước ngoặt, mở ra kỷ nguyên mới."
+          },
+          {
+            "id": 3,
+            "mondai": "Mondai 3: Xếp sao ngữ pháp ★ (文の組み立て)",
+            "type": "star_grammar",
+            "sentence_jp": "公の場でそのような虚偽の発言をするとは、____ ____ __★__ ____ 極まりない。",
+            "target": "★",
+            "instruction": "Sắp xếp: [1: 非常識, 2: にも, 3: 程が, 4: ある]",
+            "parts": [
+              "1. 非常識",
+              "2. にも",
+              "3. 程が",
+              "4. ある"
+            ],
+            "options": [
+              "非常識",
+              "にも",
+              "程が",
+              "ある"
+            ],
+            "answer": 2,
+            "explain": "Thành ngữ「非常識にも程がある」(vô ý thức đến quá đáng). Đi với「〜極まりない」(vô cùng). Thứ tự: 非常識 (1) にも (2) 程が (3) ある (4) 極まりない -> Vị trí ★ là [程が]."
+          },
+          {
+            "id": 4,
+            "mondai": "Mondai 4: Đọc hiểu nghị luận triết lý N1 (読解)",
+            "type": "reading",
+            "passage": "AIが高度に発展した社会において、真に問われるのは「いかに正解を導くか」ではなく「何を問いとすべきか」という課題設定力である。技術の進化は、人間の存在意義そのものを再定義する機会を与えていると言える。",
+            "sentence_jp": "AI時代において人間に最も求められる能力として筆者が挙げているものはどれか。",
+            "target": "質問",
+            "instruction": "Chọn ý đúng nhất theo lập luận tác giả:",
+            "options": [
+              "何を問いとすべきかという課題設定力",
+              "計算を高速かつ正確に行う能力",
+              "大量のデータを暗記する記憶力",
+              "AIのアルゴリズムを丸暗記すること"
+            ],
+            "answer": 0,
+            "explain": "Tác giả chỉ rõ:「真に問われるのは『何を問いとすべきか』という課題設定力である」."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Đề Thi Thử JLPT N1 — Đề Số 02 (Luận Đề Học Thuật & Ngữ Khí N1)",
+        "duration_minutes": 40,
+        "pass_threshold": 100,
+        "max_score": 180,
+        "questions": [
+          {
+            "id": 1,
+            "mondai": "Mondai 1: Cách đọc chữ Hán (漢字読み)",
+            "type": "kanji",
+            "sentence_jp": "社会保障制度の歪みを 是正 するための改革が進められている。",
+            "target": "是正",
+            "instruction": "Chọn cách đọc đúng của chữ Hán được gạch chân:",
+            "options": [
+              "ぜせい",
+              "ぜしょう",
+              "これせい",
+              "しせい"
+            ],
+            "answer": 0,
+            "explain": "「是正」đọc là「ぜせい」(chấn chỉnh, sửa chữa sai lệch)."
+          },
+          {
+            "id": 2,
+            "mondai": "Mondai 2: Điền từ vựng ngữ cảnh (文脈規定)",
+            "type": "vocab",
+            "sentence_jp": "調査結果の数値は、若者の読書離れを ____ に物語っている。",
+            "target": "____",
+            "instruction": "Chọn từ thích hợp nhất điền vào chỗ trống:",
+            "options": [
+              "如実",
+              "曖昧",
+              "露骨",
+              "簡潔"
+            ],
+            "answer": 0,
+            "explain": "「如実に」(にょじつに) nghĩa là một cách chân thực, sinh động, phản ánh đúng thực trạng."
+          },
+          {
+            "id": 3,
+            "mondai": "Mondai 3: Xếp sao ngữ pháp ★ (文の組み立て)",
+            "type": "star_grammar",
+            "sentence_jp": "理由が ____ ____ __★__ ____ 暴力はいかなる場合も容認されない。",
+            "target": "★",
+            "instruction": "Sắp xếp: [1: 何で, 2: あれ, 3: どうで, 4: あれ]",
+            "parts": [
+              "1. 何で",
+              "2. あれ",
+              "3: どうで",
+              "4. あれ"
+            ],
+            "options": [
+              "何で",
+              "あれ",
+              "どうで",
+              "あれ"
+            ],
+            "answer": 2,
+            "explain": "Mẫu câu N1「〜であれ〜であれ」(dù là... hay là...). Thứ tự: 何で (1) あれ (2) どうで (3) あれ (4) -> Vị trí ★ là [どうで]."
+          },
+          {
+            "id": 4,
+            "mondai": "Mondai 4: Đọc hiểu nghị luận triết lý N1 (読解)",
+            "type": "reading",
+            "passage": "言語は単なる意思疎通の道具ではなく、私たちが世界を認識する枠組みそのものを規定している。他言語を学ぶということは、単に異なる語彙を身につけることではなく、世界を新たな視座から捉え直す体験にほかならない。",
+            "sentence_jp": "筆者が「他言語を学ぶこと」について述べている本質は何ですか。",
+            "target": "質問",
+            "instruction": "Chọn ý đúng nhất theo tác giả:",
+            "options": [
+              "世界を新たな視座から捉え直す体験であること",
+              "試験で高い点数を取って昇進すること",
+              "辞書の単語を全て暗記すること",
+              "母国語を使わないようにすること"
+            ],
+            "answer": 0,
+            "explain": "Tác giả kết luận:「世界を新たな視座から捉え直す体験にほかならない」."
           }
         ]
       }
