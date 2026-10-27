@@ -34,13 +34,13 @@
   --stamp-blue: #2563eb;
 
   /* Typography - High-Legibility Stack for Vietnamese & Japanese */
-  --font-sans: "Be Vietnam Pro", "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Plus Jakarta Sans", "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
-  --font-marker: "Plus Jakarta Sans", "Be Vietnam Pro", -apple-system, sans-serif;
-  --font-hand: "Be Vietnam Pro", -apple-system, sans-serif;
-  --font-serif: "Be Vietnam Pro", "Plus Jakarta Sans", -apple-system, sans-serif;
-  --font-jp: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-  --font-mono: 'JetBrains Mono', SFMono-Regular, Consolas, monospace;
+  --font-sans: "Be Vietnam Pro", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-display: "Be Vietnam Pro", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-marker: "Be Vietnam Pro", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-hand: "Be Vietnam Pro", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: "Be Vietnam Pro", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-jp: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, monospace;
   
   /* Shadows & Handcrafted Radii */
   --shadow-sketch: 4px 6px 0px rgba(0, 0, 0, 0.12);
@@ -4809,4 +4809,597 @@ anatomy-computer {
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 11px;
+}
+
+/* ==========================================================================
+   SIDEBAR COUNTDOWN TIMER & APPLE LIQUID GLASS REFINEMENTS
+   ========================================================================== */
+
+.sidebar-countdown-card {
+  background: #ffffff;
+  border: 2px solid var(--border-dark);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 2px 3px 0px rgba(0, 0, 0, 0.08);
+  margin-top: 4px;
+}
+
+.countdown-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.countdown-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: statusPulse 1.8s infinite;
+}
+
+.countdown-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.countdown-timer-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.cd-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cd-unit span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.cd-unit small {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.cd-colon {
+  font-weight: 700;
+  color: #94a3b8;
+  font-size: 13px;
+  padding-bottom: 8px;
+}
+
+.sidebar-bottom-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: #64748b;
+  margin-top: auto;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 45;
+}
+
+.sidebar-backdrop.active {
+  display: block;
+}
+
+/* ==========================================================================
+   LANDING PAGE (1984 MACINTOSH RETRO PC & BENTO FEATURE SHOWCASE)
+   ========================================================================== */
+
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.landing-hero-card {
+  background: #ffffff;
+  border: 2.5px solid var(--border-dark);
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 4px 6px 0px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.landing-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 20px;
+}
+
+.hero-badge-8bit {
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+}
+
+.landing-hero-title {
+  font-family: var(--font-sans);
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.landing-hero-desc {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: #475569;
+  max-width: 720px;
+  margin: 0 auto 28px;
+  line-height: 1.6;
+}
+
+.landing-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.hero-cta-btn {
+  padding: 12px 22px;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-cta-btn.primary {
+  background: #2563eb;
+  color: #ffffff;
+  border: 2px solid #1d4ed8;
+  box-shadow: 2px 4px 0px #1e40af;
+}
+
+.hero-cta-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 6px 0px #1e40af;
+}
+
+.hero-cta-btn.secondary {
+  background: #ffffff;
+  color: #1e293b;
+  border: 2px solid var(--border-dark);
+  box-shadow: 2px 3px 0px rgba(0, 0, 0, 0.08);
+}
+
+.hero-cta-btn.secondary:hover {
+  background: #f8fafc;
+  transform: translateY(-2px);
+}
+
+.landing-pc-stage {
+  background: #f8fafc;
+  border: 2px solid var(--border-dark);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.landing-pc-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pc-indicator-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+}
+
+.landing-pc-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.04em;
+}
+
+.landing-pc-footer {
+  margin-top: 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: #64748b;
+}
+
+.landing-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.feature-card {
+  background: #ffffff;
+  border: 2px solid var(--border-dark);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 3px 4px 0px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+}
+
+.feature-icon {
+  font-size: 28px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.feature-card h3 {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.feature-card p {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   ACTIVE RECOMMENDATION BANNER IN CLASSROOM
+   ========================================================================== */
+
+.active-rec-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  box-shadow: 2px 3px 0px rgba(59, 130, 246, 0.2);
+}
+
+.rec-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.rec-content {
+  flex: 1;
+}
+
+.rec-content strong {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: #1e3a8a;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.rec-content p {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: #334155;
+  margin: 0;
+}
+
+.rec-action-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1.5px solid #1d4ed8;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.rec-action-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   CURRICULUM 4-SKILLS & BREADCRUMBS
+   ========================================================================== */
+
+.curriculum-breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: #64748b;
+  margin-bottom: 16px;
+  padding: 6px 14px;
+  background: #ffffff;
+  border: 1.5px solid var(--border-dark);
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.cb-item {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.cb-sep {
+  color: #94a3b8;
+}
+
+.skill-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.skill-tab-btn {
+  background: #f8fafc;
+  border: 1.8px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.skill-tab-btn:hover {
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.skill-tab-btn.active {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 2px 2px 0px #1e40af;
+}
+
+.lesson-detail-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.lesson-detail-modal[hidden] {
+  display: none;
+}
+
+.lesson-modal-card {
+  background: #ffffff;
+  border: 3px solid var(--border-dark);
+  border-radius: 18px;
+  width: min(720px, 96%);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-shadow: 6px 10px 0px rgba(0, 0, 0, 0.2);
+}
+
+.lesson-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.modal-lesson-badge {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1e40af;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.modal-lesson-title {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.modal-close-btn {
+  background: #f1f5f9;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+/* ==========================================================================
+   SETTINGS DANGER ZONE & GEMINI KEY
+   ========================================================================== */
+
+.gemini-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.gemini-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+  animation: statusPulse 2s infinite;
+}
+
+.api-key-config-box {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 10px;
+}
+
+.api-key-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.api-key-field {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+}
+
+.eye-toggle-btn {
+  background: #ffffff;
+  border: 1.8px solid var(--border-dark);
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.api-key-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.test-key-btn {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+}
+
+.test-key-btn:hover {
+  background: #f1f5f9;
+}
+
+.key-status-text {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: #64748b;
+}
+
+.danger-card {
+  border-color: #fca5a5 !important;
+  background: #fff5f5 !important;
+}
+
+.delete-account-btn {
+  background: #dc2626;
+  color: #ffffff;
+  border: 2px solid #b91c1c;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.delete-account-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
 }
