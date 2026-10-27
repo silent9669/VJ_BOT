@@ -596,6 +596,9 @@
                   <button type="button" class="sketch-btn-cta kaiwa-eval-btn" id="btn-eval-kaiwa">
                     <span>Gửi Sensei chấm điểm</span>
                   </button>
+                  <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-user" style="display: none; background: #f8fafc; border: 1.5px solid var(--border-dark); border-radius: 12px; padding: 10px 16px; font-size: 13px; font-weight: 700; color: var(--ink-dark); cursor: pointer;" title="Nghe lại bản thu âm của bạn">
+                    🎧 Nghe lại giọng bạn
+                  </button>
                 </div>
               </div>
 
@@ -636,10 +639,18 @@
                   <p class="quiz-desc">Mô phỏng cấu trúc đề thi chính thức: Mondai 1 (Kanji), Mondai 2 (Từ vựng), Mondai 3 (Ngữ pháp dấu sao ★), Mondai 4 (Đọc hiểu).</p>
                 </div>
                 <div class="quiz-level-row" id="quiz-level-picker">
-                  <button type="button" class="quiz-lvl-btn active" data-lvl="N5">Đề N5</button>
-                  <button type="button" class="quiz-lvl-btn" data-lvl="N4">Đề N4</button>
-                  <button type="button" class="quiz-lvl-btn" data-lvl="N3">Đề N3</button>
+                  <button type="button" class="quiz-lvl-btn active" data-lvl="N5">N5</button>
+                  <button type="button" class="quiz-lvl-btn" data-lvl="N4">N4</button>
+                  <button type="button" class="quiz-lvl-btn" data-lvl="N3">N3</button>
+                  <button type="button" class="quiz-lvl-btn" data-lvl="N2">N2</button>
+                  <button type="button" class="quiz-lvl-btn" data-lvl="N1">N1</button>
                 </div>
+              </div>
+
+              <!-- Exam Selection Row -->
+              <div class="quiz-test-select-row" style="display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: var(--ink-muted);">Chọn mã đề:</span>
+                <div id="quiz-test-picker" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
               </div>
 
               <!-- Exam Timer & Status Bar -->
