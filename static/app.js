@@ -679,13 +679,35 @@ function renderCurriculum(items, typeFilter = "all") {
   const container = document.getElementById("curriculum-list");
   if (!container) return;
 
-  const filtered = typeFilter === "all"
+  let filtered = typeFilter === "all"
     ? items
     : items.filter(it => {
         const t = (it.item_type || "").toLowerCase();
         if (typeFilter === "vocabulary") return t === "vocabulary" || t === "vocab";
+        if (typeFilter === "grammar") return t === "grammar";
+        if (typeFilter === "kanji") return t === "kanji" || t === "reading";
+        if (typeFilter === "listening") return t === "listening" || t === "kaiwa";
         return t === typeFilter.toLowerCase();
       });
+
+  // Fallback authentic skill items for Reading & Listening if not in DB
+  if ((!filtered || filtered.length === 0) && (typeFilter === "kanji" || typeFilter === "listening")) {
+    if (typeFilter === "kanji") {
+      filtered = [
+        { level: "N5", item_type: "Đọc hiểu", lesson: 1, display: "私の一日 (Một ngày của tôi)", reading: "わたし の いちにち", meaning_vi: "Luyện đọc đoạn văn ngắn về thói quen sinh hoạt hàng ngày, thức dậy, ăn sáng và đến trường.", display_btn: "Đọc & Phản xạ" },
+        { level: "N5", item_type: "Đọc hiểu", lesson: 2, display: "日本のコンビニ (Cửa hàng tiện lợi)", reading: "にほん の こんびに", meaning_vi: "Đọc hiểu bảng hướng dẫn và bảng giá tại combini Nhật Bản.", display_btn: "Đọc & Phản xạ" },
+        { level: "N4", item_type: "Đọc hiểu", lesson: 26, display: "新幹線での旅行 (Chuyến đi Shinkansen)", reading: "しんかんせん の りょこう", meaning_vi: "Đọc hiểu lịch trình và thông báo giờ tàu cao tốc Shinkansen.", display_btn: "Đọc & Phản xạ" },
+        { level: "N3", item_type: "Đọc hiểu", lesson: 1, display: "ビジネスマナー (Văn hóa công sở)", reading: "びじねす まなー", meaning_vi: "Đọc hiểu email trao đổi công việc và thông báo nội bộ công ty.", display_btn: "Đọc & Phản xạ" }
+      ];
+    } else if (typeFilter === "listening") {
+      filtered = [
+        { level: "N5", item_type: "Nghe hiểu", lesson: 1, display: "駅のアナウンス (Thông báo ga tàu)", reading: "えき の あなうんす", meaning_vi: "Luyện nghe thông báo tuyến tàu Yamanote và cửa ra vào sân ga Tokyo.", display_btn: "Nghe & Trả lời" },
+        { level: "N5", item_type: "Nghe hiểu", lesson: 2, display: "スーパーでの買い物 (Mua sắm siêu thị)", reading: "すーぱー での かいもの", meaning_vi: "Nghe đoạn hội thoại tính tiền và hỏi vị trí quầy hàng.", display_btn: "Nghe & Trả lời" },
+        { level: "N4", item_type: "Nghe hiểu", lesson: 26, display: "待ち合わせの電話 (Cuộc gọi hẹn giờ)", reading: "まちあわせ の でんわ", meaning_vi: "Nghe tin nhắn hẹn gặp tại quán cà phê và thay đổi giờ hẹn.", display_btn: "Nghe & Trả lời" },
+        { level: "N3", item_type: "Nghe hiểu", lesson: 1, display: "アルバイトの面接 (Phỏng vấn việc làm)", reading: "あるばいと の めんせつ", meaning_vi: "Nghe câu hỏi của quản lý cửa hàng và cách phản xạ lịch sự.", display_btn: "Nghe & Trả lời" }
+      ];
+    }
+  }
 
   if (!filtered || filtered.length === 0) {
     container.innerHTML = `<div class="empty-state">Không có nội dung bài học phù hợp cho bộ lọc này.</div>`;
@@ -1186,6 +1208,32 @@ async function loadProgress() {
     }
 
     drawRadarChart([data.accuracy_rate, 80, 75, 85, 90]);
+
+    // Render exam history
+    const historyContainer = document.getElementById("exam-history-list");
+    if (historyContainer) {
+      const historyData = JSON.parse(localStorage.getItem("nihongo_sensei_exam_history") || "[]");
+      if (historyData.length > 0) {
+        historyContainer.innerHTML = "";
+        historyData.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "history-item-row";
+          row.innerHTML = `
+            <div>
+              <strong>Đề thi JLPT (${item.level})</strong>
+              <span style="color: #64748b; margin-left: 8px; font-size: 12px;">${item.date}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <strong style="color: #0f172a;">${item.score} / ${item.total} Điểm</strong>
+              <span class="${item.passed ? "history-badge-pass" : "history-badge-retry"}">
+                ${item.passed ? "合格 ĐẠT" : "CẦN ÔN LẠI"}
+              </span>
+            </div>
+          `;
+          historyContainer.appendChild(row);
+        });
+      }
+    }
   } catch (err) {
     console.warn("loadProgress failed:", err);
     drawRadarChart();
@@ -1310,56 +1358,94 @@ function setupQuickQuiz() {
   const QUIZ_QUESTIONS = [
     {
       level: "N5",
-      type: "Trợ từ",
-      instruction: "Chọn trợ từ thích hợp điền vào chỗ trống:",
-      sentence: "わたし ____ ベトナム人です。",
-      options: ["は (wa)", "が (ga)", "を (wo)", "に (ni)"],
+      type: "Mondai 1: Cách đọc Kanji",
+      instruction: "Chọn cách đọc Hiragana đúng của chữ Hán được gạch chân:",
+      sentence: "あした、<u>学校</u>へ行きます。",
+      options: ["がっこう (gakkou)", "がこう (gakou)", "かっこう (kakkou)", "がくこう (gakukou)"],
       answer: 0,
-      explanation: "Trợ từ「は」(đọc là wa khi làm trợ từ) đứng sau danh từ để đánh dấu chủ đề của câu: Tôi là người Việt Nam."
+      explanation: "「学校」đọc chuẩn là「がっこう」(âm ngắt nhỏ っ) nghĩa là trường học."
     },
     {
       level: "N5",
-      type: "Từ vựng",
-      instruction: "Chọn từ tiếng Nhật có nghĩa là Học sinh, sinh viên:",
-      sentence: "たなかさんは ____ です。",
-      options: ["いしゃ (Bác sĩ)", "がくせい (Học sinh/Sinh viên)", "ぎんこういん (Nhân viên ngân hàng)", "せんせい (Giáo viên)"],
-      answer: 1,
-      explanation: "「がくせい (学生)」nghĩa là học sinh, sinh viên: Anh Tanaka là sinh viên."
+      type: "Mondai 2: Ngữ cảnh từ vựng",
+      instruction: "Chọn từ thích hợp điền vào chỗ trống:",
+      sentence: "毎朝、パンを ____ 食べます。",
+      options: ["いちまい (1 lát mỏng)", "ひとつ (1 cái chung)", "いっぽん (1 cây/chai)", "いっさつ (1 quyển)"],
+      answer: 0,
+      explanation: "Bánh mì lát (pan) dùng từ đếm đồ vật mỏng phẳng là「〜枚」(まい). 1 lát là「いちまい」."
     },
     {
       level: "N5",
-      type: "Nghi vấn",
-      instruction: "Chọn từ điền vào chỗ trống để tạo thành câu hỏi lịch sự:",
-      sentence: "これは にほんごの 本です ____。",
-      options: ["ね", "よ", "か", "わ"],
-      answer: 2,
-      explanation: "Trợ từ「か」đặt ở cuối câu để biểu thị câu hỏi nghi vấn trong tiếng Nhật: Đây có phải là sách tiếng Nhật không?"
+      type: "Mondai 3: Xếp sao ngữ pháp ★",
+      instruction: "Sắp xếp 4 cụm từ theo thứ tự đúng và chọn đáp án ở vị trí có dấu ★:",
+      sentence: "私 ____ ____ ★ ____ です。",
+      options: ["は", "ベトナム", "の", "学生"],
+      answer: 3,
+      explanation: "Trật tự câu hoàn chỉnh:「私(は) (ベトナム)(の) ★(学生) です」. Vị trí ngôi sao ★ chính là「学生」."
     },
     {
       level: "N4",
-      type: "Thể Te",
-      instruction: "Chọn dạng chia đúng của động từ để diễn tả hành động đang diễn ra:",
-      sentence: "いま、日本語を ____ います。",
-      options: ["べんきょうして", "べんきょうし", "べんきょうする", "べんきょうした"],
+      type: "Mondai 4: Đọc hiểu ngắn",
+      instruction: "Đọc đoạn văn và trả lời câu hỏi bên dưới:",
+      sentence: "「田中さんは明日、東京へ出張に行きます。会議は午後2時からなので、朝9時の新幹線に乗る予定です。」\nQ: 田中さんは何で東京へ行きますか？",
+      options: ["新幹線 (Shinkansen)", "飛行機 (Máy bay)", "バス (Xe buýt)", "車 (Xe hơi)"],
       answer: 0,
-      explanation: "Cấu trúc【V-て + います】diễn tả hành động đang diễn ra (hiện tại tiếp diễn): Bây giờ tôi đang học tiếng Nhật."
+      explanation: "Trong văn bản ghi rõ:「朝9時の新幹線に乗る予定です」(Dự định đi bằng tàu Shinkansen lúc 9h sáng)."
+    },
+    {
+      level: "N4",
+      type: "Mondai 1: Cách đọc Kanji",
+      instruction: "Chọn cách đọc đúng của chữ Kanji được gạch chân:",
+      sentence: "今週の土曜日に友達と<u>会います</u>。",
+      options: ["あいます (aimasu)", "いいます (iimasu)", "すみます (sumimasu)", "たちます (tachimasu)"],
+      answer: 0,
+      explanation: "「会います」đọc là「あいます」(Động từ nhóm 1: Gặp gỡ)."
     },
     {
       level: "N3",
-      type: "Giao tiếp",
-      instruction: "Chọn cách nói lịch sự phù hợp nhất khi lần đầu gặp gỡ:",
-      sentence: "はじめまして。どうぞ ____。",
-      options: ["よろしく おねがいします", "ごめんなさい", "いただきます", "おじゃまします"],
+      type: "Mondai 2: Ngữ pháp thực chiến",
+      instruction: "Chọn cấu trúc ngữ pháp phù hợp nhất:",
+      sentence: "大雨が降っている ____、試合は続けられました。",
+      options: ["にもかかわらず", "につれて", "をとおして", "をきっかけに"],
       answer: 0,
-      explanation: "「どうぞ よろしく おねがいします」là câu chào kinh điển khi tự giới thiệu bản thân: Rất hân hạnh được làm quen và mong được giúp đỡ."
+      explanation: "「〜にもかかわらず」biểu thị ý nghĩa \"mặc dù... nhưng\": Mặc dù trời mưa to nhưng trận đấu vẫn được tiếp tục."
     }
   ];
+
+  let examTimer = null;
+  let examSecondsLeft = 600;
+
+  function startExamTimer() {
+    if (examTimer) clearInterval(examTimer);
+    examSecondsLeft = 600;
+    tickTimer();
+    examTimer = setInterval(() => {
+      examSecondsLeft--;
+      if (examSecondsLeft <= 0) {
+        clearInterval(examTimer);
+        showResults();
+      } else {
+        tickTimer();
+      }
+    }, 1000);
+  }
+
+  function tickTimer() {
+    const el = document.getElementById("exam-timer-display");
+    if (!el) return;
+    const m = Math.floor(examSecondsLeft / 60);
+    const s = examSecondsLeft % 60;
+    el.textContent = `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }
 
   let currentIdx = 0;
   let currentScore = 0;
   let answered = false;
 
   function renderQuestion() {
+    if (currentIdx === 0 && !examTimer) {
+      startExamTimer();
+    }
     if (currentIdx >= QUIZ_QUESTIONS.length) {
       showResults();
       return;
@@ -1431,10 +1517,24 @@ function setupQuickQuiz() {
   }
 
   function showResults() {
+    if (examTimer) clearInterval(examTimer);
     if (quizCard) quizCard.hidden = true;
     if (resultCard) resultCard.hidden = false;
     if (finalScoreVal) finalScoreVal.textContent = currentScore;
     if (scoreDisplay) scoreDisplay.textContent = `${currentScore} / ${QUIZ_QUESTIONS.length}`;
+
+    // Save exam attempt to localStorage history
+    try {
+      const historyList = JSON.parse(localStorage.getItem("nihongo_sensei_exam_history") || "[]");
+      historyList.unshift({
+        date: new Date().toLocaleDateString("vi-VN") + " " + new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+        level: "N5–N3",
+        score: currentScore,
+        total: QUIZ_QUESTIONS.length,
+        passed: currentScore >= Math.ceil(QUIZ_QUESTIONS.length * 0.6)
+      });
+      localStorage.setItem("nihongo_sensei_exam_history", JSON.stringify(historyList.slice(0, 10)));
+    } catch {}
 
     soundEngine.playCheer();
     mascotMgr.celebrate();

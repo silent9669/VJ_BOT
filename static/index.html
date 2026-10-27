@@ -135,8 +135,8 @@
             <span class="nav-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             </span>
-            <span class="nav-label">Phản xạ Speed Quiz</span>
-            <span class="nav-badge new-badge">Hot</span>
+            <span class="nav-label">Thi thử JLPT (Mock Exam)</span>
+            <span class="nav-badge new-badge">Exam</span>
           </button>
         </div>
 
@@ -685,19 +685,25 @@
               <div class="tape-strip tape-top-center"></div>
               <div class="quiz-header-top">
                 <div class="quiz-title-group">
-                  <span class="quiz-badge-icon">⚡</span>
+                  <span class="quiz-badge-icon">📝</span>
                   <div>
-                    <h3 class="quiz-title-heading">Phản Xạ Speed Quiz</h3>
-                    <p class="quiz-title-sub">Thử thách 5 câu hỏi nhanh • Rèn phản xạ ngữ pháp &amp; từ vựng JLPT</p>
+                    <h3 class="quiz-title-heading">Đề Thi Thử Chuẩn JLPT (Mock Exam Simulator)</h3>
+                    <p class="quiz-title-sub">Format đề thi chuẩn JLPT: Mondai 1 (Kanji) • Mondai 2 (Từ vựng) • Mondai 3 (Xếp sao ★) • Mondai 4 (Đọc hiểu)</p>
                   </div>
                 </div>
-                <div class="quiz-score-pill">
-                  <span class="score-label">Điểm:</span>
-                  <span class="score-number" id="quiz-score-display">0 / 5</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="exam-timer-pill">
+                    <span>⏱️</span>
+                    <span id="exam-timer-display">10:00</span>
+                  </div>
+                  <div class="quiz-score-pill">
+                    <span class="score-label">Điểm:</span>
+                    <span class="score-number" id="quiz-score-display">0 / 6</span>
+                  </div>
                 </div>
               </div>
               <div class="quiz-progress-track">
-                <div class="quiz-progress-bar" id="quiz-progress-bar" style="width: 20%;"></div>
+                <div class="quiz-progress-bar" id="quiz-progress-bar" style="width: 16%;"></div>
               </div>
             </div>
 
