@@ -1,5 +1,13 @@
 # Development handoff
 
+## Guided practice and official video resources
+
+- Lessons now separate reference material from practice. Select an answer, confirm with Kiểm tra, then continue after saving. Stable attempt IDs survive save retries; failed saves cannot advance the session. Written production and dictation retain their existing controls.
+- Results show the first-pass score. Missed-question review uses the original item IDs and a separate score; completion remains a reversible learner action. Current chapter opens by default; optional kana does not override the required-course continue action.
+- `scripts/crawl_erin_resources.py` indexes 25 Japan Foundation Erin lessons / 100 activity links with retrieval time and page SHA256. Available under N5/N4 supplemental video resources and `/sources.html`; no official JLPT equivalence or exhaustive syllabus claim. Videos, transcripts and exercises stay at the publisher. The 58 official JLPT links were refreshed unchanged.
+- Motion uses CSS adaptations of Animate UI reveal/choice tokens, with reduced-motion overrides and native keyboard radio behavior. No React migration or extra runtime dependency.
+- Verification: 26 Node tests, 46 Python tests and Worker build. Chrome: full five-question lesson (4/5), review of one missed question (1/1), manual completion, landing on reload, N1 practice, 390px mobile and desktop. Isolated browser retry fixture simulated a failed then successful save: same attempt ID and response, stale error cleared. Real Google consent remains unverified.
+
 ## Level learning and merge pass
 
 This section supersedes the historical snapshots below. The user authorized merging to main and continuing deployment.

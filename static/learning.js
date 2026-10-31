@@ -102,40 +102,9 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
   }
   if(item.script_jp){const listen=document.createElement('button');listen.className='stage-btn';listen.textContent='Nghe bài đọc';listen.onclick=()=>playGeminiTTS(item.script_jp);container.append(listen);}
   if(!questions.length)return;
-  let index=0,score=0;
-  const section=document.createElement('section');section.className='lesson-exercise';container.append(section);
-  function show(){
-    section.replaceChildren();
-    if(index===questions.length){
-      const result=document.createElement('h3');result.textContent=`${score} / ${questions.length} câu đúng`;section.append(result);
-      const again=document.createElement('button');again.textContent='Luyện lại';again.onclick=()=>{index=0;score=0;show();};section.append(again);return;
-    }
-    const q=questions[index],count=document.createElement('p');count.className='exercise-count';count.textContent=`Luyện tập · ${index+1} / ${questions.length}`;
-    const title=document.createElement('h3');title.textContent=q.q;
-    const options=document.createElement('div');options.className='exercise-options';
-    const result=document.createElement('output');result.setAttribute('aria-live','polite');
-    const next=document.createElement('button');next.textContent=index===questions.length-1?'Xem kết quả':'Câu tiếp';next.hidden=true;next.onclick=()=>{index++;show();section.querySelector('button')?.focus();};
-    for(const option of q.opts||[]){
-      const button=document.createElement('button');button.type='button';button.textContent=option;
-      button.onclick=async()=>{
-        options.querySelectorAll('button').forEach(b=>{b.disabled=true;b.dataset.correct=String(b.textContent===q.ans);});
-        const correct=option===q.ans;if(correct)score++;
-        result.textContent=(correct?'Chính xác.':`Đáp án: ${q.ans}`)+(q.explanation?' '+q.explanation:'');
-        const attemptId=crypto.randomUUID(),feedback=result.textContent;
-        const retry=document.createElement('button');retry.textContent='Lưu lại';retry.hidden=true;
-        section.insertBefore(retry,next);
-        async function save(){
-          retry.disabled=true;
-          try{await record(q.item_id || `${item.id || `lesson:${level}:${skill}:${item.lesson}`}:${index}`,correct,q.q,attemptId);retry.remove();result.textContent=feedback;next.hidden=false;next.focus();}
-          catch{result.textContent=feedback+' Chưa lưu được tiến độ.';retry.hidden=false;retry.disabled=false;retry.focus();}
-        }
-        retry.onclick=save;await save();
-      };options.append(button);
-    }
-    section.append(count,title,options,result,next);
-  }
-  show();
+  renderPracticeSession(container,item,level,skill,record);
 }
+
 function audioDataUrl(data) {
   if(!data.mimeType?.startsWith('audio/L16')) return `data:${data.mimeType || 'audio/wav'};base64,${data.audioBase64}`;
   const pcm=Uint8Array.from(atob(data.audioBase64),c=>c.charCodeAt(0));

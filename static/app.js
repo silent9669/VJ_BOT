@@ -725,6 +725,8 @@ function showLessonDetail(item, level, skill) {
   const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${item.script_jp}</p><p>${item.script_vi || ""}</p></div>` : "";
 
   body.innerHTML = `
+    <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">Luyện tập</button></div>
+    <div id="lesson-reference">
     <div style="margin-bottom: 16px;">
       <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT · EN" : "Bài học"))}</span>
       <p style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 4px 0 10px;">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
@@ -741,14 +743,32 @@ function showLessonDetail(item, level, skill) {
     ${readingHtml}
     ${listeningHtml}
     ${item.externalResources?.length?`<div class="external-resources">${item.externalResources.map(r=>`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)} ↗</a>`).join('')}</div>`:''}
-    <div id="lesson-exercises"></div><div id="lesson-completion"></div>
-    <div style="margin-top: 24px; display: flex; gap: 10px;">
+    </div><div id="lesson-exercises" hidden></div><div id="lesson-completion"></div>
+    <div class="lesson-footer" style="margin-top: 24px; display: flex; gap: 10px;">
       <button type="button" class="sketch-btn-cta modal-practice-btn" style="flex: 1; padding: 10px;">Luyện với thầy Lâm</button>
       <button type="button" class="stage-btn modal-close-action" style="padding: 10px 18px;">Đóng</button>
     </div>
   `;
 
   renderLessonExercises(item,level,skill);
+  const hasPractice=Boolean(item.production || item.dictation || lessonQuestions(item,level,skill).length);
+  const modes=body.querySelector('.lesson-mode-switch');
+  modes.hidden=!hasPractice;
+  const selectMode=mode=>{
+    body.dataset.mode=mode;
+    body.querySelector('#lesson-reference').hidden=mode!=='read';
+    body.querySelector('#lesson-exercises').hidden=mode!=='practice';
+    body.querySelector('#lesson-completion').hidden=mode==='practice' && !body.querySelector('.practice-result') && !item.production && !item.dictation;
+    modes.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lessonMode===mode)));
+    body.scrollTop=0;
+  };
+  modes.querySelectorAll('button').forEach(b=>b.onclick=()=>selectMode(b.dataset.lessonMode));
+  if(hasPractice){
+    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent='Bắt đầu luyện tập';
+    start.onclick=()=>{selectMode('practice');body.querySelector('#lesson-exercises legend, #lesson-exercises textarea, #lesson-exercises button')?.focus();};
+    body.querySelector('#lesson-reference').append(start);
+  }
+  selectMode('read');
   mountCompletion(document.getElementById('lesson-completion'),{activity_id:activityId(item,level,skill),kind:'lesson',level,title:item.title || item.jp || 'Bài học'});
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -776,6 +796,7 @@ function showLessonDetail(item, level, skill) {
   if (btnClose) btnClose.addEventListener("click", () => modal.close());
 
   modal.showModal();
+  body.scrollTop=0;
   document.getElementById("btn-close-lesson-modal").focus();
 }
 

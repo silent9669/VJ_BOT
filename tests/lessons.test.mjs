@@ -101,3 +101,27 @@ test('reversed lesson context includes the actual reading and listening material
   }
   assert.ok(context.buildLessonContext({id:'long',title:'Long',passage:'あ'.repeat(10000)},'N1','reading').content.length<=3500);
 });
+
+test('practice confirms once, preserves original IDs in review and separates scores',async()=>{
+  const context=vm.createContext({});vm.runInContext(await fs.readFile('static/practice.js','utf8'),context);
+  const questions=[{opts:['a','b'],ans:'a'},{opts:['c','d'],ans:'d'},{opts:['e','f'],ans:'e'}];
+  const round=context.createPracticeRound(questions);
+  assert.equal(round.next(),false);assert.equal(round.answer('invalid'),null);
+  assert.equal(round.answer('b').correct,false);assert.equal(round.answer('a'),null);
+  round.next();assert.equal(round.answer('d').correct,true);round.next();round.answer('f');round.next();
+  assert.equal(round.correct,1);assert.deepEqual(Array.from(round.missed),[0,2]);
+  const review=context.createPracticeRound(questions,round.missed);
+  assert.equal(review.answer('a').originalIndex,0);review.next();assert.equal(review.answer('e').originalIndex,2);review.next();
+  assert.equal(review.correct,2);assert.equal(review.missed.length,0);assert.equal(round.correct,1);
+});
+
+test('Erin contains 25 sourced lessons with distinct publisher activity links',async()=>{
+  const catalog=JSON.parse(await fs.readFile('static/course/erin-resources.json','utf8'));
+  assert.equal(catalog.lessons.length,25);assert.equal(new Set(catalog.lessons.map(l=>l.id)).size,25);
+  assert.equal(catalog.pages.length,26);
+  for(const lesson of catalog.lessons){
+    assert.ok(lesson.title.length>5);assert.equal(lesson.resources.length,4);
+    assert.ok(catalog.pages.some(p=>p.url===lesson.page_url && /^[a-f0-9]{64}$/.test(p.sha256)));
+    for(const resource of lesson.resources){const url=new URL(resource.url);assert.equal(url.hostname,'www.erin.jpf.go.jp');assert.ok(url.pathname.startsWith(`/en/lesson/${String(lesson.number).padStart(2,'0')}/`));}
+  }
+});

@@ -9,11 +9,11 @@ function lessonProgressIds(item,level,skill){
   if(item.production)return [item.id];
   return item.dictation ? (item.examples||[]).map((_,i)=>`${item.id}:${i}`) : lessonQuestions(item,level,skill).map(q=>q.item_id);
 }
-let practicalCourse=null,practicalSources=null,practicalLoad=null,courseChapters=null,jlptResources=null;
+let practicalCourse=null,practicalSources=null,practicalLoad=null,courseChapters=null,jlptResources=null,erinResources=null;
 async function loadPracticalCourse(){
-  if(!practicalLoad)practicalLoad=Promise.all(['practical','sources','chapters','jlpt-resources'].map(async name=>{
+  if(!practicalLoad)practicalLoad=Promise.all(['practical','sources','chapters','jlpt-resources','erin-resources'].map(async name=>{
     const response=await fetch(`course/${name}.json`);if(!response.ok)throw new Error('course');return response.json();
-  })).then(([course,sources,chapters,resources])=>{practicalCourse=course;practicalSources=sources;courseChapters=chapters;jlptResources=resources;}).catch(error=>{practicalLoad=null;throw error;});
+  })).then(([course,sources,chapters,resources,erin])=>{practicalCourse=course;practicalSources=sources;courseChapters=chapters;jlptResources=resources;erinResources=erin;}).catch(error=>{practicalLoad=null;throw error;});
   return practicalLoad;
 }
 function createStudyPlan(level){
@@ -78,15 +78,15 @@ async function renderStudyPlan(level){
     const done=required.filter(unitDone).length;
     const upcomingUnit=required.find(u=>!unitDone(u));
     const upcoming=upcomingUnit?.steps.find(s=>!marked(s));
-    host.innerHTML=`<div class="plan-overview"><div><h3>Bài học ${level}</h3><p>${done} / ${required.length} chương hoàn thành</p></div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${required.length}" aria-label="Chương hoàn thành"></progress></div><div class="plan-units"></div>`;
+    host.innerHTML=`<div class="plan-overview"><div><h3>Bài học ${level}</h3><p>${done} / ${required.length} chương hoàn thành</p>${upcomingUnit?`<p class="plan-current-title">${escapeHtml(upcomingUnit.title)}</p>`:''}</div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${required.length}" aria-label="Chương hoàn thành"></progress></div><div class="plan-units"></div>`;
     host.querySelector('.plan-continue').onclick=()=>openStudyStep(upcoming || required[0].steps[0],level);
     for(const [index,unit] of units.entries()){
-      const detail=document.createElement('details');detail.className='plan-unit';detail.dataset.unit=unit.id;detail.open=expanded.includes(unit.id);
+      const detail=document.createElement('details');detail.className='plan-unit';detail.dataset.unit=unit.id;detail.open=units.some(u=>expanded.includes(u.id))?expanded.includes(unit.id):unit===upcomingUnit;detail.dataset.current=String(unit===upcomingUnit);detail.dataset.done=String(unitDone(unit));
       const count=unit.steps.filter(marked).length;
       detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?' · tùy chọn':''}</strong><span>${unitDone(unit)?'Hoàn thành':`${count}/${unit.steps.length}`}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal)} <span>${unit.type==='grammar'?'Ngữ pháp · nguồn EN':unit.optional?'Kana':'Tình huống · tiếng Việt'} · khoảng ${unit.minutes} phút</span></p></div>`;
       const list=detail.querySelector('.plan-steps');
       for(const step of unit.steps){
-        const state=studyStepState(step,records),button=document.createElement('button');button.type='button';button.className='plan-step';
+        const state=studyStepState(step,records),button=document.createElement('button');button.type='button';button.className='plan-step';button.dataset.done=String(marked(step));if(step===upcoming)button.setAttribute('aria-current','step');
         button.innerHTML=`<span class="plan-skill">${studySkillNames[step.skill] || (step.kind==='kaiwa'?'Kaiwa':'Bài kiểm tra')}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${marked(step)?'Hoàn thành':state.needsReview?'Cần ôn':'Bắt đầu →'}</span>`;
         button.onclick=()=>openStudyStep(step,level);list.append(button);
       }
@@ -102,6 +102,15 @@ async function renderStudyPlan(level){
       official.append(button);
     }
     host.append(official);
+    if(level==='N5' || level==='N4'){
+      const extra=document.createElement('details');extra.className='course-supplements';
+      extra.innerHTML='<summary>Hội thoại video · Erin</summary><p>Japan Foundation · 25 bài bổ trợ sơ cấp. Không quy đổi chính thức sang JLPT.</p>';
+      for(const lesson of erinResources.lessons){
+        const button=document.createElement('button');button.type='button';button.textContent=`${lesson.number}. ${lesson.title}`;
+        button.onclick=()=>showLessonDetail({id:lesson.id,title:lesson.title,lesson:lesson.number,sourceLabel:'Japan Foundation · Erin',summary:'Xem hội thoại cơ bản, học mẫu câu và đối chiếu với hội thoại mở rộng trên website gốc.',externalResources:lesson.resources},level,'listening');extra.append(button);
+      }
+      host.append(extra);
+    }
   }catch{if(request!==studyPlanRequest)return;host.textContent='Chưa tải được lộ trình. ';const retry=document.createElement('button');retry.type='button';retry.textContent='Thử lại';retry.onclick=()=>renderStudyPlan(level);host.append(retry);}
 }
 let curriculumView='plan';
