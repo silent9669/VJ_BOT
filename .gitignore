@@ -23,3 +23,5 @@ dist/
 uvicorn.log
 node_modules/
 scripts/update_app.js
+
+.taste-skill/

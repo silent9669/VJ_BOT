@@ -43,8 +43,11 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
+      - name: Test Worker and lesson data
+        run: npm test
+
       - name: Verify Cloudflare Worker Build
-        run: npx cf deploy --dry-run
+        run: npm run build
 
   deploy:
     name: Deploy to Cloudflare Workers
@@ -64,8 +67,14 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
+      - name: Apply D1 migrations
+        run: npx cf d1 migrations apply eb0d49a5-7a90-4219-968c-5fcb04390859 --dir migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy to Cloudflare
-        run: npx cf deploy
+        run: npm run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

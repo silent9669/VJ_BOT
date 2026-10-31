@@ -1,194 +1,81 @@
-# VJBot — System Architecture & Data Engineering
+# Production architecture
 
-This document outlines the technical architecture, edge deployment model, database schemas, and algorithms powering **VJBot (Nihongo Sensei)**.
+The deployed app is a Cloudflare Worker with static assets and D1. The Python/FastAPI implementation is separate and is not the deployed API behind the website.
 
----
-
-## 1. High-Level Architecture Overview
-
-VJBot utilizes a dual-engine architecture:
-1. **Production Edge Stack**: Hosted globally on **Cloudflare Workers** with **Cloudflare D1 (Serverless SQLite)** for sub-50ms latency across Asia and worldwide.
-2. **Local / Container Development Stack**: **FastAPI (Python 3.12)** with **Motor (Async MongoDB 7)** and Docker Compose.
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        User Client Browser                              │
-│   (Apple Liquid Glass UI • Anatomy 1984 PC • Web Speech • Audio API)   │
-└─────────────────────────────────┬──────────────────────────────────────┘
-                                  │ HTTPS / TLS 1.3
-                                  ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                   Cloudflare Global Edge Network                       │
-│                     (vjbot.dangphuc.me)                                │
-│                                                                        │
-│   ┌────────────────────────────────────────────────────────────────┐   │
-│   │               Cloudflare Worker (src/worker.js)                │   │
-│   │                                                                │   │
-│   │  ├── Static Asset Handling (index.html, JS, CSS, SVG)          │   │
-│   │  ├── REST API Router (/api/chat, /api/progress, /api/tts...)   │   │
-│   │  └── Authentication & CORS Middleware                          │   │
-│   └──────────────────────┬────────────────────────┬────────────────┘   │
-└──────────────────────────┼────────────────────────┼────────────────────┘
-                           │                        │
-                           ▼                        ▼
-        ┌────────────────────────────┐    ┌──────────────────────────────┐
-        │   Cloudflare D1 Database   │    │  Google Gemini AI Studio API │
-        │     (Serverless SQLite)    │    │   (gemini-2.5-flash / TTS)   │
-        │                            │    │                              │
-        │ • profiles                 │    │ • Conversational Tutor       │
-        │ • progress (SM-2 SRS)      │    │ • Kaiwa Pronunciation Eval   │
-        │ • conversations (History)  │    │ • Natural Voice Synthesis    │
-        │ • curriculum_items         │    └──────────────────────────────┘
-        └────────────────────────────┘
+```mermaid
+flowchart LR
+  B[Browser: notebook UI] --> A[Worker static assets]
+  B --> W[Worker API]
+  B --> G[Google sign-in]
+  G -->|ID token via browser| W
+  W --> D[(Cloudflare D1)]
+  W --> M[Gemini chat, Kaiwa and TTS]
+  A --> J[Versioned lesson JSON]
 ```
 
----
+## Source map
 
-## 2. Cloudflare D1 Database Schema
+| Source | Responsibility |
+| --- | --- |
+| `src/worker.js` | API routing, D1 queries, SRS scheduling, AI calls and asset responses |
+| `src/auth.js` | Google JWT verification, nonce cookies and hashed session tokens |
+| `cloudflare.config.ts` | Worker, D1, secrets and placement binding |
+| `vite.config.ts` | Cloudflare Vite integration; `static/` as public assets |
+| `static/index.html` | Page structure and dialogs |
+| `static/app.js` | Navigation, chat, lessons, cards, quizzes and progress UI |
+| `static/account.js` | Session setup, Google button, authenticated requests and guest storage |
+| `static/study-plan.js` | Guided units, stable review sets and progress-derived next lesson |
+| `static/learning.js` | On-demand lessons, furigana and exercise interactions |
+| `static/notebook.css` | Notebook design layered over existing `style.css` |
+| `src/client/room.js` | Three.js classroom; generated bundle is `static/room.js` |
+| `static/assets/lam/teacher.svg` | Original teacher asset; generator in `scripts/build_teacher.py` |
+| `static/openjlpt/` | Pinned source data, checksums and license notices |
+| `migrations/` | Authoritative D1 schema evolution |
 
-Cloudflare D1 acts as the authoritative relational data store in production:
+## Database ownership
 
-### 2.1 Table: `profiles`
-Stores learner profiles, target JLPT levels, and study track preferences.
-```sql
-CREATE TABLE IF NOT EXISTS profiles (
-  user_id TEXT PRIMARY KEY,
-  level TEXT DEFAULT 'N5',           -- N5, N4, N3, N2, N1
-  track TEXT DEFAULT 'general',       -- general, business, travel, it
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
+| Table | Stored data |
+| --- | --- |
+| `profiles` | Account ID, target level, track, update timestamp |
+| `sessions` | SHA-256 session token hash, account ID, name, expiry |
+| `curriculum_lessons` | Lesson grouping metadata |
+| `curriculum_items` | Search/review item identity, level, display, reading, meanings and source |
+| `progress` | Per-account/item counters, review dates, interval, ease and consecutive repetitions |
+| `conversations` | Account-scoped user/bot messages and timestamps |
+| `progress_attempts` | Per-account answer receipts for safe retry |
+| `study_days` | Per-account UTC dates used for streaks |
+| `ai_usage` | Per-account minute buckets used for rate limiting |
 
-### 2.2 Table: `progress`
-Stores Spaced Repetition (SM-2) state per student and curriculum/exam item.
-```sql
-CREATE TABLE IF NOT EXISTS progress (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id TEXT NOT NULL,
-  item_id TEXT NOT NULL,
-  item_type TEXT DEFAULT 'grammar',  -- grammar, vocabulary, kanji, reading, listening, exam
-  jlpt_level TEXT DEFAULT 'N5',
-  correct INTEGER DEFAULT 0,
-  incorrect INTEGER DEFAULT 0,
-  last_reviewed DATETIME DEFAULT CURRENT_TIMESTAMP,
-  next_review DATETIME DEFAULT CURRENT_TIMESTAMP,
-  interval_days REAL DEFAULT 1.0,
-  ease_factor REAL DEFAULT 2.5,
-  UNIQUE(user_id, item_id)
-);
-CREATE INDEX IF NOT EXISTS idx_progress_user_due ON progress (user_id, next_review);
-```
+Migrations `0001_base.sql`, `0002_sessions.sql`, `0003_srs_repetitions.sql` `0004_progress_display.sql` `0005_progress_attempts.sql` and `0006_learning_responses.sql` were applied locally and to production during this work. Read the migration files for exact columns; do not recreate tables from older documentation.
 
-### 2.3 Table: `conversations`
-Maintains recent chat history for the reversed-classroom AI context loop.
-```sql
-CREATE TABLE IF NOT EXISTS conversations (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id TEXT NOT NULL,
-  role TEXT NOT NULL,                -- 'user' | 'bot'
-  content TEXT NOT NULL,
-  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_conv_user ON conversations (user_id, id);
-```
+## Lesson data and persistence
 
-### 2.4 Table: `curriculum_items`
-Static reference dataset of 8,000+ vocabulary, Kanji, and grammar points across N5–N1.
-```sql
-CREATE TABLE IF NOT EXISTS curriculum_items (
-  item_id TEXT PRIMARY KEY,
-  level TEXT NOT NULL,               -- N5, N4, N3, N2, N1
-  item_type TEXT NOT NULL,           -- vocabulary, kanji, grammar
-  display TEXT NOT NULL,
-  reading TEXT,
-  meaning_vi TEXT,
-  meaning_en TEXT,
-  example_jp TEXT,
-  example_vi TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_curriculum_lvl_type ON curriculum_items (level, item_type);
-```
+The lesson library reads versioned JSON assets and builds lesson groups in the browser. D1 stores a flattened curriculum used by `/api/curriculum`, topic selection and progress joins. Rich examples are not all duplicated into D1. Refreshing content requires rebuilding the asset dataset **and** importing its generated SQL.
 
----
+Account progress is saved through the Worker into D1. Guest progress and level stay in browser local storage with a simpler review schedule; they do not automatically migrate on sign-in. Generated exercises can have IDs absent from `curriculum_items`; optional display labels are stored directly on each account’s progress row. Older unlabeled records gain labels when answered again.
 
-## 3. Spaced Repetition (SM-2) Algorithm
+## Authentication and AI
 
-VJBot implements the modified **SuperMemo-2 (SM-2)** algorithm for both Flashcards and Mock Exams.
+Google ID tokens are verified using Google's JWKS, RS256, issuer, audience, expiry, verified email and a nonce bound to an HttpOnly cookie. Random 32-byte session tokens expire after seven days; D1 stores only their hashes. HTTPS cookies use Secure and SameSite=Lax. Private routes obtain ownership from the session and ignore client-provided account IDs/API keys.
 
-### 3.1 Mathematical Formulation
-Given a user recall rating $q \in \{0, 1, 2, 3, 4, 5\}$:
-- $q \ge 3$: Successful recall
-- $q < 3$: Failed recall (lapse)
+Worker secrets hold provider credentials. Chat/Kaiwa use `gemini-3.5-flash`; speech uses `gemini-3.8-flash-tts` with the male Charon voice. TTS falls back to browser speech when provider audio is unavailable. Chat uses recent saved messages and bounded lesson context. Kaiwa assesses text/transcription, not audio pronunciation.
 
-#### Ease Factor ($EF$) Update:
-$$EF' = \max\left(1.3, \; EF + \left(0.1 - (5 - q) \times (0.08 + (5 - q) \times 0.02)\right)\right)$$
+The `gcp:us-east4` placement hint resolved an observed Google TTS location rejection. It is not a data-residency guarantee or a measured latency promise.
 
-#### Interval ($I$) Update:
-$$I' = \begin{cases}
-1 & \text{if } q < 3 \\
-1 & \text{if } q \ge 3 \text{ and repetitions } = 0 \\
-6 & \text{if } q \ge 3 \text{ and repetitions } = 1 \\
-I \times EF' & \text{if } q \ge 3 \text{ and repetitions } \ge 2
-\end{cases}$$
+## Rendering
 
-### 3.2 Implementation (`src/worker.js`)
-```javascript
-function calculateSM2(quality, repetitions, previousInterval, previousEF) {
-  let ef = previousEF + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  if (ef < 1.3) ef = 1.3;
+The classroom uses original procedural geometry and the shared teacher sprite. Animation uses delta time and stops when hidden or settled. Resources are disposed on page exit. A static fallback and HTML object buttons remain available. No React/R3F migration was introduced into this vanilla application.
 
-  let interval;
-  if (quality < 3) {
-    interval = 1;
-  } else if (repetitions === 0) {
-    interval = 1;
-  } else if (repetitions === 1) {
-    interval = 6;
-  } else {
-    interval = Math.round(previousInterval * ef);
-  }
+## Practical course and official resources
 
-  const nextReview = new Date(Date.now() + interval * 86400000).toISOString();
-  return { interval, easeFactor: ef, nextReview };
-}
-```
+`static/course/practical.json` is the editable source for original scenarios, Vietnamese explanations, prerequisites, contextual questions and writing rubrics. `study-plan.js` assembles three steps per unit. Completion uses the latest correct answer; written production is self-assessment. Migration 0006 stores latest correctness and private written responses.
 
----
+`python3 scripts/crawl_course_sources.py` refreshes `static/course/sources.json` from official Japan Foundation lesson/audio pages. It stores retrieval time, page SHA256, publisher and public links, not PDF/audio bodies. `static/source-catalog.js` exposes the catalog with book/search controls. Irodori copyright terms apply separately from OpenJLPT licensing.
 
-## 4. LLM Prompt Architecture & Reversed Tutor Persona
+After reviewing course changes, `python3 scripts/upload_practical_course.py` upserts the 20 unit identities and 200 practice identities into the configured production D1. Authored text remains in static JSON; per-account answers remain in D1. Never reassign an existing versioned ID to a different task.
 
-### 4.1 System Prompt Philosophy
-Rather than acting as a passive assistant, VJBot operates as an active teacher (Reversed Classroom):
-1. **Proactive Initiation**: Sensei introduces topics, checks prior memory, and initiates questions.
-2. **Targeted Drill**: Questions align with the learner's JLPT level and track.
-3. **Bilingual Guidance**: Japanese input/output supported by natural, friendly Vietnamese explanations.
-4. **Structured Assessment**: Points out subtle grammatical nuances (e.g. difference between 〜に際して and 〜にあたって).
+## Completion and level-based learning
 
-### 4.2 System Prompt Template (`app/services/llm.py` & `src/worker.js`)
-```
-Bạn là VJBot (Nihongo Sensei) — giáo viên tiếng Nhật thông minh, nhiệt tình và thân thiện.
-Nhiệm vụ của bạn:
-1. Luôn chủ động đặt câu hỏi rèn luyện phản xạ cho học viên theo cấp độ JLPT ({level}).
-2. Sử dụng chữ Hán có Furigana/Katakana khi cần thiết để hỗ trợ người học.
-3. Giải thích ngữ pháp ngắn gọn, súc tích bằng tiếng Việt tự nhiên và đưa ra 1-2 ví dụ thực tế.
-4. Khi học viên trả lời sai hoặc chưa tự nhiên, nhẹ nhàng sửa lỗi và đưa ra cách nói chuẩn người bản xứ.
-5. Luôn giữ phong cách tôn trọng, tích cực và tạo động lực cho học viên.
-```
+Migration `0007_completions.sql` stores explicit learner completion separately from scored attempts. `static/completion.js` provides a shared reversible control; guest storage uses `vjbot_guest_completions`. Chapter completion can be explicitly marked or derived from marked child activities. Quiz identities include the level; previous ambiguous numeric exam IDs remain historical only.
 
----
-
-## 5. Voice & Speech Pipeline
-
-### 5.1 Speech-to-Text (`Web Speech API`)
-- Zero external dependency; uses native operating system speech models on Chrome, Safari, and Edge.
-- Set to `lang = "ja-JP"` for high-accuracy Japanese speech transcription.
-
-### 5.2 Speech-to-Buffer Recording (`MediaRecorder`)
-- Connects directly to the user's `audio/webm` media stream.
-- Collects raw audio packets during microphone engagement.
-- Creates a local Blob URL for immediate, low-latency playback comparison with Sensei's model audio.
-
-### 5.3 Text-to-Speech (`Google Gemini TTS` / Browser SpeechSynthesis)
-- Endpoints request audio bytes using Gemini multimodal voice synthesis.
-- Gracefully falls back to browser-native `window.speechSynthesis` (`ja-JP`) when offline or when no API key is provided.
+`static/course/chapters.json` maps eight curated chapters per level to pinned OpenJLPT grammar IDs. `scripts/crawl_jlpt_resources.py` reproducibly indexes the official 2018 workbook page into `jlpt-resources.json`; no copyrighted question/audio bodies are copied. `buildLessonContext` supplies bounded real lesson material to the Worker. Its Gemini system instruction asks for explanation/application before feedback. The browser never receives the shared API secret.

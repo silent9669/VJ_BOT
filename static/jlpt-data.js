@@ -288,7 +288,7 @@ window.JLPT_DATA = {
                 ]
               },
               {
-                "q": "Cùng đi xem phim nhé? -> いっしょに えいがを み____ か。",
+                "q": "Rủ bạn đi xem phim bằng ませんか: いっしょに えいがを み____。",
                 "ans": "ませんか",
                 "opts": [
                   "ませんか",
@@ -1234,7 +1234,7 @@ window.JLPT_DATA = {
     "N5": [
       {
         "id": 1,
-        "title": "Đề Thi Thử JLPT N5 — Đề Số 01 (Format Chuẩn Quốc Tế)",
+        "title": "Bài luyện N5 · Bộ 1",
         "duration_minutes": 20,
         "pass_threshold": 80,
         "max_score": 180,
@@ -1346,7 +1346,7 @@ window.JLPT_DATA = {
       },
       {
         "id": 2,
-        "title": "Đề Thi Thử JLPT N5 — Đề Số 02 (Phản Xạ Trợ Từ & Động Từ)",
+        "title": "Bài luyện N5 · Bộ 2",
         "duration_minutes": 20,
         "pass_threshold": 80,
         "max_score": 180,
@@ -1428,7 +1428,7 @@ window.JLPT_DATA = {
     "N4": [
       {
         "id": 1,
-        "title": "Đề Thi Thử JLPT N4 — Đề Số 01 (Chuẩn Minna II)",
+        "title": "Bài luyện N4 · Bộ 1",
         "duration_minutes": 25,
         "pass_threshold": 90,
         "max_score": 180,
@@ -1508,7 +1508,7 @@ window.JLPT_DATA = {
       },
       {
         "id": 2,
-        "title": "Đề Thi Thử JLPT N4 — Đề Số 02 (Ngữ pháp & Đọc hiểu thông báo)",
+        "title": "Bài luyện N4 · Bộ 2",
         "duration_minutes": 25,
         "pass_threshold": 90,
         "max_score": 180,
@@ -1590,7 +1590,7 @@ window.JLPT_DATA = {
     "N3": [
       {
         "id": 1,
-        "title": "Đề Thi Thử JLPT N3 — Đề Số 01 (Chuẩn Shinkanzen N3)",
+        "title": "Bài luyện N3 · Bộ 1",
         "duration_minutes": 30,
         "pass_threshold": 95,
         "max_score": 180,
@@ -1670,7 +1670,7 @@ window.JLPT_DATA = {
       },
       {
         "id": 2,
-        "title": "Đề Thi Thử JLPT N3 — Đề Số 02 (Từ vựng Năng động & Văn bản)",
+        "title": "Bài luyện N3 · Bộ 2",
         "duration_minutes": 30,
         "pass_threshold": 95,
         "max_score": 180,
@@ -1752,7 +1752,7 @@ window.JLPT_DATA = {
     "N2": [
       {
         "id": 1,
-        "title": "Đề Thi Thử JLPT N2 — Đề Số 01 (Chuẩn Đề Thi Thật N2)",
+        "title": "Bài luyện N2 · Bộ 1",
         "duration_minutes": 35,
         "pass_threshold": 90,
         "max_score": 180,
@@ -1832,7 +1832,7 @@ window.JLPT_DATA = {
       },
       {
         "id": 2,
-        "title": "Đề Thi Thử JLPT N2 — Đề Số 02 (Phân Tích Ngữ Pháp & Biểu Đạt N2)",
+        "title": "Bài luyện N2 · Bộ 2",
         "duration_minutes": 35,
         "pass_threshold": 90,
         "max_score": 180,
@@ -1914,7 +1914,7 @@ window.JLPT_DATA = {
     "N1": [
       {
         "id": 1,
-        "title": "Đề Thi Thử JLPT N1 — Đề Số 01 (Đỉnh Cao Thao Lược JLPT N1)",
+        "title": "Bài luyện N1 · Bộ 1",
         "duration_minutes": 40,
         "pass_threshold": 100,
         "max_score": 180,
@@ -1994,7 +1994,7 @@ window.JLPT_DATA = {
       },
       {
         "id": 2,
-        "title": "Đề Thi Thử JLPT N1 — Đề Số 02 (Luận Đề Học Thuật & Ngữ Khí N1)",
+        "title": "Bài luyện N1 · Bộ 2",
         "duration_minutes": 40,
         "pass_threshold": 100,
         "max_score": 180,

@@ -1,96 +1,67 @@
-# VJBot — Cloudflare Deployment & CI/CD Pipeline
+# Cloudflare deployment
 
-This guide details the deployment pipeline, Cloudflare edge configuration, and GitHub branch protection rules enforced on the **VJBot** repository.
+Read [HANDOFF.md](HANDOFF.md) first for the current deployed version and remaining verification.
 
----
+## Targets
 
-## 1. Cloudflare Workers & D1 Production Architecture
+- Site: https://vjbot.dangphuc.me/
+- Worker: `vjbot`; entrypoint `src/worker.js`.
+- D1: `eb0d49a5-7a90-4219-968c-5fcb04390859`, binding `DB`.
+- Configuration: `cloudflare.config.ts` and `vite.config.ts`.
+- Latest recorded version: `d4933bcf-41fb-401d-a620-c8411ce48666`.
 
-- **Production URL**: [`https://vjbot.dangphuc.me/`](https://vjbot.dangphuc.me/)
-- **Zone**: `dangphuc.me` (ID: `f566edfee01abd83506943cfb30bad9d`)
-- **Worker Script**: `src/worker.js`
-- **D1 Database**: `vjbot-db` (ID: `eb0d49a5-7a90-4219-968c-5fcb04390859`) bound as `env.DB`
+Do not substitute a database/Worker from another project. Verify the current CLI account and configuration before any write. The existing importer targets this production D1 ID directly; it is not a local-only command.
 
-### Configuration Files
-- `wrangler.config.ts`: Defines Worker entry point, assets directory (`.cloudflare/output/v0/workers/default/assets`), compatibility date, and D1 database bindings.
-- `cloudflare.config.ts`: Cloudflare CLI configuration file.
+## Secrets and Google
 
----
+The Worker has secret names `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Never put values in source, documentation, browser storage, command output or committed environment files. The current ID-token flow uses the client ID and Google's public keys; the client secret is stored but unused.
 
-## 2. Deploying from Local Terminal
+Google OAuth authorized JavaScript origins must include `https://vjbot.dangphuc.me`. Local sign-in additionally requires `http://localhost:8787`. Rendering the Google button does not establish that the complete login flow works.
 
-### 2.1 Dry-Run Verification
-To verify asset compilation and Worker bundling without pushing to production:
-```bash
-npx cf deploy --dry-run
+## Build and deploy
+
+```sh
+npm ci
+npm test
+npm run build
+npm run deploy
 ```
 
-### 2.2 Live Production Deployment
-```bash
-npx cf deploy
+Both build/deploy scripts rebuild `static/room.js` from `src/client/room.js`. Do not bypass them with a direct CLI deploy after editing 3D source. Vite warns about classic script tags in static HTML; these scripts are served as public files in dependency order.
+
+`npm run build` is a Cloudflare dry run; `npm run deploy` changes production. It does not automatically apply migrations or import curriculum. Record the returned version and verify the custom domain after deploying.
+
+## Database migrations and content
+
+```sh
+npx cf d1 migrations apply eb0d49a5-7a90-4219-968c-5fcb04390859 --dir migrations
 ```
 
----
+Migrations 0001–0005 were applied during this work. Inspect migration tracking before future schema work; use new migrations rather than modifying already-applied migrations.
 
-## 3. GitHub Actions Automated CI/CD Pipeline
+To refresh the pinned dataset after reviewing the upstream change:
 
-The repository uses `.github/workflows/deploy.yml` to automatically test, verify, and deploy every change to production.
-
-```
-┌────────────────────────────────────────────────────────┐
-│                   Pull Request to main                 │
-└───────────────────────────┬────────────────────────────┘
-                            │
-                            ▼
-         ┌─────────────────────────────────────┐
-         │     Job 1: Test & Quality Checks    │
-         │                                     │
-         │  • Set up Python 3.12               │
-         │  • Run Pytest (46 unit & API tests) │
-         │  • Set up Node.js 20                │
-         │  • Validate Cloudflare Worker Build │
-         └──────────────────┬──────────────────┘
-                            │ (Must Pass)
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│                    Merge PR into main                  │
-└───────────────────────────┬────────────────────────────┘
-                            │
-                            ▼
-         ┌─────────────────────────────────────┐
-         │     Job 2: Deploy to Cloudflare     │
-         │                                     │
-         │  • Install Node dependencies        │
-         │  • Run npx cf deploy                │
-         │  • Push Worker & Assets to Edge     │
-         └─────────────────────────────────────┘
+```sh
+npm run data:import
+npm test
+python3 scripts/upload_lessons.py
+npm run deploy
 ```
 
-### 3.1 Workflow Secrets Required
-Ensure the following repository secrets are set in GitHub (`Settings > Secrets and variables > Actions`):
-- `CLOUDFLARE_API_TOKEN`: Cloudflare API Token with Workers & D1 Edit permissions.
-- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account ID.
+The importer creates tracked JSON/attribution/checksums and ignored `data/openjlpt.sql`. The uploader submits restartable 250-statement batches and retains existing learner records. Review its current upsert fields before changing source IDs or structural metadata; it is not a general database reconciliation tool.
 
----
+For CLI discovery use `npx cf cli search` with a generic action description; avoid putting account IDs, domains or secrets in search queries.
 
-## 4. Main Branch Protection & Security Policy
+## Production verification
 
-The `main` branch is protected by GitHub Ruleset **#25958093** (`Protect main branch`):
+`GET /api/health` should return `status: ok` and the expected curriculum count (10,783 at handoff). Also inspect lesson loading, session behavior, progress read/write, chat history and the browser console. Use isolated QA accounts for mutations and remove only their data afterward. A health check alone does not prove login, saving or AI behavior.
 
-1. **Pull Request Required**:
-   - Direct pushes to `main` are rejected.
-   - All code changes must go through a pull request.
-2. **Force Push Blocked (`non_fast_forward`)**:
-   - `git push --force` or `git push --force-with-lease` is prohibited.
-3. **Deletion Prohibited**:
-   - The `main` branch cannot be deleted.
-4. **Required Status Checks**:
-   - The status check `Test & Quality Checks` must pass before any PR can be merged into `main`.
-5. **Bypass Actors**: None (`current_user_can_bypass: never`).
+The Worker uses `gcp:us-east4` placement because the default location caused Google TTS rejection. Do not remove it casually; verify audio, not just HTTP status, after placement/model changes.
 
----
+Before a later deployment, record the current version and choose a compatible rollback version using the CLI's Worker version/deployment commands. A Worker rollback does not undo D1 migrations or learner writes; keep schema changes compatible and plan data recovery separately.
 
-## 5. Secret Scanning & Security Rules
+## GitHub workflow
 
-- **Zero Hardcoded API Keys**: Never commit raw Google Cloud / Gemini AI Studio API key strings starting with `AQ.Ab...` or `AIza...` directly into tracked git files.
-- **Client Key Storage**: API keys are saved locally in the learner's browser `localStorage` or injected via Cloudflare Worker secrets.
+`.github/workflows/deploy.yml` runs Python tests, Node Worker/data tests and `npm run build` for pull requests/pushes to main. Its deployment job runs `npm run deploy` only for pushes to main, using the configured Cloudflare token/account ID.
+
+The new workflow changes are local and uncommitted. Hosted CI and branch protection have not been verified for this state. Do not infer them from successful local tests or the direct Cloudflare deployment. Future schema-changing releases need an explicit migration step; the workflow currently does not apply migrations.

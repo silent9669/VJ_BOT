@@ -1,30 +1,52 @@
 {
   "name": "vj_bot",
   "version": "1.0.0",
-  "description": "Chatbot dạy tiếng Nhật chủ động cho luyện thi JLPT N5–N1. Bot tự chọn chủ đề theo tiến độ, điểm yếu và lịch sử ôn tập của từng người học, thay vì chỉ trả lời khi được hỏi.",
+  "description": "VJBot (Nihongo Sensei) — Nền tảng luyện thi JLPT N5–N1 & phản xạ tiếng Nhật chủ động cùng AI Sensei. Hosted on Cloudflare Workers edge at https://vjbot.dangphuc.me",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "cf dev --port 8787",
+    "build": "npm run build:room && cf deploy --dry-run",
+    "test": "node --test tests/*.test.mjs",
+    "test:python": "PYTHONPATH=. .venv/bin/pytest tests/ -q",
+    "data:import": "python3 scripts/import_lessons.py",
+    "deploy": "npm run build:room && cf deploy",
+    "build:room": "node scripts/build_room.mjs"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/silent9669/VJ_BOT.git"
   },
-  "keywords": [],
+  "keywords": [
+    "japanese",
+    "jlpt",
+    "jlpt-n5-n1",
+    "reversed-classroom",
+    "gemini-flash",
+    "cloudflare-workers",
+    "cloudflare-d1",
+    "apple-design",
+    "spaced-repetition",
+    "speech-recognition"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
   "bugs": {
     "url": "https://github.com/silent9669/VJ_BOT/issues"
   },
-  "homepage": "https://github.com/silent9669/VJ_BOT#readme",
+  "homepage": "https://vjbot.dangphuc.me",
   "devDependencies": {
     "@cloudflare/vite-plugin": "^2.0.0-beta.v.5",
     "anatomy-figures": "^0.1.0",
     "cf": "^1.0.0-beta.23",
+    "esbuild": "^0.28.2",
     "wrangler": "^4.153.0"
+  },
+  "dependencies": {
+    "jose": "^6.2.14",
+    "three": "^0.187.0"
   }
 }

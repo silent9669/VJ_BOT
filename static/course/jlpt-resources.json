@@ -1,0 +1,416 @@
+{
+  "publisher": "Japan Foundation / Japan Educational Exchanges and Services",
+  "source_url": "https://www.jlpt.jp/e/samples/sampleindex.html",
+  "terms_url": "https://www.jlpt.jp/e/policy.html",
+  "retrieved_at": "2026-10-31T16:16:56.866294+00:00",
+  "sha256": "e20d76d048fa0be9c4d12b6cd96deb3d3367ddb601062cb3fdebf01402313d5c",
+  "usage": "External links only; no questions, transcripts or audio reproduced. Official practice workbooks are not a complete course.",
+  "resources": [
+    {
+      "id": "jlpt:2018:N1:V",
+      "level": "N1",
+      "title": "Từ vựng",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N1V.pdf"
+    },
+    {
+      "id": "jlpt:2018:N1:G",
+      "level": "N1",
+      "title": "Ngữ pháp",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N1G.pdf"
+    },
+    {
+      "id": "jlpt:2018:N1:R",
+      "level": "N1",
+      "title": "Đọc hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N1R.pdf"
+    },
+    {
+      "id": "jlpt:2018:N1:L",
+      "level": "N1",
+      "title": "Nghe hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N1L.pdf"
+    },
+    {
+      "id": "jlpt:2018:N2:V",
+      "level": "N2",
+      "title": "Từ vựng",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N2V.pdf"
+    },
+    {
+      "id": "jlpt:2018:N2:G",
+      "level": "N2",
+      "title": "Ngữ pháp",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N2G.pdf"
+    },
+    {
+      "id": "jlpt:2018:N2:R",
+      "level": "N2",
+      "title": "Đọc hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N2R.pdf"
+    },
+    {
+      "id": "jlpt:2018:N2:L",
+      "level": "N2",
+      "title": "Nghe hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N2L.pdf"
+    },
+    {
+      "id": "jlpt:2018:N3:V",
+      "level": "N3",
+      "title": "Từ vựng",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N3V.pdf"
+    },
+    {
+      "id": "jlpt:2018:N3:G",
+      "level": "N3",
+      "title": "Ngữ pháp",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N3G.pdf"
+    },
+    {
+      "id": "jlpt:2018:N3:R",
+      "level": "N3",
+      "title": "Đọc hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N3R.pdf"
+    },
+    {
+      "id": "jlpt:2018:N3:L",
+      "level": "N3",
+      "title": "Nghe hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N3L.pdf"
+    },
+    {
+      "id": "jlpt:2018:N4:V",
+      "level": "N4",
+      "title": "Từ vựng",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N4V.pdf"
+    },
+    {
+      "id": "jlpt:2018:N4:G",
+      "level": "N4",
+      "title": "Ngữ pháp",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N4G.pdf"
+    },
+    {
+      "id": "jlpt:2018:N4:R",
+      "level": "N4",
+      "title": "Đọc hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N4R.pdf"
+    },
+    {
+      "id": "jlpt:2018:N4:L",
+      "level": "N4",
+      "title": "Nghe hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N4L.pdf"
+    },
+    {
+      "id": "jlpt:2018:N5:V",
+      "level": "N5",
+      "title": "Từ vựng",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N5V.pdf"
+    },
+    {
+      "id": "jlpt:2018:N5:G",
+      "level": "N5",
+      "title": "Ngữ pháp",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N5G.pdf"
+    },
+    {
+      "id": "jlpt:2018:N5:R",
+      "level": "N5",
+      "title": "Đọc hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N5R.pdf"
+    },
+    {
+      "id": "jlpt:2018:N5:L",
+      "level": "N5",
+      "title": "Nghe hiểu",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N5L.pdf"
+    },
+    {
+      "id": "jlpt:2018:N1:Q1",
+      "level": "N1",
+      "title": "Âm thanh Q1",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N1Q1.mp3"
+    },
+    {
+      "id": "jlpt:2018:N1:Q2",
+      "level": "N1",
+      "title": "Âm thanh Q2",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N1Q2.mp3"
+    },
+    {
+      "id": "jlpt:2018:N1:Q3",
+      "level": "N1",
+      "title": "Âm thanh Q3",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N1Q3.mp3"
+    },
+    {
+      "id": "jlpt:2018:N1:Q4",
+      "level": "N1",
+      "title": "Âm thanh Q4",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N1Q4.mp3"
+    },
+    {
+      "id": "jlpt:2018:N1:Q5",
+      "level": "N1",
+      "title": "Âm thanh Q5",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N1Q5.mp3"
+    },
+    {
+      "id": "jlpt:2018:N2:Q1",
+      "level": "N2",
+      "title": "Âm thanh Q1",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N2Q1.mp3"
+    },
+    {
+      "id": "jlpt:2018:N2:Q2",
+      "level": "N2",
+      "title": "Âm thanh Q2",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N2Q2.mp3"
+    },
+    {
+      "id": "jlpt:2018:N2:Q3",
+      "level": "N2",
+      "title": "Âm thanh Q3",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N2Q3.mp3"
+    },
+    {
+      "id": "jlpt:2018:N2:Q4",
+      "level": "N2",
+      "title": "Âm thanh Q4",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N2Q4.mp3"
+    },
+    {
+      "id": "jlpt:2018:N2:Q5",
+      "level": "N2",
+      "title": "Âm thanh Q5",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N2Q5.mp3"
+    },
+    {
+      "id": "jlpt:2018:N3:Q1",
+      "level": "N3",
+      "title": "Âm thanh Q1",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N3Q1.mp3"
+    },
+    {
+      "id": "jlpt:2018:N3:Q2",
+      "level": "N3",
+      "title": "Âm thanh Q2",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N3Q2.mp3"
+    },
+    {
+      "id": "jlpt:2018:N3:Q3",
+      "level": "N3",
+      "title": "Âm thanh Q3",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N3Q3.mp3"
+    },
+    {
+      "id": "jlpt:2018:N3:Q4",
+      "level": "N3",
+      "title": "Âm thanh Q4",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N3Q4.mp3"
+    },
+    {
+      "id": "jlpt:2018:N3:Q5",
+      "level": "N3",
+      "title": "Âm thanh Q5",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N3Q5.mp3"
+    },
+    {
+      "id": "jlpt:2018:N4:Q1",
+      "level": "N4",
+      "title": "Âm thanh Q1",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N4Q1.mp3"
+    },
+    {
+      "id": "jlpt:2018:N4:Q2",
+      "level": "N4",
+      "title": "Âm thanh Q2",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N4Q2.mp3"
+    },
+    {
+      "id": "jlpt:2018:N4:Q3",
+      "level": "N4",
+      "title": "Âm thanh Q3",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N4Q3.mp3"
+    },
+    {
+      "id": "jlpt:2018:N4:Q4",
+      "level": "N4",
+      "title": "Âm thanh Q4",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N4Q4.mp3"
+    },
+    {
+      "id": "jlpt:2018:N5:Q1",
+      "level": "N5",
+      "title": "Âm thanh Q1",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N5Q1.mp3"
+    },
+    {
+      "id": "jlpt:2018:N5:Q2",
+      "level": "N5",
+      "title": "Âm thanh Q2",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N5Q2.mp3"
+    },
+    {
+      "id": "jlpt:2018:N5:Q3",
+      "level": "N5",
+      "title": "Âm thanh Q3",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N5Q3.mp3"
+    },
+    {
+      "id": "jlpt:2018:N5:Q4",
+      "level": "N5",
+      "title": "Âm thanh Q4",
+      "kind": "audio",
+      "url": "https://www.jlpt.jp/samples/sample2018/mp3/N5Q4.mp3"
+    },
+    {
+      "id": "jlpt:2018:N1:sheet",
+      "level": "N1",
+      "title": "Phiếu trả lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N1sheet.pdf"
+    },
+    {
+      "id": "jlpt:2018:N1:answer",
+      "level": "N1",
+      "title": "Đáp án",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N1answer.pdf"
+    },
+    {
+      "id": "jlpt:2018:N1:script",
+      "level": "N1",
+      "title": "Bản chép lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N1script.pdf"
+    },
+    {
+      "id": "jlpt:2018:N2:sheet",
+      "level": "N2",
+      "title": "Phiếu trả lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N2sheet.pdf"
+    },
+    {
+      "id": "jlpt:2018:N2:answer",
+      "level": "N2",
+      "title": "Đáp án",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N2answer.pdf"
+    },
+    {
+      "id": "jlpt:2018:N2:script",
+      "level": "N2",
+      "title": "Bản chép lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N2script.pdf"
+    },
+    {
+      "id": "jlpt:2018:N3:sheet",
+      "level": "N3",
+      "title": "Phiếu trả lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N3sheet.pdf"
+    },
+    {
+      "id": "jlpt:2018:N3:answer",
+      "level": "N3",
+      "title": "Đáp án",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N3answer.pdf"
+    },
+    {
+      "id": "jlpt:2018:N3:script",
+      "level": "N3",
+      "title": "Bản chép lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N3script.pdf"
+    },
+    {
+      "id": "jlpt:2018:N4:sheet",
+      "level": "N4",
+      "title": "Phiếu trả lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N4sheet.pdf"
+    },
+    {
+      "id": "jlpt:2018:N4:answer",
+      "level": "N4",
+      "title": "Đáp án",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N4answer.pdf"
+    },
+    {
+      "id": "jlpt:2018:N4:script",
+      "level": "N4",
+      "title": "Bản chép lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N4script.pdf"
+    },
+    {
+      "id": "jlpt:2018:N5:sheet",
+      "level": "N5",
+      "title": "Phiếu trả lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N5sheet.pdf"
+    },
+    {
+      "id": "jlpt:2018:N5:answer",
+      "level": "N5",
+      "title": "Đáp án",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N5answer.pdf"
+    },
+    {
+      "id": "jlpt:2018:N5:script",
+      "level": "N5",
+      "title": "Bản chép lời",
+      "kind": "document",
+      "url": "https://www.jlpt.jp/samples/sample2018/pdf/N5script.pdf"
+    }
+  ]
+}

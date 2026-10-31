@@ -1,105 +1,47 @@
-# VJBot — Contributor & Teammate Guide
+# Continuing development
 
-Welcome to the **VJBot** engineering team! This guide will help you set up your local development environment, run tests, adhere to UI/UX and code standards, and ship code safely through our CI/CD pipeline.
+Read [the handoff](HANDOFF.md) and inspect `git status` before editing. Development has resumed; preserve the existing uncommitted tree. Do not switch/reset branches or merge/deploy merely to tidy it.
 
----
+## Local setup
 
-## 1. Local Development Setup
+Use Node 22.13+ for the Worker tests' SQLite adapter. The production UI is vanilla HTML/CSS/JavaScript; Python is a separate backend implementation.
 
-### 1.1 Prerequisites
-- **Python 3.12+**
-- **Node.js 20+**
-- **Cloudflare CLI (`cf`)** or **Wrangler**
-- **Git & GitHub CLI (`gh`)**
-
-### 1.2 Python Environment Setup
-```bash
-# Create and activate virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-pip install pytest pytest-asyncio anyio httpx
+```sh
+npm ci
+npm run dev
 ```
 
-### 1.3 Node.js & Edge Runtime Setup
-```bash
-# Install npm packages
-npm install
+The local Worker runs at `http://localhost:8787`. Production secret bindings do not mean local credentials are automatically present. Keep local secret values in ignored environment configuration; check the CLI's current configuration guidance. Apply migrations to the intended local database before testing database-backed flows locally.
+
+For the separate Python suite, create a virtual environment, install `requirements.txt` and its test dependencies (`pytest`, `pytest-asyncio`, `httpx`), then run `npm run test:python`.
+
+## Product and code conventions
+
+- Preserve the notebook/sketch direction and the existing stack. No unrequested React migration.
+- Use one male pixel teacher, Lâm, wearing a vest. Edit the original generator/asset consistently.
+- Keep text concise. Avoid taglines, redundant helper labels, emoji-heavy navigation and decorative dashboards.
+- Retain keyboard access, native dialog behavior, readable mobile layouts and reduced motion.
+- Keep Three.js animation time-based; stop idle/hidden rendering and clean up GPU resources.
+- Ground new lessons in reviewed source material. Preserve attribution, language labels and licensing; do not invent coverage claims.
+- Keep credentials server-side. Authenticate ownership in the Worker instead of trusting client IDs.
+- Keep changes scoped. Reproduce a suspected bug before changing adjacent code.
+- Do not add AI co-author attribution to commits.
+
+## Verification
+
+```sh
+npm test
+npm run build
+npm run test:python
+git diff --check
 ```
 
----
+Run checks appropriate to the edited implementation. The Python tests do not prove Worker behavior. Use Chrome DevTools to review the actual pages, keyboard interaction, mobile layout, console, animation and fallback paths. For persistence changes, test reloads and separate account sessions against isolated QA data.
 
-## 2. Running & Verifying Changes
+Do not claim Google login is verified solely because the button renders or a synthetic session works. Do not claim TTS is working from a 200 fallback response. Distinguish local tests, hosted CI and production evidence in the handoff or PR.
 
-### 2.1 Backend Tests
-Always run the pytest suite before submitting any changes:
-```bash
-PYTHONPATH=. .venv/bin/pytest
-```
-All 46 unit and API tests must pass.
+## Source generation and Git
 
-### 2.2 Cloudflare Worker Build Verification
-Verify that your static assets and Worker script bundle properly:
-```bash
-npx cf deploy --dry-run
-```
+Edit `src/client/room.js`, then rebuild through `npm run build:room` (also included in build/deploy). Dataset imports and the teacher generator have separate scripts; do not run them for unrelated UI changes.
 
----
-
-## 3. Git Branching & CI/CD Workflow
-
-The `main` branch is strictly protected:
-- **Direct push to `main` is disabled.**
-- **Force push is disabled.**
-- **Every change must be reviewed and pass CI/CD via a Pull Request.**
-
-### Recommended Step-by-Step Workflow:
-```bash
-# 1. Ensure you have the latest main
-git checkout main
-git pull origin main
-
-# 2. Create your feature branch
-git checkout -b feat/your-feature-name
-
-# 3. Make changes and verify locally
-PYTHONPATH=. .venv/bin/pytest
-npx cf deploy --dry-run
-
-# 4. Commit and push your branch
-git add .
-git commit -m "feat: description of your change"
-git push -u origin feat/your-feature-name
-
-# 5. Create a Pull Request
-gh pr create --title "feat: your feature" --body "Summary of changes" --base main
-
-# 6. Wait for CI status check (Test & Quality Checks) to pass
-gh pr checks <PR_NUMBER> --watch
-
-# 7. Merge into main
-gh pr merge <PR_NUMBER> --merge --delete-branch
-```
-Once merged into `main`, GitHub Actions automatically deploys the latest version to [`https://vjbot.dangphuc.me/`](https://vjbot.dangphuc.me/).
-
----
-
-## 4. UI/UX & Coding Standards
-
-1. **Apple Liquid Glass Design Language**:
-   - Favor translucent cards (`background: rgba(255, 255, 255, 0.75)`, `backdrop-filter: blur(16px)`).
-   - Use crisp, subtle borders (`border: 1px solid rgba(0, 0, 0, 0.08)`).
-   - Maintain warm paper/ink accents (`--paper-card`, `--ink-dark`).
-2. **Typography**:
-   - Primary Vietnamese & English font: **Be Vietnam Pro** paired with **Inter**.
-   - Japanese typography: **Noto Sans JP**.
-   - Code & Furigana monospace: **JetBrains Mono**.
-3. **Minimalist Iconography**:
-   - Limit emojis to functional badges only. Avoid stacking 3+ emojis in button labels or headers.
-   - Favor clean SVG icons, 8-bit brand marks, and typography pills.
-4. **D1 SQL Prepared Statements**:
-   - Always use `env.DB.prepare(...).bind(...)` to prevent SQL injection vulnerabilities.
-5. **No Secret Leaks**:
-   - Never commit raw API keys into git. Use environment variables or client-side `localStorage`.
+When work resumes, review the dirty files before staging. Split data, auth/backend, UI and documentation into coherent changes where practical. Commit messages should explain behavior. Verify branch protections and CI state rather than assuming old documentation reflects remote configuration.
