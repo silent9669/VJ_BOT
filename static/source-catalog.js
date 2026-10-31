@@ -13,7 +13,7 @@ function renderSources(){
     const row=document.createElement('article');row.className='source-row';
     const title=document.createElement('h3');title.textContent=lesson.title;
     const links=document.createElement('div');
-    for(const [label,url] of [['PDF ↗',lesson.pdf_url],['Bản nghe ↗',lesson.audio_page_url]]){
+    for(const [label,url] of (lesson.resources?lesson.resources.map(r=>[r.title+' ↗',r.url]):[['PDF ↗',lesson.pdf_url],['Bản nghe ↗',lesson.audio_page_url]])){
       if(!url)continue;
       const link=document.createElement('a');link.textContent=label;link.href=url;link.target='_blank';link.rel='noopener';link.setAttribute('aria-label',`${label} · ${lesson.title}`);links.append(link);
     }
@@ -23,9 +23,8 @@ function renderSources(){
 async function loadSources(){
   sourceRetry.hidden=true;sourceCount.textContent='Đang tải tài liệu…';
   try{
-    const response=await fetch('course/sources.json');if(!response.ok)throw new Error('sources');
-    const data=await response.json();sourceLessons=data.lessons;
-    document.getElementById('source-date').textContent=`Cập nhật nguồn: ${new Date(data.retrieved_at).toLocaleDateString('vi-VN')} · ${sourceLessons.length} bài trong 4 quyển.`;
+    const [data,erin]=await Promise.all(['sources','erin-resources'].map(async name=>{const response=await fetch(`course/${name}.json`);if(!response.ok)throw new Error('sources');return response.json();}));sourceLessons=[...data.lessons,...erin.lessons];
+    document.getElementById('source-date').textContent=`Cập nhật nguồn: ${new Date(data.retrieved_at).toLocaleDateString('vi-VN')} · ${data.lessons.length} bài Irodori · ${erin.lessons.length} bài Erin.`;
     renderSources();
   }catch{sourceCount.textContent='Chưa tải được danh mục tài liệu.';sourceRetry.hidden=false;}
 }

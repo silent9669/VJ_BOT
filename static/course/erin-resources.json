@@ -1,0 +1,764 @@
+{
+  "retrieved_at": "2026-10-31T16:31:52.072051+00:00",
+  "terms_url": "https://www.erin.jpf.go.jp/en/policy/",
+  "method": "Lesson titles and verified links only; no video, transcript or exercise copying.",
+  "level_note": "Supplementary beginner conversation; no official JLPT level equivalence.",
+  "pages": [
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/01/",
+      "sha256": "6163bc7554e3f754972644792afdec70468bfb363b069066c4704e4fdc463946"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/02/",
+      "sha256": "01e8d08278364da761cb2a5aee25f7cf5efdb0fbdeccc453774c8f1db7c7a1b2"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/03/",
+      "sha256": "553c6474790a584e13bfb8e941fc330ba45192237529ae416c968c911b3bb167"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/04/",
+      "sha256": "e1562111ce61e098394cae4805dc579b603b20bcafee59c50c2b0f040c2bbec2"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/05/",
+      "sha256": "297ce2b08f916ba9c981e65cfded432385658d936810b0eabe9d6af3c450e269"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/06/",
+      "sha256": "df429c1204e1dbfe0fccef121313a52c1d7a8aa3739c8885ad05a0448abd96b0"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/07/",
+      "sha256": "856cf2cb4a646c84fc528bbca3b226655fdc4144971eeef7bb6c800ce4e46be8"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/08/",
+      "sha256": "02c9329fb0173854d9ccffa964fdeb4dc9fb2e5c4fe16292b26860393036bf51"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/09/",
+      "sha256": "e9bc9d4e4c2ef38693cb08d97ffa35224c8f9dd45b73b2866ca03ec32902b526"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/10/",
+      "sha256": "84e21ed3c4587064e2d49b2163b49f53b0342c20a0359ce93ffa7bd1e60d83a8"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/11/",
+      "sha256": "1f95ada5112ddb348c14dc014d3c843f747a21328163b0dc6d4fd9dd20d49ed5"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/12/",
+      "sha256": "e35d0728d07dbf3102ffacd820d67cf09f64092f2bd11c56e5748e9b116387d7"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/13/",
+      "sha256": "2b355f556f7e29b5357dbf75258a27eb8bd235b4c1155c80b36cdd41d46879b3"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/14/",
+      "sha256": "8a456cef3a402a383e37e208d103783f990f3986a0408ba204b438e0fa951e03"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/15/",
+      "sha256": "ab8ddab295e8aed0feee3f94e725462170655e7cdd0b71b9c053d29310f0b77b"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/16/",
+      "sha256": "02b32ad1a040a2a727723d98535c6cf2223485e2814bfec898786e81fe510ce3"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/17/",
+      "sha256": "b45538922f1bb327fadcfeb391d59f83be14ceb2f3cb5592c792a856c7ec4c11"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/18/",
+      "sha256": "52959af61dc00c0704e7897c6de277ed3a36c3cdca88d95461d4acf7c31fc839"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/19/",
+      "sha256": "73b12edfa395860de2a910210c482d43603e61aca89411f8ec3b6570fe0f7885"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/20/",
+      "sha256": "6f2f018def63b7bed6d723d3322fe841c01bb3c362a7fa32b4ea8643638356a0"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/21/",
+      "sha256": "7141c63b6dfdf2df17737d77f458f7ab343d29c742d78460ee4cda8f1bdc0d31"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/22/",
+      "sha256": "84b2543d54564c8b384a728ac5da2c95eb544b8bc50abe1ffc95e1b52f5f8fc0"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/23/",
+      "sha256": "ded45612187dda40a25205e60aa4d410754631eab004d727526d10a8b285853a"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/24/",
+      "sha256": "f044a6923b0e0f44c628cff2e60907d2e205b22553587c42faa0d6313630aae0"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/lesson/25/",
+      "sha256": "c51faa71c73c40589b84cdbb6f918b713957a30af23869c8a717d25edec7c64b"
+    },
+    {
+      "url": "https://www.erin.jpf.go.jp/en/policy/",
+      "sha256": "eafbbde1261c328f350f1a1b84de8611d9ca3a9e65a122cc64a697e7da6f95fb"
+    }
+  ],
+  "lessons": [
+    {
+      "id": "erin:01",
+      "number": 1,
+      "title": "First-meeting Greetings - Classroom -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/01/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/01/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/01/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/01/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/01/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:02",
+      "number": 2,
+      "title": "Making Requests - School -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/02/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/02/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/02/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/02/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/02/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:03",
+      "number": 3,
+      "title": "Indicating Things - Home -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/03/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/03/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/03/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/03/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/03/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:04",
+      "number": 4,
+      "title": "Asking Locations - Convenience Store -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/04/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/04/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/04/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/04/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/04/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:05",
+      "number": 5,
+      "title": "Expressing Time - Cram School -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/05/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/05/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/05/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/05/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/05/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:06",
+      "number": 6,
+      "title": "Asking Prices - Bus -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/06/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/06/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/06/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/06/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/06/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:07",
+      "number": 7,
+      "title": "Discussing Interests - Friend's Room -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/07/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/07/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/07/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/07/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/07/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:08",
+      "number": 8,
+      "title": "Ordering - Fast-Food -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/08/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/08/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/08/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/08/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/08/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:09",
+      "number": 9,
+      "title": "Describing Present Situation - After-school Lessons -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/09/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/09/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/09/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/09/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/09/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:10",
+      "number": 10,
+      "title": "Asking Permission - Fashion -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/10/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/10/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/10/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/10/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/10/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:11",
+      "number": 11,
+      "title": "Describing Order of Events - Hot Springs -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/11/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/11/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/11/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/11/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/11/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:12",
+      "number": 12,
+      "title": "Talking with Friends - Club Activities -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/12/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/12/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/12/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/12/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/12/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:13",
+      "number": 13,
+      "title": "Asking How - Train Station -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/13/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/13/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/13/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/13/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/13/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:14",
+      "number": 14,
+      "title": "Making Assumptions - Cell Phones -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/14/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/14/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/14/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/14/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/14/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:15",
+      "number": 15,
+      "title": "Expressing Desires - Festivals -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/15/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/15/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/15/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/15/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/15/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:16",
+      "number": 16,
+      "title": "Explaining - Injuries and Illness -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/16/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/16/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/16/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/16/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/16/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:17",
+      "number": 17,
+      "title": "Describing Contradictory Ideas - In Class -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/17/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/17/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/17/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/17/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/17/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:18",
+      "number": 18,
+      "title": "Comparing - 100-yen Shop -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/18/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/18/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/18/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/18/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/18/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:19",
+      "number": 19,
+      "title": "Giving Reasons - Part-time Jobs -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/19/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/19/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/19/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/19/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/19/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:20",
+      "number": 20,
+      "title": "Talking about Experiences - School Trip -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/20/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/20/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/20/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/20/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/20/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:21",
+      "number": 21,
+      "title": "Asking about Rules - Leisure -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/21/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/21/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/21/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/21/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/21/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:22",
+      "number": 22,
+      "title": "Explaining Problems - Trouble -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/22/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/22/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/22/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/22/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/22/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:23",
+      "number": 23,
+      "title": "Making Suggestions to Friends - Amusement Park -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/23/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/23/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/23/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/23/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/23/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:24",
+      "number": 24,
+      "title": "Describing Changes - School Festival -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/24/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/24/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/24/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/24/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/24/vocabulary/"
+        }
+      ]
+    },
+    {
+      "id": "erin:25",
+      "number": 25,
+      "title": "Conveying What You Feel - Parting -",
+      "book": "erin",
+      "publisher": "Japan Foundation",
+      "page_url": "https://www.erin.jpf.go.jp/en/lesson/25/",
+      "resources": [
+        {
+          "title": "Hội thoại cơ bản",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/25/basic/"
+        },
+        {
+          "title": "Hội thoại mở rộng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/25/advanced/"
+        },
+        {
+          "title": "Mẫu câu",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/25/key-phrases/"
+        },
+        {
+          "title": "Từ vựng",
+          "url": "https://www.erin.jpf.go.jp/en/lesson/25/vocabulary/"
+        }
+      ]
+    }
+  ]
+}
