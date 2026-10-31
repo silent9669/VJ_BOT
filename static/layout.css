@@ -1,0 +1,48 @@
+/* Course shelves and a collapsible navigation rail. */
+.app-sidebar{width:76px;min-width:76px;transition:width 180ms ease-out,min-width 180ms ease-out;overflow:visible}
+.sidebar-expanded .app-sidebar{width:236px;min-width:236px}
+.sidebar-header{padding:22px 14px 12px}.sidebar-brand{justify-content:center}.sidebar-nav{padding:12px}.sidebar-nav-item{min-height:48px;display:flex;gap:14px;align-items:center;padding:12px;white-space:nowrap;border-radius:7px}
+.rail-icon{display:block;width:22px;height:22px;flex-shrink:0}
+body:not(.sidebar-expanded) .app-sidebar .brand-text,body:not(.sidebar-expanded) .app-sidebar .sidebar-countdown-card,body:not(.sidebar-expanded) .app-sidebar .sidebar-user-card,body:not(.sidebar-expanded) .app-sidebar .nav-label,body:not(.sidebar-expanded) .app-sidebar .sidebar-sources{display:none!important}
+.sidebar-expanded .sidebar-brand{justify-content:flex-start}.sidebar-nav-item.active{box-shadow:none;border:0;background:#e8ece3}.sidebar-nav-item:not(.active){border:0}
+.mobile-menu-btn{display:inline-flex!important;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;border:0;background:transparent;cursor:pointer}
+.mobile-menu-btn svg{width:22px;height:22px}.main-topbar{gap:16px}.topbar-left{display:flex;align-items:center;gap:12px}
+#sidebar-close{display:none}#panel-curriculum{max-width:1240px;padding:40px}.level-hub-heading{display:flex;justify-content:space-between;align-items:center;margin:4px 0 32px;gap:24px}.level-hub-heading h2{font-size:32px;font-weight:600;letter-spacing:-.035em}.level-hub-heading p{margin-top:10px;color:#64685e;font-size:15px}.level-hub-heading img{object-fit:contain;image-rendering:pixelated}
+.level-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:stretch}
+.level-course-card{display:flex;flex-direction:column;color:var(--ink);text-decoration:none;border:1px solid #cdd0c4;border-radius:12px;background:#fffef9;overflow:hidden;transition:transform 180ms cubic-bezier(.23,1,.32,1),border-color 180ms ease-out;animation:course-appear 300ms cubic-bezier(.23,1,.32,1)}
+.level-cover{position:relative;background:#e8ecdf;min-height:176px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #cdd0c4}.level-cover img{width:100%;height:176px;object-fit:contain}.level-cover>span:first-child{position:absolute;left:18px;top:16px;font:600 13px var(--font-mono);color:#344e3c}.level-cover>span:last-child{position:absolute;bottom:12px;right:16px;color:#56634f;font:22px var(--font-jp)}
+.level-cover[data-level=N4]{background:#e5e9e5}.level-cover[data-level=N3]{background:#f0e9d6}.level-cover[data-level=N2]{background:#e6e9ec}.level-cover[data-level=N1]{background:#eae4dc}
+.level-card-content{display:flex;flex-direction:column;flex:1;padding:24px}.level-card-content h3{font-size:26px;line-height:1.3;display:flex;align-items:baseline;gap:12px}.level-card-content h3 span{font-size:16px;font-weight:500}.level-card-content p{font-size:14px;line-height:1.7;color:#62665a;margin:14px 0 26px}.level-card-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:auto;font-size:12px;color:#61665a}.level-card-footer>span:last-child{font-size:24px;color:#355c46}
+.curriculum-breadcrumb-bar{display:flex!important;gap:12px;align-items:center;margin:0 0 24px!important;font-size:13px}.curriculum-breadcrumb-bar button,.learning-breadcrumb button{border:0;background:transparent;color:#355c46;font:inherit;padding:8px 0;cursor:pointer;text-decoration:underline;text-underline-offset:4px}.curriculum-header-card{padding:0!important}.curriculum-title{font-size:28px!important}.curriculum-title-row{align-items:center}.curriculum-container{max-width:1000px;margin:auto}
+#level-hub[hidden],#level-course[hidden],#panel-lesson[hidden]{display:none}
+#panel-lesson{max-width:1100px;padding:32px 40px 64px}.learning-breadcrumb{display:flex;align-items:center;gap:12px;margin-bottom:28px;font-size:13px}.learning-breadcrumb>span{color:#6e7168}
+#lesson-page{background:#fffef9;border:1px solid #d5d6ca;border-radius:12px;overflow:hidden}.lesson-page-header{padding:32px 40px 24px;border-bottom:1px solid #d5d6ca}.lesson-page-header h2{font-size:30px;line-height:1.5;margin-top:12px;overflow-wrap:anywhere}.lesson-page-header .modal-lesson-badge{display:inline-block;padding:5px 10px;color:#355c46;background:#e8ece3;border-radius:4px;font-size:12px}
+#modal-lesson-body{padding:28px 40px;max-height:none;overflow:visible}.lesson-mode-switch{position:static}.lesson-footer{flex-wrap:wrap}.lesson-footer button{min-height:44px}.lesson-page .practice-session{max-width:680px}.lesson-page .practice-actions{position:sticky;bottom:0;padding:16px 0;background:#fffef9}.lesson-page .lesson-reading{line-height:2}
+#panel-lesson .practice-result{padding:24px 0}.sidebar-nav-item:focus-visible,.level-course-card:focus-visible,.mobile-menu-btn:focus-visible{outline:3px solid #557a60;outline-offset:3px}
+@keyframes course-appear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(hover:hover) and (pointer:fine){.level-course-card:hover{transform:translateY(-4px);border-color:#698365}.sidebar-nav-item:hover{background:#eef0e9}}
+@media(min-width:900px){.app-sidebar{position:sticky;top:0;transform:none!important;height:100dvh}.sidebar-backdrop{display:none!important}}
+@media(max-width:1100px){.level-cards{grid-template-columns:repeat(2,minmax(0,1fr))}#panel-curriculum{padding:28px}.level-card-content{padding:20px}}
+@media(max-width:899px){
+ .app-sidebar,.sidebar-expanded .app-sidebar{position:fixed;top:0;left:0;width:260px;min-width:260px;height:100dvh;transform:translateX(-100%);z-index:300;transition:transform 180ms cubic-bezier(.23,1,.32,1);overflow-y:auto}
+ .app-sidebar.open{transform:translateX(0)}.sidebar-backdrop.active{display:block;position:fixed;inset:0;background:#25282066;z-index:290}
+ body:not(.sidebar-expanded) .app-sidebar .brand-text,body:not(.sidebar-expanded) .app-sidebar .sidebar-countdown-card,body:not(.sidebar-expanded) .app-sidebar .sidebar-user-card,body:not(.sidebar-expanded) .app-sidebar .nav-label,body:not(.sidebar-expanded) .app-sidebar .sidebar-sources{display:revert!important}
+ .sidebar-brand{justify-content:flex-start}.sidebar-header{padding:28px 20px 16px}.sidebar-nav{padding:12px 16px}.sidebar-nav-item{width:100%}.sidebar-sources{margin-top:auto}
+ #sidebar-close{display:block;position:absolute;top:10px;right:8px;background:transparent;border:0;font-size:26px;width:40px;height:40px;cursor:pointer}
+ #panel-lesson{padding:24px 24px 90px}.lesson-page .practice-actions{bottom:54px}
+}
+@media(max-width:600px){
+ #panel-curriculum{padding:24px 18px 90px}.level-hub-heading{margin:0 0 24px;gap:12px}.level-hub-heading h2{font-size:26px}.level-hub-heading img{width:48px;height:70px}.level-hub-heading p{font-size:13px}
+ .level-cards{grid-template-columns:1fr;gap:20px}.level-cover,.level-cover img{min-height:144px;height:144px}.level-card-content{padding:20px}.level-card-content p{margin:12px 0 20px}.level-card-content h3{font-size:26px}
+ .curriculum-title-row{flex-wrap:wrap;gap:12px}.curriculum-title{font-size:25px!important}.curriculum-view-switch{margin-top:24px}
+ #panel-lesson{padding:18px 12px 90px}.learning-breadcrumb{gap:10px;margin:0 6px 18px;font-size:12px}.lesson-page-header{padding:24px 20px 18px}.lesson-page-header h2{font-size:24px}#modal-lesson-body{padding:20px!important}.lesson-page .practice-session legend{font-size:21px}.lesson-page .lesson-footer .modal-practice-btn{flex-basis:100%!important}
+}
+@media(prefers-reduced-motion:reduce){.app-sidebar,.level-course-card{transition:none;animation:none}.level-course-card:hover{transform:none}}
+.app-sidebar .sidebar-nav{width:100%;padding:12px!important}.app-sidebar .sidebar-nav-section{width:100%;padding:0;margin:0 0 12px}.app-sidebar .sidebar-nav-item{width:100%;min-width:48px;justify-content:flex-start}
+.level-cover>span{pointer-events:none}
+
+body[data-page=lesson] #sensei-floating-dock{display:none}
+@media(max-width:899px){.app-sidebar,.sidebar-expanded .app-sidebar{z-index:1100}.sidebar-backdrop.active{z-index:1090;backdrop-filter:none}}
+
+body[data-page=curriculum] #sensei-floating-dock{display:none}
+#level-hub-title:focus,#course-page-title:focus,#modal-lesson-title:focus{outline:none}

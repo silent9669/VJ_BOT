@@ -35,13 +35,15 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="notebook.css">
   <link rel="stylesheet" href="practice.css">
+  <link rel="stylesheet" href="layout.css">
 </head>
 <body>
   <!-- APP SHELL: TWO-COLUMN SIDEBAR + MAIN CONTENT (APPLE / SKETCH HYBRID) -->
   <div class="app-shell">
 
     <!-- 1. LEFT SIDEBAR NAVIGATION (Apple Liquid Glass / Sketch Hybrid) -->
-    <aside class="app-sidebar" id="app-sidebar">
+    <aside class="app-sidebar" id="app-sidebar" aria-label="Điều hướng">
+      <button type="button" id="sidebar-close" aria-label="Đóng menu">×</button>
 
       <!-- Sidebar Header (Contains ONLY 8-bit VJ Logo & VJBot Brand Name) -->
       <div class="sidebar-header">
@@ -164,7 +166,7 @@
       <!-- TOPBAR / WINDOW CHROME -->
       <header class="main-topbar">
         <div class="topbar-left">
-          <button type="button" class="mobile-menu-btn" id="btn-mobile-sidebar" aria-label="Mở menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <button type="button" class="mobile-menu-btn" id="btn-mobile-sidebar" aria-label="Mở menu" aria-controls="app-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
           <img src="assets/logo-vj-8bit.svg" alt="VJ Logo" class="topbar-logo-8bit">
           <div class="breadcrumb-group">
             <span class="breadcrumb-root">VJBot</span>
@@ -368,30 +370,27 @@
 
         <!-- TAB 2: CURRICULUM (4 SKILLS ROADMAP: GRAMMAR, VOCAB, READING, LISTENING) -->
         <section class="tab-panel" id="panel-curriculum" hidden>
-          <div class="curriculum-container">
+          <section id="level-hub" aria-labelledby="level-hub-title">
+            <div class="level-hub-heading"><div><h2 id="level-hub-title" tabindex="-1">Chọn cấp độ của bạn</h2><p>Khóa học tiếng Nhật N5–N1</p></div><img src="assets/lam/teacher.svg" alt="Thầy Lâm" width="64" height="88"></div>
+            <div id="level-cards" class="level-cards" aria-live="polite"></div>
+          </section>
+          <div class="curriculum-container" id="level-course" hidden>
 
             <!-- Breadcrumb Navigation -->
             <div class="curriculum-breadcrumb-bar">
-              <span class="cb-item" id="cb-root">Lộ trình</span>
+              <button type="button" class="cb-item" id="cb-root">Tất cả cấp độ</button>
               <span class="cb-sep">/</span>
               <span class="cb-item" id="cb-level">N5</span>
-              <span class="cb-sep">/</span>
-              <span class="cb-item" id="cb-skill">Ngữ pháp</span>
+              <span id="cb-skill-trail" hidden><span class="cb-sep">/</span> <span class="cb-item" id="cb-skill">Ngữ pháp</span></span>
             </div>
 
             <div class="curriculum-header-card">
               <div class="curriculum-title-row">
                 <div>
-                  <h2 class="curriculum-title"> Sổ bài học</h2>
+                  <h2 class="curriculum-title" id="course-page-title" tabindex="-1">Khóa học N5</h2>
 
                 </div>
-                <div class="level-badges-row" id="curriculum-level-picker">
-                  <button type="button" class="level-tab-btn active" data-lvl="N5">N5 (Sơ cấp 1)</button>
-                  <button type="button" class="level-tab-btn" data-lvl="N4">N4 (Sơ cấp 2)</button>
-                  <button type="button" class="level-tab-btn" data-lvl="N3">N3 (Trung cấp)</button>
-                  <button type="button" class="level-tab-btn" data-lvl="N2">N2 (Cao cấp)</button>
-                  <button type="button" class="level-tab-btn" data-lvl="N1">N1 (Thượng cấp)</button>
-                </div>
+                <button type="button" class="stage-btn" id="course-change-level">Đổi cấp độ</button>
               </div>
 
               <div class="curriculum-view-switch" aria-label="Chế độ học">
@@ -418,21 +417,14 @@
             </div>
           </div>
 
-          <!-- Lesson Detail Modal -->
-          <dialog class="lesson-detail-modal" id="lesson-detail-modal" aria-labelledby="modal-lesson-title">
-            <div class="lesson-modal-card">
-              <div class="lesson-modal-header">
-                <div>
-                  <span class="modal-lesson-badge" id="modal-lesson-badge">Bài 1 • N5</span>
-                  <h2 class="modal-lesson-title" id="modal-lesson-title">...</h2>
-                </div>
-                <button type="button" class="modal-close-btn" id="btn-close-lesson-modal" aria-label="Đóng bài học">×</button>
-              </div>
-              <div class="lesson-modal-body" id="modal-lesson-body">
-                <!-- Rendered dynamically -->
-              </div>
-            </div>
-          </dialog>
+        </section>
+
+        <section class="tab-panel lesson-page" id="panel-lesson" aria-labelledby="modal-lesson-title" hidden>
+          <nav class="learning-breadcrumb" aria-label="Đường dẫn bài học"><button type="button" id="lesson-all-levels">Cấp độ</button><span aria-hidden="true">/</span><button type="button" id="btn-close-lesson-modal">Về khóa học</button><span aria-hidden="true">/</span><span aria-current="page">Bài học</span></nav>
+          <article id="lesson-page">
+            <header class="lesson-page-header"><span class="modal-lesson-badge" id="modal-lesson-badge"></span><h2 id="modal-lesson-title" tabindex="-1">Bài học</h2></header>
+            <div id="modal-lesson-body"></div>
+          </article>
         </section>
 
         <!-- TAB 3: FLASHCARDS (SRS SPACED REPETITION) -->
@@ -890,6 +882,7 @@
   <script src="study-plan.js"></script>
   <script src="account.js"></script>
   <script src="completion.js"></script>
+  <script src="navigation.js"></script>
   <script src="app.js"></script>
   <script type="module" src="/room.js"></script>
 </body>
