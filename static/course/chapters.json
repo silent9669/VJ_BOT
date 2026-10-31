@@ -1,0 +1,641 @@
+{
+  "version": 1,
+  "source": "OpenJLPT",
+  "license": "CC-BY-SA-4.0",
+  "note": "Editorial learning sequence; source grammar explanations and examples remain English. Not an official exhaustive JLPT syllabus.",
+  "chapters": [
+    {
+      "id": "chapter:v1:N5:1",
+      "level": "N5",
+      "title": "Giới thiệu người và đồ vật",
+      "goal": "Giới thiệu bản thân và hỏi thông tin cơ bản.",
+      "grammar_ids": [
+        "wa",
+        "desu",
+        "ka-question",
+        "no"
+      ],
+      "minutes": 40,
+      "prerequisites": []
+    },
+    {
+      "id": "chapter:v1:N5:2",
+      "level": "N5",
+      "title": "Chỉ nơi chốn và sự tồn tại",
+      "goal": "Nói người, đồ vật ở đâu và đi đến đâu.",
+      "grammar_ids": [
+        "ga-aru-ga-iru",
+        "ni-location",
+        "ni-destination",
+        "koko-soko-asoko-doko"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N5:1"
+      ]
+    },
+    {
+      "id": "chapter:v1:N5:3",
+      "level": "N5",
+      "title": "Thời gian và thói quen",
+      "goal": "Nói lịch sinh hoạt với thời điểm bắt đầu, kết thúc.",
+      "grammar_ids": [
+        "masu",
+        "masen",
+        "ni-time",
+        "kara-from",
+        "made"
+      ],
+      "minutes": 50,
+      "prerequisites": [
+        "chapter:v1:N5:2"
+      ]
+    },
+    {
+      "id": "chapter:v1:N5:4",
+      "level": "N5",
+      "title": "Kể việc đã làm",
+      "goal": "Kể lại một ngày và phân biệt việc đã làm, chưa làm.",
+      "grammar_ids": [
+        "mashita",
+        "masen-deshita",
+        "ta",
+        "mada-te-inai",
+        "mou-ta"
+      ],
+      "minutes": 50,
+      "prerequisites": [
+        "chapter:v1:N5:3"
+      ]
+    },
+    {
+      "id": "chapter:v1:N5:5",
+      "level": "N5",
+      "title": "Mua sắm và yêu cầu",
+      "goal": "Yêu cầu món đồ, hỏi giúp và nói điều mình muốn.",
+      "grammar_ids": [
+        "o-kudasai",
+        "te-kudasai",
+        "tai",
+        "ga-hoshii"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N5:4"
+      ]
+    },
+    {
+      "id": "chapter:v1:N5:6",
+      "level": "N5",
+      "title": "Mời và xin phép",
+      "goal": "Rủ bạn làm việc cùng nhau, xin phép và nói điều không được làm.",
+      "grammar_ids": [
+        "mashou",
+        "masen-ka",
+        "te-mo-ii",
+        "te-wa-ikenai"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N5:5"
+      ]
+    },
+    {
+      "id": "chapter:v1:N5:7",
+      "level": "N5",
+      "title": "Miêu tả và so sánh",
+      "goal": "Miêu tả sở thích và chọn giữa hai phương án.",
+      "grammar_ids": [
+        "ga-suki-ga-kirai",
+        "yori",
+        "no-hou-ga-yori",
+        "no-naka-de-ga-ichiban"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N5:6"
+      ]
+    },
+    {
+      "id": "chapter:v1:N5:8",
+      "level": "N5",
+      "title": "Nối hành động và lý do",
+      "goal": "Nối các bước thực hiện và giải thích lý do đơn giản.",
+      "grammar_ids": [
+        "te",
+        "te-kara",
+        "mae-ni",
+        "ato-de",
+        "kara-reason"
+      ],
+      "minutes": 50,
+      "prerequisites": [
+        "chapter:v1:N5:7"
+      ]
+    },
+    {
+      "id": "chapter:v1:N4:1",
+      "level": "N4",
+      "title": "Nhờ vả và nhận giúp đỡ",
+      "goal": "Phân biệt người cho, người nhận và cách nhờ lịch sự.",
+      "grammar_ids": [
+        "ageru-kureru-morau",
+        "te-kureru",
+        "te-morau",
+        "te-kuremasen-ka-te-itadakemasen-ka"
+      ],
+      "minutes": 40,
+      "prerequisites": []
+    },
+    {
+      "id": "chapter:v1:N4:2",
+      "level": "N4",
+      "title": "Chuẩn bị và thử làm",
+      "goal": "Nói việc chuẩn bị trước, thử làm và kết quả ngoài ý muốn.",
+      "grammar_ids": [
+        "te-oku",
+        "te-miru",
+        "te-shimau-chau",
+        "te-aru"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N4:1"
+      ]
+    },
+    {
+      "id": "chapter:v1:N4:3",
+      "level": "N4",
+      "title": "Dự định và thay đổi kế hoạch",
+      "goal": "Trình bày dự định cá nhân và quyết định của tập thể.",
+      "grammar_ids": [
+        "tsumori",
+        "yotei",
+        "koto-ni-suru",
+        "koto-ni-naru"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N4:2"
+      ]
+    },
+    {
+      "id": "chapter:v1:N4:4",
+      "level": "N4",
+      "title": "Điều kiện và lời khuyên",
+      "goal": "Đưa lời khuyên phù hợp với điều kiện cụ thể.",
+      "grammar_ids": [
+        "tara",
+        "nara",
+        "ba",
+        "hou-ga-ii"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N4:3"
+      ]
+    },
+    {
+      "id": "chapter:v1:N4:5",
+      "level": "N4",
+      "title": "Mục đích và tiến bộ",
+      "goal": "Nói mục tiêu và sự thay đổi về khả năng.",
+      "grammar_ids": [
+        "tame-ni",
+        "you-ni",
+        "you-ni-naru",
+        "koto-ga-dekiru"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N4:4"
+      ]
+    },
+    {
+      "id": "chapter:v1:N4:6",
+      "level": "N4",
+      "title": "Nghe nói và phỏng đoán",
+      "goal": "Phân biệt điều trực tiếp quan sát với thông tin nghe lại.",
+      "grammar_ids": [
+        "sou-da-appearance",
+        "sou-da-hearsay",
+        "rashii",
+        "kamo-shirenai"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N4:5"
+      ]
+    },
+    {
+      "id": "chapter:v1:N4:7",
+      "level": "N4",
+      "title": "Giải thích và xác nhận",
+      "goal": "Giải thích hoàn cảnh rồi xác nhận thông tin chưa chắc.",
+      "grammar_ids": [
+        "n-desu-no-desu",
+        "node",
+        "ka-dou-ka",
+        "to-omou"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N4:6"
+      ]
+    },
+    {
+      "id": "chapter:v1:N4:8",
+      "level": "N4",
+      "title": "Lịch sự tại nơi làm việc",
+      "goal": "Chọn cách diễn đạt kính trọng hoặc khiêm nhường theo vai trò.",
+      "grammar_ids": [
+        "sonkeigo",
+        "kenjougo",
+        "o-ni-naru",
+        "o-suru"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N4:7"
+      ]
+    },
+    {
+      "id": "chapter:v1:N3:1",
+      "level": "N3",
+      "title": "Giải thích kết luận",
+      "goal": "Phân biệt kết luận hợp lý, phủ định một phần và sự bất khả thi.",
+      "grammar_ids": [
+        "wake-da",
+        "wake-de-wa-nai",
+        "wake-ga-nai",
+        "wake-ni-wa-ikanai"
+      ],
+      "minutes": 40,
+      "prerequisites": []
+    },
+    {
+      "id": "chapter:v1:N3:2",
+      "level": "N3",
+      "title": "Quy định và lời nhắc",
+      "goal": "Truyền đạt thói quen, quy định và chỉ dẫn trong công việc.",
+      "grammar_ids": [
+        "koto-ni-shite-iru",
+        "koto-ni-natte-iru",
+        "koto-instruction",
+        "you-ni-iu-you-ni-tanomu"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N3:1"
+      ]
+    },
+    {
+      "id": "chapter:v1:N3:3",
+      "level": "N3",
+      "title": "Báo cáo thông tin",
+      "goal": "Dẫn nguồn và nêu chủ đề báo cáo rõ ràng.",
+      "grammar_ids": [
+        "ni-tsuite",
+        "ni-yotte-ni-yoru",
+        "ni-yoru-to-ni-yoreba",
+        "to-iu-koto-da"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N3:2"
+      ]
+    },
+    {
+      "id": "chapter:v1:N3:4",
+      "level": "N3",
+      "title": "So sánh quan điểm",
+      "goal": "So sánh hai tình huống từ góc nhìn của người liên quan.",
+      "grammar_ids": [
+        "ni-totte",
+        "ni-kurabete",
+        "ni-shite-wa",
+        "ippou-de"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N3:3"
+      ]
+    },
+    {
+      "id": "chapter:v1:N3:5",
+      "level": "N3",
+      "title": "Diễn biến theo thời gian",
+      "goal": "Mô tả việc thay đổi dần, lặp lại và xảy ra trong một khoảng.",
+      "grammar_ids": [
+        "ni-tsurete",
+        "ni-shitagatte",
+        "tabi-ni",
+        "uchi-ni"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N3:4"
+      ]
+    },
+    {
+      "id": "chapter:v1:N3:6",
+      "level": "N3",
+      "title": "Nguyên nhân và kết quả",
+      "goal": "Nêu tác động tích cực hoặc tiêu cực và thời điểm phát hiện.",
+      "grammar_ids": [
+        "okage-de",
+        "sei-de",
+        "te-hajimete",
+        "ta-totan-ta-totan-ni"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N3:5"
+      ]
+    },
+    {
+      "id": "chapter:v1:N3:7",
+      "level": "N3",
+      "title": "Ngoại lệ và giả định",
+      "goal": "Xử lý tình huống giả định mà không khẳng định quá mức.",
+      "grammar_ids": [
+        "baai-wa",
+        "to-sureba-to-shitara",
+        "to-shite-mo",
+        "kara-to-itte"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N3:6"
+      ]
+    },
+    {
+      "id": "chapter:v1:N3:8",
+      "level": "N3",
+      "title": "Sắc thái và khuynh hướng",
+      "goal": "Nhận diện khuynh hướng, dấu hiệu nhẹ và việc chưa làm xong.",
+      "grammar_ids": [
+        "gachi",
+        "gimi",
+        "kakeru",
+        "kiru-kirenai"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N3:7"
+      ]
+    },
+    {
+      "id": "chapter:v1:N2:1",
+      "level": "N2",
+      "title": "Đọc quy trình và căn cứ",
+      "goal": "Xác định căn cứ, phạm vi và hướng dẫn thực hiện.",
+      "grammar_ids": [
+        "ni-motozuite",
+        "ni-sotte",
+        "ni-watatte",
+        "ni-saishite"
+      ],
+      "minutes": 40,
+      "prerequisites": []
+    },
+    {
+      "id": "chapter:v1:N2:2",
+      "level": "N2",
+      "title": "Biến đổi và đáp ứng",
+      "goal": "Diễn đạt sự thay đổi đồng thời và cách đáp ứng từng điều kiện.",
+      "grammar_ids": [
+        "ni-tomonatte",
+        "ni-oujite",
+        "ni-kotaete",
+        "ni-mukete"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N2:1"
+      ]
+    },
+    {
+      "id": "chapter:v1:N2:3",
+      "level": "N2",
+      "title": "Ngoại lệ trong quy định",
+      "goal": "Đọc chính xác giới hạn và trường hợp được loại trừ.",
+      "grammar_ids": [
+        "ni-kagiri",
+        "ni-kagirazu",
+        "o-nozoite",
+        "nai-kagiri"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N2:2"
+      ]
+    },
+    {
+      "id": "chapter:v1:N2:4",
+      "level": "N2",
+      "title": "Đối chiếu hai lập luận",
+      "goal": "Nêu mặt đối lập và điều trái dự đoán của một lập luận.",
+      "grammar_ids": [
+        "hanmen",
+        "mono-no",
+        "ni-mo-kakawarazu",
+        "ni-hanshite"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N2:3"
+      ]
+    },
+    {
+      "id": "chapter:v1:N2:5",
+      "level": "N2",
+      "title": "Rủi ro và tính khả thi",
+      "goal": "Đánh giá khả năng, rủi ro và việc khó chấp nhận.",
+      "grammar_ids": [
+        "osore-ga-aru",
+        "kanenai",
+        "uru-enai",
+        "kaneru"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N2:4"
+      ]
+    },
+    {
+      "id": "chapter:v1:N2:6",
+      "level": "N2",
+      "title": "Giải thích nguyên nhân sâu",
+      "goal": "Phân biệt căn nguyên, sự nhấn mạnh và hậu quả đáng tiếc.",
+      "grammar_ids": [
+        "koto-kara",
+        "kara-koso",
+        "bakari-ni",
+        "ageku"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N2:5"
+      ]
+    },
+    {
+      "id": "chapter:v1:N2:7",
+      "level": "N2",
+      "title": "Giới hạn của kết luận",
+      "goal": "Tránh kết luận tuyệt đối và xác định mức độ của phát biểu.",
+      "grammar_ids": [
+        "to-wa-kagiranai",
+        "ni-suginai",
+        "to-itte-mo",
+        "to-iu-mono-de-wa-nai"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N2:6"
+      ]
+    },
+    {
+      "id": "chapter:v1:N2:8",
+      "level": "N2",
+      "title": "Đề xuất và quyết định",
+      "goal": "Đưa đề xuất, nghĩa vụ và quyết định khi ít lựa chọn.",
+      "grammar_ids": [
+        "zaru-o-enai",
+        "ni-koshita-koto-wa-nai",
+        "ijou-wa",
+        "you-de-wa-nai-ka"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N2:7"
+      ]
+    },
+    {
+      "id": "chapter:v1:N1:1",
+      "level": "N1",
+      "title": "Căn cứ và điều kiện thiết yếu",
+      "goal": "Nêu nền tảng và điều kiện không thể thiếu của lập luận.",
+      "grammar_ids": [
+        "o-fumaete",
+        "ni-nottotte",
+        "atte-no",
+        "nakushite-wa"
+      ],
+      "minutes": 40,
+      "prerequisites": []
+    },
+    {
+      "id": "chapter:v1:N1:2",
+      "level": "N1",
+      "title": "Sắc thái nhượng bộ",
+      "goal": "Thừa nhận một điểm nhưng giữ giới hạn của kết luận.",
+      "grammar_ids": [
+        "to-wa-ie",
+        "to-iedomo",
+        "you-ga-you-to",
+        "nai-made-mo"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N1:1"
+      ]
+    },
+    {
+      "id": "chapter:v1:N1:3",
+      "level": "N1",
+      "title": "Đánh giá và phản biện",
+      "goal": "Đánh giá điều đáng làm, không đáng làm hoặc không cần làm.",
+      "grammar_ids": [
+        "ni-taru",
+        "ni-wa-ataranai",
+        "made-mo-nai",
+        "te-shikaru-beki-da"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N1:2"
+      ]
+    },
+    {
+      "id": "chapter:v1:N1:4",
+      "level": "N1",
+      "title": "Nguyên nhân kết hợp",
+      "goal": "Phân tích nguyên nhân kết hợp và hoàn cảnh đặc biệt.",
+      "grammar_ids": [
+        "to-aimatte",
+        "yue-ni",
+        "to-atte",
+        "ba-koso"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N1:3"
+      ]
+    },
+    {
+      "id": "chapter:v1:N1:5",
+      "level": "N1",
+      "title": "Quá trình và bước ngoặt",
+      "goal": "Mô tả diễn biến, bước khởi đầu và thay đổi kéo dài.",
+      "grammar_ids": [
+        "o-kawakiri-ni",
+        "o-ki-ni",
+        "te-kara-to-iu-mono",
+        "ni-itaru-ni-itatte-ni-itatte-wa"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N1:4"
+      ]
+    },
+    {
+      "id": "chapter:v1:N1:6",
+      "level": "N1",
+      "title": "Phạm vi và tính bao quát",
+      "goal": "Phân biệt ngoại lệ, phạm vi bao quát và sự mở rộng.",
+      "grammar_ids": [
+        "nomi-narazu",
+        "ni-todomarazu",
+        "ikan-de-ikan-ni-yorazu",
+        "sura"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N1:5"
+      ]
+    },
+    {
+      "id": "chapter:v1:N1:7",
+      "level": "N1",
+      "title": "Phản ứng và sự bắt buộc",
+      "goal": "Diễn tả cảm xúc khó kìm và hành động bị hoàn cảnh buộc làm.",
+      "grammar_ids": [
+        "o-kinjienai",
+        "o-yogi-naku-sareru",
+        "zu-ni-wa-sumanai-nai-de-wa-sumanai",
+        "te-yamanai"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N1:6"
+      ]
+    },
+    {
+      "id": "chapter:v1:N1:8",
+      "level": "N1",
+      "title": "Văn phong trang trọng",
+      "goal": "Nhận diện văn phong văn viết và chuyển thành cách nói dễ hiểu.",
+      "grammar_ids": [
+        "beku",
+        "taru",
+        "bekarazu-bekarazaru",
+        "gotoki-gotoku"
+      ],
+      "minutes": 40,
+      "prerequisites": [
+        "chapter:v1:N1:7"
+      ]
+    }
+  ]
+}

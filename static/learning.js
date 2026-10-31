@@ -145,3 +145,7 @@ function audioDataUrl(data) {
   let binary='';for(let i=0;i<wav.length;i+=8192) binary+=String.fromCharCode(...wav.subarray(i,i+8192));
   return 'data:audio/wav;base64,'+btoa(binary);
 }
+
+function buildLessonContext(item,level,skill){
+  return {id:activityId(item,level,skill),title:item.roleplay?`${item.roleplay.title} · ${item.title}`:item.title || item.jp || 'Bài học',level,goal:item.roleplay?.goal || item.summary || item.meaning_vi || '',content:JSON.stringify({formula:item.formula,explanation:item.explanation,passage:item.passage,translation:item.translation,script_jp:item.script_jp,script_vi:item.script_vi,examples:item.examples?.slice(0,3),words:item.items?.slice(0,5),task:item.production,external_resources:item.externalResources}).slice(0,3500)};
+}

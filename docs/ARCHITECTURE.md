@@ -73,3 +73,9 @@ The classroom uses original procedural geometry and the shared teacher sprite. A
 `python3 scripts/crawl_course_sources.py` refreshes `static/course/sources.json` from official Japan Foundation lesson/audio pages. It stores retrieval time, page SHA256, publisher and public links, not PDF/audio bodies. `static/source-catalog.js` exposes the catalog with book/search controls. Irodori copyright terms apply separately from OpenJLPT licensing.
 
 After reviewing course changes, `python3 scripts/upload_practical_course.py` upserts the 20 unit identities and 200 practice identities into the configured production D1. Authored text remains in static JSON; per-account answers remain in D1. Never reassign an existing versioned ID to a different task.
+
+## Completion and level-based learning
+
+Migration `0007_completions.sql` stores explicit learner completion separately from scored attempts. `static/completion.js` provides a shared reversible control; guest storage uses `vjbot_guest_completions`. Chapter completion can be explicitly marked or derived from marked child activities. Quiz identities include the level; previous ambiguous numeric exam IDs remain historical only.
+
+`static/course/chapters.json` maps eight curated chapters per level to pinned OpenJLPT grammar IDs. `scripts/crawl_jlpt_resources.py` reproducibly indexes the official 2018 workbook page into `jlpt-resources.json`; no copyrighted question/audio bodies are copied. `buildLessonContext` supplies bounded real lesson material to the Worker. Its Gemini system instruction asks for explanation/application before feedback. The browser never receives the shared API secret.

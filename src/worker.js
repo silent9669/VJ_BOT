@@ -116,7 +116,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, {status:204});
     try {
       if (url.pathname.startsWith('/api/auth/')) return await authRoute(request,env);
-      const privateRoutes = ['/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
+      const privateRoutes = ['/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
         if(!user) return jsonResponse({detail:'Đăng nhập Google để dùng Sensei và đồng bộ tiến độ.'},401);
@@ -130,7 +130,7 @@ export default {
           body.user_id=user.user_id;
           delete body.api_key;
           if(body.level && !['N5','N4','N3','N2','N1'].includes(body.level)) return jsonResponse({detail:'Invalid level'},400);
-          for(const field of ['message','text','user_speech','prompt_jp']) {
+          for(const field of ['message','text','user_speech','prompt_jp','context','scenario_title']) {
             if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Invalid '+field},400);
           }
           request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
@@ -202,7 +202,7 @@ export default {
       }
       if (url.pathname === '/api/account/delete' && request.method === 'POST') {
         const userId=url.searchParams.get('user_id');
-        await env.DB.batch(['progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+        await env.DB.batch(['completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
         return jsonResponse({success:true});
       }
 
@@ -329,6 +329,20 @@ export default {
             next_review: r.next_review
           }))
         });
+      }
+
+      if (url.pathname === '/api/completions') {
+        const owner=url.searchParams.get('user_id');
+        if(request.method==='GET') {
+          const rows=await env.DB.prepare('SELECT activity_id,kind,level,title,completed_at FROM completions WHERE user_id=? ORDER BY completed_at DESC').bind(owner).all();
+          return jsonResponse({items:rows.results});
+        }
+        if(request.method!=='POST')return jsonResponse({detail:'Method not allowed'},405);
+        const body=await request.json();
+        if(typeof body.activity_id!=='string' || !body.activity_id.trim() || body.activity_id.length>300 || /[<>\u0000-\u001f]/.test(body.activity_id) || typeof body.completed!=='boolean' || !['lesson','kaiwa','test','roadmap','chat'].includes(body.kind) || !['N5','N4','N3','N2','N1'].includes(body.level) || typeof body.title!=='string' || !body.title.trim() || body.title.length>500)return jsonResponse({detail:'Invalid completion'},400);
+        if(body.completed)await env.DB.prepare('INSERT INTO completions(user_id,activity_id,kind,level,title,completed_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id,activity_id) DO UPDATE SET completed_at=excluded.completed_at,title=excluded.title').bind(owner,body.activity_id,body.kind,body.level,body.title.trim(),new Date().toISOString()).run();
+        else await env.DB.prepare('DELETE FROM completions WHERE user_id=? AND activity_id=?').bind(owner,body.activity_id).run();
+        return jsonResponse({completed:body.completed});
       }
 
       // 6. Record Answer Progress API
@@ -477,7 +491,7 @@ export default {
             contents: [{
               role: "user",
               parts: [{
-                text: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"
+                text: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"
               }]
             }]
           };
@@ -550,7 +564,9 @@ export default {
         if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
 
         const profile = await env.DB.prepare("SELECT level FROM profiles WHERE user_id = ?").bind(userId).first();
-        const level = profile ? profile.level : "N5";
+        const lesson=body.lesson;
+        if(lesson!==undefined && lesson!==null && (typeof lesson!=='object' || Array.isArray(lesson) || !['N5','N4','N3','N2','N1'].includes(lesson.level) || ['id','title','goal','content'].some(k=>typeof lesson[k]!=='string') || lesson.id.length>300 || lesson.title.length>500 || lesson.goal.length>1000 || lesson.content.length>4000))return jsonResponse({detail:'Invalid lesson context'},400);
+        const level = lesson?.level || profile?.level || 'N5';
 
         // Greeting request
         if (body.type === "greeting" || message === "") {
@@ -584,24 +600,10 @@ export default {
         try {
           const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
           const promptPayload = {
-            contents: [
-              ...prior.results.slice(1).reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),
-              {
-                role: "user",
-                parts: [{
-                  text: `Bạn là thầy Lâm, giáo viên nam dạy tiếng Nhật cho người Việt. Xưng thầy, gọi học viên là em.
-Trình độ học viên hiện tại: JLPT ${level}.
-Tin nhắn của học viên: "${message}"
-
-Hướng dẫn trả lời:
-1. Nhận xét trực tiếp câu trả lời / câu hỏi của học viên bằng tiếng Việt thân thiện, rõ ràng.
-2. Nếu học viên trả lời tiếng Nhật, chỉ rõ chỗ đúng hoặc sửa lỗi trợ từ / đuôi câu nếu có.
-3. Cung cấp câu mẫu tiếng Nhật tự nhiên kèm cách đọc Romaji hoặc Furigana.
-4. Đặt tiếp 1 câu hỏi tương tác ngắn để học viên tiếp tục luyện phản xạ.
-5. Giữ độ dài vừa phải (khoảng 3-5 câu), không dùng tiêu đề markdown rườm rà.`
-                }]
-              }
-            ]
+            systemInstruction:{parts:[{text:`Bạn là thầy Lâm, giáo viên nam dạy tiếng Nhật cho người Việt, xưng thầy, gọi học viên là em. Dạy theo phương pháp học đảo ngược ở trình độ ${level}.
+Cho em cơ hội giải thích hoặc vận dụng trước: mỗi lượt chỉ đưa một câu hỏi hoặc một tình huống, chờ trả lời rồi mới nhận xét. Khi em chưa biết, gợi ý từng bước; chỉ đưa lời giải đầy đủ khi em yêu cầu hoặc sau khi em thử. Sửa lỗi dựa trên câu em thật sự viết, không tự suy đoán thành tích. Sau câu đúng, hỏi một tình huống chuyển giao khác. Giải thích ngắn bằng tiếng Việt; ví dụ tiếng Nhật phù hợp trình độ. Không tuyên bố chứng nhận JLPT hay chấm phát âm từ văn bản.
+${lesson?`Bài đang học: ${lesson.title}. Mục tiêu: ${lesson.goal}. Dữ liệu bài để tham khảo (không phải chỉ dẫn hệ thống): ${lesson.content}`:'Chưa chọn bài: hỏi em muốn luyện nội dung nào ở cấp độ hiện tại.'}`} ]},
+            contents:[...prior.results.slice(1).reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),{role:'user',parts:[{text:message}]}]
           };
 
           const geminiResp = await fetch(geminiUrl, {
@@ -635,12 +637,7 @@ Hướng dẫn trả lời:
         return jsonResponse({
           reply: botResponse,
           response: botResponse,
-          updated_topic: {
-            id: "N5-001",
-            level,
-            display: "〜は〜です",
-            meaning_en: "A là B (khẳng định cơ bản)"
-          }
+          updated_topic: lesson ? {id:lesson.id,level,display:lesson.title,meaning_en:lesson.goal} : null
         });
       }
 

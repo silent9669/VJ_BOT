@@ -53,12 +53,16 @@ test('practical roadmaps follow authored goals and link only verified source rec
   for(const level of levels){
     await context.window.ensureLessons(level);
     const units=context.window.createStudyPlan(level),count=context.window.JLPT_DATA.exams[level].length;
-    assert.equal(units.filter(u=>!u.optional).length,course.units.filter(u=>u.level===level).length);
+    assert.equal(units.filter(u=>u.type==='situation').length,course.units.filter(u=>u.level===level).length);
     context.window.createStudyPlan(level);assert.equal(context.window.JLPT_DATA.exams[level].length,count);
-    for(const unit of units.filter(u=>!u.optional)){
-      assert.equal(unit.steps.length,3);assert.ok(unit.steps.every(s=>s.ids.length));
+    for(const unit of units.filter(u=>u.type==='situation')){
+      assert.equal(unit.steps.length,5);assert.ok(unit.steps.slice(0,3).every(s=>s.ids.length));
+      assert.equal(unit.steps[3].kind,'kaiwa');assert.equal(unit.steps[4].kind,'test');
+      assert.equal(unit.steps[4].lesson.id,`test:${context.examIdentity(level,unit.examIndex)}`);
       assert.equal(unit.exam.questions.length,3);assert.ok(unit.exam.questions.every(q=>q.passage && q.explanation));
     }
+    const chapters=units.filter(u=>u.type==='grammar');assert.equal(chapters.length,8);
+    for(const chapter of chapters)assert.ok(chapter.steps.every(s=>s.lesson.source==='OpenJLPT' && s.ids.length));
     const step=units.find(u=>!u.optional).steps[0];
     const records=new Map(step.ids.map(id=>[id,{correct:0,incorrect:1,last_correct:0}]));
     assert.equal(context.window.studyStepState(step,records).complete,false);
@@ -67,4 +71,33 @@ test('practical roadmaps follow authored goals and link only verified source rec
     records.get(step.ids[0]).last_correct=0;
     assert.equal(context.window.studyStepState(step,records).complete,false);
   }
+});
+
+test('official resources cover each level and point only to the publisher',async()=>{
+  const catalog=JSON.parse(await fs.readFile('static/course/jlpt-resources.json','utf8'));
+  const ids=new Set();
+  for(const row of catalog.resources){assert.ok(!ids.has(row.id));ids.add(row.id);assert.equal(new URL(row.url).hostname,'www.jlpt.jp');}
+  for(const level of levels)for(const type of ['V','G','R','L','answer','script'])assert.ok(ids.has(`jlpt:2018:${level}:${type}`));
+});
+
+test('exam identities never share completion or answers between levels',async()=>{
+  const context=vm.createContext({window:{}});
+  for(const file of ['jlpt-data.js','study-plan.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
+  const completionIds=new Set(),answerIds=new Set();
+  for(const level of levels)for(const [index,exam] of context.window.JLPT_DATA.exams[level].entries()){
+    const id=context.examIdentity(level,index);assert.ok(!completionIds.has(id));completionIds.add(id);
+    for(const [qIndex,q] of exam.questions.entries()){
+      const id=context.quizProgressId(level,index,q,qIndex);assert.ok(!answerIds.has(id));answerIds.add(id);
+    }
+  }
+});
+
+test('reversed lesson context includes the actual reading and listening material',async()=>{
+  const context=vm.createContext({window:{}});
+  for(const file of ['learning.js','completion.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
+  for(const item of [{passage:'私は毎日七時に起きます。',translation:'Tôi dậy lúc 7 giờ.'},{script_jp:'次の電車は三番線です。',script_vi:'Tàu tiếp theo ở sân ga 3.'}]){
+    const result=context.buildLessonContext({id:'source',title:'Reading',...item},'N5','reading');
+    for(const value of Object.values(item))assert.ok(result.content.includes(value));
+  }
+  assert.ok(context.buildLessonContext({id:'long',title:'Long',passage:'あ'.repeat(10000)},'N1','reading').content.length<=3500);
 });

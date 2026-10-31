@@ -1,4 +1,20 @@
-# Development handoff — 2026-10-31
+# Development handoff
+
+## Level learning and merge pass
+
+This section supersedes the historical snapshots below. The user authorized merging to main and continuing deployment.
+
+- Landing always opens first, including reloads of tab hashes; level buttons open the chapter list. Explicit navigation after opening works normally.
+- 40 curated grammar chapters reference 163 pinned OpenJLPT patterns across N5–N1; 20 practical units now connect five activities including Kaiwa and tests. Original full reference library remains available.
+- Official JLPT crawl adds 58 workbook/PDF/audio links across all levels. Run `python3 scripts/crawl_jlpt_resources.py` to refresh. OpenJLPT import was re-fetched at its pinned revision and remained unchanged. Publisher materials are linked externally, not copied.
+- Migration 0007 adds private, reversible completion independent of scores and SRS. Shared completion UI covers lessons, Kaiwa, finished tests, chapters and lesson-linked reversed chat. Migration applied locally and to production; CI applies migrations before deploying.
+- Reversed chat sends the selected level and actual bounded lesson material, including reading/listening passages. The Worker system instruction asks one question, waits for the learner, then gives feedback. Shared API credentials remain Worker secrets.
+- Fixed legacy test IDs colliding across levels. No historical completion is inferred from ambiguous old exam IDs.
+- 24 Node tests and 46 Python tests passed (two Python dependency deprecation warnings). Build passed. Read-only multi-model review found the identity/context issues above; both fixed with regressions. Browser checks verified landing-first routing, N1 list, lesson completion reflected in roadmap, and contextual Kaiwa on mobile.
+
+The current course is a working study sequence, not a claim of exhaustive official JLPT coverage. Source grammar definitions are English; original Vietnamese practical content needs teacher review. Real Google consent remains unverified; authenticated API checks use isolated temporary QA sessions.
+
+## Historical handoff — 2026-10-31
 
 ## Current practical curriculum pass
 

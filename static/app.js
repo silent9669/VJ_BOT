@@ -20,6 +20,8 @@ let activeCurriculumLevel = "N5";
 let activeCurriculumSkill = "grammar";
 let activeKaiwaKey = "freestyle";
 let activeKaiwaPromptIdx = 0;
+let activeKaiwaLevel = "N5";
+let chatLessonContext = null;
 let activeQuizLevel = "N5";
 let activeFcLevel = "N5";
 let examTimerInterval = null;
@@ -445,6 +447,9 @@ function switchTab(tabId) {
     history.replaceState(null, null, `#${tabId}`);
   }
 
+  window.scrollTo({top:0,behavior:'instant'});
+  document.querySelector('.app-main').scrollTop=0;
+
   // Close mobile sidebar if open
   const sidebar = document.getElementById("app-sidebar");
   const backdrop = document.getElementById("sidebar-backdrop");
@@ -530,7 +535,8 @@ async function sendMessage(text) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: userId,
-        message: text
+        message: text,
+        lesson: chatLessonContext
       })
     });
 
@@ -604,7 +610,7 @@ function filterCurriculum(reset=true){
 async function renderCurriculum(level = "N5", skill = "grammar") {
   if(skill==="kana"&&level!=="N5")skill="grammar";
   const request=++curriculumRequest;
-  try { await ensureLessons(level); } catch (error) { document.getElementById("curriculum-list").textContent=error.message; return; }
+  try { await Promise.all([ensureLessons(level),loadCompletions()]); } catch (error) { document.getElementById("curriculum-list").textContent=error.message; return; }
   if(request!==curriculumRequest)return;
   activeCurriculumLevel = level;
   activeCurriculumSkill = skill;
@@ -661,7 +667,7 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
       <p style="font-family: var(--font-sans); font-size: 13px; color: #475569; margin-bottom: 12px; line-height: 1.4;">${escapeHtml(item.meaning_vi || item.vi || item.translation || item.summary || item.script_vi || "")}</p>
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px;">
         <span style="font-size: 12px; color: #64748b; font-family: var(--font-mono);">${item.source ? "OpenJLPT · EN" : item.reading || item.ro || (item.items ? `${item.items.length} mục` : "")}</span>
-        <span class="open-lesson-btn" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Chi tiết →</span>
+        <span class="open-lesson-btn" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">${completionRecords.has(activityId(item,level,skill))?'Hoàn thành':'Học bài →'}</span>
       </div>
     </div>
   `).join("");
@@ -734,7 +740,8 @@ function showLessonDetail(item, level, skill) {
     ${vocabularyHtml}
     ${readingHtml}
     ${listeningHtml}
-    <div id="lesson-exercises"></div>
+    ${item.externalResources?.length?`<div class="external-resources">${item.externalResources.map(r=>`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)} ↗</a>`).join('')}</div>`:''}
+    <div id="lesson-exercises"></div><div id="lesson-completion"></div>
     <div style="margin-top: 24px; display: flex; gap: 10px;">
       <button type="button" class="sketch-btn-cta modal-practice-btn" style="flex: 1; padding: 10px;">Luyện với thầy Lâm</button>
       <button type="button" class="stage-btn modal-close-action" style="padding: 10px 18px;">Đóng</button>
@@ -742,6 +749,7 @@ function showLessonDetail(item, level, skill) {
   `;
 
   renderLessonExercises(item,level,skill);
+  mountCompletion(document.getElementById('lesson-completion'),{activity_id:activityId(item,level,skill),kind:'lesson',level,title:item.title || item.jp || 'Bài học'});
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const text = decodeURIComponent(btn.dataset.text);
@@ -754,11 +762,16 @@ function showLessonDetail(item, level, skill) {
     btnPractice.addEventListener("click", () => {
       modal.close();
       switchTab("classroom");
-      if(item.roleplay){const u=item.roleplay;sendMessage(`Thầy Lâm, hãy đóng vai người đối thoại để em luyện: ${u.title}. Mục tiêu: ${u.goal}. Tình huống: ${u.production.prompt}. Tiêu chí: ${u.production.criteria.join('; ')}. Hỏi từng câu một bằng tiếng Nhật, chỉ phản hồi dựa trên câu em thực sự trả lời, giải thích ngắn bằng tiếng Việt. Bắt đầu bằng một câu hỏi.`);return;}
-      sendMessage(`Thầy Lâm, em muốn luyện ${level}: ${item.title || item.jp}. Nội dung: ${JSON.stringify({meaning:item.meaning_vi,formula:item.formula,examples:item.examples?.slice(0,3),words:item.items?.slice(0,5)}).slice(0,2500)}`);
+      startReversedLesson(item,level,skill);
     });
   }
 
+  const steps=(studyPlans.get(level)||[]).flatMap(u=>u.steps);
+  const current=steps.findIndex(s=>activityId(s.lesson,level,s.skill)===activityId(item,level,skill));
+  if(current>=0 && steps[current+1]){
+    const next=document.createElement('button');next.type='button';next.className='stage-btn';next.textContent='Bài tiếp →';
+    next.onclick=()=>{modal.close();openStudyStep(steps[current+1],level);};body.querySelector('.modal-practice-btn').parentElement.append(next);
+  }
   const btnClose = body.querySelector(".modal-close-action");
   if (btnClose) btnClose.addEventListener("click", () => modal.close());
 
@@ -839,31 +852,26 @@ function displayFlashcard() {
 // ==========================================
 // 11. KAIWA SPEAKING LAB CONTROLLER
 // ==========================================
-function renderKaiwaScenarios() {
-  const container = document.getElementById("kaiwa-scenarios-grid");
-  if (!container) return;
-
-  const scenarios = window.JLPT_DATA?.kaiwaScenarios || {};
-  container.innerHTML = Object.entries(scenarios).map(([k, s]) => `
-    <button type="button" class="kaiwa-scenario-card ${k === activeKaiwaKey ? "active" : ""}" data-key="${k}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 14px; padding: 14px; box-shadow: 2px 3px 0px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.15s ease;">
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-        <span style="font-size: 20px;">${s.icon || "🎙️"}</span>
-        <strong style="font-size: 14px; color: var(--ink);">${s.title}</strong>
-      </div>
-      <p style="font-size: 12.5px; color: #64748b; line-height: 1.4; margin: 0;">${s.desc || ""}</p>
-    </button>
-  `).join("");
-
-  container.querySelectorAll(".kaiwa-scenario-card").forEach(c => {
-    c.addEventListener("click", () => {
-      activeKaiwaKey = c.dataset.key;
-      activeKaiwaPromptIdx=0;
-      container.querySelectorAll(".kaiwa-scenario-card").forEach(x => x.classList.remove("active"));
-      c.classList.add("active");
-      loadKaiwaPrompt();
-    });
-  });
-
+let kaiwaRenderRequest=0;
+function installCourseKaiwa(){
+  for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:unit.production.prompt,hints:unit.production.criteria}]};}
+}
+function startCourseKaiwa(unit){
+  installCourseKaiwa();activeKaiwaLevel=unit.level;activeKaiwaKey=unit.id;activeKaiwaPromptIdx=0;switchTab('kaiwa');
+}
+async function renderKaiwaScenarios(){
+  const request=++kaiwaRenderRequest,container=document.getElementById('kaiwa-scenarios-grid');
+  container.textContent='Đang tải tình huống…';
+  try{await loadPracticalCourse();if(request!==kaiwaRenderRequest)return;installCourseKaiwa();}
+  catch{container.textContent='Chưa tải được tình huống.';return;}
+  const scenarios=Object.entries(window.JLPT_DATA.kaiwaScenarios).filter(([key,s])=>s.level===activeKaiwaLevel || s.level==='ALL');
+  if(!scenarios.some(([key])=>key===activeKaiwaKey))activeKaiwaKey=scenarios[0]?.[0];
+  document.getElementById('kaiwa-level').value=activeKaiwaLevel;
+  container.replaceChildren();
+  for(const [key,scenario] of scenarios){
+    const button=document.createElement('button');button.type='button';button.className='kaiwa-scenario-card';button.classList.toggle('active',key===activeKaiwaKey);button.textContent=scenario.title;
+    button.onclick=()=>{activeKaiwaKey=key;activeKaiwaPromptIdx=0;container.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===button));loadKaiwaPrompt();};container.append(button);
+  }
   loadKaiwaPrompt();
 }
 
@@ -879,10 +887,13 @@ function loadKaiwaPrompt() {
   const prompts = Array.isArray(s.prompts) ? s.prompts : [];
   const prompt = prompts[activeKaiwaPromptIdx % Math.max(prompts.length, 1)] || {};
 
+  mountCompletion(document.getElementById('kaiwa-completion'),{activity_id:s.course?`kaiwa:${activeKaiwaKey}`:`kaiwa:${activeKaiwaLevel}:${activeKaiwaKey}:${activeKaiwaPromptIdx}`,kind:'kaiwa',level:activeKaiwaLevel,title:s.title});
+  const context=document.getElementById('kaiwa-context');context.textContent=s.context || '';context.hidden=!s.context;
   if (tag) tag.textContent = s.title;
   if (jp) jp.textContent = prompt.jp || "こんにちは。よろしくお願いします。";
   if (vi) vi.textContent = prompt.vi || "Hãy trả lời bằng một câu tiếng Nhật tự nhiên.";
   if (manualInput) manualInput.value = "";
+  document.getElementById("kaiwa-next-prompt").hidden=prompts.length<2;
   if (resultCard) resultCard.hidden = true;
   const hint = document.getElementById("kaiwa-prompt-hint");
   if (hint) hint.textContent = prompt.hints?.[0] || "Gợi ý: dùng câu lịch sự với です / ます.";
@@ -925,6 +936,7 @@ async function renderQuiz(level = "N5", testIdx = 0) {
   }
   document.getElementById('quiz-source-note').textContent=selectedExam.source || 'Bài luyện JLPT';
 
+  const completion=document.getElementById('quiz-completion');completion.replaceChildren();
   currentExamQuestions = questions;
   examQuestionIdx = 0;
   examScore = 0;
@@ -1073,6 +1085,8 @@ function finishExam() {
       : "Cố gắng lên nhé! Hãy ôn lại các câu chưa chính xác cùng Sensei.";
   }
 
+  const exam=window.JLPT_DATA.exams[activeQuizLevel][activeQuizTestIdx];
+  mountCompletion(document.getElementById('quiz-completion'),{activity_id:`test:${examIdentity(activeQuizLevel,activeQuizTestIdx)}`,kind:'test',level:activeQuizLevel,title:exam.title});
   loadProgress();
 }
 
@@ -1080,6 +1094,7 @@ function finishExam() {
 // 13. MASTERY & PROGRESS CONTROLLER
 // ==========================================
 async function loadProgress() {
+  showCompletedActivities(document.getElementById("completed-activities"));
   try {
     const resp = await apiFetch(`/api/progress?user_id=${encodeURIComponent(userId)}`);
     if (resp.ok) {
@@ -1366,13 +1381,16 @@ function setupEventListeners() {
   if(SpeechRecognition){const recognition=new SpeechRecognition();recognition.lang='ja-JP';recognition.onresult=e=>{document.getElementById('chat-input').value=e.results[0][0].transcript;};recognition.onend=()=>voiceButton.textContent='🎙️';voiceButton.onclick=()=>{try{recognition.start();voiceButton.textContent='■';}catch{recognition.stop();}};}
   else {voiceButton.disabled=true;voiceButton.title='Trình duyệt không hỗ trợ nhập giọng nói';}
 
+  window.addEventListener('completion-changed',()=>{if(location.hash==='#curriculum' && curriculumView==='plan' && !document.getElementById('lesson-detail-modal').open)renderStudyPlan(activeCurriculumLevel);});
+  document.getElementById('kaiwa-level').onchange=e=>{activeKaiwaLevel=e.target.value;activeKaiwaPromptIdx=0;renderKaiwaScenarios();};
+  document.querySelectorAll('[data-start-level]').forEach(button=>button.onclick=()=>{activeCurriculumLevel=button.dataset.startLevel;activeKaiwaLevel=activeCurriculumLevel;switchTab('curriculum');});
   document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.go)));
   document.getElementById("settings-account").addEventListener("click",openAccount);
   document.querySelectorAll('[data-curriculum-view]').forEach(b=>b.onclick=()=>setCurriculumView(b.dataset.curriculumView));
-  document.getElementById('lesson-detail-modal').addEventListener('close',()=>{if(curriculumView==='plan' && location.hash==='#curriculum')renderStudyPlan(activeCurriculumLevel);});
+  document.getElementById('lesson-detail-modal').addEventListener('close',()=>{if(location.hash==='#curriculum'){if(curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);else renderCurriculum(activeCurriculumLevel,activeCurriculumSkill);}});
   document.getElementById("lesson-search").addEventListener("input",()=>filterCurriculum());
   document.getElementById('lesson-load-more').addEventListener('click',()=>{lessonVisibleLimit+=24;filterCurriculum(false);});
-  document.getElementById("kaiwa-next-prompt").addEventListener("click",()=>{activeKaiwaPromptIdx++;loadKaiwaPrompt();});
+  document.getElementById("kaiwa-next-prompt").addEventListener("click",()=>{activeKaiwaPromptIdx=(activeKaiwaPromptIdx+1)%Math.max(1,window.JLPT_DATA.kaiwaScenarios[activeKaiwaKey]?.prompts?.length || 1);loadKaiwaPrompt();});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.getElementById("lesson-detail-modal").close();document.getElementById("level-picker").hidden=true;}});
   // Mobile sidebar drawer
   const btnMobile = document.getElementById("btn-mobile-sidebar");
@@ -1759,6 +1777,9 @@ function setupEventListeners() {
         return;
       }
 
+      if(btnEvalKaiwa.disabled)return;
+      btnEvalKaiwa.disabled=true;
+      const evaluationKey=activeKaiwaKey,evaluationIndex=activeKaiwaPromptIdx;
       btnEvalKaiwa.textContent = "Đang nhận xét…";
       const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
 
@@ -1768,12 +1789,14 @@ function setupEventListeners() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             scenario_title: s?.title || activeKaiwaKey,
+            context: s?.context || "",
             prompt_jp: document.getElementById("kaiwa-prompt-jp")?.textContent || "",
             user_speech: speech,
-            level: s?.level === "ALL" ? activeCurriculumLevel : (s?.level || activeCurriculumLevel)
+            level: activeKaiwaLevel
           })
         });
 
+        if(evaluationKey!==activeKaiwaKey || evaluationIndex!==activeKaiwaPromptIdx)return;
         const resultCard = document.getElementById("kaiwa-result-card");
         const scoreVal = document.getElementById("kaiwa-score-val");
         const feedbackText = document.getElementById("kaiwa-feedback-text");
@@ -1796,6 +1819,7 @@ function setupEventListeners() {
       } catch {
         alert("Lỗi khi kết nối hệ thống chấm điểm.");
       } finally {
+        btnEvalKaiwa.disabled=false;
         btnEvalKaiwa.textContent = "Nhờ thầy nhận xét";
       }
     });
@@ -1876,8 +1900,7 @@ function setupEventListeners() {
   setupSettings();
 
   // Resolve account and saved level before rendering data-dependent routes.
-  const initialHash = window.location.hash.replace("#", "");
-  switchTab(TAB_TITLES[initialHash] ? initialHash : "landing");
+  switchTab("landing");
   loadGreeting();
   loadProgress();
   try {
@@ -1901,4 +1924,13 @@ if (typeof window !== "undefined") {
   window.renderCurriculum = renderCurriculum;
   window.renderFlashcards = renderFlashcards;
   window.renderQuiz = renderQuiz;
+}
+
+function startReversedLesson(item,level,skill){
+  chatLessonContext=buildLessonContext(item,level,skill);
+  const host=document.getElementById('chat-lesson-context');host.hidden=false;host.replaceChildren();
+  const title=document.createElement('strong');title.textContent=`${level} · ${chatLessonContext.title}`;
+  const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>{switchTab('curriculum');showLessonDetail(item,level,skill);};
+  const control=document.createElement('div');host.append(title,back,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${chatLessonContext.title}`});
+  sendMessage('Bắt đầu học đảo ngược bài này. Thầy hỏi một câu để em tự giải thích hoặc vận dụng; chờ câu trả lời của em trước khi đưa đáp án.');
 }

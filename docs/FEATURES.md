@@ -2,11 +2,13 @@
 
 ## Guided learning and review sets
 
-The roadmap has 20 original practical units: N5 (6), N4 (5), N3 (4), N2 (3), N1 (2). Each has a concrete goal, suggested prerequisite order, six selected words, an original Japanese situation with Vietnamese translation, three contextual questions, and a written task with a model and three self-assessment criteria. N5 includes optional kana foundations outside the main progress total.
+Opening the app starts on the landing page. Choose N5–N1 to open a compact chapter list; expand a chapter, choose a lesson, and use the next-lesson action. The library retains all vocabulary, grammar, kanji, reading and listening groups.
 
-Each unit has a three-question contextual review. Versioned IDs preserve old history without transferring completion from the previous mechanically grouped roadmap. The latest answer must be correct for objective steps to pass. Written production is explicitly self-assessed, stores the answer text, and does not certify proficiency. The next unfinished main step opens from “Học tiếp”.
+The guided sequence has 40 curated grammar chapters (eight per level, 163 source pattern references) and 20 authored practical units (N5: 6, N4: 5, N3: 4, N2: 3, N1: 2). Each practical unit connects vocabulary, comprehension, written production, Kaiwa and its contextual test. Grammar source explanations remain English. This is an editorial learning sequence, not an official exhaustive JLPT syllabus.
 
-The public sources catalog filters 72 official Irodori lessons by book and title. It links original PDFs and audio pages; the crawl indexes 1,373 MP3 links without mirroring copyrighted content. Irodori A1/A2/A2–B1 is not an official N5–N1 mapping. Advanced units are short skill exercises, not complete exam passages. Authored content still needs human editorial review.
+Every lesson, Kaiwa prompt, finished test, roadmap chapter and lesson-linked reversed-chat activity has a reversible completion control. Completion is explicit learner bookkeeping, independent of exercise correctness, self-assessment and SM-2 scheduling. Account completions persist in D1; guest completions persist locally. The progress screen lists marked activities. Old answer records are preserved; ambiguous legacy exam IDs are not migrated into the new level-qualified identities.
+
+The official resource crawl indexes 58 workbook links from JLPT for all five levels. Each level exposes vocabulary, grammar, reading and listening workbooks with original answer sheets, scripts and audio links. The Irodori catalog retains 72 lessons and 1,373 MP3 links. Copyrighted PDFs/audio remain on publisher servers; only link metadata is stored. Irodori levels are not official JLPT equivalents. Authored content still needs human editorial review.
 
 Lesson and quiz saves offer retry after failure. Optional attempt IDs prevent repeated save requests from incrementing counters twice. Guest receipts retain the last 100 attempts per item; signed-in receipts are stored in D1 and removed on account deletion.
 
@@ -26,7 +28,7 @@ OpenJLPT definitions are English and marked EN; existing Vietnamese lessons rema
 
 Flashcards use 20-card sessions prioritized by due dates. Signed-in progress uses SM-2 scheduling with repetitions reset after a miss; guests use local storage and simpler scheduling. Short JLPT-style quiz sets provide answer explanations; they are not complete official mock exams.
 
-Authenticated chat uses thầy Lâm and saved conversation context. Lessons can pass context into practice. Kaiwa accepts typing or browser speech transcription and evaluates the transcript. No claim of pronunciation analysis is made. Japanese audio uses server-side TTS or browser speech fallback, subject to browser voices/support.
+Authenticated reversed chat uses thầy Lâm and saved conversation context. It asks the learner to explain or apply the selected material before offering correction and another question. Lesson context includes actual examples, passages or listening scripts, with an explicit selected level. Kaiwa accepts typing or browser speech transcription and evaluates the transcript. No claim of pronunciation analysis is made. Japanese audio uses server-side TTS or browser speech fallback, subject to browser voices/support.
 
 ## Accounts
 

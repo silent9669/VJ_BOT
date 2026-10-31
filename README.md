@@ -8,7 +8,7 @@ Development resumed at the user’s request. Account persistence and login recov
 
 ## Learning
 
-- Practical roadmaps: 20 authored situations with Vietnamese explanations, 60 contextual questions and saved written responses. A searchable catalog links 72 official Irodori lessons to original PDFs/audio; the full dictionary library remains available.
+- Landing-first learning: choose N5–N1, open one of 40 grammar chapters or 20 authored situations with Vietnamese explanations, 60 contextual questions and saved written responses. Reversible completion across lessons/Kaiwa/tests and lesson-grounded reversed chat. Crawled catalogs link 58 JLPT workbook resources and 72 official Irodori lessons to original PDFs/audio; the full dictionary library remains available.
 
 - Vocabulary, grammar and kanji across N5–N1, loaded on demand by level, plus 20 original kana lessons.
 - **10,720 imported OpenJLPT entries:** 7,811 vocabulary, 526 grammar patterns and 2,383 kanji records. Level assignments are community estimates, not official JLPT lists.

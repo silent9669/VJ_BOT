@@ -9,11 +9,11 @@ function lessonProgressIds(item,level,skill){
   if(item.production)return [item.id];
   return item.dictation ? (item.examples||[]).map((_,i)=>`${item.id}:${i}`) : lessonQuestions(item,level,skill).map(q=>q.item_id);
 }
-let practicalCourse=null,practicalSources=null,practicalLoad=null;
+let practicalCourse=null,practicalSources=null,practicalLoad=null,courseChapters=null,jlptResources=null;
 async function loadPracticalCourse(){
-  if(!practicalLoad)practicalLoad=Promise.all(['practical','sources'].map(async name=>{
+  if(!practicalLoad)practicalLoad=Promise.all(['practical','sources','chapters','jlpt-resources'].map(async name=>{
     const response=await fetch(`course/${name}.json`);if(!response.ok)throw new Error('course');return response.json();
-  })).then(([course,sources])=>{practicalCourse=course;practicalSources=sources;}).catch(error=>{practicalLoad=null;throw error;});
+  })).then(([course,sources,chapters,resources])=>{practicalCourse=course;practicalSources=sources;courseChapters=chapters;jlptResources=resources;}).catch(error=>{practicalLoad=null;throw error;});
   return practicalLoad;
 }
 function createStudyPlan(level){
@@ -22,8 +22,13 @@ function createStudyPlan(level){
   const units=[],skills=window.JLPT_DATA.curriculum[level].skills;
   const step=(lesson,skill)=>({lesson,skill,ids:lessonProgressIds(lesson,level,skill)});
   if(level==='N5')units.push({id:'practical:kana',title:'Làm quen bảng chữ cái',goal:'Nhận diện cách đọc các chữ cơ bản trước khi bắt đầu hội thoại.',minutes:60,optional:true,steps:skills.kana.map(l=>step(l,'kana'))});
+  for(const chapter of courseChapters.chapters.filter(c=>c.level===level)){
+    const lessons=chapter.grammar_ids.map(id=>skills.grammar.find(l=>l.id===`openjlpt:${level}:grammar:${id}`));
+    if(lessons.some(l=>!l))throw new Error('Missing chapter source');
+    units.push({...chapter,type:'grammar',steps:lessons.map(l=>step(l,'grammar'))});
+  }
   for(const unit of practicalCourse.units.filter(u=>u.level===level)){
-    const common={source:'VJBot',sourceLabel:'VJBot · tiếng Việt',lesson:units.length+1};
+    const common={roleplay:unit,source:'VJBot',sourceLabel:'VJBot · tiếng Việt',lesson:units.length+1};
     const vocabulary={...common,id:unit.id+':words',title:'Từ cần dùng',summary:unit.goal,items:unit.words};
     vocabulary.drills=unit.words.map((w,i)=>({item_id:`${unit.id}:word:${i}`,q:`${w.jp} (${w.reading}) — nghĩa nào phù hợp?`,opts:unit.words.map(x=>x.vi).filter(x=>x!==w.vi).slice(0,3),ans:w.vi}));
     vocabulary.drills.forEach((q,i)=>q.opts.splice(i%(q.opts.length+1),0,q.ans));
@@ -31,15 +36,18 @@ function createStudyPlan(level){
     const production={...common,id:unit.id+':production',title:'Tự trả lời trong tình huống',summary:unit.goal,production:unit.production,roleplay:unit};
     const questions=unit.questions.map((q,i)=>({id:q.id,item_id:q.id,item_type:'reading',sentence:q.q,passage:unit.dialogue.map(d=>d.jp).join('\n'),options:q.opts,answer:q.opts.indexOf(q.ans),explanation:q.explanation,type:'Hiểu tình huống',plain:true}));
     const exam={id:unit.id+':review',title:unit.title,duration_minutes:10,source:'VJBot · tình huống',questions};
-    units.push({...unit,steps:[step(vocabulary,'vocabulary'),step(situation,'reading'),step(production,'production')],exam});
+    units.push({...unit,type:'situation',steps:[step(vocabulary,'vocabulary'),step(situation,'reading'),step(production,'production')],exam});
   }
   const exams=window.JLPT_DATA.exams[level] ||= [];
-  for(const unit of units)if(unit.exam){unit.examIndex=exams.length;exams.push(unit.exam);}
+  for(const unit of units)if(unit.exam){unit.examIndex=exams.length;exams.push(unit.exam);unit.steps.push({kind:'kaiwa',skill:'kaiwa',lesson:{id:`kaiwa:${unit.id}`,title:'Luyện nói tình huống'},ids:[],unit},{kind:'test',skill:'test',lesson:{id:`test:${level}:${unit.exam.id}`,title:'Kiểm tra tình huống'},ids:[],unit});}
   studyPlans.set(level,units);return units;
 }
-function quizProgressId(level,index,q,questionIndex){
+function examIdentity(level,index){
   const exam=window.JLPT_DATA.exams[level][index];
-  return exam.id?`exam-${exam.id}-q${questionIndex+1}`:`exam-${level}-t${index+1}-q${q.id || questionIndex+1}`;
+  return `${level}:${exam.id ?? index+1}`;
+}
+function quizProgressId(level,index,q,questionIndex){
+  return `exam-${examIdentity(level,index)}-q${questionIndex+1}`;
 }
 function studyStepState(step,records){
   const passed=id=>{const r=records.get(id);return r?.last_correct===1 || r?.last_correct===true || (r?.last_correct==null && (r?.correct||0)>0);};
@@ -47,34 +55,53 @@ function studyStepState(step,records){
   const attempted=step.ids.some(id=>records.has(id));
   return {reviewed,total:step.ids.length,complete:step.ids.length>0 && reviewed===step.ids.length,needsReview:attempted && reviewed<step.ids.length};
 }
+function openStudyStep(step,level){
+  if(step.kind==='kaiwa'){startCourseKaiwa(step.unit);return;}
+  if(step.kind==='test'){switchTab('quiz');renderQuiz(level,step.unit.examIndex);return;}
+  showLessonDetail(step.lesson,level,step.skill);
+}
 let studyPlanRequest=0;
 async function renderStudyPlan(level){
   const request=++studyPlanRequest,host=document.getElementById('study-plan');
-  host.textContent='Đang tải lộ trình…';
+  const expanded=[...host.querySelectorAll('details[open]')].map(d=>d.dataset.unit);
+  host.textContent='Đang tải danh sách bài học…';
   try{
     await Promise.all([ensureLessons(level),loadPracticalCourse()]);
-    const units=createStudyPlan(level),response=await apiFetch('/api/progress');
+    const units=createStudyPlan(level);
+    const [response,completed]=await Promise.all([apiFetch('/api/progress'),loadCompletions()]);
     if(!response.ok)throw new Error('progress');
     const progress=await response.json();if(request!==studyPlanRequest)return;
     const records=new Map((progress.items||[]).map(i=>[i.item_id,i]));
     const required=units.filter(u=>!u.optional);
-    const done=required.reduce((n,u)=>n+u.steps.filter(s=>studyStepState(s,records).complete).length,0);
-    const total=required.reduce((n,u)=>n+u.steps.length,0);
-    const upcoming=units.filter(u=>!u.optional).flatMap(u=>u.steps).find(s=>!studyStepState(s,records).complete);
-    host.innerHTML=`<div class="plan-overview"><div><h3>Học để sử dụng · ${level}</h3><p>${done} / ${total} bước hoàn thành · ${units.filter(u=>!u.optional).length} tình huống</p></div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${total}" aria-label="Bài đã luyện"></progress></div><p class="plan-note">${["N2","N1"].includes(level)?"Bài luyện kỹ năng ngắn; chưa phải giáo trình hoặc đề thi đầy đủ. ":""}<a href="sources.html">Tài liệu & bản nghe gốc ↗</a></p><div class="plan-units"></div>`;
-    const open=step=>showLessonDetail(step.lesson,level,step.skill);
-    host.querySelector('.plan-continue').onclick=()=>open(upcoming || units[0].steps[0]);
-    let expanded=false;
+    const marked=step=>completed.has(activityId(step.lesson,level,step.skill));
+    const unitDone=unit=>completed.has(unit.id) || unit.steps.every(marked);
+    const done=required.filter(unitDone).length;
+    const upcomingUnit=required.find(u=>!unitDone(u));
+    const upcoming=upcomingUnit?.steps.find(s=>!marked(s));
+    host.innerHTML=`<div class="plan-overview"><div><h3>Bài học ${level}</h3><p>${done} / ${required.length} chương hoàn thành</p></div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${required.length}" aria-label="Chương hoàn thành"></progress></div><div class="plan-units"></div>`;
+    host.querySelector('.plan-continue').onclick=()=>openStudyStep(upcoming || required[0].steps[0],level);
     for(const [index,unit] of units.entries()){
-      const completed=unit.steps.filter(s=>studyStepState(s,records).complete).length;
-      const detail=document.createElement('details');detail.className='plan-unit';
-      if(!expanded && !unit.optional && completed<unit.steps.length){detail.open=true;expanded=true;}
-      detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?" · tùy chọn":""}</strong><span>${completed}/${unit.steps.length}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal || "")} <span>Khoảng ${unit.minutes} phút</span></p></div>`;
+      const detail=document.createElement('details');detail.className='plan-unit';detail.dataset.unit=unit.id;detail.open=expanded.includes(unit.id);
+      const count=unit.steps.filter(marked).length;
+      detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?' · tùy chọn':''}</strong><span>${unitDone(unit)?'Hoàn thành':`${count}/${unit.steps.length}`}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal)} <span>${unit.type==='grammar'?'Ngữ pháp · nguồn EN':unit.optional?'Kana':'Tình huống · tiếng Việt'} · khoảng ${unit.minutes} phút</span></p></div>`;
       const list=detail.querySelector('.plan-steps');
-      for(const step of unit.steps){const state=studyStepState(step,records),button=document.createElement('button');button.type='button';button.className='plan-step';button.innerHTML=`<span class="plan-skill">${studySkillNames[step.skill]}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${state.complete?(step.skill==='production'?'Tự đánh giá đạt':'Đạt'):state.needsReview?'Cần ôn':`${state.reviewed}/${state.total}`}</span>`;button.onclick=()=>open(step);list.append(button);}
-      if(unit.exam){const button=document.createElement('button');button.type='button';button.className='plan-review';const answered=unit.exam.questions.filter((q,i)=>records.has(quizProgressId(level,unit.examIndex,q,i))).length;button.textContent=`Ôn tình huống · ${answered}/${unit.exam.questions.length} câu đã làm`;button.onclick=()=>{switchTab('quiz');renderQuiz(level,unit.examIndex);};list.append(button);}
+      for(const step of unit.steps){
+        const state=studyStepState(step,records),button=document.createElement('button');button.type='button';button.className='plan-step';
+        button.innerHTML=`<span class="plan-skill">${studySkillNames[step.skill] || (step.kind==='kaiwa'?'Kaiwa':'Bài kiểm tra')}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${marked(step)?'Hoàn thành':state.needsReview?'Cần ôn':'Bắt đầu →'}</span>`;
+        button.onclick=()=>openStudyStep(step,level);list.append(button);
+      }
+      const completion=document.createElement('div');list.append(completion);mountCompletion(completion,{activity_id:unit.id,kind:'roadmap',level,title:unit.title},true);
+      detail.addEventListener('toggle',()=>{if(detail.open)for(const other of host.querySelectorAll('.plan-unit'))if(other!==detail)other.open=false;});
       host.querySelector('.plan-units').append(detail);
     }
+    const official=document.createElement('section');official.className='official-level-resources';official.innerHTML='<h3>Tài liệu JLPT chính thức</h3><p>Đề luyện 2018 · mở tài liệu tại jlpt.jp</p>';
+    for(const type of ['V','G','R','L']){
+      const main=jlptResources.resources.find(r=>r.id===`jlpt:2018:${level}:${type}`);
+      const button=document.createElement('button');button.className='stage-btn';button.textContent=main.title;
+      button.onclick=()=>showLessonDetail({id:main.id,title:`${level} · ${main.title}`,sourceLabel:'JLPT · tài liệu chính thức',summary:'Làm bài trên tài liệu gốc, đối chiếu đáp án, rồi đánh dấu hoàn thành tại đây.',externalResources:jlptResources.resources.filter(r=>r.level===level && (r.id===main.id || /:(answer|sheet)$/.test(r.id) || (type==='L' && (r.kind==='audio' || r.id.endsWith(':script')))))},level,type==='L'?'listening':'reading');
+      official.append(button);
+    }
+    host.append(official);
   }catch{if(request!==studyPlanRequest)return;host.textContent='Chưa tải được lộ trình. ';const retry=document.createElement('button');retry.type='button';retry.textContent='Thử lại';retry.onclick=()=>renderStudyPlan(level);host.append(retry);}
 }
 let curriculumView='plan';

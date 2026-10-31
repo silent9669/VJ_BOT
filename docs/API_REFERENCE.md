@@ -21,6 +21,8 @@ The Google credential response includes `{user}` and session cookies. The curren
 
 | Method | Route | Request / response |
 | --- | --- | --- |
+| GET | `/api/completions` | `{items: [{activity_id, kind, level, title, completed_at}]}` for this account |
+| POST | `/api/completions` | `{activity_id, kind, level, title, completed}`; idempotent set/remove without changing answer scores |
 | GET | `/api/profile` | `{user_id, level, track, updated_at}`; provisions a default profile if absent |
 | POST | `/api/profile` | `{level, track?}`; upserts and returns profile |
 | GET | `/api/progress` | Totals, accuracy, streak, `weak_items`, and per-item review state |
@@ -28,9 +30,9 @@ The Google credential response includes `{user}` and session cookies. The curren
 | GET | `/api/next-topic` | Due or next curriculum item at the profile level, with reason |
 | GET | `/api/history` | Latest 50 messages in chronological order: `{role, content, timestamp}[]` |
 | DELETE | `/api/history` | Clears this account's conversation history |
-| POST | `/api/chat` | `{message}`; returns `reply`, `response`, `updated_topic`; lesson practice may include context in the message |
+| POST | `/api/chat` | `{message, lesson?: {id,title,level,goal,content}}`; bounded lesson context controls level and reversed teaching; returns `reply`, `response`, `updated_topic`; lesson practice may include context in the message |
 | POST | `/api/chat/greeting` | Creates and saves a greeting at the profile level |
-| POST | `/api/kaiwa/evaluate` | `{prompt_jp, user_speech, scenario_title?, level?}`; score, rating, feedback, model answer and transcript |
+| POST | `/api/kaiwa/evaluate` | `{prompt_jp, user_speech, scenario_title?, context?, level?}`; score, rating, feedback, model answer and transcript |
 | POST | `/api/tts` | `{text}`; `{mimeType, audioBase64, voice}` or `{fallback: true, voice, text}` |
 | POST | `/api/account/delete` | Removes own profile, progress, chat, study days, usage and sessions; `{success: true}` |
 
@@ -56,3 +58,5 @@ if (!response.ok) throw new Error('Progress was not saved');
 Errors generally return `{detail}`. Missing/expired sessions return 401; invalid input 400; cross-origin mutation 403; unknown API route 404; oversized private mutation body 413. Chat, TTS and Kaiwa share a 20-request-per-minute/account limit, returning 429 when exceeded.
 
 Chat/Kaiwa provider failures return 503 instead of fabricated assessments. TTS can return a successful fallback response; HTTP 200 alone does not prove generated audio exists. An unexpected Worker error returns a generic 500 without exposing a stack trace. Route method handling is not uniformly hardened to 405; the table lists intended client methods.
+
+Completion kinds: `lesson`, `kaiwa`, `test`, `roadmap`, `chat`. IDs have at most 300 characters, titles at most 500. Test IDs include the level to avoid cross-level collisions. Migration 0007 adds the account-scoped completions table; deletion removes it with the rest of the account.

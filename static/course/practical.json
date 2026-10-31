@@ -104,7 +104,8 @@
           "Có tên của bạn",
           "Có quê quán và nghề nghiệp",
           "Có lời chào mở đầu hoặc kết thúc"
-        ]
+        ],
+        "question_jp": "はじめまして。お名前とお仕事を教えてください。"
       }
     },
     {
@@ -210,7 +211,8 @@
           "Có hai loại món hoặc đồ uống",
           "Mỗi loại có số lượng",
           "Có câu hỏi giá"
-        ]
+        ],
+        "question_jp": "何をご注文ですか。"
       }
     },
     {
@@ -316,7 +318,8 @@
           "Nêu cả giờ bắt đầu và kết thúc",
           "Giờ hẹn nằm sau giờ kết thúc",
           "Dùng に với giờ hẹn"
-        ]
+        ],
+        "question_jp": "何時から何時まで勉強しますか。いつ会いましょうか。"
       }
     },
     {
@@ -422,7 +425,8 @@
           "Có câu hỏi xác nhận đích đến",
           "Có điểm xuống cụ thể",
           "Phân biệt に行きます và で降ります"
-        ]
+        ],
+        "question_jp": "このバスについて、運転手に何を聞きますか。"
       }
     },
     {
@@ -532,7 +536,8 @@
           "Có câu hỏi giá",
           "Dùng この trước danh từ",
           "Nêu một chiếc bằng 一本"
-        ]
+        ],
+        "question_jp": "いらっしゃいませ。何をお探しですか。"
       }
     },
     {
@@ -642,7 +647,8 @@
           "Có từ hoặc chữ cần hỏi",
           "Có yêu cầu nhắc lại",
           "Dùng cách nói lịch sự"
-        ]
+        ],
+        "question_jp": "わからない言葉があったら、どう聞きますか。"
       }
     },
     {
@@ -746,7 +752,8 @@
           "Nêu lý do",
           "Nêu thời gian trễ dự kiến",
           "Nêu hành động tiếp theo"
-        ]
+        ],
+        "question_jp": "今どこですか。何時ごろ着きますか。"
       }
     },
     {
@@ -852,7 +859,8 @@
           "Nêu thời gian nghỉ",
           "Dùng mẫu xin phép",
           "Có công việc và hạn bàn giao"
-        ]
+        ],
+        "question_jp": "いつ休みたいですか。仕事の準備はどうしますか。"
       }
     },
     {
@@ -958,7 +966,8 @@
           "Có triệu chứng rõ ràng",
           "Có triệu chứng và thời điểm",
           "Có câu hỏi làm rõ hướng dẫn"
-        ]
+        ],
+        "question_jp": "今日はどうしましたか。いつからですか。"
       }
     },
     {
@@ -1064,7 +1073,8 @@
           "Có ngày, giờ và số người",
           "Có phương án giờ thay thế",
           "Có câu hỏi xác nhận chỗ trống"
-        ]
+        ],
+        "question_jp": "何曜日の何時に、何名様でご予約ですか。"
       }
     },
     {
@@ -1174,7 +1184,8 @@
           "Có hai bước đúng thứ tự",
           "Dùng ～てから",
           "Có câu hỏi xin hỗ trợ"
-        ]
+        ],
+        "question_jp": "作業の順番を説明してください。わからないときはどうしますか。"
       }
     },
     {
@@ -1278,7 +1289,8 @@
           "Nêu dấu hiệu cụ thể",
           "Không khẳng định nguyên nhân chưa biết",
           "Có giờ hẹn và yêu cầu liên lạc"
-        ]
+        ],
+        "question_jp": "どんな故障ですか。いつ修理に伺えばよろしいですか。"
       }
     },
     {
@@ -1384,7 +1396,8 @@
           "Phân biệt lời email với sự thật đã xác minh",
           "Không yêu cầu gửi mật khẩu",
           "Nêu kênh xác minh độc lập"
-        ]
+        ],
+        "question_jp": "このメールを受け取ったら、どうやって本物か確認しますか。"
       }
     },
     {
@@ -1490,7 +1503,8 @@
           "Có thứ tự ba bước",
           "Có điều kiện khi thiếu hàng",
           "Không cho phép tự đặt trước khi báo"
-        ]
+        ],
+        "question_jp": "在庫が不足していたら、どんな順番で対応しますか。"
       }
     },
     {
@@ -1600,7 +1614,8 @@
           "Không bịa kinh nghiệm",
           "Có ví dụ về sự tiến bộ",
           "Có mục tiêu cụ thể tiếp theo"
-        ]
+        ],
+        "question_jp": "これまでの経験と、今できるようになったことを教えてください。"
       }
     },
     {
@@ -1698,7 +1713,8 @@
           "Có ngày hiệu lực",
           "Giữ đủ hai điều kiện ngoại lệ",
           "Không thêm quyền gia hạn"
-        ]
+        ],
+        "question_jp": "資料室の規定で、例外として認められるのはどんな場合ですか。"
       }
     },
     {
@@ -1798,7 +1814,8 @@
           "Nêu phương án rõ ràng",
           "Dẫn thời gian và tổng chi phí",
           "Giải thích ràng buộc mà bên kia không đáp ứng"
-        ]
+        ],
+        "question_jp": "どちらの印刷会社を選びますか。数字を使って理由を説明してください。"
       }
     },
     {
@@ -1898,7 +1915,8 @@
           "Có cả lợi ích và rủi ro",
           "Không biến kỳ vọng thành sự thật",
           "Có cách kiểm chứng cụ thể"
-        ]
+        ],
+        "question_jp": "会議を減らす案について、利点とリスクをどう評価しますか。"
       }
     },
     {
@@ -1996,7 +2014,8 @@
           "Giữ cả tiêu chuẩn chung và hỗ trợ ngoại lệ",
           "Không biến ví dụ thành kết luận phổ quát",
           "Phản biện được ghi là khả năng, không là dữ kiện đã có"
-        ]
+        ],
+        "question_jp": "手続きの統一と例外的な支援は両立しますか。本文を踏まえて説明してください。"
       }
     },
     {
@@ -2096,7 +2115,8 @@
           "Phân biệt đúng A và B",
           "Nêu được điểm chung",
           "Đề xuất hai thời điểm và hai dạng bằng chứng"
-        ]
+        ],
+        "question_jp": "研修の評価について、二人の共通点と相違点を説明してください。"
       }
     }
   ]

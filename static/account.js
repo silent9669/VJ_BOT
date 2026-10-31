@@ -23,6 +23,17 @@ async function apiFetch(path,options={}) {
     if(options.method==='POST') localStorage.setItem('vjbot_guest_level',body.level);
     return Response.json({level:localStorage.getItem('vjbot_guest_level')||'N5',user_id:guestId});
   }
+  if(route==='/api/completions') {
+    const key='vjbot_guest_completions';
+    const items=JSON.parse(localStorage.getItem(key)||'{}');
+    if(options.method==='POST') {
+      if(body.completed)items[body.activity_id]={...body,completed_at:new Date().toISOString()};
+      else delete items[body.activity_id];
+      localStorage.setItem(key,JSON.stringify(items));
+      return Response.json({completed:body.completed});
+    }
+    return Response.json({items:Object.values(items)});
+  }
   if(route==='/api/progress') return Response.json(progressSummary(guestProgress()));
   if(route==='/api/progress/record') {
     const items=guestProgress(),old=items[body.item_id]||{correct:0,incorrect:0};

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import worker from '../src/worker.js';
 
 test('shared AI and private progress require a session', async () => {
-  for (const path of ['/api/chat','/api/tts','/api/kaiwa/evaluate','/api/progress?user_id=someone']) {
+  for (const path of ['/api/completions','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/progress?user_id=someone']) {
     const response = await worker.fetch(new Request('https://vjbot.test'+path, path.includes('?') ? {} : {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}), {});
     assert.equal(response.status,401,path);
   }
@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -126,4 +126,41 @@ test('a written response persists privately and the latest answer determines rev
   await worker.fetch(request('/api/progress/record',{...body,correct:false,attempt_id:'production-save-002'}),env);
   data=await (await worker.fetch(request('/api/progress'),env)).json();assert.equal(data.items[0].last_correct,0);
   assert.equal((await worker.fetch(request('/api/progress/record',{...body,response_text:'x'.repeat(4001)}),env)).status,400);
+});
+
+
+test('completion is reversible, private, idempotent and separate from answer scores',async()=>{
+  const {env,request}=await authenticated();
+  const payload={activity_id:'lesson:N4:late',kind:'lesson',level:'N4',title:'Báo đến muộn',completed:true,user_id:'victim'};
+  for(let i=0;i<2;i++)assert.equal((await worker.fetch(request('/api/completions',payload),env)).status,200);
+  const data=await (await worker.fetch(request('/api/completions?user_id=victim'),env)).json();
+  assert.equal(data.items.length,1);assert.equal(data.items[0].activity_id,payload.activity_id);
+  assert.equal((await env.DB.prepare('SELECT user_id FROM completions').first()).user_id,'google:qa');
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM progress').first()).n,0);
+  const token='c'.repeat(64);await env.DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(token),'other','Other',Date.now()+60000).run();
+  const other=new Request('https://vjbot.test/api/completions',{headers:{Cookie:'vj_session='+token}});
+  assert.deepEqual((await (await worker.fetch(other,env)).json()).items,[]);
+  assert.equal((await worker.fetch(request('/api/completions',{...payload,completed:false}),env)).status,200);
+  assert.equal((await (await worker.fetch(request('/api/completions'),env)).json()).items.length,0);
+  for(const change of [{completed:'true'},{kind:'wrong'},{activity_id:'<script>'},{title:''}])assert.equal((await worker.fetch(request('/api/completions',{...payload,...change}),env)).status,400);
+  await worker.fetch(request('/api/completions',payload),env);
+  await worker.fetch(request('/api/account/delete',{}),env);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM completions').first()).n,0);
+});
+
+test('reversed chatbot uses selected lesson level, asks before explaining and keeps credentials server-side',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  env.GEMINI_API_KEY='test-only';
+  const lesson={id:'chapter:N3:1',title:'Giải thích kết luận',level:'N3',goal:'Giải thích lại',content:'〜わけだ'};
+  globalThis.fetch=async(url,options)=>{
+    assert.match(url,/generativelanguage.googleapis.com/);assert.equal(options.headers['x-goog-api-key'],'test-only');
+    const payload=JSON.parse(options.body);assert.match(payload.systemInstruction.parts[0].text,/N3/);assert.match(payload.systemInstruction.parts[0].text,/chờ trả lời/);assert.match(payload.systemInstruction.parts[0].text,/〜わけだ/);
+    assert.equal(payload.contents.at(-1).parts[0].text,'Bắt đầu');
+    return Response.json({candidates:[{content:{parts:[{text:'Em thử giải thích mẫu này nhé?'}]}}]});
+  };
+  try{
+    const response=await worker.fetch(request('/api/chat',{message:'Bắt đầu',lesson}),env);assert.equal(response.status,200);
+    const data=await response.json();assert.equal(data.updated_topic.level,'N3');assert.equal(data.updated_topic.id,lesson.id);assert.ok(!JSON.stringify(data).includes('test-only'));
+    assert.equal((await worker.fetch(request('/api/chat',{message:'test',lesson:{...lesson,content:'x'.repeat(4001)}}),env)).status,400);
+  }finally{globalThis.fetch=original;}
 });

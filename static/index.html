@@ -205,7 +205,7 @@
           <div class="landing-container">
             <div class="notebook-home">
               <div class="notebook-intro">
-                <h1>Sổ tay<br><em>tiếng Nhật</em></h1>
+                <h1>Học tiếng Nhật<br><em>cùng thầy Lâm</em></h1><p class="landing-method">Học bài, tự giải thích lại, rồi luyện trong tình huống.</p><div class="landing-levels" aria-label="Chọn cấp độ học"><button type="button" data-start-level="N5">N5</button><button type="button" data-start-level="N4">N4</button><button type="button" data-start-level="N3">N3</button><button type="button" data-start-level="N2">N2</button><button type="button" data-start-level="N1">N1</button></div>
                 <div class="landing-hero-ctas">
                   <button type="button" class="hero-cta-btn primary" id="landing-btn-curriculum">Chọn bài học</button>
                   <button type="button" class="hero-cta-btn secondary" id="landing-btn-start">Hỏi thầy Lâm</button>
@@ -224,7 +224,7 @@
 
         <!-- TAB 1: SENSEI CLASSROOM (REVERSED QUIZ & CHAT) -->
         <section class="tab-panel" id="panel-classroom" hidden>
-          <div class="classroom-layout">
+          <div id="chat-lesson-context" hidden></div><div class="classroom-layout">
 
             <!-- SENSEI STAGE (MASCOT PODIUM) -->
             <aside class="sensei-stage-card" data-od-id="sensei-podium">
@@ -394,7 +394,7 @@
               </div>
 
               <div class="curriculum-view-switch" aria-label="Chế độ học">
-                <button type="button" data-curriculum-view="plan" aria-pressed="true">Lộ trình</button>
+                <button type="button" data-curriculum-view="plan" aria-pressed="true">Bài học & lộ trình</button>
                 <button type="button" data-curriculum-view="library" aria-pressed="false">Thư viện</button>
               </div>
               <!-- Skill filters belong to the library view. -->
@@ -509,7 +509,7 @@
 
 
               <!-- Scenario Picker Grid -->
-              <div class="kaiwa-scenarios-grid" id="kaiwa-scenarios-grid">
+              <label class="kaiwa-level-label">Cấp độ <select id="kaiwa-level"><option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option></select></label><div class="kaiwa-scenarios-grid" id="kaiwa-scenarios-grid">
                 <!-- Rendered dynamically -->
               </div>
             </div>
@@ -521,7 +521,7 @@
                   <span class="kaiwa-scenario-tag" id="kaiwa-prompt-tag">Tiệm tiện lợi (Combini)</span>
                   <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-prompt" title="Nghe Sensei nói">Nghe</button>
                 </div>
-                <div class="kaiwa-prompt-japanese" id="kaiwa-prompt-jp">いらっしゃいませ！お弁当温めますか？</div>
+                <p id="kaiwa-context" class="lesson-japanese-passage" lang="ja" hidden></p><div class="kaiwa-prompt-japanese" id="kaiwa-prompt-jp">いらっしゃいませ！お弁当温めますか？</div>
                 <button type="button" class="stage-btn" id="kaiwa-next-prompt">Câu tiếp →</button><p id="kaiwa-prompt-hint"></p>
                 <div class="kaiwa-prompt-vietnamese" id="kaiwa-prompt-vi">Xin chào quý khách! Cơm hộp có cần hâm nóng không ạ?</div>
               </div>
@@ -548,7 +548,7 @@
                 </div>
               </div>
 
-              <!-- AI Evaluation Result Card -->
+              <div id="kaiwa-completion"></div><!-- AI Evaluation Result Card -->
               <div class="kaiwa-result-card" id="kaiwa-result-card" hidden>
                 <div class="result-header">
                   <span class="result-badge">KẾT QUẢ ĐÁNH GIÁ SENSEI</span>
@@ -646,7 +646,7 @@
                 <span id="quiz-final-score-val">100%</span>
               </div>
               <p id="quiz-result-praise">Xuất sắc! Bạn đã nắm rất vững kiến thức phần này.</p>
-              <div class="result-actions">
+              <div id="quiz-completion"></div><div class="result-actions">
                 <button type="button" class="sketch-btn-cta" id="btn-quiz-restart">Làm lại đề này</button>
                 <button type="button" class="stage-btn" id="btn-quiz-to-classroom">Vào phòng học hỏi Sensei</button>
               </div>
@@ -656,7 +656,7 @@
 
         <!-- TAB 6: MASTERY RADAR & ANALYTICS -->
         <section class="tab-panel" id="panel-mastery" hidden>
-          <div class="mastery-container">
+          <div class="mastery-container"><section class="completed-section"><h2>Bài đã hoàn thành</h2><div id="completed-activities"></div></section>
             <div class="mastery-header-card">
               <h2 class="mastery-title"> Tiến độ học tập</h2>
 
@@ -887,6 +887,7 @@
   <script src="learning.js"></script>
   <script src="study-plan.js"></script>
   <script src="account.js"></script>
+  <script src="completion.js"></script>
   <script src="app.js"></script>
   <script type="module" src="/room.js"></script>
 </body>
