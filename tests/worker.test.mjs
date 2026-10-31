@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import worker from '../src/worker.js';
 
 test('shared AI and private progress require a session', async () => {
-  for (const path of ['/api/completions','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/progress?user_id=someone']) {
+  for (const path of ['/api/exam-attempts','/api/completions','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/progress?user_id=someone']) {
     const response = await worker.fetch(new Request('https://vjbot.test'+path, path.includes('?') ? {} : {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}), {});
     assert.equal(response.status,401,path);
   }
@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -163,4 +163,15 @@ test('reversed chatbot uses selected lesson level, asks before explaining and ke
     const data=await response.json();assert.equal(data.updated_topic.level,'N3');assert.equal(data.updated_topic.id,lesson.id);assert.ok(!JSON.stringify(data).includes('test-only'));
     assert.equal((await worker.fetch(request('/api/chat',{message:'test',lesson:{...lesson,content:'x'.repeat(4001)}}),env)).status,400);
   }finally{globalThis.fetch=original;}
+});
+test('exam attempts persist only for the session owner and reject invalid state',async()=>{
+  const {env,request}=await authenticated();
+  const attempt={paper_id:'N5:2018',status:'running',section:0,deadline:Date.now()+1200000,answers:[[1,...Array(34).fill(null)],Array(32).fill(null),Array(24).fill(null)],user_id:'victim'};
+  assert.equal((await worker.fetch(request('/api/exam-attempts',attempt),env)).status,200);
+  const saved=await worker.fetch(request('/api/exam-attempts?paper_id=N5:2018&user_id=victim'),env);
+  assert.deepEqual((await saved.json()).attempt.answers,attempt.answers);
+  assert.equal((await env.DB.prepare('SELECT user_id FROM exam_attempts').first()).user_id,'google:qa');
+  for(const patch of [{answers:[[9]]},{section:-1},{paper_id:'N9:2018'},{deadline:Date.now()+86400000},{status:'passed'}])assert.equal((await worker.fetch(request('/api/exam-attempts',{...attempt,...patch}),env)).status,400);
+  await worker.fetch(request('/api/account/delete',{}),env);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM exam_attempts').first()).n,0);
 });

@@ -1,3 +1,17 @@
+## 2026-11-01 · Learning workspace and timed exam pass
+
+This pass replaces guest exploration with a public landing and Google sign-in before opening learning routes. Pending routes survive login. The landing follows the supplied [OpenDesign Landing](https://open-design.ai/plugins/example-open-design-landing/) editorial reference with original SVG/paper artwork; the existing vanilla stack remains.
+
+- New dashboard uses account progress and completions. Kaiwa, Kanji, flashcards and JLPT tests each start with N5–N1 level cards. Chat has a larger conversation area and a compact teacher sidebar. Lâm is an original pixel teacher in a green waistcoat, with book and chalk; the 3D room is now an optional dashboard activity.
+- `scripts/crawl_exam_catalog.py` fetches publisher links and numeric answer keys for ten official 2012/2018 workbooks. `static/course/exams.json` records source and answer PDF hashes, original question labels/subquestions, external PDF/audio links and current JLPT section timings. PDFs/audio remain at jlpt.jp; older workbook question counts and recording lengths can differ from current live exams.
+- Simulations run timed sections with locked submissions, breaks, persistent answers/deadlines and raw answer-key scoring. Raw counts do not predict a JLPT scaled score or pass/fail. Native audio controls remain available; this is self-study, not a proctored exam.
+- Migration `0008_exam_attempts.sql` stores the latest attempt per account and paper. Retakes replace that paper's previous attempt. Saves are serialized; leaving an unsaved attempt requires a visible warning. Failed saves can be retried. Account deletion includes attempts.
+- Curriculum, flashcards, Kaiwa and JLPT practice now follow level → lesson list → reference → five-question check → reversible completion. Feature lessons have reloadable URLs and retain their owner through chatbot return. Flashcard review uses only the selected lesson; Kaiwa lesson/session share completion.
+- `static/lesson-checks.js` builds five checks from each lesson's existing exercises, vocabulary and examples. Built-in reading/listening lessons have five authored comprehension questions. External publisher resource links remain resources; official simulations retain their full question counts.
+- Validation: 48 Node tests, 46 Python tests and Worker dry-run build passed (existing classic-script bundling notices). Exhaustive five-question/data-identity checks for every N5–N1 in-app lesson; browser flashcard 5/5 → completion → reload, selected 11-card deck, Kaiwa completion/session synchronization, quiz → chat → lesson reload, and responsive level cards. The return-route regression also rejects a mutation dropping its owner.
+- Fifty additional mixed recognition sets are assembled from attributed OpenJLPT exercises. They are labeled as practice with English glosses, separate from official workbooks.
+- Live QA against the existing Worker verified real chat, Kaiwa evaluation and TTS output with a temporary isolated account. This does not establish that Google's interactive consent flow was completed by a real user.
+
 # Development handoff
 
 ## Level shelves and routed lesson pages

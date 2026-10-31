@@ -36,7 +36,7 @@ test('all levels load once with answerable exercises and attributed reading/list
 
 test('practical roadmaps follow authored goals and link only verified source records',async()=>{
   const context=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(await fs.readFile('static/'+path,'utf8'))})});
-  for(const file of ['jlpt-data.js','learning.js','study-plan.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
+  for(const file of ['jlpt-data.js','learning.js','lesson-checks.js','study-plan.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
   const course=JSON.parse(await fs.readFile('static/course/practical.json','utf8'));
   const sources=JSON.parse(await fs.readFile('static/course/sources.json','utf8'));
   const sourceIds=new Set(sources.lessons.map(s=>s.id));assert.equal(sourceIds.size,72);

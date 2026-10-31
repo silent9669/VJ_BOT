@@ -5,7 +5,7 @@ async function loadCompletions(){
   if(!response.ok)throw new Error('completion');
   const data=await response.json();if(version!==completionVersion)return completionRecords;completionRecords=new Map(data.items.map(x=>[x.activity_id,x]));return completionRecords;
 }
-function activityId(item,level,skill){return item.id || `lesson:${level}:${skill}:${item.lesson}`;}
+function activityId(item,level,skill){return item.completionId || item.id || `lesson:${level}:${skill}:${item.lesson}`;}
 function mountCompletion(host,activity,loaded=false){
   host.replaceChildren();host.classList.add('completion-control');
   const button=document.createElement('button'),status=document.createElement('output');button.type='button';status.setAttribute('aria-live','polite');

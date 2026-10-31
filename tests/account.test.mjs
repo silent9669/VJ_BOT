@@ -45,3 +45,9 @@ test('failed logout keeps the page and explains that the session was not closed'
   await b.context.setupAccount();await b.element('auth-logout').events.click();
   assert.equal(b.reloads(),0);assert.match(b.element('auth-status').textContent,/Chưa đăng xuất/);
 });
+test('signed-out learners cannot write progress through the former guest fallback',async()=>{
+  const b=browser(async path=>path.endsWith('/session')?Response.json({user:null}):Response.json({client_id:'public-client',nonce:'fresh'}));
+  await b.context.setupAccount();
+  assert.equal((await b.context.apiFetch('/api/progress/record',{method:'POST',body:JSON.stringify({item_id:'word',correct:true})})).status,401);
+  assert.equal(b.storage.has('vjbot_guest_progress'),false);
+});

@@ -1,3 +1,4 @@
+import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
@@ -116,7 +117,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, {status:204});
     try {
       if (url.pathname.startsWith('/api/auth/')) return await authRoute(request,env);
-      const privateRoutes = ['/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
+      const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
         if(!user) return jsonResponse({detail:'Đăng nhập Google để dùng Sensei và đồng bộ tiến độ.'},401);
@@ -142,6 +143,7 @@ export default {
           await env.DB.prepare('DELETE FROM ai_usage WHERE bucket < ?').bind(bucket-60).run();
         }
       }
+      if(url.pathname==='/api/exam-attempts')return await examRoute(request,url,env,url.searchParams.get('user_id'));
       // Favicon handler (prevent 500/404)
       if (url.pathname === "/favicon.ico") {
         return new Response(FAVICON_SVG, {
@@ -202,7 +204,7 @@ export default {
       }
       if (url.pathname === '/api/account/delete' && request.method === 'POST') {
         const userId=url.searchParams.get('user_id');
-        await env.DB.batch(['completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+        await env.DB.batch(['exam_attempts','completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
         return jsonResponse({success:true});
       }
 

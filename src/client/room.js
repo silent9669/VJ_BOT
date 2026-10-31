@@ -58,7 +58,7 @@ function mount(){
   box(.07,1.1,.07,2.45,1.05,-.6,0x5d7052,'plant');
   for(let i=0;i<7;i++){const g=new THREE.SphereGeometry(.23,6,4);resources.push(g);const leaf=new THREE.Mesh(g,material(i%2?0x738666:0x536c51));leaf.scale.set(1.6,.5,.7);leaf.position.set(2.45+Math.sin(i*2)*.3,.7+i*.13,-.6+Math.cos(i*2)*.22);leaf.rotation.z=i%2?.55:-.55;leaf.userData.key='plant';targets.push(leaf);room.add(leaf);}
   // The same original pixel teacher used by chat, settings and the dock.
-  const teacher=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false}));teacher.position.set(-1.95,1.25,-.55);teacher.scale.set(1.35,2.4,1);room.add(teacher);resources.push(teacher.material);
+  const teacher=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false}));teacher.position.set(-1.25,1.25,1.1);teacher.scale.set(1.35,2.4,1);room.add(teacher);resources.push(teacher.material);
   new THREE.TextureLoader().load('/assets/lam/teacher.svg',texture=>{if(disposed){texture.dispose();return;}texture.magFilter=THREE.NearestFilter;texture.minFilter=THREE.NearestFilter;texture.colorSpace=THREE.SRGBColorSpace;teacher.material.map=texture;teacher.material.needsUpdate=true;resources.push(texture);render();});
   const ringGeo=new THREE.TorusGeometry(.48,.018,4,40);resources.push(ringGeo);const ringMat=new THREE.MeshBasicMaterial({color:0xad392e});resources.push(ringMat);const ring=new THREE.Mesh(ringGeo,ringMat);ring.rotation.x=-Math.PI/2;room.add(ring);
   const ringPositions={book:[-.1,1.43,.3],desk:[0,1.34,.35],chair:[.65,.79,1.65],plant:[2.45,.02,-.6]};

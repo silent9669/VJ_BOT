@@ -5,6 +5,11 @@ function parseAppRoute(hash){
   let parts;
   try{parts=hash.replace(/^#/,'').split('/').map(decodeURIComponent);}catch{return {tab:'landing'};}
   const [tab,level,view,skill,id]=parts;
+  if(['kaiwa','kanji','flashcards','quiz'].includes(tab)){
+    const validLevel=learningLevels.includes(level)?level:undefined;
+    if(validLevel && view==='lesson' && skill && ['kaiwa','flashcards','quiz'].includes(tab))return {tab:'lesson',owner:tab,level,skill:tab==='flashcards'?'vocabulary':tab==='kaiwa'?'listening':'reading',id:skill};
+    return {tab,level:validLevel,view:['practice','simulation','review','session'].includes(view)?view:undefined,id:skill};
+  }
   if(tab!=='curriculum')return {tab:Object.hasOwn(TAB_TITLES,tab) && tab!=='lesson'?tab:'landing'};
   if(!level)return {tab:'curriculum'};
   if(!learningLevels.includes(level))return {tab:'curriculum'};
@@ -13,6 +18,8 @@ function parseAppRoute(hash){
   return {tab:'curriculum',level,view:'plan'};
 }
 function appRouteHash(tab,route={}){
+  if(['kaiwa','kanji','flashcards','quiz'].includes(tab) && route.level)return `#${tab}/${route.level}${route.view?`/${route.view}/${encodeURIComponent(route.id || '0')}`:''}`;
+  if(tab==='lesson' && route.owner)return `#${route.owner}/${route.level}/lesson/${encodeURIComponent(route.id)}`;
   if(tab==='lesson')return `#curriculum/${route.level}/lesson/${route.skill}/${encodeURIComponent(route.id)}`;
   if(tab==='curriculum' && route.level)return `#curriculum/${route.level}${route.view==='library'?`/library/${route.skill || 'grammar'}`:''}`;
   return `#${tab}`;
@@ -21,14 +28,17 @@ function openLevelCourse(level,view='plan',skill='grammar',fromHistory=false){
   switchTab('curriculum',{level,view,skill,fromHistory});
 }
 function returnToCourse(){
+  if(currentLesson?.owner){switchTab(currentLesson.owner,{level:currentLesson.level});return;}
+  if(currentLesson?.returnTab==='kanji'){switchTab('kanji',{level:currentLesson.level});return;}
   const level=currentLesson?.level || activeCurriculumLevel;
   const view=currentLesson?.returnView || 'plan';
   openLevelCourse(level,view,view==='library'?currentLesson?.skill || 'grammar':'grammar');
 }
 async function restoreAppRoute(){
   const route=parseAppRoute(location.hash);
+  if(!authorizePage(route.tab,route))return;
   if(route.tab!=='lesson'){switchTab(route.tab,{...route,fromHistory:true});return;}
-  switchTab('lesson',{...route,fromHistory:true});
+  if(switchTab('lesson',{...route,fromHistory:true})===false)return;
   const version=navigationVersion;
   const host=document.getElementById('modal-lesson-body');host.textContent='Đang tải bài học…';
   document.getElementById('modal-lesson-title').textContent='Bài học';
@@ -37,6 +47,7 @@ async function restoreAppRoute(){
   try{
     await Promise.all([ensureLessons(route.level),loadPracticalCourse()]);
     if(version!==navigationVersion)return;
+    if(route.owner){const item=findFeatureLesson(route.owner,route.level,route.id);if(!item)throw new Error('missing');showLessonDetail(item,route.level,route.skill,true,route.owner);return;}
     const units=createStudyPlan(route.level);
     const lessons=[...units.flatMap(u=>u.steps.filter(s=>!s.kind).map(s=>s.lesson)),...(window.JLPT_DATA.curriculum[route.level].skills[route.skill]||[])];
     let item=lessons.find(l=>activityId(l,route.level,route.skill)===route.id);
@@ -83,7 +94,7 @@ function setupSidebar(){
   const sidebar=document.getElementById('app-sidebar'),toggle=document.getElementById('btn-mobile-sidebar'),backdrop=document.getElementById('sidebar-backdrop');
   const mobile=matchMedia('(max-width: 899px)');
   let expanded=localStorage.getItem('vjbot_sidebar_expanded')==='true';
-  const paths={landing:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',classroom:'M4 4h16v12H4zM8 21l4-5 4 5M8 8h8M8 12h4',curriculum:'M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3zM12 6v16',flashcards:'M7 3h14v15H7zM3 7v14h14',kaiwa:'M4 4h16v12H9l-5 5zM8 8h8M8 12h5',quiz:'M6 3h12v18H6zM9 7h6M9 11h6M9 15h4',mastery:'M4 20V10M10 20V4M16 20v-7M22 20H2',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
+  const paths={dashboard:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',kanji:'M4 4h16M12 2v6M6 9h12M12 9v12M4 20l8-8 8 8',landing:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',classroom:'M4 4h16v12H4zM8 21l4-5 4 5M8 8h8M8 12h4',curriculum:'M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3zM12 6v16',flashcards:'M7 3h14v15H7zM3 7v14h14',kaiwa:'M4 4h16v12H9l-5 5zM8 8h8M8 12h5',quiz:'M6 3h12v18H6zM9 7h6M9 11h6M9 15h4',mastery:'M4 20V10M10 20V4M16 20v-7M22 20H2',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
   for(const button of sidebar.querySelectorAll('[data-tab]')){
     const label=button.textContent.trim();button.setAttribute('aria-label',label);button.title=label;
     button.insertAdjacentHTML('afterbegin',`<svg class="rail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[button.dataset.tab]}"/></svg>`);

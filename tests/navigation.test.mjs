@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
 async function navigation(){
-  const context=vm.createContext({TAB_TITLES:{landing:'Home',curriculum:'Courses',lesson:'Lesson',quiz:'Quiz',classroom:'Teacher'}});
+  const context=vm.createContext({authorizePage:()=>true,TAB_TITLES:{landing:'Home',curriculum:'Courses',lesson:'Lesson',quiz:'Quiz',classroom:'Teacher'}});
   vm.runInContext(await fs.readFile('static/navigation.js','utf8'),context);
   return context;
 }
@@ -51,11 +51,18 @@ test('browser navigation is ready even while chat history is still loading',asyn
   const init=source.slice(source.indexOf('(async function init() {'),source.indexOf('\nif (typeof window !== "undefined")'));
   const listeners=new Map();let finishHistory,restored=0;
   const noop=()=>{};
-  const c=vm.createContext({initLoadingScreen:noop,initJlptCountdown:noop,initAnatomyTypewriter:noop,mascotMgr:{updateAllSpriteElements:noop},setupAccount:async()=>{},setupEventListeners:noop,setupFloatingSensei:noop,setupSettings:noop,loadGreeting:noop,loadProgress:noop,renderBubble:noop,userId:'qa',location:{hash:'#curriculum'},history:{},document:{getElementById:()=>({})},window:{addEventListener:(type,fn)=>listeners.set(type,fn)},restoreAppRoute:()=>{restored++;},apiFetch:async path=>path.startsWith('/api/profile')?{ok:true,json:async()=>({level:'N5'})}:new Promise(resolve=>{finishHistory=resolve;})});
+  const c=vm.createContext({signedInUser:{name:'QA'},setupWorkspace:noop,sessionStorage:{getItem:()=>null},initLoadingScreen:noop,initJlptCountdown:noop,initAnatomyTypewriter:noop,mascotMgr:{updateAllSpriteElements:noop},setupAccount:async()=>{},setupEventListeners:noop,setupFloatingSensei:noop,setupSettings:noop,loadGreeting:noop,loadProgress:noop,renderBubble:noop,userId:'qa',location:{hash:'#curriculum'},history:{},document:{getElementById:()=>({})},window:{addEventListener:(type,fn)=>listeners.set(type,fn)},restoreAppRoute:()=>{restored++;},apiFetch:async path=>path.startsWith('/api/profile')?{ok:true,json:async()=>({level:'N5'})}:new Promise(resolve=>{finishHistory=resolve;})});
   const pending=vm.runInContext(init,c);
   await new Promise(resolve=>setTimeout(resolve,0));
   assert.ok(finishHistory,'history request started but has not finished');
   assert.equal(typeof listeners.get('hashchange'),'function');
   listeners.get('hashchange')();assert.equal(restored,2);
   finishHistory({ok:true,json:async()=>[]});await pending;
+});
+test('cancelled lesson history navigation stops before loading or changing lesson state',async()=>{
+  const c=await navigation();let checks=0,loaded=false;
+  c.location={hash:'#curriculum/N3/lesson/grammar/example'};c.switchTab=()=>{checks++;return false;};
+  c.ensureLessons=()=>{loaded=true;};
+  c.document={getElementById(){throw new Error('cancelled route mutated the page');}};
+  await c.restoreAppRoute();assert.equal(checks,1);assert.equal(loaded,false);
 });

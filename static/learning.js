@@ -27,7 +27,8 @@ async function ensureLessons(level) {
     const sentences=vocab.flatMap(v=>(v.examples||[]).filter(e=>e.ja&&e.en&&e.tatoeba_id).map(e=>({...e,word:v.word}))).filter(e=>{if(seen.has(e.ja))return false;seen.add(e.ja);return true;});
     for(let i=0;i<sentences.length;i+=10) {
       const batch=sentences.slice(i,i+10),number=i/10+1;
-      const common={lesson:number,source:'OpenJLPT',language:'en',summary:'Câu ví dụ theo từ vựng · bản dịch tiếng Anh',examples:batch.map(e=>({jp:e.ja,vi:e.en,source:`https://tatoeba.org/sentences/show/${e.tatoeba_id}`,furigana:e.furigana}))};
+      const targetWords=[...new Set(batch.map(e=>e.word))].map(word=>vocab.find(v=>v.word===word)).filter(Boolean).map(v=>({jp:v.word,reading:v.reading,vi:v.meanings.join('; ')}));
+      const common={targetWords,lesson:number,source:'OpenJLPT',language:'en',summary:'Câu ví dụ theo từ vựng · bản dịch tiếng Anh',examples:batch.map(e=>({jp:e.ja,vi:e.en,source:`https://tatoeba.org/sentences/show/${e.tatoeba_id}`,furigana:e.furigana}))};
       skills.reading.push({...common,id:`sentences:${level}:${number}`,title:`Đọc câu ${number} · ${batch[0].word}`});
       skills.listening.push({...common,id:`listening:${level}:${number}`,title:`Nghe chép câu ${number} · ${batch[0].word}`,dictation:true});
     }
@@ -60,7 +61,7 @@ window.escapeHtml=escapeHtml;
 window.ensureLessons=ensureLessons;
 function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
   const container=document.getElementById('lesson-exercises');
-  const questions=item.drills || item.questions || (item.q?[item]:[]);
+  const questions=lessonQuestions(item,level,skill);
   async function record(id,correct,display,attempt_id,response_text){
     const response=await apiFetch('/api/progress/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,display,level,item_type:skill,correct,quality:correct?4:1,attempt_id,response_text})});
     if(!response.ok)throw new Error('save');
@@ -80,7 +81,6 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
       catch{status.textContent='Chưa lưu được. Bấm Lưu lại để gửi đúng bài vừa viết.';save.textContent='Lưu lại';}
       finally{save.disabled=false;}
     };
-    return;
   }
   if(item.dictation) {
     for(const [index,example] of (item.examples||[]).entries()) {
@@ -98,7 +98,6 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
       }
       reveal.onclick=()=>{answer.hidden=false;};section.append(play,input,reveal,answer,status);container.append(section);
     }
-    return;
   }
   if(item.script_jp){const listen=document.createElement('button');listen.className='stage-btn';listen.textContent='Nghe bài đọc';listen.onclick=()=>playGeminiTTS(item.script_jp);container.append(listen);}
   if(!questions.length)return;
