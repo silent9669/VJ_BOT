@@ -1,0 +1,2103 @@
+{
+  "version": 1,
+  "authorship": "VJBot original Vietnamese explanations, Japanese scenarios and questions; not official JLPT questions. Human editorial review is still needed.",
+  "level_note": "N5–N1 are study tracks, not a certified mapping to Irodori A1/A2/A2-B1. Advanced units are short skill practice, not full-length examination passages.",
+  "units": [
+    {
+      "id": "practical:v1:N5:introductions",
+      "level": "N5",
+      "title": "Gặp đồng nghiệp lần đầu",
+      "goal": "Tự giới thiệu tên, quê quán và công việc trong 3 câu.",
+      "minutes": 25,
+      "prerequisites": [],
+      "source_ids": [
+        "irodori:starter:3"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "名前",
+          "reading": "なまえ",
+          "vi": "tên"
+        },
+        {
+          "jp": "会社",
+          "reading": "かいしゃ",
+          "vi": "công ty"
+        },
+        {
+          "jp": "社員",
+          "reading": "しゃいん",
+          "vi": "nhân viên"
+        },
+        {
+          "jp": "学生",
+          "reading": "がくせい",
+          "vi": "học sinh, sinh viên"
+        },
+        {
+          "jp": "ベトナム",
+          "reading": "ベトナム",
+          "vi": "Việt Nam"
+        },
+        {
+          "jp": "日本",
+          "reading": "にほん",
+          "vi": "Nhật Bản"
+        }
+      ],
+      "formula": "私は［tên］です。［nước］から来ました。",
+      "note": "は đánh dấu chủ đề và đọc là wa. Khi hỏi lịch sự, thêm か ở cuối câu. Không thêm です sau 来ました.",
+      "dialogue": [
+        {
+          "jp": "はじめまして。私はアンです。ベトナムから来ました。",
+          "vi": "Rất vui được gặp bạn. Tôi là An, đến từ Việt Nam."
+        },
+        {
+          "jp": "田中です。アンさんは学生ですか。",
+          "vi": "Tôi là Tanaka. An là sinh viên phải không?"
+        },
+        {
+          "jp": "いいえ、会社員です。よろしくお願いします。",
+          "vi": "Không, tôi là nhân viên công ty. Mong được giúp đỡ."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N5:introductions:task:0",
+          "q": "An làm nghề gì?",
+          "opts": [
+            "Sinh viên",
+            "Nhân viên công ty",
+            "Giáo viên"
+          ],
+          "ans": "Nhân viên công ty",
+          "explanation": "An phủ định 学生 và nói 会社員です."
+        },
+        {
+          "id": "practical:v1:N5:introductions:task:1",
+          "q": "Điền câu giới thiệu: 私（　）アンです。",
+          "opts": [
+            "は",
+            "を",
+            "で"
+          ],
+          "ans": "は",
+          "explanation": "Tên của người nói được nêu sau chủ đề 私は."
+        },
+        {
+          "id": "practical:v1:N5:introductions:task:2",
+          "q": "Đáp lại はじめまして phù hợp nhất là gì?",
+          "opts": [
+            "よろしくお願いします。",
+            "いただきます。",
+            "おやすみなさい。"
+          ],
+          "ans": "よろしくお願いします。",
+          "explanation": "よろしくお願いします dùng khi bắt đầu làm quen, không dùng câu chào trước bữa ăn."
+        }
+      ],
+      "production": {
+        "prompt": "Viết lời tự giới thiệu của chính bạn: tên, quê quán và nghề nghiệp.",
+        "model": "はじめまして。私はリンです。ベトナムから来ました。学生です。よろしくお願いします。",
+        "criteria": [
+          "Có tên của bạn",
+          "Có quê quán và nghề nghiệp",
+          "Có lời chào mở đầu hoặc kết thúc"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N5:ordering",
+      "level": "N5",
+      "title": "Gọi món và xác nhận số lượng",
+      "goal": "Gọi hai món, nói số lượng và hỏi giá.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N5:introductions"
+      ],
+      "source_ids": [
+        "irodori:starter:6"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "水",
+          "reading": "みず",
+          "vi": "nước"
+        },
+        {
+          "jp": "お茶",
+          "reading": "おちゃ",
+          "vi": "trà"
+        },
+        {
+          "jp": "定食",
+          "reading": "ていしょく",
+          "vi": "suất ăn"
+        },
+        {
+          "jp": "一つ",
+          "reading": "ひとつ",
+          "vi": "một cái, một phần"
+        },
+        {
+          "jp": "二つ",
+          "reading": "ふたつ",
+          "vi": "hai cái, hai phần"
+        },
+        {
+          "jp": "いくら",
+          "reading": "いくら",
+          "vi": "bao nhiêu tiền"
+        }
+      ],
+      "formula": "［món］を［số lượng］ください。",
+      "note": "を đánh dấu món được yêu cầu. 一つ・二つ là số đếm chung. Khi gọi món, nói tên món rồi số lượng giúp nhân viên xác nhận dễ hơn.",
+      "dialogue": [
+        {
+          "jp": "すみません。定食を一つ、お茶を二つください。",
+          "vi": "Cho tôi một suất ăn và hai trà."
+        },
+        {
+          "jp": "はい。全部で千二百円です。",
+          "vi": "Vâng, tất cả là 1.200 yên."
+        },
+        {
+          "jp": "水もお願いします。",
+          "vi": "Cho tôi thêm nước nữa."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N5:ordering:task:0",
+          "q": "Khách gọi bao nhiêu trà?",
+          "opts": [
+            "Một",
+            "Hai",
+            "Ba"
+          ],
+          "ans": "Hai",
+          "explanation": "Khách nói お茶を二つ: 二つ là hai phần, còn 一つ chỉ suất ăn."
+        },
+        {
+          "id": "practical:v1:N5:ordering:task:1",
+          "q": "Điền: 定食（　）一つください。",
+          "opts": [
+            "に",
+            "を",
+            "が"
+          ],
+          "ans": "を",
+          "explanation": "を đi với đối tượng yêu cầu trong mẫu ～をください."
+        },
+        {
+          "id": "practical:v1:N5:ordering:task:2",
+          "q": "Muốn hỏi giá, chọn câu nào?",
+          "opts": [
+            "いくらですか。",
+            "どこですか。",
+            "だれですか。"
+          ],
+          "ans": "いくらですか。",
+          "explanation": "いくら hỏi giá; どこ hỏi nơi, だれ hỏi người."
+        }
+      ],
+      "production": {
+        "prompt": "Đặt hai loại đồ uống hoặc món ăn với số lượng cụ thể, rồi hỏi giá.",
+        "model": "お茶を二つ、水を一つください。全部でいくらですか。",
+        "criteria": [
+          "Có hai loại món hoặc đồ uống",
+          "Mỗi loại có số lượng",
+          "Có câu hỏi giá"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N5:time",
+      "level": "N5",
+      "title": "Đọc giờ làm và hẹn gặp",
+      "goal": "Đọc thời gian bắt đầu, kết thúc và xác nhận giờ hẹn.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N5:ordering"
+      ],
+      "source_ids": [
+        "irodori:starter:9"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "午前",
+          "reading": "ごぜん",
+          "vi": "buổi sáng"
+        },
+        {
+          "jp": "午後",
+          "reading": "ごご",
+          "vi": "buổi chiều"
+        },
+        {
+          "jp": "時間",
+          "reading": "じかん",
+          "vi": "thời gian"
+        },
+        {
+          "jp": "休み",
+          "reading": "やすみ",
+          "vi": "nghỉ"
+        },
+        {
+          "jp": "仕事",
+          "reading": "しごと",
+          "vi": "công việc"
+        },
+        {
+          "jp": "半",
+          "reading": "はん",
+          "vi": "rưỡi"
+        }
+      ],
+      "formula": "［giờ］から［giờ］までです。［giờ］に会います。",
+      "note": "から là điểm bắt đầu, まで là điểm kết thúc. に đi sau giờ cụ thể của một sự kiện. 午後三時半 là 15:30.",
+      "dialogue": [
+        {
+          "jp": "仕事は何時から何時までですか。",
+          "vi": "Công việc từ mấy giờ đến mấy giờ?"
+        },
+        {
+          "jp": "午前九時から午後五時までです。昼休みは十二時から一時までです。",
+          "vi": "Từ 9 giờ sáng đến 5 giờ chiều. Nghỉ trưa từ 12 đến 1 giờ."
+        },
+        {
+          "jp": "では、午後五時半に駅で会いましょう。",
+          "vi": "Vậy gặp ở ga lúc 5 giờ rưỡi chiều nhé."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N5:time:task:0",
+          "q": "Giờ hẹn là mấy giờ?",
+          "opts": [
+            "15:30",
+            "17:00",
+            "17:30"
+          ],
+          "ans": "17:30",
+          "explanation": "Câu hẹn là 午後五時半. 午後 là buổi chiều, 五時半 là 5 giờ rưỡi, tức 17:30."
+        },
+        {
+          "id": "practical:v1:N5:time:task:1",
+          "q": "Điền: 九時から五時（　）です。",
+          "opts": [
+            "まで",
+            "から",
+            "を"
+          ],
+          "ans": "まで",
+          "explanation": "まで kết thúc khoảng thời gian."
+        },
+        {
+          "id": "practical:v1:N5:time:task:2",
+          "q": "Nghỉ trưa kéo dài bao lâu?",
+          "opts": [
+            "30 phút",
+            "Một giờ",
+            "Hai giờ"
+          ],
+          "ans": "Một giờ",
+          "explanation": "Khoảng 12:00–13:00 dài một giờ."
+        }
+      ],
+      "production": {
+        "prompt": "Viết giờ học hoặc làm việc của bạn và đề nghị một giờ gặp sau đó.",
+        "model": "授業は午前八時から午後三時までです。午後四時に駅で会いましょう。",
+        "criteria": [
+          "Nêu cả giờ bắt đầu và kết thúc",
+          "Giờ hẹn nằm sau giờ kết thúc",
+          "Dùng に với giờ hẹn"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N5:transport",
+      "level": "N5",
+      "title": "Chọn xe đến đúng nơi",
+      "goal": "Hỏi tuyến xe và xác nhận điểm xuống.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N5:time"
+      ],
+      "source_ids": [
+        "irodori:starter:13"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "駅",
+          "reading": "えき",
+          "vi": "ga"
+        },
+        {
+          "jp": "空港",
+          "reading": "くうこう",
+          "vi": "sân bay"
+        },
+        {
+          "jp": "バス",
+          "reading": "バス",
+          "vi": "xe buýt"
+        },
+        {
+          "jp": "電車",
+          "reading": "でんしゃ",
+          "vi": "tàu điện"
+        },
+        {
+          "jp": "次",
+          "reading": "つぎ",
+          "vi": "tiếp theo"
+        },
+        {
+          "jp": "降ります",
+          "reading": "おります",
+          "vi": "xuống xe"
+        }
+      ],
+      "formula": "この［xe］は［nơi］に行きますか。［trạm］で降ります。",
+      "note": "に chỉ đích đến; で chỉ địa điểm thực hiện hành động xuống xe. Hỏi rõ đích đến trước khi lên xe.",
+      "dialogue": [
+        {
+          "jp": "このバスは空港に行きますか。",
+          "vi": "Xe buýt này có đi sân bay không?"
+        },
+        {
+          "jp": "いいえ。駅に行きます。空港へは次のバスです。",
+          "vi": "Không, xe đi ga. Đến sân bay thì đi chuyến tiếp theo."
+        },
+        {
+          "jp": "わかりました。次のバスを待ちます。",
+          "vi": "Tôi hiểu rồi. Tôi sẽ đợi chuyến tiếp theo."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N5:transport:task:0",
+          "q": "Người đi sân bay nên làm gì?",
+          "opts": [
+            "Lên xe đang hỏi",
+            "Đợi xe tiếp theo",
+            "Xuống ở ga rồi đi bộ"
+          ],
+          "ans": "Đợi xe tiếp theo",
+          "explanation": "Người trả lời nói 空港へは次のバスです."
+        },
+        {
+          "id": "practical:v1:N5:transport:task:1",
+          "q": "Điền: 駅（　）降ります。",
+          "opts": [
+            "を",
+            "で",
+            "が"
+          ],
+          "ans": "で",
+          "explanation": "で chỉ nơi diễn ra hành động 降ります."
+        },
+        {
+          "id": "practical:v1:N5:transport:task:2",
+          "q": "Xe đang hỏi đi đâu?",
+          "opts": [
+            "Sân bay",
+            "Ga",
+            "Công ty"
+          ],
+          "ans": "Ga",
+          "explanation": "Người trả lời xác nhận 駅に行きます."
+        }
+      ],
+      "production": {
+        "prompt": "Viết câu hỏi xe có đến ga không, rồi nói bạn sẽ xuống ở ga.",
+        "model": "このバスは駅に行きますか。駅で降ります。",
+        "criteria": [
+          "Có câu hỏi xác nhận đích đến",
+          "Có điểm xuống cụ thể",
+          "Phân biệt に行きます và で降ります"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N5:shopping",
+      "level": "N5",
+      "title": "Mua đồ trong ngân sách",
+      "goal": "Hỏi giá, chọn số lượng và tính tổng đơn giản.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N5:transport"
+      ],
+      "source_ids": [
+        "irodori:starter:16"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "円",
+          "reading": "えん",
+          "vi": "yên"
+        },
+        {
+          "jp": "安い",
+          "reading": "やすい",
+          "vi": "rẻ"
+        },
+        {
+          "jp": "高い",
+          "reading": "たかい",
+          "vi": "đắt"
+        },
+        {
+          "jp": "傘",
+          "reading": "かさ",
+          "vi": "ô, dù"
+        },
+        {
+          "jp": "店",
+          "reading": "みせ",
+          "vi": "cửa hàng"
+        },
+        {
+          "jp": "全部",
+          "reading": "ぜんぶ",
+          "vi": "tất cả"
+        }
+      ],
+      "formula": "これはいくらですか。［vật］を［số lượng］ください。",
+      "note": "これ chỉ vật ở gần người nói. この đứng trước danh từ: この傘. Xác nhận tổng bằng 全部でいくらですか.",
+      "dialogue": [
+        {
+          "jp": "この傘はいくらですか。",
+          "vi": "Cái ô này bao nhiêu tiền?"
+        },
+        {
+          "jp": "一本五百円です。",
+          "vi": "Một chiếc là 500 yên."
+        },
+        {
+          "jp": "では、二本ください。",
+          "vi": "Vậy cho tôi hai chiếc."
+        },
+        {
+          "jp": "全部で千円です。",
+          "vi": "Tổng cộng 1.000 yên."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N5:shopping:task:0",
+          "q": "Hai ô giá bao nhiêu?",
+          "opts": [
+            "500 yên",
+            "1.000 yên",
+            "1.500 yên"
+          ],
+          "ans": "1.000 yên",
+          "explanation": "Một chiếc giá 五百円 (500 yên); 二本 là hai chiếc nên tổng là 1.000 yên."
+        },
+        {
+          "id": "practical:v1:N5:shopping:task:1",
+          "q": "Cụm nào đúng trước danh từ 傘?",
+          "opts": [
+            "これ傘",
+            "この傘",
+            "ここ傘"
+          ],
+          "ans": "この傘",
+          "explanation": "この bổ nghĩa cho danh từ; これ tự đứng làm danh từ."
+        },
+        {
+          "id": "practical:v1:N5:shopping:task:2",
+          "q": "Có 800 yên, mua tối đa được mấy ô?",
+          "opts": [
+            "Một",
+            "Hai",
+            "Ba"
+          ],
+          "ans": "Một",
+          "explanation": "Một ô 500 yên, hai ô 1.000 yên vượt ngân sách."
+        }
+      ],
+      "production": {
+        "prompt": "Bạn cần một chiếc ô. Hỏi giá và nói muốn mua một chiếc.",
+        "model": "この傘はいくらですか。一本ください。",
+        "criteria": [
+          "Có câu hỏi giá",
+          "Dùng この trước danh từ",
+          "Nêu một chiếc bằng 一本"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N5:asking-help",
+      "level": "N5",
+      "title": "Nhờ giúp khi chưa hiểu",
+      "goal": "Xin nhắc lại và hỏi cách đọc một từ.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N5:shopping"
+      ],
+      "source_ids": [
+        "irodori:starter:2"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "もう一度",
+          "reading": "もういちど",
+          "vi": "một lần nữa"
+        },
+        {
+          "jp": "ゆっくり",
+          "reading": "ゆっくり",
+          "vi": "chậm"
+        },
+        {
+          "jp": "言います",
+          "reading": "いいます",
+          "vi": "nói"
+        },
+        {
+          "jp": "読みます",
+          "reading": "よみます",
+          "vi": "đọc"
+        },
+        {
+          "jp": "意味",
+          "reading": "いみ",
+          "vi": "ý nghĩa"
+        },
+        {
+          "jp": "わかります",
+          "reading": "わかります",
+          "vi": "hiểu"
+        }
+      ],
+      "formula": "もう一度、ゆっくり言ってください。",
+      "note": "～てください nhờ làm một việc. Khi chưa hiểu, nói phần nào mình chưa hiểu rồi yêu cầu cụ thể; không cần giả vờ đã hiểu.",
+      "dialogue": [
+        {
+          "jp": "すみません。「入口」は何と読みますか。",
+          "vi": "Xin lỗi, chữ 入口 đọc thế nào?"
+        },
+        {
+          "jp": "「いりぐち」です。",
+          "vi": "Đọc là iriguchi."
+        },
+        {
+          "jp": "もう一度、ゆっくり言ってください。",
+          "vi": "Xin nói lại chậm một lần nữa."
+        },
+        {
+          "jp": "い・り・ぐ・ち、です。",
+          "vi": "Là i-ri-gu-chi."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N5:asking-help:task:0",
+          "q": "Người học đang cần trợ giúp gì?",
+          "opts": [
+            "Cách đọc chữ",
+            "Giá vé",
+            "Giờ mở cửa"
+          ],
+          "ans": "Cách đọc chữ",
+          "explanation": "何と読みますか hỏi cách đọc."
+        },
+        {
+          "id": "practical:v1:N5:asking-help:task:1",
+          "q": "ゆっくり yêu cầu điều gì?",
+          "opts": [
+            "Nói to hơn",
+            "Nói chậm hơn",
+            "Viết bằng bút"
+          ],
+          "ans": "Nói chậm hơn",
+          "explanation": "ゆっくり nói về tốc độ chậm."
+        },
+        {
+          "id": "practical:v1:N5:asking-help:task:2",
+          "q": "Để nhờ nói lại, chọn câu nào?",
+          "opts": [
+            "もう一度言ってください。",
+            "初めまして。",
+            "ごちそうさまでした。"
+          ],
+          "ans": "もう一度言ってください。",
+          "explanation": "もう一度 nghĩa là một lần nữa."
+        }
+      ],
+      "production": {
+        "prompt": "Bạn không hiểu một từ. Viết câu hỏi cách đọc và nhờ người đối thoại nói chậm.",
+        "model": "すみません。「出口」は何と読みますか。もう一度、ゆっくり言ってください。",
+        "criteria": [
+          "Có từ hoặc chữ cần hỏi",
+          "Có yêu cầu nhắc lại",
+          "Dùng cách nói lịch sự"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N4:late",
+      "level": "N4",
+      "title": "Báo đến muộn và hẹn lại",
+      "goal": "Nói lý do, thời gian trễ và đề nghị cách xử lý.",
+      "minutes": 25,
+      "prerequisites": [],
+      "source_ids": [
+        "irodori:elementary01:7"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "遅れます",
+          "reading": "おくれます",
+          "vi": "đến muộn"
+        },
+        {
+          "jp": "道",
+          "reading": "みち",
+          "vi": "đường"
+        },
+        {
+          "jp": "迷います",
+          "reading": "まよいます",
+          "vi": "lạc"
+        },
+        {
+          "jp": "連絡",
+          "reading": "れんらく",
+          "vi": "liên lạc"
+        },
+        {
+          "jp": "待ちます",
+          "reading": "まちます",
+          "vi": "đợi"
+        },
+        {
+          "jp": "到着",
+          "reading": "とうちゃく",
+          "vi": "đến nơi"
+        }
+      ],
+      "formula": "［lý do］ので、［kết quả］。",
+      "note": "ので nối nguyên nhân với kết quả; thường mềm hơn cách nêu thẳng bằng から trong lời giải thích. Nêu cả thời gian dự kiến để người nhận có thể sắp xếp.",
+      "dialogue": [
+        {
+          "jp": "すみません。道に迷ったので、十分ぐらい遅れます。",
+          "vi": "Xin lỗi, vì bị lạc nên tôi sẽ trễ khoảng 10 phút."
+        },
+        {
+          "jp": "大丈夫です。駅の東口で待っています。",
+          "vi": "Không sao. Tôi đang đợi ở cửa đông của ga."
+        },
+        {
+          "jp": "ありがとうございます。着いたら連絡します。",
+          "vi": "Cảm ơn. Khi đến tôi sẽ liên lạc."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N4:late:task:0",
+          "q": "Người nhận nên đợi ở đâu?",
+          "opts": [
+            "Cửa tây",
+            "Cửa đông",
+            "Trong cửa hàng"
+          ],
+          "ans": "Cửa đông",
+          "explanation": "Người nhận nói 駅の東口で待っています: đang đợi tại cửa đông của ga."
+        },
+        {
+          "id": "practical:v1:N4:late:task:1",
+          "q": "Điền: 道に迷った（　）、遅れます。",
+          "opts": [
+            "ので",
+            "まで",
+            "だけ"
+          ],
+          "ans": "ので",
+          "explanation": "ので liên kết lý do bị lạc với kết quả đến muộn."
+        },
+        {
+          "id": "practical:v1:N4:late:task:2",
+          "q": "Khi đến nơi người nói sẽ làm gì?",
+          "opts": [
+            "Gọi hoặc nhắn liên lạc",
+            "Đi về ngay",
+            "Đổi sang cửa tây"
+          ],
+          "ans": "Gọi hoặc nhắn liên lạc",
+          "explanation": "着いたら連絡します là sẽ liên lạc khi tới."
+        }
+      ],
+      "production": {
+        "prompt": "Nhắn cho đồng nghiệp: tàu trễ, bạn đến muộn 15 phút và sẽ báo khi tới.",
+        "model": "電車が遅れているので、十五分ぐらい遅れます。着いたら連絡します。すみません。",
+        "criteria": [
+          "Nêu lý do",
+          "Nêu thời gian trễ dự kiến",
+          "Nêu hành động tiếp theo"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N4:leave",
+      "level": "N4",
+      "title": "Xin nghỉ và bàn giao",
+      "goal": "Xin phép nghỉ, giải thích và nêu cách bàn giao.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N4:late"
+      ],
+      "source_ids": [
+        "irodori:elementary01:14"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "休暇",
+          "reading": "きゅうか",
+          "vi": "nghỉ phép"
+        },
+        {
+          "jp": "午前中",
+          "reading": "ごぜんちゅう",
+          "vi": "trong buổi sáng"
+        },
+        {
+          "jp": "病院",
+          "reading": "びょういん",
+          "vi": "bệnh viện"
+        },
+        {
+          "jp": "資料",
+          "reading": "しりょう",
+          "vi": "tài liệu"
+        },
+        {
+          "jp": "送ります",
+          "reading": "おくります",
+          "vi": "gửi"
+        },
+        {
+          "jp": "許可",
+          "reading": "きょか",
+          "vi": "sự cho phép"
+        }
+      ],
+      "formula": "［động từ thể て］もいいですか。",
+      "note": "～てもいいですか xin phép. Sau lời xin nghỉ, thông báo cách bàn giao để người nghe không phải đoán công việc còn lại.",
+      "dialogue": [
+        {
+          "jp": "明日の午前中、休んでもいいですか。病院に行きたいんです。",
+          "vi": "Sáng mai tôi xin nghỉ được không? Tôi muốn đi bệnh viện."
+        },
+        {
+          "jp": "はい。会議の資料はどうしますか。",
+          "vi": "Được. Tài liệu cuộc họp thì sao?"
+        },
+        {
+          "jp": "今日中にメールで送ります。",
+          "vi": "Tôi sẽ gửi qua email trong hôm nay."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N4:leave:task:0",
+          "q": "Xin nghỉ khi nào?",
+          "opts": [
+            "Cả ngày hôm nay",
+            "Sáng ngày mai",
+            "Chiều ngày mai"
+          ],
+          "ans": "Sáng ngày mai",
+          "explanation": "明日の午前中 chỉ buổi sáng ngày mai, không phải toàn bộ ngày."
+        },
+        {
+          "id": "practical:v1:N4:leave:task:1",
+          "q": "Tài liệu được gửi khi nào?",
+          "opts": [
+            "Trong hôm nay",
+            "Sau khi nghỉ về",
+            "Tuần sau"
+          ],
+          "ans": "Trong hôm nay",
+          "explanation": "今日中に là trong hôm nay."
+        },
+        {
+          "id": "practical:v1:N4:leave:task:2",
+          "q": "Câu xin phép đúng là gì?",
+          "opts": [
+            "休んでもいいですか。",
+            "休みをいいですか。",
+            "休むまでいいですか。"
+          ],
+          "ans": "休んでもいいですか。",
+          "explanation": "休む chuyển sang thể て là 休んで, rồi thêm もいいですか."
+        }
+      ],
+      "production": {
+        "prompt": "Xin nghỉ chiều thứ Sáu và nêu một việc sẽ hoàn thành trước khi nghỉ.",
+        "model": "金曜日の午後、休んでもいいですか。資料は木曜日までに送ります。",
+        "criteria": [
+          "Nêu thời gian nghỉ",
+          "Dùng mẫu xin phép",
+          "Có công việc và hạn bàn giao"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N4:clinic",
+      "level": "N4",
+      "title": "Nói triệu chứng ở phòng khám",
+      "goal": "Mô tả triệu chứng, thời điểm bắt đầu và hỏi chỉ dẫn.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N4:leave"
+      ],
+      "source_ids": [
+        "irodori:elementary01:15"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "熱",
+          "reading": "ねつ",
+          "vi": "sốt"
+        },
+        {
+          "jp": "喉",
+          "reading": "のど",
+          "vi": "cổ họng"
+        },
+        {
+          "jp": "痛い",
+          "reading": "いたい",
+          "vi": "đau"
+        },
+        {
+          "jp": "昨日",
+          "reading": "きのう",
+          "vi": "hôm qua"
+        },
+        {
+          "jp": "薬",
+          "reading": "くすり",
+          "vi": "thuốc"
+        },
+        {
+          "jp": "食後",
+          "reading": "しょくご",
+          "vi": "sau bữa ăn"
+        }
+      ],
+      "formula": "［thời điểm］から、［triệu chứng］。",
+      "note": "から chỉ thời điểm bắt đầu tình trạng. Khi đọc chỉ dẫn, chú ý số lần và thời điểm. Bài này luyện ngôn ngữ, không đưa lời khuyên điều trị.",
+      "dialogue": [
+        {
+          "jp": "昨日から熱があります。喉も痛いです。",
+          "vi": "Tôi sốt từ hôm qua. Cổ họng cũng đau."
+        },
+        {
+          "jp": "この説明を読んでください。「一日三回、食後に飲んでください」と書いてあります。",
+          "vi": "Hãy đọc hướng dẫn này. Trên đó viết: uống ba lần một ngày, sau bữa ăn."
+        },
+        {
+          "jp": "食後ですね。わかりました。",
+          "vi": "Sau bữa ăn, tôi hiểu rồi."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N4:clinic:task:0",
+          "q": "Triệu chứng bắt đầu khi nào?",
+          "opts": [
+            "Hôm nay",
+            "Hôm qua",
+            "Tuần trước"
+          ],
+          "ans": "Hôm qua",
+          "explanation": "昨日から熱があります cho biết bắt đầu sốt từ hôm qua; から đánh dấu điểm bắt đầu."
+        },
+        {
+          "id": "practical:v1:N4:clinic:task:1",
+          "q": "Theo văn bản trong bài, thời điểm nào được ghi?",
+          "opts": [
+            "Trước bữa ăn",
+            "Sau bữa ăn",
+            "Chỉ trước ngủ"
+          ],
+          "ans": "Sau bữa ăn",
+          "explanation": "Văn bản ghi 食後に: sau bữa ăn. Đây là bài đọc chỉ dẫn giả định, không phải hướng dẫn điều trị cá nhân."
+        },
+        {
+          "id": "practical:v1:N4:clinic:task:2",
+          "q": "Điền: 喉（　）痛いです。",
+          "opts": [
+            "が",
+            "を",
+            "で"
+          ],
+          "ans": "が",
+          "explanation": "が đánh dấu bộ phận có tình trạng đau trong mẫu 喉が痛い."
+        }
+      ],
+      "production": {
+        "prompt": "Viết hai câu mô tả một triệu chứng giả định và thời điểm bắt đầu; hỏi nghĩa của 食後.",
+        "model": "今朝から頭が痛いです。「食後」はどういう意味ですか。",
+        "criteria": [
+          "Có triệu chứng rõ ràng",
+          "Có triệu chứng và thời điểm",
+          "Có câu hỏi làm rõ hướng dẫn"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N4:booking",
+      "level": "N4",
+      "title": "Đặt chỗ và đổi lịch",
+      "goal": "Đặt chỗ theo ngày, giờ, số người rồi xác nhận thay đổi.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N4:clinic"
+      ],
+      "source_ids": [
+        "irodori:elementary02:5"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "予約",
+          "reading": "よやく",
+          "vi": "đặt chỗ"
+        },
+        {
+          "jp": "変更",
+          "reading": "へんこう",
+          "vi": "thay đổi"
+        },
+        {
+          "jp": "人数",
+          "reading": "にんずう",
+          "vi": "số người"
+        },
+        {
+          "jp": "金曜日",
+          "reading": "きんようび",
+          "vi": "thứ Sáu"
+        },
+        {
+          "jp": "空いています",
+          "reading": "あいています",
+          "vi": "còn chỗ, trống"
+        },
+        {
+          "jp": "確認",
+          "reading": "かくにん",
+          "vi": "xác nhận"
+        }
+      ],
+      "formula": "［ngày giờ］に［số người］で予約したいです。",
+      "note": "～たいです diễn đạt mong muốn. Khi đổi lịch, nhắc lại thông tin mới để tránh hiểu sai. で trong 三人で nói số người tham gia.",
+      "dialogue": [
+        {
+          "jp": "金曜日の七時に、三人で予約したいです。",
+          "vi": "Tôi muốn đặt cho ba người lúc 7 giờ thứ Sáu."
+        },
+        {
+          "jp": "七時はいっぱいです。八時なら空いています。",
+          "vi": "7 giờ đã kín. Nếu 8 giờ thì còn chỗ."
+        },
+        {
+          "jp": "では、八時にお願いします。",
+          "vi": "Vậy xin đặt lúc 8 giờ."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N4:booking:task:0",
+          "q": "Giờ đặt cuối cùng là gì?",
+          "opts": [
+            "7 giờ",
+            "8 giờ",
+            "9 giờ"
+          ],
+          "ans": "8 giờ",
+          "explanation": "Khách chấp nhận 八時 sau khi biết 7 giờ đã kín."
+        },
+        {
+          "id": "practical:v1:N4:booking:task:1",
+          "q": "Số người là bao nhiêu?",
+          "opts": [
+            "Hai",
+            "Ba",
+            "Bốn"
+          ],
+          "ans": "Ba",
+          "explanation": "Khách nói 三人で予約したいです, nghĩa là muốn đặt cho ba người."
+        },
+        {
+          "id": "practical:v1:N4:booking:task:2",
+          "q": "なら trong 八時なら chỉ gì?",
+          "opts": [
+            "Điều kiện nếu chọn 8 giờ",
+            "Kết thúc lúc 8 giờ",
+            "Bắt đầu từ 8 giờ"
+          ],
+          "ans": "Điều kiện nếu chọn 8 giờ",
+          "explanation": "なら đặt trường hợp 8 giờ để nói còn chỗ."
+        }
+      ],
+      "production": {
+        "prompt": "Đặt bàn cho hai người tối thứ Bảy lúc 6 giờ; nếu kín thì hỏi 7 giờ có chỗ không.",
+        "model": "土曜日の午後六時に二人で予約したいです。六時がいっぱいなら、七時は空いていますか。",
+        "criteria": [
+          "Có ngày, giờ và số người",
+          "Có phương án giờ thay thế",
+          "Có câu hỏi xác nhận chỗ trống"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N4:instructions",
+      "level": "N4",
+      "title": "Xác nhận cách làm việc",
+      "goal": "Đọc quy trình ngắn và hỏi lại bước chưa rõ.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N4:booking"
+      ],
+      "source_ids": [
+        "irodori:elementary01:9"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "使い方",
+          "reading": "つかいかた",
+          "vi": "cách dùng"
+        },
+        {
+          "jp": "押します",
+          "reading": "おします",
+          "vi": "nhấn"
+        },
+        {
+          "jp": "番号",
+          "reading": "ばんごう",
+          "vi": "số"
+        },
+        {
+          "jp": "先に",
+          "reading": "さきに",
+          "vi": "trước"
+        },
+        {
+          "jp": "次に",
+          "reading": "つぎに",
+          "vi": "tiếp theo"
+        },
+        {
+          "jp": "最後",
+          "reading": "さいご",
+          "vi": "cuối cùng"
+        }
+      ],
+      "formula": "［động từ thể て］から、［hành động tiếp］。",
+      "note": "～てから nhấn mạnh thứ tự: hoàn tất hành động đầu rồi mới làm hành động sau. Cách dùng máy thường có まず・次に・最後に.",
+      "dialogue": [
+        {
+          "jp": "この機械の使い方を教えてください。",
+          "vi": "Xin chỉ tôi cách dùng máy này."
+        },
+        {
+          "jp": "まず番号を入れてから、緑のボタンを押してください。",
+          "vi": "Trước hết nhập số, rồi nhấn nút màu xanh lá."
+        },
+        {
+          "jp": "番号がわからないときは、どうすればいいですか。",
+          "vi": "Nếu không biết số thì tôi nên làm gì?"
+        },
+        {
+          "jp": "受付で聞いてください。",
+          "vi": "Hãy hỏi quầy tiếp nhận."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N4:instructions:task:0",
+          "q": "Bước đầu là gì?",
+          "opts": [
+            "Nhấn nút xanh",
+            "Nhập số",
+            "Tắt máy"
+          ],
+          "ans": "Nhập số",
+          "explanation": "番号を入れてから đặt việc nhập số trước."
+        },
+        {
+          "id": "practical:v1:N4:instructions:task:1",
+          "q": "Không biết số thì hỏi đâu?",
+          "opts": [
+            "Quầy tiếp nhận",
+            "Người ở nhà",
+            "Không cần hỏi"
+          ],
+          "ans": "Quầy tiếp nhận",
+          "explanation": "受付で聞いてください chỉ rõ nơi cần hỏi."
+        },
+        {
+          "id": "practical:v1:N4:instructions:task:2",
+          "q": "Mẫu nào nhấn mạnh thứ tự?",
+          "opts": [
+            "～てから",
+            "～ても",
+            "～ながら"
+          ],
+          "ans": "～てから",
+          "explanation": "～てから nghĩa là sau khi làm xong; ながら là đồng thời."
+        }
+      ],
+      "production": {
+        "prompt": "Viết quy trình hai bước: đọc tài liệu rồi gửi email; thêm câu hỏi khi chưa hiểu.",
+        "model": "資料を読んでから、メールを送ってください。わからないときは、だれに聞けばいいですか。",
+        "criteria": [
+          "Có hai bước đúng thứ tự",
+          "Dùng ～てから",
+          "Có câu hỏi xin hỗ trợ"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N3:repair",
+      "level": "N3",
+      "title": "Báo hỏng và thu xếp sửa chữa",
+      "goal": "Mô tả vấn đề, phân biệt phỏng đoán và sự thật, hẹn thời gian kiểm tra.",
+      "minutes": 25,
+      "prerequisites": [],
+      "source_ids": [
+        "irodori:pre-intermediate:4"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "故障",
+          "reading": "こしょう",
+          "vi": "hỏng hóc"
+        },
+        {
+          "jp": "修理",
+          "reading": "しゅうり",
+          "vi": "sửa chữa"
+        },
+        {
+          "jp": "管理人",
+          "reading": "かんりにん",
+          "vi": "người quản lý"
+        },
+        {
+          "jp": "確認",
+          "reading": "かくにん",
+          "vi": "kiểm tra"
+        },
+        {
+          "jp": "原因",
+          "reading": "げんいん",
+          "vi": "nguyên nhân"
+        },
+        {
+          "jp": "都合",
+          "reading": "つごう",
+          "vi": "sự thuận tiện, lịch rảnh"
+        }
+      ],
+      "formula": "［mệnh đề］ようです。［thời gian］なら都合がいいです。",
+      "note": "ようです nêu suy đoán dựa trên dấu hiệu. Tách điều quan sát được khỏi kết luận chưa kiểm tra; đề nghị thời gian cụ thể thay vì chỉ nói sớm.",
+      "dialogue": [
+        {
+          "jp": "エアコンをつけても、冷たい風が出ません。故障しているようです。",
+          "vi": "Dù bật điều hòa cũng không có gió lạnh. Có vẻ máy bị hỏng."
+        },
+        {
+          "jp": "明日の午後、確認に伺います。ご在宅ですか。",
+          "vi": "Chiều mai chúng tôi sẽ đến kiểm tra. Anh/chị có ở nhà không?"
+        },
+        {
+          "jp": "三時以降なら家にいます。来る前に連絡していただけますか。",
+          "vi": "Sau 3 giờ tôi ở nhà. Anh/chị có thể liên lạc trước khi đến không?"
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N3:repair:task:0",
+          "q": "Thông tin nào là quan sát trực tiếp?",
+          "opts": [
+            "Không có gió lạnh",
+            "Đã biết linh kiện hỏng",
+            "Chắc chắn phải thay máy"
+          ],
+          "ans": "Không có gió lạnh",
+          "explanation": "Không có gió lạnh là dấu hiệu; 故障しているようです vẫn là phỏng đoán."
+        },
+        {
+          "id": "practical:v1:N3:repair:task:1",
+          "q": "Thời gian phù hợp là gì?",
+          "opts": [
+            "Trước 3 giờ",
+            "Từ 3 giờ trở đi",
+            "Chỉ đúng 3 giờ"
+          ],
+          "ans": "Từ 3 giờ trở đi",
+          "explanation": "三時以降 bao gồm 3 giờ và sau đó."
+        },
+        {
+          "id": "practical:v1:N3:repair:task:2",
+          "q": "Người thuê yêu cầu thêm gì?",
+          "opts": [
+            "Báo trước khi đến",
+            "Mang máy mới ngay",
+            "Hủy việc kiểm tra"
+          ],
+          "ans": "Báo trước khi đến",
+          "explanation": "来る前に連絡していただけますか yêu cầu liên lạc trước."
+        }
+      ],
+      "production": {
+        "prompt": "Viết tin nhắn báo máy giặt không chạy, đề nghị kiểm tra sau 6 giờ và gọi trước khi đến.",
+        "model": "洗濯機の電源を入れても動きません。故障しているようです。午後六時以降なら家にいますので、来る前に連絡していただけますか。",
+        "criteria": [
+          "Nêu dấu hiệu cụ thể",
+          "Không khẳng định nguyên nhân chưa biết",
+          "Có giờ hẹn và yêu cầu liên lạc"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N3:scam",
+      "level": "N3",
+      "title": "Đọc email đáng ngờ",
+      "goal": "Nhận ra dấu hiệu rủi ro và chọn cách xác minh thông tin.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N3:repair"
+      ],
+      "source_ids": [
+        "irodori:pre-intermediate:11"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "至急",
+          "reading": "しきゅう",
+          "vi": "khẩn cấp"
+        },
+        {
+          "jp": "本人確認",
+          "reading": "ほんにんかくにん",
+          "vi": "xác minh danh tính"
+        },
+        {
+          "jp": "期限",
+          "reading": "きげん",
+          "vi": "hạn chót"
+        },
+        {
+          "jp": "不審",
+          "reading": "ふしん",
+          "vi": "đáng ngờ"
+        },
+        {
+          "jp": "公式",
+          "reading": "こうしき",
+          "vi": "chính thức"
+        },
+        {
+          "jp": "入力",
+          "reading": "にゅうりょく",
+          "vi": "nhập dữ liệu"
+        }
+      ],
+      "formula": "［mệnh đề］と書いてあります。～かどうか確認する。",
+      "note": "と書いてあります thuật lại nội dung văn bản, không có nghĩa người nói xác nhận nội dung đó là đúng. ～かどうか là có hay không.",
+      "dialogue": [
+        {
+          "jp": "メールに「本日中に本人確認をしないと、口座を停止する」と書いてあります。",
+          "vi": "Email ghi rằng nếu không xác minh danh tính trong hôm nay, tài khoản sẽ bị khóa."
+        },
+        {
+          "jp": "リンクを開く前に、銀行の公式アプリで同じお知らせがあるか確認しましょう。",
+          "vi": "Trước khi mở liên kết, hãy kiểm tra ứng dụng chính thức của ngân hàng có cùng thông báo không."
+        },
+        {
+          "jp": "メールのリンクには入力せず、公式の窓口に問い合わせます。",
+          "vi": "Tôi sẽ không nhập thông tin qua liên kết email mà hỏi kênh chính thức."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N3:scam:task:0",
+          "q": "Hành động được đề nghị trước tiên là gì?",
+          "opts": [
+            "Nhập mật khẩu vào link",
+            "Kiểm tra thông báo qua ứng dụng chính thức",
+            "Chuyển email cho mọi người"
+          ],
+          "ans": "Kiểm tra thông báo qua ứng dụng chính thức",
+          "explanation": "Hội thoại yêu cầu xác minh bằng kênh độc lập trước khi mở liên kết."
+        },
+        {
+          "id": "practical:v1:N3:scam:task:1",
+          "q": "Nội dung đe dọa khóa tài khoản đã được xác nhận chưa?",
+          "opts": [
+            "Đã chắc chắn",
+            "Chưa, mới là lời ghi trong email",
+            "Không thể xác minh bằng cách nào"
+          ],
+          "ans": "Chưa, mới là lời ghi trong email",
+          "explanation": "と書いてあります chỉ thuật lại điều email nói."
+        },
+        {
+          "id": "practical:v1:N3:scam:task:2",
+          "q": "本日中に mang nghĩa nào?",
+          "opts": [
+            "Trong hôm nay",
+            "Đầu tháng tới",
+            "Không giới hạn thời gian"
+          ],
+          "ans": "Trong hôm nay",
+          "explanation": "本日中 là trong ngày hôm nay."
+        }
+      ],
+      "production": {
+        "prompt": "Tóm tắt email đáng ngờ trong một câu và nêu hai bước xác minh an toàn bằng tiếng Nhật.",
+        "model": "今日中に確認しないと口座を停止すると書いてあります。メールのリンクには入力せず、公式アプリを確認して、公式の窓口に問い合わせます。",
+        "criteria": [
+          "Phân biệt lời email với sự thật đã xác minh",
+          "Không yêu cầu gửi mật khẩu",
+          "Nêu kênh xác minh độc lập"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N3:handover",
+      "level": "N3",
+      "title": "Bàn giao công việc có ngoại lệ",
+      "goal": "Phân biệt quy trình thường lệ và việc cần làm khi có vấn đề.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N3:scam"
+      ],
+      "source_ids": [
+        "irodori:pre-intermediate:17"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "担当",
+          "reading": "たんとう",
+          "vi": "phụ trách"
+        },
+        {
+          "jp": "在庫",
+          "reading": "ざいこ",
+          "vi": "hàng tồn"
+        },
+        {
+          "jp": "報告",
+          "reading": "ほうこく",
+          "vi": "báo cáo"
+        },
+        {
+          "jp": "不足",
+          "reading": "ふそく",
+          "vi": "thiếu"
+        },
+        {
+          "jp": "補充",
+          "reading": "ほじゅう",
+          "vi": "bổ sung"
+        },
+        {
+          "jp": "責任者",
+          "reading": "せきにんしゃ",
+          "vi": "người chịu trách nhiệm"
+        }
+      ],
+      "formula": "～場合は、…。～ことになっています。",
+      "note": "場合は nêu trường hợp; ことになっています thuật lại quy định đã có. Khi bàn giao, nêu ai làm gì và ngoại lệ xử lý ra sao.",
+      "dialogue": [
+        {
+          "jp": "開店前に在庫を確認することになっています。",
+          "vi": "Theo quy định, cần kiểm tra hàng tồn trước khi mở cửa."
+        },
+        {
+          "jp": "商品が足りない場合は、すぐに注文すればいいですか。",
+          "vi": "Nếu thiếu hàng thì đặt thêm ngay được không?"
+        },
+        {
+          "jp": "いいえ。まず責任者に報告して、指示を受けてから注文してください。",
+          "vi": "Không. Trước tiên báo người phụ trách, nhận chỉ dẫn rồi mới đặt."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N3:handover:task:0",
+          "q": "Thiếu hàng thì bước đầu là gì?",
+          "opts": [
+            "Tự đặt ngay",
+            "Báo người phụ trách",
+            "Chờ đến đóng cửa"
+          ],
+          "ans": "Báo người phụ trách",
+          "explanation": "まず責任者に報告して chỉ rõ bước đầu."
+        },
+        {
+          "id": "practical:v1:N3:handover:task:1",
+          "q": "Kiểm tra tồn kho khi nào?",
+          "opts": [
+            "Sau đóng cửa",
+            "Trước mở cửa",
+            "Chỉ khi khách hỏi"
+          ],
+          "ans": "Trước mở cửa",
+          "explanation": "Câu đầu ghi 開店前に: trước khi mở cửa, để biết tình trạng hàng trước ca."
+        },
+        {
+          "id": "practical:v1:N3:handover:task:2",
+          "q": "ことになっています nói về điều gì?",
+          "opts": [
+            "Quy định đã được thống nhất",
+            "Sở thích cá nhân",
+            "Việc đã quên"
+          ],
+          "ans": "Quy định đã được thống nhất",
+          "explanation": "Mẫu này thuật lại quy định hoặc sắp xếp đã có."
+        }
+      ],
+      "production": {
+        "prompt": "Viết hướng dẫn ba bước cho người nhận ca: kiểm tra, báo khi thiếu, chỉ đặt hàng sau khi được chỉ dẫn.",
+        "model": "開店前に在庫を確認してください。不足している場合は責任者に報告してください。指示を受けてから注文してください。",
+        "criteria": [
+          "Có thứ tự ba bước",
+          "Có điều kiện khi thiếu hàng",
+          "Không cho phép tự đặt trước khi báo"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N3:interview",
+      "level": "N3",
+      "title": "Trình bày kinh nghiệm khi phỏng vấn",
+      "goal": "Nêu kinh nghiệm, ví dụ cụ thể và mục tiêu học hỏi.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N3:handover"
+      ],
+      "source_ids": [
+        "irodori:pre-intermediate:18"
+      ],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "経験",
+          "reading": "けいけん",
+          "vi": "kinh nghiệm"
+        },
+        {
+          "jp": "応募",
+          "reading": "おうぼ",
+          "vi": "ứng tuyển"
+        },
+        {
+          "jp": "接客",
+          "reading": "せっきゃく",
+          "vi": "phục vụ khách"
+        },
+        {
+          "jp": "得意",
+          "reading": "とくい",
+          "vi": "sở trường"
+        },
+        {
+          "jp": "学びます",
+          "reading": "まなびます",
+          "vi": "học"
+        },
+        {
+          "jp": "希望",
+          "reading": "きぼう",
+          "vi": "mong muốn"
+        }
+      ],
+      "formula": "～たことがあります。～ようになりました。",
+      "note": "たことがあります nói trải nghiệm; ようになりました nói sự thay đổi về khả năng hoặc thói quen. Một ví dụ cụ thể đáng tin hơn nhận xét chung rằng mình giỏi.",
+      "dialogue": [
+        {
+          "jp": "これまでどんな仕事をしていましたか。",
+          "vi": "Trước đây bạn làm công việc gì?"
+        },
+        {
+          "jp": "一年間、カフェで働いていました。最初は緊張しましたが、お客様に説明できるようになりました。",
+          "vi": "Tôi làm ở quán cà phê một năm. Lúc đầu hồi hộp nhưng sau đó đã có thể giải thích cho khách."
+        },
+        {
+          "jp": "こちらでは何を学びたいですか。",
+          "vi": "Ở đây bạn muốn học điều gì?"
+        },
+        {
+          "jp": "接客だけでなく、在庫管理も学びたいです。",
+          "vi": "Tôi muốn học cả phục vụ khách lẫn quản lý hàng tồn."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N3:interview:task:0",
+          "q": "Kinh nghiệm kéo dài bao lâu?",
+          "opts": [
+            "Một tháng",
+            "Một năm",
+            "Hai năm"
+          ],
+          "ans": "Một năm",
+          "explanation": "一年間 là trong một năm."
+        },
+        {
+          "id": "practical:v1:N3:interview:task:1",
+          "q": "Thay đổi được nêu là gì?",
+          "opts": [
+            "Có thể giải thích cho khách",
+            "Không cần học nữa",
+            "Chuyển sang làm quản lý"
+          ],
+          "ans": "Có thể giải thích cho khách",
+          "explanation": "説明できるようになりました nói khả năng mới đạt được."
+        },
+        {
+          "id": "practical:v1:N3:interview:task:2",
+          "q": "Người ứng tuyển muốn học thêm gì?",
+          "opts": [
+            "Chỉ pha cà phê",
+            "Quản lý tồn kho",
+            "Lái xe"
+          ],
+          "ans": "Quản lý tồn kho",
+          "explanation": "在庫管理も学びたい nêu quản lý tồn kho."
+        }
+      ],
+      "production": {
+        "prompt": "Viết 4 câu về kinh nghiệm học tập hoặc làm việc thật của bạn, kèm một việc giờ đã làm được và mục tiêu tiếp theo.",
+        "model": "大学で日本語を勉強しています。最初は短い文しか読めませんでした。今は簡単なメールが読めるようになりました。これから仕事の会話も学びたいです。",
+        "criteria": [
+          "Không bịa kinh nghiệm",
+          "Có ví dụ về sự tiến bộ",
+          "Có mục tiêu cụ thể tiếp theo"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N2:policy",
+      "level": "N2",
+      "title": "Đọc thông báo thay đổi quy định",
+      "goal": "Xác định ngày hiệu lực, đối tượng và ngoại lệ trong thông báo.",
+      "minutes": 25,
+      "prerequisites": [],
+      "source_ids": [],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "原則",
+          "reading": "げんそく",
+          "vi": "nguyên tắc"
+        },
+        {
+          "jp": "対象",
+          "reading": "たいしょう",
+          "vi": "đối tượng áp dụng"
+        },
+        {
+          "jp": "例外",
+          "reading": "れいがい",
+          "vi": "ngoại lệ"
+        },
+        {
+          "jp": "申請",
+          "reading": "しんせい",
+          "vi": "đăng ký, đề nghị"
+        },
+        {
+          "jp": "実施",
+          "reading": "じっし",
+          "vi": "thực hiện"
+        },
+        {
+          "jp": "事前",
+          "reading": "じぜん",
+          "vi": "trước khi thực hiện"
+        }
+      ],
+      "formula": "～に伴い、…。ただし、…。",
+      "note": "に伴い diễn tả thay đổi đi kèm. ただし thường giới thiệu ngoại lệ hoặc điều kiện hạn chế. Đọc thông báo cần tách nguyên tắc chung và phần ngoại lệ.",
+      "dialogue": [
+        {
+          "jp": "来月一日から、資料室の利用方法を変更します。電子化に伴い、紙の資料の貸し出しは原則終了します。",
+          "vi": "Từ ngày 1 tháng tới, cách sử dụng phòng tài liệu thay đổi. Cùng với việc số hóa, về nguyên tắc sẽ chấm dứt cho mượn tài liệu giấy."
+        },
+        {
+          "jp": "ただし、電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。",
+          "vi": "Tuy nhiên, chỉ tài liệu chưa có bản điện tử mới được mượn một tuần nếu đăng ký trước. Không được gia hạn trả."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N2:policy:task:0",
+          "q": "Tài liệu nào vẫn được mượn?",
+          "opts": [
+            "Mọi tài liệu giấy",
+            "Tài liệu chưa có bản điện tử, đã đăng ký trước",
+            "Chỉ tài liệu đã có bản điện tử"
+          ],
+          "ans": "Tài liệu chưa có bản điện tử, đã đăng ký trước",
+          "explanation": "電子版がない資料に限り và 事前に申請すれば đặt hai điều kiện."
+        },
+        {
+          "id": "practical:v1:N2:policy:task:1",
+          "q": "Có thể gia hạn không?",
+          "opts": [
+            "Có, một tuần nữa",
+            "Có nếu yêu cầu qua email",
+            "Không"
+          ],
+          "ans": "Không",
+          "explanation": "返却期限の延長はできません phủ định việc gia hạn."
+        },
+        {
+          "id": "practical:v1:N2:policy:task:2",
+          "q": "Vai trò của ただし là gì?",
+          "opts": [
+            "Đưa ngoại lệ cho nguyên tắc trước đó",
+            "Lặp lại nguyên nhân số hóa",
+            "Giới thiệu một chủ đề không liên quan"
+          ],
+          "ans": "Đưa ngoại lệ cho nguyên tắc trước đó",
+          "explanation": "Phần sau ただし hạn chế phạm vi nguyên tắc chấm dứt cho mượn."
+        }
+      ],
+      "production": {
+        "prompt": "Tóm tắt thông báo bằng tiếng Nhật trong 3 câu: thay đổi, ngoại lệ và điều không được phép.",
+        "model": "来月から紙の資料の貸し出しは原則終了します。ただし、電子版がない資料は事前に申請すると一週間借りられます。期限の延長はできません。",
+        "criteria": [
+          "Có ngày hiệu lực",
+          "Giữ đủ hai điều kiện ngoại lệ",
+          "Không thêm quyền gia hạn"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N2:comparison",
+      "level": "N2",
+      "title": "So sánh hai phương án bằng chứng",
+      "goal": "Chọn phương án theo ràng buộc, không chỉ nhìn giá.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N2:policy"
+      ],
+      "source_ids": [],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "費用",
+          "reading": "ひよう",
+          "vi": "chi phí"
+        },
+        {
+          "jp": "納期",
+          "reading": "のうき",
+          "vi": "hạn giao"
+        },
+        {
+          "jp": "条件",
+          "reading": "じょうけん",
+          "vi": "điều kiện"
+        },
+        {
+          "jp": "比較",
+          "reading": "ひかく",
+          "vi": "so sánh"
+        },
+        {
+          "jp": "追加",
+          "reading": "ついか",
+          "vi": "bổ sung"
+        },
+        {
+          "jp": "優先",
+          "reading": "ゆうせん",
+          "vi": "ưu tiên"
+        }
+      ],
+      "formula": "～一方で、…。～を優先すると、…。",
+      "note": "一方で đặt hai mặt đối chiếu. Kết luận cần căn cứ vào tiêu chí của người quyết định, không suy từ một con số riêng lẻ.",
+      "dialogue": [
+        {
+          "jp": "印刷会社Aは一部八十円で、納品まで五日かかる。会社Bは一部百円だが、三日で納品できる。どちらも送料は無料である。",
+          "vi": "Nhà in A giá 80 yên/bản và mất 5 ngày. B giá 100 yên/bản nhưng giao trong 3 ngày. Cả hai miễn phí vận chuyển."
+        },
+        {
+          "jp": "担当者は四日後の説明会までに二百部必要としており、予算は二万二千円である。品質については両社とも社内基準を満たしている。",
+          "vi": "Người phụ trách cần 200 bản trước buổi giới thiệu sau 4 ngày, ngân sách 22.000 yên. Chất lượng cả hai đạt chuẩn nội bộ."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N2:comparison:task:0",
+          "q": "Phương án nào đáp ứng đủ điều kiện?",
+          "opts": [
+            "A vì rẻ nhất",
+            "B vì kịp hạn và trong ngân sách",
+            "Không bên nào"
+          ],
+          "ans": "B vì kịp hạn và trong ngân sách",
+          "explanation": "B mất 3 ngày và 200 × 100 = 20.000 yên; A giao sau 5 ngày, trễ hạn."
+        },
+        {
+          "id": "practical:v1:N2:comparison:task:1",
+          "q": "Tiêu chí nào không tạo khác biệt ở đây?",
+          "opts": [
+            "Thời gian giao",
+            "Đơn giá",
+            "Đạt chuẩn chất lượng nội bộ"
+          ],
+          "ans": "Đạt chuẩn chất lượng nội bộ",
+          "explanation": "Văn bản xác nhận cả hai đạt chuẩn nội bộ."
+        },
+        {
+          "id": "practical:v1:N2:comparison:task:2",
+          "q": "Nếu chỉ chọn theo giá, rủi ro là gì?",
+          "opts": [
+            "Không kịp buổi giới thiệu",
+            "Vượt ngân sách với A",
+            "Phải trả thêm phí vận chuyển"
+          ],
+          "ans": "Không kịp buổi giới thiệu",
+          "explanation": "A rẻ nhưng giao sau sự kiện; không có phí vận chuyển."
+        }
+      ],
+      "production": {
+        "prompt": "Viết đề xuất chọn nhà in, đưa hai bằng chứng số và một lý do không chọn bên còn lại.",
+        "model": "B社を選びます。三日で納品でき、二百部で二万円なので予算内です。A社は安い一方で、納品が説明会に間に合いません。",
+        "criteria": [
+          "Nêu phương án rõ ràng",
+          "Dẫn thời gian và tổng chi phí",
+          "Giải thích ràng buộc mà bên kia không đáp ứng"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N2:proposal",
+      "level": "N2",
+      "title": "Đọc và phản hồi một đề xuất",
+      "goal": "Phân biệt mục tiêu, giải pháp và việc cần xác minh trước khi đồng ý.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N2:comparison"
+      ],
+      "source_ids": [],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "提案",
+          "reading": "ていあん",
+          "vi": "đề xuất"
+        },
+        {
+          "jp": "負担",
+          "reading": "ふたん",
+          "vi": "gánh nặng"
+        },
+        {
+          "jp": "効率",
+          "reading": "こうりつ",
+          "vi": "hiệu quả"
+        },
+        {
+          "jp": "検討",
+          "reading": "けんとう",
+          "vi": "xem xét"
+        },
+        {
+          "jp": "効果",
+          "reading": "こうか",
+          "vi": "hiệu quả, tác dụng"
+        },
+        {
+          "jp": "試験的",
+          "reading": "しけんてき",
+          "vi": "mang tính thử nghiệm"
+        }
+      ],
+      "formula": "～に対して、…。～とは限りません。",
+      "note": "とは限らない bác bỏ kết luận luôn đúng, không phủ định hoàn toàn khả năng đó. Khi phản hồi đề xuất, phân biệt lợi ích kỳ vọng với kết quả đã đo.",
+      "dialogue": [
+        {
+          "jp": "会議の負担を減らすため、毎週の定例会を月二回にする案が出された。提案者は、空いた時間を作業に使えるため効率が上がると考えている。",
+          "vi": "Có đề xuất giảm họp định kỳ từ hàng tuần xuống hai lần mỗi tháng để giảm gánh nặng. Người đề xuất cho rằng có thêm thời gian làm việc sẽ tăng hiệu quả."
+        },
+        {
+          "jp": "これに対して、情報共有が遅れるおそれもあるという意見が出た。回数を減らせば必ず効率が上がるとは限らないため、まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。",
+          "vi": "Có ý kiến lo chậm chia sẻ thông tin. Vì giảm họp không chắc luôn tăng hiệu quả, nhóm quyết định thử một tháng rồi xem độ trễ liên lạc và thời gian làm việc."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N2:proposal:task:0",
+          "q": "Quyết định cuối cùng là gì?",
+          "opts": [
+            "Áp dụng vĩnh viễn ngay",
+            "Thử một tháng rồi kiểm tra hai chỉ số",
+            "Bỏ đề xuất hoàn toàn"
+          ],
+          "ans": "Thử một tháng rồi kiểm tra hai chỉ số",
+          "explanation": "まず一か月試験的に実施 chỉ giai đoạn thử nghiệm."
+        },
+        {
+          "id": "practical:v1:N2:proposal:task:1",
+          "q": "Hiệu quả đã được chứng minh chưa?",
+          "opts": [
+            "Rồi",
+            "Chưa, hiện là kỳ vọng cần kiểm tra",
+            "Văn bản nói không thể đo"
+          ],
+          "ans": "Chưa, hiện là kỳ vọng cần kiểm tra",
+          "explanation": "Người đề xuất 考えている; nhóm còn cần xác minh."
+        },
+        {
+          "id": "practical:v1:N2:proposal:task:2",
+          "q": "とは限らない ở đây mang nghĩa gì?",
+          "opts": [
+            "Giảm họp chắc chắn vô ích",
+            "Giảm họp không phải lúc nào cũng hiệu quả hơn",
+            "Không được phép giảm họp"
+          ],
+          "ans": "Giảm họp không phải lúc nào cũng hiệu quả hơn",
+          "explanation": "Mẫu này phủ định tính tất yếu, không phủ định mọi hiệu quả có thể có."
+        }
+      ],
+      "production": {
+        "prompt": "Phản hồi đề xuất trong 3–4 câu: công nhận lợi ích, nêu rủi ro, đề nghị cách đo.",
+        "model": "会議の負担が減る点には賛成です。ただ、情報共有が遅れる可能性もあります。一か月試して、作業時間と連絡の遅れを比較してはどうでしょうか。",
+        "criteria": [
+          "Có cả lợi ích và rủi ro",
+          "Không biến kỳ vọng thành sự thật",
+          "Có cách kiểm chứng cụ thể"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N1:argument",
+      "level": "N1",
+      "title": "Phân tích luận điểm và phản biện",
+      "goal": "Tách lập luận chính khỏi ví dụ và nêu giới hạn của kết luận.",
+      "minutes": 25,
+      "prerequisites": [],
+      "source_ids": [],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "前提",
+          "reading": "ぜんてい",
+          "vi": "tiền đề"
+        },
+        {
+          "jp": "論拠",
+          "reading": "ろんきょ",
+          "vi": "căn cứ lập luận"
+        },
+        {
+          "jp": "一律",
+          "reading": "いちりつ",
+          "vi": "đồng loạt"
+        },
+        {
+          "jp": "妥当",
+          "reading": "だとう",
+          "vi": "hợp lý"
+        },
+        {
+          "jp": "裁量",
+          "reading": "さいりょう",
+          "vi": "quyền tự quyết"
+        },
+        {
+          "jp": "検証",
+          "reading": "けんしょう",
+          "vi": "kiểm chứng"
+        }
+      ],
+      "formula": "～からといって、必ずしも～とはいえない。",
+      "note": "Mẫu này bác bỏ bước suy luận quá mạnh từ một tiền đề. Phản biện tốt chỉ rõ kết luận nào vượt quá bằng chứng thay vì chỉ nói không đồng ý.",
+      "dialogue": [
+        {
+          "jp": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。例えば、オンライン申請への一本化は、多くの人の待ち時間を減らす一方、機器の操作に不慣れな人には新たな負担となりうる。",
+          "vi": "Thống nhất thủ tục giúp giảm khác biệt xử lý. Nhưng thống nhất không có nghĩa tối ưu cho từng người. Chẳng hạn, chỉ nhận đăng ký trực tuyến có thể giảm chờ đợi cho nhiều người nhưng tạo gánh nặng mới cho người chưa quen thiết bị."
+        },
+        {
+          "jp": "したがって、共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
+          "vi": "Vì vậy, tiêu chuẩn chung và hỗ trợ ngoại lệ không mâu thuẫn. Điều cần thiết không phải mở rộng vô hạn quyền tự quyết tại chỗ, mà nêu rõ điều kiện hỗ trợ và kiểm chứng tác dụng."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N1:argument:task:0",
+          "q": "Luận điểm chính phù hợp nhất là gì?",
+          "opts": [
+            "Bỏ mọi tiêu chuẩn chung",
+            "Kết hợp tiêu chuẩn chung với hỗ trợ có điều kiện và kiểm chứng",
+            "Trao quyền vô hạn cho hiện trường"
+          ],
+          "ans": "Kết hợp tiêu chuẩn chung với hỗ trợ có điều kiện và kiểm chứng",
+          "explanation": "Đoạn cuối giữ tiêu chuẩn chung và yêu cầu điều kiện hỗ trợ minh bạch."
+        },
+        {
+          "id": "practical:v1:N1:argument:task:1",
+          "q": "Ví dụ đăng ký trực tuyến có chức năng gì?",
+          "opts": [
+            "Chứng minh mọi công nghệ đều có hại",
+            "Minh họa rằng cùng một thủ tục có tác động khác nhau",
+            "Đưa số liệu về thời gian chờ"
+          ],
+          "ans": "Minh họa rằng cùng một thủ tục có tác động khác nhau",
+          "explanation": "Ví dụ đối chiếu nhóm được lợi và nhóm gặp gánh nặng; không có số liệu."
+        },
+        {
+          "id": "practical:v1:N1:argument:task:2",
+          "q": "Kết luận nào vượt quá bằng chứng trong bài?",
+          "opts": [
+            "Một số người cần hỗ trợ thêm",
+            "Mọi dịch vụ trực tuyến đều làm tăng bất bình đẳng",
+            "Cần kiểm chứng hiệu quả hỗ trợ"
+          ],
+          "ans": "Mọi dịch vụ trực tuyến đều làm tăng bất bình đẳng",
+          "explanation": "Bài chỉ nêu một tình huống và khả năng gánh nặng, không kết luận cho mọi dịch vụ."
+        }
+      ],
+      "production": {
+        "prompt": "Viết tóm tắt 80–140 chữ Nhật và một câu phản biện có điều kiện, không thêm số liệu ngoài bài.",
+        "model": "筆者は、手続きを統一しても全員に最善とは限らないと指摘する。共通基準を保ちながら、支援を加える条件を明示し、効果を検証すべきだという。ただし、条件が複雑すぎれば支援を受けにくくなる可能性もある。",
+        "criteria": [
+          "Giữ cả tiêu chuẩn chung và hỗ trợ ngoại lệ",
+          "Không biến ví dụ thành kết luận phổ quát",
+          "Phản biện được ghi là khả năng, không là dữ kiện đã có"
+        ]
+      }
+    },
+    {
+      "id": "practical:v1:N1:synthesis",
+      "level": "N1",
+      "title": "Tổng hợp hai quan điểm",
+      "goal": "Tìm điểm đồng thuận, khác biệt và đề xuất kết hợp có điều kiện.",
+      "minutes": 25,
+      "prerequisites": [
+        "practical:v1:N1:argument"
+      ],
+      "source_ids": [],
+      "reference_url": "https://www.jlpt.jp/e/about/levelsummary.html",
+      "words": [
+        {
+          "jp": "合意",
+          "reading": "ごうい",
+          "vi": "đồng thuận"
+        },
+        {
+          "jp": "相違",
+          "reading": "そうい",
+          "vi": "khác biệt"
+        },
+        {
+          "jp": "短期",
+          "reading": "たんき",
+          "vi": "ngắn hạn"
+        },
+        {
+          "jp": "長期",
+          "reading": "ちょうき",
+          "vi": "dài hạn"
+        },
+        {
+          "jp": "指標",
+          "reading": "しひょう",
+          "vi": "chỉ số"
+        },
+        {
+          "jp": "両立",
+          "reading": "りょうりつ",
+          "vi": "cùng đạt được"
+        }
+      ],
+      "formula": "～を踏まえて、…。～のみならず、…。",
+      "note": "を踏まえて nghĩa là dựa trên, có tính đến. Tổng hợp cần giữ đúng lập trường từng bên, không ép hai quan điểm thành đồng ý hoàn toàn.",
+      "dialogue": [
+        {
+          "jp": "意見A：研修の成果は、受講直後の業務時間の短縮など、測定できる指標で確認すべきだ。数値がなければ、改善に資源を配分する根拠が曖昧になる。ただし、一つの指標だけで判断するべきではない。",
+          "vi": "Ý kiến A: nên kiểm tra kết quả đào tạo bằng chỉ số đo được, chẳng hạn thời gian làm việc giảm ngay sau khóa học. Không có số liệu thì căn cứ phân bổ nguồn lực mơ hồ. Tuy vậy không nên chỉ dựa một chỉ số."
+        },
+        {
+          "jp": "意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は、時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
+          "vi": "Ý kiến B: số liệu ngắn hạn không nắm hết giá trị đào tạo. Tư vấn đồng nghiệp và xử lý vấn đề mới thể hiện dần. B không phủ nhận đo lường bằng số, nhưng muốn đánh giá thêm tình huống vài tháng sau."
+        }
+      ],
+      "questions": [
+        {
+          "id": "practical:v1:N1:synthesis:task:0",
+          "q": "Điểm chung của hai bên là gì?",
+          "opts": [
+            "Đều phủ nhận mọi số liệu",
+            "Đều chấp nhận số liệu nhưng không xem nó là toàn bộ đánh giá",
+            "Đều chỉ quan tâm ngay sau khóa học"
+          ],
+          "ans": "Đều chấp nhận số liệu nhưng không xem nó là toàn bộ đánh giá",
+          "explanation": "A nói không chỉ một chỉ số; B nói không phủ nhận kiểm tra bằng số."
+        },
+        {
+          "id": "practical:v1:N1:synthesis:task:1",
+          "q": "Khác biệt trọng tâm là gì?",
+          "opts": [
+            "A ưu tiên căn cứ đo được; B nhấn mạnh giá trị xuất hiện về sau",
+            "A phản đối đào tạo; B ủng hộ",
+            "A chỉ dùng phỏng vấn; B chỉ dùng số"
+          ],
+          "ans": "A ưu tiên căn cứ đo được; B nhấn mạnh giá trị xuất hiện về sau",
+          "explanation": "Sự khác biệt nằm ở thời gian và dạng bằng chứng, không phải có nên đào tạo."
+        },
+        {
+          "id": "practical:v1:N1:synthesis:task:2",
+          "q": "Phương án dung hòa phù hợp nhất là gì?",
+          "opts": [
+            "Chỉ đo ngay sau học",
+            "Bỏ đo số liệu",
+            "Đo nhiều chỉ số lúc đầu, bổ sung tình huống sau vài tháng"
+          ],
+          "ans": "Đo nhiều chỉ số lúc đầu, bổ sung tình huống sau vài tháng",
+          "explanation": "Kết hợp được yêu cầu căn cứ đo được và giá trị dài hạn."
+        }
+      ],
+      "production": {
+        "prompt": "Viết một đoạn tổng hợp: điểm chung, khác biệt và kế hoạch đánh giá hai giai đoạn.",
+        "model": "両者は数値による確認を認めているが、Aは測定可能な根拠を、Bは時間をかけて表れる価値を重視している。これを踏まえ、受講直後に複数の指標を測定し、数か月後に具体的な事例を追加して評価してはどうか。",
+        "criteria": [
+          "Phân biệt đúng A và B",
+          "Nêu được điểm chung",
+          "Đề xuất hai thời điểm và hai dạng bằng chứng"
+        ]
+      }
+    }
+  ]
+}
