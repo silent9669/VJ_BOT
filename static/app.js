@@ -28,7 +28,9 @@ let examTimerInterval = null;
 let examSecondsRemaining = 1500; // 25 mins
 
 const TAB_TITLES = {
-  landing: "Sổ tay",
+  landing: "VJBot",
+  dashboard: "Góc học tập",
+  kanji: "Kanji",
   classroom: "Thầy Lâm",
   curriculum: "Khóa học",
   lesson: "Bài học",
@@ -419,12 +421,17 @@ async function playGeminiTTS(text, voice = "Charon") {
 // 7. TAB SWITCHER & NAVIGATION
 // ==========================================
 function switchTab(tabId, route={}) {
+  if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
+  featureVersion++;
+  quizRequest++;fcRequest++;kaiwaRenderRequest++;
+  clearInterval(simulationInterval);
+  document.getElementById("simulation-audio")?.pause();
   navigationVersion++;
   curriculumRequest++;
   studyPlanRequest++;
   if (!TAB_TITLES[tabId]) tabId = "landing";
   document.body.dataset.page=tabId;
-  document.title=`${TAB_TITLES[tabId]} · VJBot`;
+  document.title=tabId==='landing'?'VJBot · Học tiếng Nhật cùng thầy Lâm':`${TAB_TITLES[tabId]} · VJBot`;
   soundEngine.playBlip();
 
   // Update sidebar & mobile bottom items
@@ -461,6 +468,7 @@ function switchTab(tabId, route={}) {
 
   window.closeAppSidebar?.();
 
+  if(examTimerInterval && tabId!=="quiz"){clearInterval(examTimerInterval);examTimerInterval=null;}
   // Initialize specific tab views
   if (tabId === "curriculum") {
     document.getElementById('level-hub').hidden=Boolean(route.level);
@@ -471,18 +479,17 @@ function switchTab(tabId, route={}) {
       renderCurriculum(route.level,route.skill || activeCurriculumSkill);
       document.getElementById('course-page-title').focus({preventScroll:true});
     }else{renderLevelCards();document.getElementById('level-hub-title').focus({preventScroll:true});}
-  } else if (tabId === "flashcards") {
-    renderFlashcards(activeCurriculumLevel);
-  } else if (tabId === "kaiwa") {
-    renderKaiwaScenarios();
-  } else if (tabId === "quiz" && !currentExamQuestions.length) {
-    renderQuiz(activeCurriculumLevel);
+  } else if (['flashcards','kaiwa','kanji','quiz'].includes(tabId)) {
+    renderFeaturePage(tabId,route);
+  } else if (tabId === 'dashboard') {
+    renderDashboard();
   } else if (tabId === "mastery") {
     loadProgress();
     renderBookmarks();
   } else if (tabId === "classroom") {
     renderDailyKanji(activeCurriculumLevel);
   }
+  return true;
 }
 
 // ==========================================
@@ -499,13 +506,13 @@ function renderBubble(role, content) {
   row.className = `chat-bubble-row ${role === "user" ? "user-row" : "bot-row"}`;
 
   const currentMascot = MASCOTS[mascotMgr.current];
-  const avatarSrc = role === "user" ? "assets/lam/teacher.svg" : currentMascot.avatar;
+  const avatarSrc = currentMascot.avatar;
 
   const formattedContent = escapeHtml(content).replace(/\n/g, "<br>");
 
   row.innerHTML = `
     <div class="bubble-avatar-box">
-      <img src="${avatarSrc}" alt="${role}" class="bubble-avatar-img pixel-sprite">
+      ${role === "user" ? '<span class="learner-avatar">Em</span>' : `<img src="${avatarSrc}" alt="Thầy Lâm" class="bubble-avatar-img pixel-sprite">`}
     </div>
     <div class="bubble-speech-card ${role}">
       <div class="bubble-header-meta">
@@ -531,6 +538,9 @@ function renderBubble(role, content) {
 let sendingMessage=false;
 async function sendMessage(text) {
   if (sendingMessage || !text || !text.trim()) return;
+  if(!signedInUser){openAccount();return;}
+  document.getElementById('btn-send-message').disabled=true;
+  document.getElementById('chat-connection-status').textContent='Thầy đang đọc…';
   sendingMessage=true;
   renderBubble("user", text);
   soundEngine.playSend();
@@ -561,7 +571,8 @@ async function sendMessage(text) {
     mascotMgr.setState("speaking");
     soundEngine.playReceive();
 
-    const reply = data.reply || data.response || "Rất tốt! Bạn hãy tiếp tục nhé.";
+    const reply = data.reply || data.response;
+    if(typeof reply!=="string" || !reply.trim())throw new Error("Empty AI reply");
     renderBubble("bot", reply);
 
     if (reply.includes("正解") || reply.includes("chính xác") || reply.includes("Đúng rồi")) {
@@ -572,7 +583,7 @@ async function sendMessage(text) {
   } catch (err) {
     renderBubble("bot", "Không kết nối được với thầy Lâm. Em hãy thử gửi lại.");
     mascotMgr.setState("idle");
-  } finally {sendingMessage=false;}
+  } finally {sendingMessage=false;document.getElementById("btn-send-message").disabled=false;document.getElementById("chat-connection-status").textContent="Sẵn sàng";}
 }
 
 async function loadGreeting() {
@@ -704,9 +715,9 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
 
 function showLessonDetail(item, level, skill, fromHistory=false) {
   const returnView=curriculumView;
+  if(switchTab('lesson',{level,skill,id:activityId(item,level,skill),fromHistory})===false)return;
   activeCurriculumLevel=level;
   activeCurriculumSkill=skill;
-  switchTab('lesson',{level,skill,id:activityId(item,level,skill),fromHistory});
   currentLesson={item,level,skill,returnView};
   const modal = document.getElementById("lesson-page");
   const badge = document.getElementById("modal-lesson-badge");
@@ -899,7 +910,7 @@ function installCourseKaiwa(){
   for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:unit.production.prompt,hints:unit.production.criteria}]};}
 }
 function startCourseKaiwa(unit){
-  installCourseKaiwa();activeKaiwaLevel=unit.level;activeKaiwaKey=unit.id;activeKaiwaPromptIdx=0;switchTab('kaiwa');
+  installCourseKaiwa();activeKaiwaLevel=unit.level;activeKaiwaKey=unit.id;activeKaiwaPromptIdx=0;switchTab('kaiwa',{level:unit.level});
 }
 async function renderKaiwaScenarios(){
   const request=++kaiwaRenderRequest,container=document.getElementById('kaiwa-scenarios-grid');
@@ -966,7 +977,7 @@ async function renderQuiz(level = "N5", testIdx = 0) {
   if (testPicker) {
     testPicker.innerHTML = examList.map((ex,idx)=>`<option value="${idx}">${escapeHtml(ex.id ? ex.title : `Bộ cơ bản ${idx+1}`)} · ${ex.questions?.length || 0} câu</option>`).join('');
     testPicker.value=String(testIdx);
-    testPicker.onchange=()=>renderQuiz(activeQuizLevel,Number(testPicker.value));
+    testPicker.onchange=()=>switchTab('quiz',{level:activeQuizLevel,view:'practice',id:testPicker.value});
   }
 
   const selectedExam = examList[testIdx] || examList[0];
@@ -1885,10 +1896,11 @@ function setupEventListeners() {
   initAnatomyTypewriter();
   mascotMgr.updateAllSpriteElements();
 
+  setupWorkspace();
   await setupAccount();
 
   // Pre-fetch greeting & user profile
-  try {
+  if(signedInUser)try {
     let res = await apiFetch(`/api/profile?user_id=${encodeURIComponent(userId)}`);
     if (res.status === 404) {
       res = await apiFetch("/api/profile", {
@@ -1913,8 +1925,10 @@ function setupEventListeners() {
 
   // Resolve account and saved level before rendering data-dependent routes.
   window.addEventListener('hashchange',restoreAppRoute);
-  if(!location.hash)history.replaceState(null,'','#landing');
+  if(signedInUser && sessionStorage.getItem('vjbot_return_route')){history.replaceState(null,'',sessionStorage.getItem('vjbot_return_route'));sessionStorage.removeItem('vjbot_return_route');}
+  if(!location.hash)history.replaceState(null,'',signedInUser?'#dashboard':'#landing');
   restoreAppRoute();
+  if(!signedInUser)return;
   loadGreeting();
   loadProgress();
   try {

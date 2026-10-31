@@ -57,7 +57,7 @@ function studyStepState(step,records){
 }
 function openStudyStep(step,level){
   if(step.kind==='kaiwa'){startCourseKaiwa(step.unit);return;}
-  if(step.kind==='test'){switchTab('quiz');renderQuiz(level,step.unit.examIndex);return;}
+  if(step.kind==='test'){switchTab('quiz',{level,view:'practice',id:String(step.unit.examIndex)});return;}
   showLessonDetail(step.lesson,level,step.skill);
 }
 let studyPlanRequest=0;

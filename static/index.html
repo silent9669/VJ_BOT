@@ -35,9 +35,9 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="notebook.css">
   <link rel="stylesheet" href="practice.css">
-  <link rel="stylesheet" href="layout.css">
+  <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css">
 </head>
-<body>
+<body data-page="landing">
   <!-- APP SHELL: TWO-COLUMN SIDEBAR + MAIN CONTENT (APPLE / SKETCH HYBRID) -->
   <div class="app-shell">
 
@@ -95,9 +95,9 @@
 
         <div class="sidebar-nav-section">
 
-          <button type="button" class="sidebar-nav-item active sketch-tab" data-tab="landing" id="tab-btn-landing">
+          <button type="button" class="sidebar-nav-item active sketch-tab" data-tab="dashboard" id="tab-btn-dashboard">
 
-            <span class="nav-label">Trang chủ</span>
+            <span class="nav-label">Góc học tập</span>
 
           </button>
         </div>
@@ -117,6 +117,7 @@
 
           </button>
 
+          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Kanji</span></button>
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards">
 
             <span class="nav-label">Thẻ nhớ</span>
@@ -205,26 +206,17 @@
 
         <!-- TAB 0: LANDING PAGE (APPLE RETRO MACINTOSH 1984 PC + TYPEWRITER + SHOWCASE) -->
         <section class="tab-panel active" id="panel-landing">
-          <div class="landing-container">
-            <div class="notebook-home">
-              <div class="notebook-intro">
-                <h1>Học tiếng Nhật<br><em>cùng thầy Lâm</em></h1><p class="landing-method">Học bài, tự giải thích lại, rồi luyện trong tình huống.</p><div class="landing-levels" aria-label="Chọn cấp độ học"><button type="button" data-start-level="N5">N5</button><button type="button" data-start-level="N4">N4</button><button type="button" data-start-level="N3">N3</button><button type="button" data-start-level="N2">N2</button><button type="button" data-start-level="N1">N1</button></div>
-                <div class="landing-hero-ctas">
-                  <button type="button" class="hero-cta-btn primary" id="landing-btn-curriculum">Chọn bài học</button>
-                  <button type="button" class="hero-cta-btn secondary" id="landing-btn-start">Hỏi thầy Lâm</button>
-                </div>
-              </div>
-              <div class="room-card"><div id="study-room" aria-label="Phòng học 3D của thầy Lâm"><img class="room-fallback" src="assets/lam/teacher.svg" alt="Thầy Lâm" width="144" height="240"></div><label class="room-angle-label">Góc nhìn<input id="room-angle" type="range" min="-30" max="30" value="0" aria-label="Xoay góc nhìn phòng học"></label><div class="room-controls"><button type="button" data-room="book">本 · Sách</button><button type="button" data-room="desk">机 · Bàn</button><button type="button" data-room="chair">椅子 · Ghế</button><button type="button" data-room="plant">植物 · Cây</button></div><div class="room-word"><strong id="room-word-jp">本は机の上にあります。</strong><span id="room-word-vi">Quyển sách ở trên bàn.</span><button type="button" id="room-audio" aria-label="Nghe câu tiếng Nhật">Nghe ↗</button></div><div class="room-quiz"><button type="button" id="room-quiz-start">Luyện đồ vật</button><p id="room-question" hidden></p><output id="room-feedback" aria-live="polite"></output></div></div>
-            </div>
-            <details class="anatomy-vocab"><summary>パソコン · Máy tính</summary><anatomy-computer theme="light"></anatomy-computer></details>
-            <div class="study-shortcuts">
-              <button class="study-shortcut" data-go="flashcards"><strong>Thẻ nhớ</strong></button>
-              <button class="study-shortcut" data-go="kaiwa"><strong>Luyện nói</strong></button>
-              <button class="study-shortcut" id="landing-btn-mock-exam"><strong>Bài luyện JLPT</strong></button>
-            </div>
+          <nav class="public-nav" aria-label="Trang giới thiệu"><a href="#landing" class="public-brand">VJBot<span>日本語</span></a><div><a href="#landing-method">Cách học</a><a href="#landing-courses">Khóa học</a><button class="public-login" data-enter="dashboard">Đăng nhập Google ↗</button></div></nav>
+          <div class="public-hero">
+            <div class="public-hero-copy"><h1>Tiếng Nhật.<br><em>Hiểu để nói.</em></h1><p>Học từ N5 đến N1 cùng thầy Lâm. Tự giải thích, luyện hội thoại và thử sức với đề JLPT.</p><button class="public-cta" id="landing-btn-curriculum">Bắt đầu học <span>↗</span></button><button class="public-text-action" id="landing-btn-start">Gặp thầy Lâm</button></div>
+            <div class="learning-collage" aria-label="Sổ học tiếng Nhật và thầy Lâm"><span class="collage-sun" aria-hidden="true"></span><div class="collage-sheet" lang="ja"><span>日本語のノート</span><strong>学ぶ<br>話す<br>わかる</strong><small>Học · Nói · Hiểu</small></div><img src="assets/lam/teacher.svg" alt="Thầy Lâm mặc vest, cầm sách" width="260" height="340"><div class="collage-note"><span lang="ja">今日は、何を学ぼう？</span><span>Hôm nay, mình học gì?</span></div></div>
           </div>
+          <section class="public-method" id="landing-method"><h2>Một bài học.<br><em>Ba lần hiểu.</em></h2><div><article><h3>Đọc và khám phá</h3><p>Chọn bài theo trình độ. Học mẫu câu, từ vựng và cách dùng trong tình huống.</p></article><article><h3>Giải thích cho thầy</h3><p>Thầy Lâm đặt câu hỏi, nghe em trả lời rồi gợi ý để em tự tìm ra cách diễn đạt.</p></article><article><h3>Thử lại trong thực tế</h3><p>Luyện nói, ôn thẻ đến hạn và làm đề. Lưu tiến độ bằng tài khoản Google.</p></article></div></section>
+          <section class="public-courses" id="landing-courses"><header><h2>Từ câu đầu tiên<br><em>đến ý tưởng của em.</em></h2><p>Năm cấp độ. Một lộ trình riêng.</p></header><div class="public-levels"><button data-start-level="N5"><strong>N5</strong><span>Bắt đầu</span><span aria-hidden="true">↗</span></button><button data-start-level="N4"><strong>N4</strong><span>Nền tảng</span><span aria-hidden="true">↗</span></button><button data-start-level="N3"><strong>N3</strong><span>Kết nối</span><span aria-hidden="true">↗</span></button><button data-start-level="N2"><strong>N2</strong><span>Mở rộng</span><span aria-hidden="true">↗</span></button><button data-start-level="N1"><strong>N1</strong><span>Chuyên sâu</span><span aria-hidden="true">↗</span></button></div></section>
+          <footer class="public-footer"><div><h2>Mở sổ.<br><em>Bắt đầu thôi.</em></h2><button class="public-cta" data-enter="dashboard">Đăng nhập để học ↗</button></div><div><button id="landing-btn-mock-exam">Khám phá đề JLPT ↗</button><a href="sources.html">Nguồn học liệu ↗</a><span>VJBot · Học cùng thầy Lâm</span></div></footer>
         </section>
-
+        <section class="tab-panel workspace-panel" id="panel-dashboard" hidden><header class="workspace-heading"><div><h1>Góc học tập</h1><p id="dashboard-greeting"></p></div><img src="assets/lam/teacher.svg" alt="Thầy Lâm" width="72" height="100"></header><div id="dashboard-content" aria-live="polite"></div><details class="dashboard-room"><summary>Phòng học tương tác</summary><div class="room-card"><div id="study-room" aria-label="Phòng học 3D của thầy Lâm"><img class="room-fallback" src="assets/lam/teacher.svg" alt="Thầy Lâm" width="144" height="240"></div><label class="room-angle-label">Góc nhìn<input id="room-angle" type="range" min="-30" max="30" value="0" aria-label="Xoay góc nhìn phòng học"></label><div class="room-controls"><button type="button" data-room="book">本 · Sách</button><button type="button" data-room="desk">机 · Bàn</button><button type="button" data-room="chair">椅子 · Ghế</button><button type="button" data-room="plant">植物 · Cây</button></div><div class="room-word"><strong id="room-word-jp">本は机の上にあります。</strong><span id="room-word-vi">Quyển sách ở trên bàn.</span><button type="button" id="room-audio" aria-label="Nghe câu tiếng Nhật">Nghe ↗</button></div><div class="room-quiz"><button type="button" id="room-quiz-start">Luyện đồ vật</button><p id="room-question" hidden></p><output id="room-feedback" aria-live="polite"></output></div></div></details><details class="anatomy-vocab"><summary>パソコン · Máy tính</summary><anatomy-computer theme="light"></anatomy-computer></details></section>
+        <section class="tab-panel workspace-panel" id="panel-kanji" hidden><div class="skill-hub" id="kanji-hub"></div><div id="kanji-workspace" hidden></div></section>
         <!-- TAB 1: SENSEI CLASSROOM (REVERSED QUIZ & CHAT) -->
         <section class="tab-panel" id="panel-classroom" hidden>
           <div id="chat-lesson-context" hidden></div><div class="classroom-layout">
@@ -234,7 +226,7 @@
               <div class="tape-strip tape-top-center"></div>
 
               <div class="sensei-podium-header">
-                <span class="podium-title">SENSEI MASCOT</span>
+                <span class="podium-title">THẦY LÂM</span>
                 <span class="sensei-mood-badge" id="sensei-mood-badge">Tươi vui </span>
               </div>
 
@@ -247,7 +239,7 @@
 
               <div class="stage-sensei-info">
                 <h3 class="stage-sensei-name" id="stage-sensei-name">Thầy Lâm</h3>
-                <p class="stage-sensei-role" id="stage-sensei-role">Giáo viên luyện đề • Chuyên sâu JLPT &amp; Phản xạ nhanh</p>
+                <p class="stage-sensei-role" id="stage-sensei-role">Tiếng Nhật · Học đảo ngược</p>
               </div>
 
               <!-- Active Topic Card -->
@@ -307,9 +299,9 @@
               <!-- Chat Stage Header -->
               <div class="chat-header">
                 <div class="chat-header-left">
-                  <div class="chat-status-pulse"></div>
+                  <img class="chat-teacher-avatar" src="assets/lam/teacher.svg" alt="" width="32" height="42">
                   <div>
-                    <h2 class="chat-title">Thầy Lâm</h2>
+                    <h2 class="chat-title">Thầy Lâm</h2><span id="chat-connection-status" role="status">Hỏi, giải thích, rồi thử lại.</span>
 
                   </div>
                 </div>
@@ -428,7 +420,7 @@
         </section>
 
         <!-- TAB 3: FLASHCARDS (SRS SPACED REPETITION) -->
-        <section class="tab-panel" id="panel-flashcards" hidden>
+        <section class="tab-panel" id="panel-flashcards" hidden><div class="skill-hub" id="flashcards-hub"></div><div class="feature-workspace" id="flashcards-workspace" hidden><button class="feature-back" data-feature-back="flashcards">← Chọn cấp độ</button>
           <div class="flashcards-container">
             <div class="flashcards-header-card">
               <div class="fc-header-top">
@@ -492,10 +484,10 @@
               </div>
             </div>
           </div>
-        </section>
+        </div></section>
 
         <!-- TAB 4: KAIWA SPEAKING LAB (VOICE AI + FREESTYLE) -->
-        <section class="tab-panel" id="panel-kaiwa" hidden>
+        <section class="tab-panel" id="panel-kaiwa" hidden><div class="skill-hub" id="kaiwa-hub"></div><div class="feature-workspace" id="kaiwa-workspace" hidden><button class="feature-back" data-feature-back="kaiwa">← Chọn cấp độ</button>
           <div class="kaiwa-container">
             <div class="kaiwa-header-card">
               <h2 class="kaiwa-title">Luyện nói</h2>
@@ -566,11 +558,11 @@
               </div>
             </div>
           </div>
-        </section>
+        </div></section>
 
         <!-- TAB 5: JLPT MOCK EXAM (MONDAI 1-4 SIMULATOR) -->
-        <section class="tab-panel" id="panel-quiz" hidden>
-          <div class="quiz-container">
+        <section class="tab-panel" id="panel-quiz" hidden><div class="skill-hub" id="quiz-hub"></div><div class="feature-workspace" id="quiz-workspace" hidden><button class="feature-back" data-feature-back="quiz">← Chọn cấp độ</button>
+          <div id="exam-catalog"></div><div id="simulation-workspace" hidden></div><div class="quiz-container" id="practice-workspace" hidden>
             <div class="quiz-header-card">
               <div class="quiz-title-row">
                 <div>
@@ -645,7 +637,7 @@
               </div>
             </div>
           </div>
-        </section>
+        </div></section>
 
         <!-- TAB 6: MASTERY RADAR & ANALYTICS -->
         <section class="tab-panel" id="panel-mastery" hidden>
@@ -852,7 +844,7 @@
 
   <!-- MOBILE BOTTOM DOCK (APPLE TAB BAR FOR EASY 1-TAP NAVIGATION) -->
   <nav class="mobile-bottom-bar" id="mobile-bottom-bar" aria-label="Mobile Navigation">
-    <button type="button" class="mobile-bottom-item active" data-tab="landing">
+    <button type="button" class="mobile-bottom-item active" data-tab="dashboard">
 
       <span class="m-label">Trang chủ</span>
     </button>
@@ -883,7 +875,7 @@
   <script src="account.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
-  <script src="app.js"></script>
+  <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="app.js"></script>
   <script type="module" src="/room.js"></script>
 </body>
 </html>
