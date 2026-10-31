@@ -421,7 +421,7 @@
 
         <!-- TAB 3: FLASHCARDS (SRS SPACED REPETITION) -->
         <section class="tab-panel" id="panel-flashcards" hidden><div class="skill-hub" id="flashcards-hub"></div><div class="feature-workspace" id="flashcards-workspace" hidden><button class="feature-back" data-feature-back="flashcards">← Chọn cấp độ</button>
-          <div class="flashcards-container">
+          <div id="flashcard-lesson-list"></div><div class="flashcards-container" id="flashcard-review" hidden>
             <div class="flashcards-header-card">
               <div class="fc-header-top">
                 <div>
@@ -488,7 +488,7 @@
 
         <!-- TAB 4: KAIWA SPEAKING LAB (VOICE AI + FREESTYLE) -->
         <section class="tab-panel" id="panel-kaiwa" hidden><div class="skill-hub" id="kaiwa-hub"></div><div class="feature-workspace" id="kaiwa-workspace" hidden><button class="feature-back" data-feature-back="kaiwa">← Chọn cấp độ</button>
-          <div class="kaiwa-container">
+          <div id="kaiwa-lesson-list"></div><div class="kaiwa-container" id="kaiwa-session" hidden>
             <div class="kaiwa-header-card">
               <h2 class="kaiwa-title">Luyện nói</h2>
 
@@ -871,7 +871,7 @@
   <dialog id="auth-dialog" aria-labelledby="auth-user"><button type="button" id="auth-close" class="modal-close-btn" aria-label="Đóng">×</button><h2 id="auth-user">Đăng nhập Google</h2><div id="google-signin"></div><p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button></dialog>
   <script src="practice.js"></script>
   <script src="learning.js"></script>
-  <script src="study-plan.js"></script>
+  <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
   <script src="account.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>

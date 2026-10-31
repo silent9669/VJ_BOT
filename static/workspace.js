@@ -31,9 +31,16 @@ async function renderFeaturePage(feature,route){
   const version=featureVersion;
   const hub=document.getElementById(`${feature}-hub`),work=document.getElementById(`${feature}-workspace`);
   hub.hidden=!!route.level;work.hidden=!route.level;
+  const back=work.querySelector('[data-feature-back]');if(back){back.textContent=route.view?'← Danh sách bài':'← Chọn cấp độ';back.onclick=()=>switchTab(feature,route.view?{level:route.level}:{});}
   if(!route.level){featureLevelCards(feature);return;}
-  if(feature==='flashcards')return renderFlashcards(route.level);
-  if(feature==='kaiwa'){activeKaiwaLevel=route.level;return renderKaiwaScenarios();}
+  if(feature==='flashcards'){
+    if(route.view==='review' && route.id){document.getElementById('flashcard-lesson-list').hidden=true;document.getElementById('flashcard-review').hidden=false;return renderFlashcards(route.level,route.id);}
+    return renderFeatureLessonList(feature,route.level);
+  }
+  if(feature==='kaiwa'){
+    if(route.view==='session' && route.id){document.getElementById('kaiwa-lesson-list').hidden=true;document.getElementById('kaiwa-session').hidden=false;activeKaiwaLevel=route.level;activeKaiwaKey=route.id;activeKaiwaPromptIdx=0;return renderKaiwaScenarios();}
+    return renderFeatureLessonList(feature,route.level);
+  }
   if(feature==='quiz')return renderExamCatalog(route);
   work.innerHTML='<button class="feature-back" id="kanji-back">← Chọn cấp độ</button><h1>Kanji '+route.level+'</h1><div id="kanji-library" class="kanji-library" aria-live="polite">Đang tải…</div>';
   document.getElementById('kanji-back').onclick=()=>switchTab('kanji');
@@ -78,7 +85,7 @@ async function renderExamCatalog(route){
   host.hidden=false;practice.hidden=true;simulation.hidden=true;host.textContent='Đang tải bộ đề…';
   const version=featureVersion;
   try{
-    await Promise.all([ensureLessons(route.level),loadPracticalCourse(),loadExamConfig()]);if(version!==featureVersion)return;
+    await Promise.all([ensureLessons(route.level),loadPracticalCourse(),loadExamConfig(),loadCompletions()]);if(version!==featureVersion)return;
     createStudyPlan(route.level);addPracticeSets(route.level);
     if(route.view==='practice'){
       const index=Number(route.id);if(!Number.isInteger(index)||index<0||index>=window.JLPT_DATA.exams[route.level].length)throw new Error('exam');
@@ -88,6 +95,46 @@ async function renderExamCatalog(route){
       if(!examConfig.papers.some(p=>p.level===route.level && p.year===route.id))throw new Error('paper');
       host.hidden=true;simulation.hidden=false;return renderSimulation(route.level,route.id);
     }
-    host.innerHTML=`<header class="workspace-heading"><h1>JLPT ${route.level}</h1></header><h2>Mô phỏng kỳ thi</h2><p class="exam-source-note">Đề luyện chính thức, đồng hồ theo từng phần. Điểm tự đối chiếu, không quy đổi sang thang điểm JLPT.</p><div class="exam-grid">${examConfig.papers.filter(p=>p.level===route.level).map(p=>`<a class="exam-set official" href="#quiz/${route.level}/simulation/${p.year}"><span>Japan Foundation · JEES</span><h3>Official Practice Workbook ${p.year}</h3><p>${p.sections.reduce((n,s)=>n+s.minutes,0)} phút · ${p.sections.length} phần</p><strong>Chuẩn bị thi ↗</strong></a>`).join('')}</div><h2>Bộ luyện theo chủ đề</h2><div class="exam-grid">${window.JLPT_DATA.exams[route.level].map((e,i)=>`<a class="exam-set" href="#quiz/${route.level}/practice/${i}"><h3>${escapeHtml(e.title || `Bộ cơ bản ${i+1}`)}</h3><p>${e.questions.length} câu · ${e.duration_minutes||25} phút</p><span>${escapeHtml(e.source || 'VJBot · bài luyện')}</span></a>`).join('')}</div>`;
+    host.innerHTML=`<header class="workspace-heading"><h1>JLPT ${route.level}</h1></header><h2>Mô phỏng kỳ thi</h2><p class="exam-source-note">Đề luyện chính thức, đồng hồ theo từng phần. Điểm tự đối chiếu, không quy đổi sang thang điểm JLPT.</p><div class="exam-grid">${examConfig.papers.filter(p=>p.level===route.level).map(p=>`<a class="exam-set official" href="#quiz/${route.level}/simulation/${p.year}"><span>Japan Foundation · JEES</span><h3>Official Practice Workbook ${p.year}</h3><p>${p.sections.reduce((n,s)=>n+s.minutes,0)} phút · ${p.sections.length} phần</p><strong>Chuẩn bị thi ↗</strong></a>`).join('')}</div><h2>Bộ luyện theo chủ đề</h2><div class="exam-grid">${featureLessons('quiz',route.level).map(e=>`<a class="exam-set" href="#quiz/${route.level}/lesson/${encodeURIComponent(e.id)}"><h3>${escapeHtml(e.title)}</h3><p>${completionRecords.has(activityId(e,route.level,'quiz'))?'Đã hoàn thành':'Học bài · 5 câu kiểm tra'}</p><span>${escapeHtml(e.summary)}</span></a>`).join('')}</div>`;
   }catch{host.hidden=false;host.textContent='Chưa mở được bộ đề. ';const b=document.createElement('button');b.textContent='Thử lại';b.onclick=()=>renderExamCatalog({...route,view:undefined});host.append(b);}
+}
+function featureLessons(feature,level){
+  const skills=window.JLPT_DATA.curriculum[level].skills;
+  if(feature==='flashcards')return skills.vocabulary.filter(l=>l.items?.length).map(l=>({...l,id:l.id || `lesson:${level}:vocabulary:${l.lesson}`}));
+  if(feature==='kaiwa'){
+    installCourseKaiwa();
+    return Object.entries(window.JLPT_DATA.kaiwaScenarios).filter(([,s])=>s.level===level || s.level==='ALL').map(([key,s])=>{
+      const unit=practicalCourse.units.find(u=>u.id===key);
+      return {id:`kaiwa-lesson:${level}:${key}`,completionId:s.course?`kaiwa:${key}`:`kaiwa:${level}:${key}`,title:s.title,summary:unit?.goal || s.desc,lessonKey:key,sourceLabel:'VJBot · hội thoại',examples:unit?.dialogue || s.prompts.flatMap(p=>[{jp:p.jp,vi:p.vi,ro:p.ro},...(p.responses || [])]),items:unit?.words,drills:unit?.questions,formula:unit?.formula,explanation:unit?.note};
+    });
+  }
+  if(feature==='quiz'){
+    createStudyPlan(level);addPracticeSets(level);
+    return window.JLPT_DATA.exams[level].map((exam,index)=>{
+      const questions=exam.questions.slice(0,5);
+      return {id:`quiz-lesson:${level}:${exam.id ?? index}`,completionId:`test:${examIdentity(level,index)}`,title:exam.title || `Bộ luyện ${index+1}`,summary:exam.source || 'VJBot · bài luyện',sourceLabel:exam.source || 'VJBot',examIndex:index,examples:questions.map(q=>({jp:(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,''),vi:q.explain || q.explanation || q.options[q.answer]})),drills:questions.map((q,i)=>({q:[q.instruction?.replace('chữ Hán được gạch chân', '「'+q.target+'」'),q.passage,(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,'')].filter(Boolean).join('\n'),opts:q.options,ans:q.options[q.answer],explanation:q.explain || q.explanation,item_id:quizProgressId(level,index,q,i)}))};
+    });
+  }
+  return [];
+}
+function findFeatureLesson(feature,level,id){return featureLessons(feature,level).find(l=>l.id===id);}
+async function renderFeatureLessonList(feature,level){
+  const version=featureVersion,host=document.getElementById(feature==='flashcards'?'flashcard-lesson-list':'kaiwa-lesson-list');
+  host.hidden=false;document.getElementById(feature==='flashcards'?'flashcard-review':'kaiwa-session').hidden=true;
+  host.textContent='Đang tải bài học…';
+  try{
+    await Promise.all([ensureLessons(level),loadPracticalCourse(),loadCompletions()]);if(version!==featureVersion)return;
+    const lessons=featureLessons(feature,level);
+    host.innerHTML=`<header class="workspace-heading"><h1>${featureNames[feature]} ${level}</h1><span>${lessons.length} bài</span></header><div class="feature-lesson-grid">${lessons.map((l,i)=>`<a class="feature-lesson-card" href="#${feature}/${level}/lesson/${encodeURIComponent(l.id)}"><span class="lesson-list-number">${String(i+1).padStart(2,'0')}</span><h2>${escapeHtml(l.title)}</h2><p>${escapeHtml(l.items?.slice(0,4).map(w=>w.jp).join(' · ') || l.summary || '')}</p><span>${completionRecords.has(activityId(l,level,feature))?'Đã hoàn thành':'Học bài · 5 câu kiểm tra'} ↗</span></a>`).join('')}</div>`;
+  }catch{if(version!==featureVersion)return;host.textContent='Chưa tải được bài học. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeatureLessonList(feature,level);host.append(retry);}
+}
+function addFeatureLessonAction(item,level,owner){
+  if(!owner)return;
+  const body=document.getElementById('modal-lesson-body'),back=body.querySelector('.modal-close-action');
+  back.textContent=`Về ${featureNames[owner]}`;document.getElementById('btn-close-lesson-modal').textContent=`${featureNames[owner]} ${level}`;
+  if(owner==='quiz')return;
+  const button=document.createElement('button');button.className='stage-btn';
+  button.textContent=owner==='flashcards'?'Ôn bằng thẻ nhớ':'Thực hành hội thoại';
+  button.onclick=()=>switchTab(owner,{level,view:owner==='flashcards'?'review':'session',id:owner==='flashcards'?item.id:item.lessonKey});
+  body.querySelector('.lesson-footer').prepend(button);
 }

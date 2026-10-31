@@ -5,7 +5,11 @@ function parseAppRoute(hash){
   let parts;
   try{parts=hash.replace(/^#/,'').split('/').map(decodeURIComponent);}catch{return {tab:'landing'};}
   const [tab,level,view,skill,id]=parts;
-  if(['kaiwa','kanji','flashcards','quiz'].includes(tab))return {tab,level:learningLevels.includes(level)?level:undefined,view:['practice','simulation'].includes(view)?view:undefined,id:skill};
+  if(['kaiwa','kanji','flashcards','quiz'].includes(tab)){
+    const validLevel=learningLevels.includes(level)?level:undefined;
+    if(validLevel && view==='lesson' && skill && ['kaiwa','flashcards','quiz'].includes(tab))return {tab:'lesson',owner:tab,level,skill:tab==='flashcards'?'vocabulary':tab==='kaiwa'?'listening':'reading',id:skill};
+    return {tab,level:validLevel,view:['practice','simulation','review','session'].includes(view)?view:undefined,id:skill};
+  }
   if(tab!=='curriculum')return {tab:Object.hasOwn(TAB_TITLES,tab) && tab!=='lesson'?tab:'landing'};
   if(!level)return {tab:'curriculum'};
   if(!learningLevels.includes(level))return {tab:'curriculum'};
@@ -15,6 +19,7 @@ function parseAppRoute(hash){
 }
 function appRouteHash(tab,route={}){
   if(['kaiwa','kanji','flashcards','quiz'].includes(tab) && route.level)return `#${tab}/${route.level}${route.view?`/${route.view}/${encodeURIComponent(route.id || '0')}`:''}`;
+  if(tab==='lesson' && route.owner)return `#${route.owner}/${route.level}/lesson/${encodeURIComponent(route.id)}`;
   if(tab==='lesson')return `#curriculum/${route.level}/lesson/${route.skill}/${encodeURIComponent(route.id)}`;
   if(tab==='curriculum' && route.level)return `#curriculum/${route.level}${route.view==='library'?`/library/${route.skill || 'grammar'}`:''}`;
   return `#${tab}`;
@@ -23,6 +28,7 @@ function openLevelCourse(level,view='plan',skill='grammar',fromHistory=false){
   switchTab('curriculum',{level,view,skill,fromHistory});
 }
 function returnToCourse(){
+  if(currentLesson?.owner){switchTab(currentLesson.owner,{level:currentLesson.level});return;}
   if(currentLesson?.returnTab==='kanji'){switchTab('kanji',{level:currentLesson.level});return;}
   const level=currentLesson?.level || activeCurriculumLevel;
   const view=currentLesson?.returnView || 'plan';
@@ -41,6 +47,7 @@ async function restoreAppRoute(){
   try{
     await Promise.all([ensureLessons(route.level),loadPracticalCourse()]);
     if(version!==navigationVersion)return;
+    if(route.owner){const item=findFeatureLesson(route.owner,route.level,route.id);if(!item)throw new Error('missing');showLessonDetail(item,route.level,route.skill,true,route.owner);return;}
     const units=createStudyPlan(route.level);
     const lessons=[...units.flatMap(u=>u.steps.filter(s=>!s.kind).map(s=>s.lesson)),...(window.JLPT_DATA.curriculum[route.level].skills[route.skill]||[])];
     let item=lessons.find(l=>activityId(l,route.level,route.skill)===route.id);

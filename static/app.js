@@ -436,12 +436,12 @@ function switchTab(tabId, route={}) {
 
   // Update sidebar & mobile bottom items
   document.querySelectorAll(".sidebar-nav-item").forEach(item => {
-    const active=item.dataset.tab === (tabId==='lesson'?'curriculum':tabId);
+    const active=item.dataset.tab === (tabId==='lesson'?(route.owner || 'curriculum'):tabId);
     item.classList.toggle('active',active);
     if(active)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current');
   });
   document.querySelectorAll(".mobile-bottom-item").forEach(item => {
-    const active=item.dataset.tab === (tabId==='lesson'?'curriculum':tabId);
+    const active=item.dataset.tab === (tabId==='lesson'?(route.owner || 'curriculum'):tabId);
     item.classList.toggle('active',active);
     if(active)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current');
   });
@@ -713,12 +713,14 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
   setCurriculumView(curriculumView,false);
 }
 
-function showLessonDetail(item, level, skill, fromHistory=false) {
+function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
+  item={...item,items:item.items || item.roleplay?.words || item.targetWords,examples:item.examples || item.roleplay?.dialogue};
   const returnView=curriculumView;
-  if(switchTab('lesson',{level,skill,id:activityId(item,level,skill),fromHistory})===false)return;
+  if(switchTab('lesson',{level,skill,id:owner?item.id:activityId(item,level,skill),fromHistory,owner})===false)return;
   activeCurriculumLevel=level;
   activeCurriculumSkill=skill;
-  currentLesson={item,level,skill,returnView};
+  currentLesson={item,level,skill,returnView,owner};
+  document.getElementById('btn-close-lesson-modal').textContent='Về khóa học';
   const modal = document.getElementById("lesson-page");
   const badge = document.getElementById("modal-lesson-badge");
   const title = document.getElementById("modal-lesson-title");
@@ -730,7 +732,7 @@ function showLessonDetail(item, level, skill, fromHistory=false) {
   document.title=`${title.textContent} · ${level} · VJBot`;
 
   let examplesHtml = "";
-  if (!item.dictation && item.examples && item.examples.length > 0) {
+  if (item.examples && item.examples.length > 0) {
     examplesHtml = `
       <div style="margin-top: 20px;">
         <h4 style="font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 10px;">Ví dụ</h4>
@@ -759,7 +761,7 @@ function showLessonDetail(item, level, skill, fromHistory=false) {
   const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${item.script_jp}</p><p>${item.script_vi || ""}</p></div>` : "";
 
   body.innerHTML = `
-    <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">Luyện tập</button></div>
+    <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">5 câu kiểm tra</button></div>
     <div id="lesson-reference">
     <div style="margin-bottom: 16px;">
       <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT · EN" : "Bài học"))}</span>
@@ -798,12 +800,12 @@ function showLessonDetail(item, level, skill, fromHistory=false) {
   };
   modes.querySelectorAll('button').forEach(b=>b.onclick=()=>selectMode(b.dataset.lessonMode));
   if(hasPractice){
-    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent='Bắt đầu luyện tập';
+    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent='Làm 5 câu kiểm tra';
     start.onclick=()=>{selectMode('practice');body.querySelector('#lesson-exercises legend, #lesson-exercises textarea, #lesson-exercises button')?.focus();};
     body.querySelector('#lesson-reference').append(start);
   }
   selectMode('read');
-  mountCompletion(document.getElementById('lesson-completion'),{activity_id:activityId(item,level,skill),kind:'lesson',level,title:item.title || item.jp || 'Bài học'});
+  mountCompletion(document.getElementById('lesson-completion'),{activity_id:activityId(item,level,skill),kind:owner==='quiz'?'test':owner==='kaiwa'?'kaiwa':'lesson',level,title:item.title || item.jp || 'Bài học'});
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const text = decodeURIComponent(btn.dataset.text);
@@ -815,7 +817,7 @@ function showLessonDetail(item, level, skill, fromHistory=false) {
   if (btnPractice) {
     btnPractice.addEventListener("click", () => {
       switchTab("classroom");
-      startReversedLesson(item,level,skill);
+      startReversedLesson(item,level,skill,owner);
     });
   }
 
@@ -828,6 +830,7 @@ function showLessonDetail(item, level, skill, fromHistory=false) {
   const btnClose = body.querySelector(".modal-close-action");
   if (btnClose){btnClose.textContent="Về khóa học";btnClose.addEventListener("click",returnToCourse);}
 
+  addFeatureLessonAction(item,level,owner);
   body.scrollTop=0;
   title.focus({preventScroll:true});
 }
@@ -838,7 +841,7 @@ function showLessonDetail(item, level, skill, fromHistory=false) {
 let fcDeck = [];
 let fcIdx = 0,fcRequest=0;
 
-async function renderFlashcards(level = "N5") {
+async function renderFlashcards(level = "N5",lessonId=null) {
   const request=++fcRequest;
   let deck=[];
   try { await ensureLessons(level); } catch (error) { document.getElementById("fc-counter").textContent=error.message; return; }
@@ -849,7 +852,7 @@ async function renderFlashcards(level = "N5") {
   });
 
   const vocabularyLessons = window.JLPT_DATA?.curriculum?.[level]?.skills?.vocabulary || [];
-  const vocabList = vocabularyLessons.flatMap(lesson => lesson.items || []).filter(item => item.jp);
+  const vocabList = vocabularyLessons.filter(l=>!lessonId || (l.id || `lesson:${level}:vocabulary:${l.lesson}`)===lessonId).flatMap(lesson => lesson.items || []).filter(item => item.jp);
   if (vocabList.length > 0) {
     deck = vocabList.map(v => ({
       id: v.id || `fc-${level}-${v.jp}`,
@@ -910,7 +913,7 @@ function installCourseKaiwa(){
   for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:unit.production.prompt,hints:unit.production.criteria}]};}
 }
 function startCourseKaiwa(unit){
-  installCourseKaiwa();activeKaiwaLevel=unit.level;activeKaiwaKey=unit.id;activeKaiwaPromptIdx=0;switchTab('kaiwa',{level:unit.level});
+  installCourseKaiwa();activeKaiwaLevel=unit.level;activeKaiwaKey=unit.id;activeKaiwaPromptIdx=0;showLessonDetail(findFeatureLesson('kaiwa',unit.level,`kaiwa-lesson:${unit.level}:${unit.id}`),unit.level,'listening',false,'kaiwa');
 }
 async function renderKaiwaScenarios(){
   const request=++kaiwaRenderRequest,container=document.getElementById('kaiwa-scenarios-grid');
@@ -940,7 +943,7 @@ function loadKaiwaPrompt() {
   const prompts = Array.isArray(s.prompts) ? s.prompts : [];
   const prompt = prompts[activeKaiwaPromptIdx % Math.max(prompts.length, 1)] || {};
 
-  mountCompletion(document.getElementById('kaiwa-completion'),{activity_id:s.course?`kaiwa:${activeKaiwaKey}`:`kaiwa:${activeKaiwaLevel}:${activeKaiwaKey}:${activeKaiwaPromptIdx}`,kind:'kaiwa',level:activeKaiwaLevel,title:s.title});
+  mountCompletion(document.getElementById('kaiwa-completion'),{activity_id:s.course?`kaiwa:${activeKaiwaKey}`:`kaiwa:${activeKaiwaLevel}:${activeKaiwaKey}`,kind:'kaiwa',level:activeKaiwaLevel,title:s.title});
   const context=document.getElementById('kaiwa-context');context.textContent=s.context || '';context.hidden=!s.context;
   if (tag) tag.textContent = s.title;
   if (jp) jp.textContent = prompt.jp || "こんにちは。よろしくお願いします。";
@@ -1435,7 +1438,7 @@ function setupEventListeners() {
   else {voiceButton.disabled=true;voiceButton.title='Trình duyệt không hỗ trợ nhập giọng nói';}
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
-  document.getElementById('kaiwa-level').onchange=e=>{activeKaiwaLevel=e.target.value;activeKaiwaPromptIdx=0;renderKaiwaScenarios();};
+  document.getElementById('kaiwa-level').onchange=e=>switchTab('kaiwa',{level:e.target.value});
   document.querySelectorAll('[data-start-level]').forEach(button=>button.onclick=()=>openLevelCourse(button.dataset.startLevel));
   document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.go)));
   document.getElementById("settings-account").addEventListener("click",openAccount);
@@ -1447,7 +1450,7 @@ function setupEventListeners() {
   setupSidebar();
   document.getElementById('cb-root').onclick=()=>switchTab('curriculum');
   document.getElementById('course-change-level').onclick=()=>switchTab('curriculum');
-  document.getElementById('lesson-all-levels').onclick=()=>switchTab('curriculum');
+  document.getElementById('lesson-all-levels').onclick=()=>switchTab(currentLesson?.owner || currentLesson?.returnTab || 'curriculum');
   document.getElementById('btn-close-lesson-modal').onclick=returnToCourse;
 
   // Sidebar & Mobile bottom navigation clicks
@@ -1948,11 +1951,11 @@ if (typeof window !== "undefined") {
   window.renderQuiz = renderQuiz;
 }
 
-function startReversedLesson(item,level,skill){
+function startReversedLesson(item,level,skill,owner=null){
   chatLessonContext=buildLessonContext(item,level,skill);
   const host=document.getElementById('chat-lesson-context');host.hidden=false;host.replaceChildren();
   const title=document.createElement('strong');title.textContent=`${level} · ${chatLessonContext.title}`;
-  const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill);
+  const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill,false,owner);
   const control=document.createElement('div');host.append(title,back,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${chatLessonContext.title}`});
   sendMessage('Bắt đầu học đảo ngược bài này. Thầy hỏi một câu để em tự giải thích hoặc vận dụng; chờ câu trả lời của em trước khi đưa đáp án.');
 }

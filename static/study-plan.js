@@ -2,8 +2,7 @@
 const studyPlans=new Map();
 const studySkillNames={kana:'Bảng chữ cái',vocabulary:'Từ vựng',grammar:'Ngữ pháp',kanji:'Hán tự',reading:'Đọc',listening:'Nghe',production:'Thực hành'};
 function lessonQuestions(item,level,skill){
-  const questions=item.drills || item.questions || (item.q?[item]:[]);
-  return questions.map((q,index)=>({...q,item_id:q.item_id || `${item.id || `lesson:${level}:${skill}:${item.lesson}`}:${index}`,skill}));
+  return fiveLessonQuestions(item,level,skill);
 }
 function lessonProgressIds(item,level,skill){
   if(item.production)return [item.id];
@@ -57,7 +56,7 @@ function studyStepState(step,records){
 }
 function openStudyStep(step,level){
   if(step.kind==='kaiwa'){startCourseKaiwa(step.unit);return;}
-  if(step.kind==='test'){switchTab('quiz',{level,view:'practice',id:String(step.unit.examIndex)});return;}
+  if(step.kind==='test'){showLessonDetail(featureLessons('quiz',level)[step.unit.examIndex],level,'reading',false,'quiz');return;}
   showLessonDetail(step.lesson,level,step.skill);
 }
 let studyPlanRequest=0;
