@@ -1,5 +1,13 @@
 # Development handoff
 
+## Level shelves and routed lesson pages
+
+- Curriculum navigation opens five illustrated level cards first. Each links to `#curriculum/N5` (through N1); library skills use `#curriculum/N5/library/reading`; lessons use `#curriculum/N5/lesson/grammar/<encoded-id>`.
+- Lessons are full pages with breadcrumbs, practice, completion and next-lesson actions. Root opens landing; explicit course/lesson URLs now survive reload and browser Back/Forward. This supersedes the historical always-reset-to-landing behavior. Route loading is guarded against stale responses.
+- Desktop sidebar defaults to a 76px icon rail; expansion preference persists locally. Mobile drawer supports Escape, focus containment, inert background and closing before the profile-level picker opens. Source navigation remains available in the expanded sidebar.
+- Five original SVG course illustrations are under `static/assets/courses/`. Existing vanilla stack, teacher Lâm and Worker credentials remain in place; no runtime dependency added.
+- Verification: 31 Node tests and 46 Python tests; browser checks for card→course→lesson, deep-link reload, Back/Forward, completion returning to roadmap, production lesson→course, desktop expansion persistence, mobile level picker, and 320/390/1440px layouts. No console errors in inspected routes. Real Google consent remains unverified.
+
 ## Guided practice and official video resources
 
 - Lessons now separate reference material from practice. Select an answer, confirm with Kiểm tra, then continue after saving. Stable attempt IDs survive save retries; failed saves cannot advance the session. Written production and dictation retain their existing controls.

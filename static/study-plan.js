@@ -98,7 +98,7 @@ async function renderStudyPlan(level){
     for(const type of ['V','G','R','L']){
       const main=jlptResources.resources.find(r=>r.id===`jlpt:2018:${level}:${type}`);
       const button=document.createElement('button');button.className='stage-btn';button.textContent=main.title;
-      button.onclick=()=>showLessonDetail({id:main.id,title:`${level} · ${main.title}`,sourceLabel:'JLPT · tài liệu chính thức',summary:'Làm bài trên tài liệu gốc, đối chiếu đáp án, rồi đánh dấu hoàn thành tại đây.',externalResources:jlptResources.resources.filter(r=>r.level===level && (r.id===main.id || /:(answer|sheet)$/.test(r.id) || (type==='L' && (r.kind==='audio' || r.id.endsWith(':script')))))},level,type==='L'?'listening':'reading');
+      button.onclick=()=>showLessonDetail(officialResourceLesson(level,type),level,type==='L'?'listening':'reading');
       official.append(button);
     }
     host.append(official);
@@ -107,14 +107,15 @@ async function renderStudyPlan(level){
       extra.innerHTML='<summary>Hội thoại video · Erin</summary><p>Japan Foundation · 25 bài bổ trợ sơ cấp. Không quy đổi chính thức sang JLPT.</p>';
       for(const lesson of erinResources.lessons){
         const button=document.createElement('button');button.type='button';button.textContent=`${lesson.number}. ${lesson.title}`;
-        button.onclick=()=>showLessonDetail({id:lesson.id,title:lesson.title,lesson:lesson.number,sourceLabel:'Japan Foundation · Erin',summary:'Xem hội thoại cơ bản, học mẫu câu và đối chiếu với hội thoại mở rộng trên website gốc.',externalResources:lesson.resources},level,'listening');extra.append(button);
+        button.onclick=()=>showLessonDetail(erinResourceLesson(lesson),level,'listening');extra.append(button);
       }
       host.append(extra);
     }
   }catch{if(request!==studyPlanRequest)return;host.textContent='Chưa tải được lộ trình. ';const retry=document.createElement('button');retry.type='button';retry.textContent='Thử lại';retry.onclick=()=>renderStudyPlan(level);host.append(retry);}
 }
 let curriculumView='plan';
-function setCurriculumView(view){
+function setCurriculumView(view,navigate=true){
+  if(navigate){openLevelCourse(activeCurriculumLevel,view,activeCurriculumSkill);return;}
   curriculumView=view;
   document.getElementById('study-plan').hidden=view!=='plan';
   document.getElementById('lesson-library').hidden=view!=='library';
