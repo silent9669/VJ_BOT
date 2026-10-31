@@ -6,16 +6,6 @@
 const USER_ID_KEY = "vjbot_user_id";
 const SOUND_KEY = "vjbot_sound_enabled";
 const MASCOT_KEY = "vjbot_sensei_mascot";
-const API_KEY_STORAGE = "vjbot_gemini_key";
-const GOOGLE_USER_KEY = "vjbot_google_user";
-const DEFAULT_GEMINI_KEY = (typeof atob !== "undefined") ? atob("QVEuQWI4Uk42STRUY01Bd1ZkTnZ1MERoMDIxVjhMVTBCXzdNTmRMelNWQ0FDNUZUcFJEQUE=") : "";
-
-let GEMINI_API_KEY = localStorage.getItem(API_KEY_STORAGE) || DEFAULT_GEMINI_KEY;
-
-function getGeminiApiKey() {
-  return localStorage.getItem(API_KEY_STORAGE) || DEFAULT_GEMINI_KEY;
-}
-
 function getUserId() {
   let id = localStorage.getItem(USER_ID_KEY);
   if (!id) {
@@ -29,20 +19,102 @@ const userId = getUserId();
 let activeCurriculumLevel = "N5";
 let activeCurriculumSkill = "grammar";
 let activeKaiwaKey = "freestyle";
+let activeKaiwaPromptIdx = 0;
 let activeQuizLevel = "N5";
+let activeFcLevel = "N5";
 let examTimerInterval = null;
 let examSecondsRemaining = 1500; // 25 mins
 
 const TAB_TITLES = {
-  landing: "Trang chủ (1984 Macintosh PC)",
-  classroom: "Phòng học Sensei (Reversed Quiz)",
-  curriculum: "Lộ trình 4 Kỹ năng JLPT N5–N1",
-  flashcards: "Thẻ nhớ SRS Spaced Repetition",
-  kaiwa: "Kaiwa Speaking Lab (Voice AI)",
-  quiz: "Thi thử JLPT (Mock Exam Simulator)",
-  mastery: "Radar Năng lực & Phân tích",
-  settings: "Hồ sơ & Cài đặt Gemini AI"
+  landing: "Sổ tay",
+  classroom: "Thầy Lâm",
+  curriculum: "Sổ bài học",
+  flashcards: "Thẻ nhớ",
+  kaiwa: "Luyện nói",
+  quiz: "Bài luyện JLPT",
+  mastery: "Tiến độ",
+  settings: "Cài đặt"
 };
+
+// ==========================================
+// FEATURE: DAILY KANJI OF THE DAY (N5-N1)
+// ==========================================
+const DAILY_KANJI_DATA = {
+  N5: { char: "学", hanviet: "HỌC (まな・ぶ)", meaning: "Học tập, tiếp thu tri thức", on: "ガク", kun: "まな.ぶ", sample: "学生 (gakusei - học sinh)" },
+  N4: { char: "旅", hanviet: "LỮ (たび)", meaning: "Du lịch, chuyến đi xa", on: "リョ", kun: "たび", sample: "旅行 (ryokou - du lịch)" },
+  N3: { char: "夢", hanviet: "MỘNG (ゆめ)", meaning: "Ước mơ, chiêm bao", on: "ム", kun: "ゆめ", sample: "夢を持つ (yume wo motsu - ấp ủ ước mơ)" },
+  N2: { char: "競", hanviet: "CẠNH (きそ・う)", meaning: "Cạnh tranh, thi đua", on: "キョウ, ケイ", kun: "きそ.う", sample: "競争 (kyousou - cạnh tranh)" },
+  N1: { char: "鑑", hanviet: "GIÁM (かんが・みる)", meaning: "Gương soi, giám định, xem xét", on: "カン", kun: "かんが.みる", sample: "鑑みる (kangamiru - soi xét cẩn trọng)" }
+};
+
+function renderDailyKanji(level = "N5") {
+  const data = DAILY_KANJI_DATA[level] || DAILY_KANJI_DATA.N5;
+  const charEl = document.getElementById("daily-kanji-char");
+  const lvlEl = document.getElementById("daily-kanji-level");
+  const hvEl = document.getElementById("daily-kanji-hanviet");
+  const meanEl = document.getElementById("daily-kanji-meaning");
+  const onEl = document.getElementById("daily-kanji-on");
+  const kunEl = document.getElementById("daily-kanji-kun");
+
+  if (charEl) charEl.textContent = data.char;
+  if (lvlEl) lvlEl.textContent = level;
+  if (hvEl) hvEl.textContent = data.hanviet;
+  if (meanEl) meanEl.textContent = data.meaning;
+  if (onEl) onEl.textContent = data.on;
+  if (kunEl) kunEl.textContent = data.kun;
+}
+
+// ==========================================
+// FEATURE: WEAK SPOTS BOOKMARK NOTEBOOK
+// ==========================================
+const BOOKMARKS_STORAGE_KEY = "vjbot_bookmarks_data";
+
+function getBookmarks() {
+  try {
+    return JSON.parse(localStorage.getItem(BOOKMARKS_STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveBookmark(item) {
+  const list = getBookmarks();
+  if (!list.some(b => b.topic === item.topic)) {
+    list.unshift(item);
+    if (list.length > 50) list.pop();
+    localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(list));
+  }
+}
+
+function renderBookmarks() {
+  const container = document.getElementById("bookmarked-items-list");
+  if (!container) return;
+  const list = getBookmarks();
+  if (!list || list.length === 0) {
+    container.innerHTML = `<p class="empty-bookmark-msg">Chưa có mục nào được lưu. Hãy bấm nút <strong>Lưu chủ đề</strong> trong phòng học Sensei!</p>`;
+    return;
+  }
+  container.innerHTML = list.map((item) => `
+    <div class="bookmarked-item">
+      <div class="bookmarked-info">
+        <strong>${escapeHtml(item.topic)}</strong>
+        <span>${escapeHtml(item.desc || "")} • Trình độ ${item.level || "N5"}</span>
+      </div>
+      <button type="button" class="bookmark-review-btn" data-topic="${encodeURIComponent(item.topic)}">
+        🎯 Ôn tập ngay
+      </button>
+    </div>
+  `).join("");
+
+  container.querySelectorAll(".bookmark-review-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const topic = decodeURIComponent(btn.dataset.topic);
+      switchTab("classroom");
+      sendMessage(`Sensei ơi, em muốn luyện sâu lại phần điểm yếu:「${topic}」nhé!`);
+    });
+  });
+}
+
 
 // ==========================================
 // 1. SOUND ENGINE (8-BIT RETRO SYNTHESIZER)
@@ -70,7 +142,7 @@ class SoundEngine {
   }
 
   playTone(freq, type, duration, delay = 0, gainVal = 0.08) {
-    if (!this.enabled) return;
+    if (!this.enabled || !navigator.userActivation?.hasBeenActive) return;
     try {
       this.initContext();
       if (!this.ctx) return;
@@ -100,49 +172,12 @@ const soundEngine = new SoundEngine();
 // ==========================================
 // 2. MASCOT MANAGER (6 PIXELLAB MASCOTS)
 // ==========================================
-const MASCOTS = {
-  minh: {
-    name: "Thầy Minh (Minh Sensei)",
-    role: "Giáo viên luyện đề • Chuyên sâu JLPT & Phản xạ nhanh",
-    avatar: "assets/sensei/minh/south.png",
-    cheer: "Rất xuất sắc! Đúng cấu trúc rồi đó!"
-  },
-  an: {
-    name: "Cô An (An Sensei)",
-    role: "Giáo viên hướng dẫn phản xạ • Tablet ngữ pháp",
-    avatar: "assets/sensei/an/south.png",
-    cheer: "Tuyệt vời lắm! Tiếp tục câu tiếp theo nhé!"
-  },
-  chi: {
-    name: "Cô Chi (Chi Sensei)",
-    role: "Giáo viên tận tâm • Cặp tài liệu & Kính tri thức",
-    avatar: "assets/sensei/chi/south.png",
-    cheer: "Cố gắng rất tốt! Ngữ pháp đã chuẩn hơn nhiều rồi!"
-  },
-  linh: {
-    name: "Cô Linh (Linh Sensei)",
-    role: "Giáo viên dịu dàng • Sách bài tập & Ân cần",
-    avatar: "assets/sensei/linh/south.png",
-    cheer: "素晴らしい！Sensei rất tự hào về bạn!"
-  },
-  pip: {
-    name: "Pip Robot (Trợ lý AI)",
-    role: "Robot AI đồng hành • Phân tích dữ liệu & Phản xạ nhanh",
-    avatar: "assets/sensei/pip/south.png",
-    cheer: "BEEP BOOP! Tính toán chính xác 100%!"
-  },
-  bao: {
-    name: "Kỹ sư Bảo (Bao Sensei)",
-    role: "Kỹ sư chuyên môn • Tiếng Nhật thực chiến & Cơ khí/IT",
-    avatar: "assets/sensei/bao/south.png",
-    cheer: "Chuẩn xác! Ứng dụng thực tế cực kỳ ổn!"
-  }
-};
+const MASCOTS = { lam: { name: "Thầy Lâm", role: "Giáo viên tiếng Nhật", avatar: "assets/lam/teacher.svg", cheer: "Đúng rồi, em làm tốt lắm!" } };
 
 class MascotManager {
   constructor() {
-    this.current = localStorage.getItem(MASCOT_KEY) || "minh";
-    if (!MASCOTS[this.current]) this.current = "minh";
+    this.current = "lam";
+    if (!MASCOTS[this.current]) this.current = "lam";
     this.state = "idle";
   }
 
@@ -184,6 +219,7 @@ class MascotManager {
 
   setState(st) {
     this.state = st;
+    document.body.dataset.teacherState=st;
     const moodBadge = document.getElementById("sensei-mood-badge");
     const stateTag = document.getElementById("sensei-state-tag");
     const label = st === "thinking" ? "Đang suy nghĩ 🤔" : (st === "speaking" ? "Đang giảng bài 🗣️" : "Tươi vui 😊");
@@ -280,13 +316,13 @@ function initJlptCountdown() {
 // ==========================================
 function initAnatomyTypewriter() {
   const anatomyEl = document.querySelector("anatomy-computer");
-  if (!anatomyEl) return;
+  if (!anatomyEl || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const PHRASES = [
     "こんにちは、世界！",
     "日本語を勉強しましょう！",
-    "VJBot: AI Nihongo Sensei",
-    "JLPT N5〜N1 対策準備完了",
+    "パソコン — máy tính",
+    "キーボード — bàn phím",
     "今日も一日がんばりましょう！"
   ];
 
@@ -295,6 +331,7 @@ function initAnatomyTypewriter() {
   let isDeleting = false;
 
   function tick() {
+    if(document.hidden || !anatomyEl.getClientRects().length){setTimeout(tick,1000);return;}
     const shadow = anatomyEl.shadowRoot;
     if (!shadow) {
       setTimeout(tick, 300);
@@ -335,25 +372,25 @@ function initAnatomyTypewriter() {
 // ==========================================
 // 6. GEMINI TTS (VOICE SYNTHESIS)
 // ==========================================
-async function playGeminiTTS(text, voice = "Aoede") {
+async function playGeminiTTS(text, voice = "Charon") {
   if (!text || !text.trim()) return;
   const clean = text.replace(/<[^>]*>/g, "").replace(/[#*`_]/g, "").trim();
 
+  window.speechSynthesis?.cancel();
   soundEngine.playBlip();
   mascotMgr.setState("speaking");
 
   try {
-    const key = getGeminiApiKey();
-    const resp = await fetch("/api/tts", {
+    const resp = await apiFetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: clean, voice, api_key: key })
+      body: JSON.stringify({ text: clean, voice })
     });
 
     if (resp.ok) {
       const data = await resp.json();
-      if (data.audio_base64) {
-        const audio = new Audio("data:audio/mp3;base64," + data.audio_base64);
+      if (data.audioBase64) {
+        const audio = new Audio(audioDataUrl(data));
         audio.onended = () => mascotMgr.setState("idle");
         await audio.play();
         return;
@@ -382,8 +419,11 @@ function switchTab(tabId) {
   if (!TAB_TITLES[tabId]) tabId = "landing";
   soundEngine.playBlip();
 
-  // Update sidebar buttons
+  // Update sidebar & mobile bottom items
   document.querySelectorAll(".sidebar-nav-item").forEach(item => {
+    item.classList.toggle("active", item.dataset.tab === tabId);
+  });
+  document.querySelectorAll(".mobile-bottom-item").forEach(item => {
     item.classList.toggle("active", item.dataset.tab === tabId);
   });
 
@@ -420,10 +460,13 @@ function switchTab(tabId) {
     renderFlashcards(activeCurriculumLevel);
   } else if (tabId === "kaiwa") {
     renderKaiwaScenarios();
-  } else if (tabId === "quiz") {
-    renderQuiz(activeQuizLevel);
+  } else if (tabId === "quiz" && !currentExamQuestions.length) {
+    renderQuiz(activeCurriculumLevel);
   } else if (tabId === "mastery") {
     loadProgress();
+    renderBookmarks();
+  } else if (tabId === "classroom") {
+    renderDailyKanji(activeCurriculumLevel);
   }
 }
 
@@ -441,9 +484,9 @@ function renderBubble(role, content) {
   row.className = `chat-bubble-row ${role === "user" ? "user-row" : "bot-row"}`;
 
   const currentMascot = MASCOTS[mascotMgr.current];
-  const avatarSrc = role === "user" ? "assets/sensei/minh/south.png" : currentMascot.avatar;
+  const avatarSrc = role === "user" ? "assets/lam/teacher.svg" : currentMascot.avatar;
 
-  const formattedContent = content.replace(/\n/g, "<br>");
+  const formattedContent = escapeHtml(content).replace(/\n/g, "<br>");
 
   row.innerHTML = `
     <div class="bubble-avatar-box">
@@ -452,7 +495,7 @@ function renderBubble(role, content) {
     <div class="bubble-speech-card ${role}">
       <div class="bubble-header-meta">
         <span class="bubble-name">${role === "user" ? "Bạn" : currentMascot.name}</span>
-        ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe Sensei đọc tiếng Nhật">🔊</button>` : ""}
+        ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe Sensei đọc tiếng Nhật">Nghe</button>` : ""}
       </div>
       <div class="bubble-body-text">${formattedContent}</div>
     </div>
@@ -470,8 +513,10 @@ function renderBubble(role, content) {
   return row;
 }
 
+let sendingMessage=false;
 async function sendMessage(text) {
-  if (!text || !text.trim()) return;
+  if (sendingMessage || !text || !text.trim()) return;
+  sendingMessage=true;
   renderBubble("user", text);
   soundEngine.playSend();
   mascotMgr.setState("thinking");
@@ -480,18 +525,18 @@ async function sendMessage(text) {
   if (inputEl) inputEl.value = "";
 
   try {
-    const resp = await fetch("/api/chat", {
+    const resp = await apiFetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: userId,
-        message: text,
-        api_key: getGeminiApiKey()
+        message: text
       })
     });
 
     if (!resp.ok) {
-      renderBubble("bot", "Sensei đang kết nối lại, bạn đợi một lát nhé...");
+      const error=await resp.json();
+      renderBubble("bot", error.detail || "Sensei đang kết nối lại, bạn đợi một lát nhé...");
       mascotMgr.setState("idle");
       return;
     }
@@ -509,16 +554,17 @@ async function sendMessage(text) {
       setTimeout(() => mascotMgr.setState("idle"), 2000);
     }
   } catch (err) {
-    renderBubble("bot", "Lỗi kết nối. Vui lòng kiểm tra mạng hoặc khóa API Gemini trong Cài đặt.");
+    renderBubble("bot", "Không kết nối được với thầy Lâm. Em hãy thử gửi lại.");
     mascotMgr.setState("idle");
-  }
+  } finally {sendingMessage=false;}
 }
 
 async function loadGreeting() {
   try {
-    const resp = await fetch(`/api/next-topic?user_id=${encodeURIComponent(userId)}`);
+    const resp = await apiFetch(`/api/next-topic?user_id=${encodeURIComponent(userId)}`);
     if (resp.ok) {
       const data = await resp.json();
+      if (data.display) updateHeroTopic({display:data.display,meaning:data.meaning_vi || data.meaning_en,jlpt_level:data.level});
       if (data.greeting) {
         renderBubble("bot", data.greeting);
       }
@@ -546,14 +592,30 @@ function updateHeroTopic(topic) {
 // ==========================================
 // 9. CURRICULUM CONTROLLER (4 SKILLS ROADMAP)
 // ==========================================
-function renderCurriculum(level = "N5", skill = "grammar") {
+let curriculumRequest=0,lessonVisibleLimit=24;
+function filterCurriculum(reset=true){
+  if(reset)lessonVisibleLimit=24;
+  const query=document.getElementById('lesson-search').value.trim().toLowerCase();let matched=0;
+  document.querySelectorAll('.curriculum-lesson-card').forEach(card=>{const match=card.dataset.search.includes(query);card.hidden=!match||matched>=lessonVisibleLimit;if(match)matched++;});
+  document.getElementById('lesson-count').textContent=matched?`${Math.min(matched,lessonVisibleLimit)} / ${matched} bài · ${activeCurriculumLevel}`:'Không tìm thấy bài học.';
+  document.getElementById('lesson-load-more').hidden=matched<=lessonVisibleLimit;
+}
+
+async function renderCurriculum(level = "N5", skill = "grammar") {
+  if(skill==="kana"&&level!=="N5")skill="grammar";
+  const request=++curriculumRequest;
+  try { await ensureLessons(level); } catch (error) { document.getElementById("curriculum-list").textContent=error.message; return; }
+  if(request!==curriculumRequest)return;
   activeCurriculumLevel = level;
   activeCurriculumSkill = skill;
+  document.querySelector('[data-skill="kana"]').hidden=level!=="N5";
 
   // Update breadcrumb
   const cbLevel = document.getElementById("cb-level");
   const cbSkill = document.getElementById("cb-skill");
   const skillNames = {
+    kana: "Bảng chữ cái",
+    kanji: "Hán tự",
     grammar: "Ngữ pháp",
     vocabulary: "Từ vựng",
     reading: "Đọc hiểu",
@@ -588,27 +650,33 @@ function renderCurriculum(level = "N5", skill = "grammar") {
     return;
   }
 
+  document.getElementById("lesson-count").textContent=`${data.length} bài · ${level}`;
   listEl.innerHTML = data.map((item, idx) => `
-    <div class="curriculum-lesson-card" data-idx="${idx}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 14px; padding: 18px; box-shadow: 2px 3px 0px rgba(0,0,0,0.08); transition: transform 0.15s ease; cursor: pointer;">
+    <div class="curriculum-lesson-card" tabindex="0" role="button" data-idx="${idx}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 14px; padding: 18px; box-shadow: 2px 3px 0px rgba(0,0,0,0.08); transition: transform 0.15s ease; cursor: pointer;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <span style="background: #eff6ff; color: #2563eb; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">Bài ${item.lesson || (idx + 1)} • ${level}</span>
-        <span style="font-size: 12px; color: #16a34a; font-weight: 700;">${item.examples?.length || 3} ví dụ</span>
+        <span style="font-size: 12px; color: #16a34a; font-weight: 700;">${item.items?.length || item.examples?.length || 1} mục</span>
       </div>
-      <h3 style="font-family: var(--font-sans); font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">${item.title || item.jp}</h3>
-      <p style="font-family: var(--font-sans); font-size: 13px; color: #475569; margin-bottom: 12px; line-height: 1.4;">${item.meaning_vi || item.vi || item.summary}</p>
+      <h3 style="font-family: var(--font-sans); font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">${escapeHtml(item.title || item.jp || "Bài học")}</h3>
+      <p style="font-family: var(--font-sans); font-size: 13px; color: #475569; margin-bottom: 12px; line-height: 1.4;">${escapeHtml(item.meaning_vi || item.vi || item.translation || item.summary || item.script_vi || "")}</p>
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-        <span style="font-size: 12px; color: #64748b; font-family: var(--font-mono);">${item.reading || item.ro || ""}</span>
-        <button type="button" class="open-lesson-btn" data-idx="${idx}" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Chi tiết →</button>
+        <span style="font-size: 12px; color: #64748b; font-family: var(--font-mono);">${item.source ? "OpenJLPT · EN" : item.reading || item.ro || (item.items ? `${item.items.length} mục` : "")}</span>
+        <span class="open-lesson-btn" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Chi tiết →</span>
       </div>
     </div>
   `).join("");
 
   listEl.querySelectorAll(".curriculum-lesson-card").forEach(card => {
+    card.dataset.search=JSON.stringify({...data[Number(card.dataset.idx)],drills:undefined}).toLowerCase();
+    card.hidden=!card.dataset.search.includes(document.getElementById("lesson-search").value.toLowerCase());
+    card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();card.click();}});
     card.addEventListener("click", () => {
       const idx = parseInt(card.dataset.idx, 10);
       showLessonDetail(data[idx], level, skill);
     });
   });
+  filterCurriculum();
+  setCurriculumView(curriculumView);
 }
 
 function showLessonDetail(item, level, skill) {
@@ -619,45 +687,61 @@ function showLessonDetail(item, level, skill) {
   if (!modal || !body) return;
 
   if (badge) badge.textContent = `Bài ${item.lesson || 1} • ${level}`;
-  if (title) title.textContent = item.title || item.jp;
+  if (title) title.textContent = item.title || item.jp || "Bài học";
 
   let examplesHtml = "";
-  if (item.examples && item.examples.length > 0) {
+  if (!item.dictation && item.examples && item.examples.length > 0) {
     examplesHtml = `
       <div style="margin-top: 20px;">
-        <h4 style="font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 10px;">✨ Các câu ví dụ thực tế:</h4>
+        <h4 style="font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 10px;">Ví dụ</h4>
         ${item.examples.map(ex => `
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <p style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">${ex.jp}</p>
-              <p style="font-size: 12px; color: #64748b; font-family: var(--font-mono); margin-bottom: 2px;">${ex.ro}</p>
-              <p style="font-size: 13px; color: #334155;">${ex.vi}</p>
+              <p style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">${furiganaHtml(ex.furigana || ex.jp)}</p>
+              <p style="font-size: 12px; color: #64748b; font-family: var(--font-mono); margin-bottom: 2px;">${escapeHtml(ex.ro)}</p>
+              <p style="font-size: 13px; color: #334155;">${escapeHtml(ex.vi)}</p>${ex.source ? `<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>` : ""}
             </div>
-            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}" style="flex-shrink: 0; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 6px 10px; cursor: pointer;">🔊</button>
+            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}" style="flex-shrink: 0; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 6px 10px; cursor: pointer;">Nghe</button>
           </div>
         `).join("")}
       </div>
     `;
   }
 
+  const vocabularyHtml = item.items?.length ? `
+    <div class="lesson-vocabulary-list">${item.items.map(word=>`
+      <details class="word-detail"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span>${escapeHtml(word.reading || word.ro || "")}</span><span>${escapeHtml(word.vi)}</span></summary>
+        <div class="word-detail-body"><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(word.jp)}">Nghe cách đọc</button>
+        ${word.strokes ? `<dl class="kanji-facts"><div><dt>Số nét</dt><dd>${word.strokes}</dd></div><div><dt>Bộ thủ</dt><dd>${escapeHtml(word.radical)}</dd></div><div><dt>Âm On</dt><dd>${escapeHtml(word.onyomi.join(' · '))}</dd></div><div><dt>Âm Kun</dt><dd>${escapeHtml(word.kunyomi.join(' · '))}</dd></div></dl><p>${escapeHtml((word.words||[]).join(' · '))}</p>` : ''}
+        ${(word.examples||[]).map(ex=>`<div class="word-example"><p lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p><p>${escapeHtml(ex.vi)}</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}">Nghe câu</button>${ex.source?`<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}</div>`).join('')}
+        </div></details>`).join('')}</div>` : "";
+  const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${escapeHtml(item.passage)}</p><p>${escapeHtml(item.translation || "")}</p></div>` : "";
+  const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${item.script_jp}</p><p>${item.script_vi || ""}</p></div>` : "";
+
   body.innerHTML = `
     <div style="margin-bottom: 16px;">
-      <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">Ý nghĩa ngữ pháp:</span>
-      <p style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 4px 0 10px;">${item.meaning_vi || item.vi || ""}</p>
+      <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT · EN" : "Bài học"))}</span>
+      <p style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 4px 0 10px;">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
       ${item.formula ? `
         <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; font-family: var(--font-mono); font-size: 13px; color: #1e40af; margin-bottom: 12px;">
-          <strong>Cấu trúc:</strong> ${item.formula}
+          <strong>Cấu trúc:</strong> ${escapeHtml(item.formula)}
         </div>
       ` : ""}
-      <p style="font-size: 14px; color: #475569; line-height: 1.6;">${item.explanation || item.summary || ""}</p>
+      <p style="font-size: 14px; color: #475569; line-height: 1.6;">${escapeHtml(item.explanation || item.summary || "")}</p>
     </div>
+    ${item.resources?.length ? `<aside class="lesson-resources"><h4>Học tiếp từ nguồn gốc</h4>${item.resources.map(r=>`<p>${escapeHtml(r.publisher)} · ${escapeHtml(r.title)}</p><a href="${escapeHtml(r.pdf_url)}" target="_blank" rel="noopener">Mở bài PDF</a> ${r.audio_page_url?`<a href="${escapeHtml(r.audio_page_url)}" target="_blank" rel="noopener">Nghe bản gốc</a>`:''}`).join('')}<p>Bài trong app được biên soạn riêng; nguồn gốc dùng hệ A1/A2/A2–B1.</p></aside>` : ''}
     ${examplesHtml}
+    ${vocabularyHtml}
+    ${readingHtml}
+    ${listeningHtml}
+    <div id="lesson-exercises"></div>
     <div style="margin-top: 24px; display: flex; gap: 10px;">
-      <button type="button" class="sketch-btn-cta modal-practice-btn" style="flex: 1; padding: 10px;">🎯 Luyện tập mẫu câu này với Sensei</button>
+      <button type="button" class="sketch-btn-cta modal-practice-btn" style="flex: 1; padding: 10px;">Luyện với thầy Lâm</button>
       <button type="button" class="stage-btn modal-close-action" style="padding: 10px 18px;">Đóng</button>
     </div>
   `;
 
+  renderLessonExercises(item,level,skill);
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const text = decodeURIComponent(btn.dataset.text);
@@ -668,47 +752,62 @@ function showLessonDetail(item, level, skill) {
   const btnPractice = body.querySelector(".modal-practice-btn");
   if (btnPractice) {
     btnPractice.addEventListener("click", () => {
-      modal.hidden = true;
+      modal.close();
       switchTab("classroom");
-      sendMessage(`Sensei ơi, em muốn luyện tập ngữ pháp:「${item.title || item.jp}」nhé!`);
+      if(item.roleplay){const u=item.roleplay;sendMessage(`Thầy Lâm, hãy đóng vai người đối thoại để em luyện: ${u.title}. Mục tiêu: ${u.goal}. Tình huống: ${u.production.prompt}. Tiêu chí: ${u.production.criteria.join('; ')}. Hỏi từng câu một bằng tiếng Nhật, chỉ phản hồi dựa trên câu em thực sự trả lời, giải thích ngắn bằng tiếng Việt. Bắt đầu bằng một câu hỏi.`);return;}
+      sendMessage(`Thầy Lâm, em muốn luyện ${level}: ${item.title || item.jp}. Nội dung: ${JSON.stringify({meaning:item.meaning_vi,formula:item.formula,examples:item.examples?.slice(0,3),words:item.items?.slice(0,5)}).slice(0,2500)}`);
     });
   }
 
   const btnClose = body.querySelector(".modal-close-action");
-  if (btnClose) btnClose.addEventListener("click", () => modal.hidden = true);
+  if (btnClose) btnClose.addEventListener("click", () => modal.close());
 
-  modal.hidden = false;
+  modal.showModal();
+  document.getElementById("btn-close-lesson-modal").focus();
 }
 
 // ==========================================
 // 10. FLASHCARDS CONTROLLER (SRS 3D FLIP)
 // ==========================================
 let fcDeck = [];
-let fcIdx = 0;
+let fcIdx = 0,fcRequest=0;
 
-function renderFlashcards(level = "N5") {
+async function renderFlashcards(level = "N5") {
+  const request=++fcRequest;
+  let deck=[];
+  try { await ensureLessons(level); } catch (error) { document.getElementById("fc-counter").textContent=error.message; return; }
+  if(request!==fcRequest)return;
+  activeFcLevel = level;
   document.querySelectorAll("#fc-level-picker .fc-lvl-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.lvl === level);
   });
 
-  const vocabList = window.JLPT_DATA?.curriculum?.[level]?.skills?.vocabulary || [];
+  const vocabularyLessons = window.JLPT_DATA?.curriculum?.[level]?.skills?.vocabulary || [];
+  const vocabList = vocabularyLessons.flatMap(lesson => lesson.items || []).filter(item => item.jp);
   if (vocabList.length > 0) {
-    fcDeck = vocabList.map(v => ({
-      front: v.jp || v.title,
-      reading: v.reading || v.ro,
-      back: v.meaning_vi || v.vi,
-      exampleJp: v.examples?.[0]?.jp || `${v.jp} を使います。`,
-      exampleVi: v.examples?.[0]?.vi || `Sử dụng từ ${v.jp}.`,
+    deck = vocabList.map(v => ({
+      id: v.id || `fc-${level}-${v.jp}`,
+      front: v.jp,
+      reading: v.reading || v.ro || "",
+      back: v.meaning_vi || v.vi || "",
+      exampleJp: v.examples?.[0]?.jp || "",
+      exampleVi: v.examples?.[0]?.vi || "",
       level: level
     }));
   } else {
-    fcDeck = [
+    deck = [
       { front: "私", reading: "わたし (watashi)", back: "Tôi", exampleJp: "私はベトナム人です。", exampleVi: "Tôi là người Việt Nam.", level: "N5" },
       { front: "学生", reading: "がくせい (gakusei)", back: "Học sinh, sinh viên", exampleJp: "彼は学生です。", exampleVi: "Anh ấy là học sinh.", level: "N5" }
     ];
   }
 
+  const progress=await apiFetch('/api/progress').then(r=>r.json()).catch(()=>({items:[]}));
+  if(request!==fcRequest)return;
+  const reviewed=new Map((progress.items||[]).map(i=>[i.item_id,i]));
+  fcDeck=deck.filter(i=>!reviewed.get(i.id)?.next_review || new Date(reviewed.get(i.id).next_review)<=new Date()).sort((a,b)=>Number(!reviewed.has(a.id))-Number(!reviewed.has(b.id))).slice(0,20);
   fcIdx = 0;
+  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.querySelector('.fc-controls-bar').hidden=true;return;}
+  document.getElementById('flashcard-card').hidden=false;document.querySelector('.fc-controls-bar').hidden=false;
   displayFlashcard();
 }
 
@@ -727,6 +826,8 @@ function displayFlashcard() {
   const counterEl = document.getElementById("fc-counter");
 
   if (frontText) frontText.textContent = item.front;
+  document.getElementById("fc-btn-prev").disabled=fcIdx===0;
+  document.getElementById("fc-btn-next").disabled=fcIdx===fcDeck.length-1;
   if (readingText) readingText.textContent = item.reading;
   if (backMeaning) backMeaning.textContent = item.back;
   if (exampleJp) exampleJp.textContent = item.exampleJp;
@@ -744,18 +845,19 @@ function renderKaiwaScenarios() {
 
   const scenarios = window.JLPT_DATA?.kaiwaScenarios || {};
   container.innerHTML = Object.entries(scenarios).map(([k, s]) => `
-    <div class="kaiwa-scenario-card ${k === activeKaiwaKey ? "active" : ""}" data-key="${k}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 14px; padding: 14px; box-shadow: 2px 3px 0px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.15s ease;">
+    <button type="button" class="kaiwa-scenario-card ${k === activeKaiwaKey ? "active" : ""}" data-key="${k}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 14px; padding: 14px; box-shadow: 2px 3px 0px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.15s ease;">
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
         <span style="font-size: 20px;">${s.icon || "🎙️"}</span>
         <strong style="font-size: 14px; color: var(--ink);">${s.title}</strong>
       </div>
-      <p style="font-size: 12.5px; color: #64748b; line-height: 1.4; margin: 0;">${s.context}</p>
-    </div>
+      <p style="font-size: 12.5px; color: #64748b; line-height: 1.4; margin: 0;">${s.desc || ""}</p>
+    </button>
   `).join("");
 
   container.querySelectorAll(".kaiwa-scenario-card").forEach(c => {
     c.addEventListener("click", () => {
       activeKaiwaKey = c.dataset.key;
+      activeKaiwaPromptIdx=0;
       container.querySelectorAll(".kaiwa-scenario-card").forEach(x => x.classList.remove("active"));
       c.classList.add("active");
       loadKaiwaPrompt();
@@ -774,12 +876,16 @@ function loadKaiwaPrompt() {
   const vi = document.getElementById("kaiwa-prompt-vi");
   const manualInput = document.getElementById("kaiwa-manual-input");
   const resultCard = document.getElementById("kaiwa-result-card");
+  const prompts = Array.isArray(s.prompts) ? s.prompts : [];
+  const prompt = prompts[activeKaiwaPromptIdx % Math.max(prompts.length, 1)] || {};
 
   if (tag) tag.textContent = s.title;
-  if (jp) jp.textContent = s.promptJp;
-  if (vi) vi.textContent = s.promptVi;
+  if (jp) jp.textContent = prompt.jp || "こんにちは。よろしくお願いします。";
+  if (vi) vi.textContent = prompt.vi || "Hãy trả lời bằng một câu tiếng Nhật tự nhiên.";
   if (manualInput) manualInput.value = "";
   if (resultCard) resultCard.hidden = true;
+  const hint = document.getElementById("kaiwa-prompt-hint");
+  if (hint) hint.textContent = prompt.hints?.[0] || "Gợi ý: dùng câu lịch sự với です / ます.";
 }
 
 // ==========================================
@@ -790,7 +896,11 @@ let examQuestionIdx = 0;
 let examScore = 0;
 let activeQuizTestIdx = 0;
 
-function renderQuiz(level = "N5", testIdx = 0) {
+let quizRequest=0;
+async function renderQuiz(level = "N5", testIdx = 0) {
+  const request=++quizRequest;
+  try { await Promise.all([ensureLessons(level),loadPracticalCourse()]);createStudyPlan(level); } catch { document.getElementById("quiz-instruction").textContent="Chưa tải được bộ luyện. Chọn lại cấp độ để thử lại.";return; }
+  if(request!==quizRequest)return;
   activeQuizLevel = level;
   activeQuizTestIdx = testIdx;
 
@@ -801,42 +911,19 @@ function renderQuiz(level = "N5", testIdx = 0) {
   const examList = window.JLPT_DATA?.exams?.[level] || [];
   const testPicker = document.getElementById("quiz-test-picker");
   if (testPicker) {
-    testPicker.innerHTML = examList.map((ex, idx) => `
-      <button type="button" class="quiz-test-btn ${idx === testIdx ? 'active' : ''}" data-idx="${idx}">
-        ${ex.title?.split("—")?.[1]?.trim() || `Đề Số 0${idx + 1}`}
-      </button>
-    `).join("");
-
-    testPicker.querySelectorAll(".quiz-test-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        renderQuiz(activeQuizLevel, parseInt(btn.dataset.idx, 10));
-      });
-    });
+    testPicker.innerHTML = examList.map((ex,idx)=>`<option value="${idx}">${escapeHtml(ex.id ? ex.title : `Bộ cơ bản ${idx+1}`)} · ${ex.questions?.length || 0} câu</option>`).join('');
+    testPicker.value=String(testIdx);
+    testPicker.onchange=()=>renderQuiz(activeQuizLevel,Number(testPicker.value));
   }
 
   const selectedExam = examList[testIdx] || examList[0];
   let questions = selectedExam?.questions || [];
 
-  if (!questions || questions.length === 0) {
-    questions = [
-      {
-        type: "Mondai 1: Cách đọc Kanji",
-        instruction: "Chọn cách đọc Hiragana đúng của chữ Hán được gạch chân:",
-        sentence: "あした、<u>学校</u>へ行きます。",
-        options: ["がっこう (gakkou)", "がこう (gakou)", "かっこう (kakkou)", "がくこう (gakukou)"],
-        answer: 0,
-        explanation: "「学校」đọc chuẩn là「がっこう」(âm ngắt nhỏ っ) nghĩa là trường học."
-      },
-      {
-        type: "Mondai 2: Điền từ vựng",
-        instruction: "Chọn từ thích hợp nhất điền vào chỗ trống:",
-        sentence: "毎朝、パンとコーヒーを ( _____ )。",
-        options: ["飲みます", "食べます", "見ます", "行きます"],
-        answer: 1,
-        explanation: "Khi có cả bánh mì (パン) và cà phê, động từ chính cho đồ ăn là「食べます」."
-      }
-    ];
+  if (!questions.length) {
+    document.getElementById('quiz-instruction').textContent='Chưa có câu hỏi cho bộ này.';
+    document.getElementById('quiz-options-grid').replaceChildren();return;
   }
+  document.getElementById('quiz-source-note').textContent=selectedExam.source || 'Bài luyện JLPT';
 
   currentExamQuestions = questions;
   examQuestionIdx = 0;
@@ -849,10 +936,11 @@ function renderQuiz(level = "N5", testIdx = 0) {
 function startExamTimer(seconds = 1500) {
   if (examTimerInterval) clearInterval(examTimerInterval);
   examSecondsRemaining = seconds;
+  const deadline=Date.now()+seconds*1000;
 
   const display = document.getElementById("exam-timer-display");
   function tick() {
-    examSecondsRemaining--;
+    examSecondsRemaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));
     if (examSecondsRemaining <= 0) {
       clearInterval(examTimerInterval);
       finishExam();
@@ -874,6 +962,7 @@ function displayQuizQuestion() {
   if (resultCard) resultCard.hidden = true;
   if (feedbackBox) feedbackBox.hidden = true;
 
+  document.getElementById("btn-quiz-next").disabled=true;
   const q = currentExamQuestions[examQuestionIdx];
   if (!q) {
     finishExam();
@@ -890,16 +979,17 @@ function displayQuizQuestion() {
   if (qType) qType.textContent = q.mondai || q.type || "JLPT Mondai";
   if (inst) inst.textContent = q.instruction || "Chọn đáp án chính xác nhất:";
   let rawSentence = q.sentence || q.sentence_jp || "";
+  if(q.plain)rawSentence=escapeHtml(rawSentence);
   if (q.target && rawSentence.includes(q.target) && !rawSentence.includes("<u>")) {
     rawSentence = rawSentence.replace(q.target, `<u>${q.target}</u>`);
   }
-  if (sentence) sentence.innerHTML = rawSentence;
+  if (sentence) sentence.innerHTML = (q.passage ? `<p class="lesson-japanese-passage">${escapeHtml(q.passage)}</p>` : "") + rawSentence;
 
   if (grid) {
     grid.innerHTML = q.options.map((opt, i) => `
       <button type="button" class="quiz-option-btn" data-idx="${i}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 12px; padding: 14px 18px; text-align: left; font-family: var(--font-sans); font-size: 14.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
         <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #f1f5f9; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; margin-right: 8px;">${i + 1}</span>
-        ${opt}
+        ${escapeHtml(opt)}
       </button>
     `).join("");
 
@@ -912,6 +1002,7 @@ function displayQuizQuestion() {
 }
 
 function handleQuizAnswer(selectedIdx) {
+  document.getElementById("btn-quiz-next").disabled=true;
   const q = currentExamQuestions[examQuestionIdx];
   const grid = document.getElementById("quiz-options-grid");
   const feedbackBox = document.getElementById("quiz-feedback-box");
@@ -937,26 +1028,29 @@ function handleQuizAnswer(selectedIdx) {
   if (isCorrect) {
     examScore++;
     soundEngine.playCheer();
-    if (feedbackStatus) feedbackStatus.textContent = "Chính xác! 🎉";
+    if (feedbackStatus) feedbackStatus.textContent = "Chính xác";
   } else {
     soundEngine.playError();
-    if (feedbackStatus) feedbackStatus.textContent = "Chưa chính xác ⚠️";
+    if (feedbackStatus) feedbackStatus.textContent = "Chưa chính xác";
   }
 
-  // Persist answer to progress API / Cloudflare D1
-  fetch("/api/progress/record", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      user_id: userId,
-      item_id: `exam-${activeQuizLevel}-t${activeQuizTestIdx + 1}-q${q.id || examQuestionIdx + 1}`,
-      correct: isCorrect,
-      quality: isCorrect ? 4 : 1
-    })
-  }).catch(() => {});
-
-  if (feedbackText) feedbackText.textContent = q.explain || q.explanation || "Chính xác theo cấu trúc ngữ pháp JLPT.";
-  if (feedbackBox) feedbackBox.hidden = false;
+  const feedback=q.explain || q.explanation || "";
+  if (feedbackText) feedbackText.textContent=feedback;
+  if (feedbackBox) feedbackBox.hidden=false;
+  const request=quizRequest,attemptId=crypto.randomUUID();
+  const body={item_id:quizProgressId(activeQuizLevel,activeQuizTestIdx,q,examQuestionIdx),correct:isCorrect,level:activeQuizLevel,item_type:"exam",display:q.sentence_jp || q.sentence,quality:isCorrect?4:1,attempt_id:attemptId};
+  document.getElementById('quiz-save-retry')?.remove();
+  const retry=document.createElement('button');retry.id='quiz-save-retry';retry.type='button';retry.className='stage-btn';retry.textContent='Lưu lại';retry.hidden=true;feedbackBox.append(retry);
+  async function save(){
+    retry.disabled=true;
+    try{
+      const response=await apiFetch('/api/progress/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!response.ok)throw new Error('save');
+      if(request!==quizRequest)return;
+      feedbackText.textContent=feedback;retry.remove();document.getElementById('btn-quiz-next').disabled=false;
+    }catch{if(request!==quizRequest)return;feedbackText.textContent=feedback+' Chưa lưu được tiến độ.';retry.hidden=false;retry.disabled=false;}
+  }
+  retry.onclick=save;save();
 }
 
 function finishExam() {
@@ -975,7 +1069,7 @@ function finishExam() {
 
   if (praise) {
     praise.textContent = pct >= 80 
-      ? "Xuất sắc! Bạn đã nắm vững cấu trúc đề thi cấp độ này." 
+      ? "Xuất sắc! Em đã làm tốt bộ câu hỏi này."
       : "Cố gắng lên nhé! Hãy ôn lại các câu chưa chính xác cùng Sensei.";
   }
 
@@ -987,20 +1081,29 @@ function finishExam() {
 // ==========================================
 async function loadProgress() {
   try {
-    const resp = await fetch(`/api/progress?user_id=${encodeURIComponent(userId)}`);
+    const resp = await apiFetch(`/api/progress?user_id=${encodeURIComponent(userId)}`);
     if (resp.ok) {
       const data = await resp.json();
+      document.getElementById("mastery-lessons-count").textContent=data.total_learned ?? 0;
+      document.getElementById("mastery-accuracy-rate").textContent=`${data.accuracy_rate ?? 0}%`;
+      document.getElementById("mastery-streak-val").textContent=`${data.streak_days ?? 0} ngày`;
+      document.getElementById("streak-counter").textContent=`${data.streak_days ?? 0} ngày`;
+      document.getElementById("mastery-exams-count").textContent=(data.items || []).filter(x=>x.item_id?.startsWith("exam-")).length;
       const list = document.getElementById("weak-spots-list");
-      if (list && data.weak_spots) {
-        list.innerHTML = data.weak_spots.map(it => `
+      const weakItems = data.weak_spots || data.weak_items || [];
+      if (list && !weakItems.length) list.textContent="Chưa có mục cần ôn.";
+      if (list && weakItems.length) {
+        list.innerHTML = weakItems.map(it => {
+          const item = typeof it === "string" ? { display: it } : it;
+          return `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; border: 1.5px solid #fed7aa; border-radius: 10px; margin-bottom: 8px;">
-            <div>
-              <strong style="color: #9a3412;">${it.display || it.topic_id}</strong>
-              <p style="font-size: 12px; color: #7c2d12; margin: 0;">Sai: ${it.incorrect || 1} lần • Đúng: ${it.correct || 0} lần</p>
+            <div><strong style="color: #9a3412;">${escapeHtml(item.display || item.topic_id || "Mục cần ôn")}</strong>
+              <p style="font-size: 12px; color: #7c2d12; margin: 0;">Sai: ${item.incorrect || 1} lần • Đúng: ${item.correct || 0} lần</p>
             </div>
-            <button type="button" class="revise-btn" data-topic="${it.display || it.topic_id}" style="background: #ea580c; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Ôn tập ngay</button>
+            <button type="button" class="revise-btn" data-topic="${escapeHtml(item.display || item.topic_id || "mục này")}" style="background: #ea580c; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Ôn tập ngay</button>
           </div>
-        `).join("");
+        `;
+        }).join("");
 
         list.querySelectorAll(".revise-btn").forEach(b => {
           b.addEventListener("click", () => {
@@ -1017,6 +1120,7 @@ async function loadProgress() {
 // 14. FLOATING SENSEI DOCK (ANYWHERE SPAWNING)
 // ==========================================
 function setupFloatingSensei() {
+  const dock = document.getElementById("sensei-floating-dock");
   const dockBtn = document.getElementById("btn-spawn-sensei-float");
   const popover = document.getElementById("sensei-floating-popover");
   const closeBtn = document.getElementById("btn-close-popover");
@@ -1035,7 +1139,91 @@ function setupFloatingSensei() {
     }
   }
 
-  if (dockBtn) dockBtn.addEventListener("click", togglePopover);
+  // Draggable Anywhere Logic
+  dockBtn?.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();togglePopover();}});
+  if (dock) {
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialTop = 0;
+    let movedDist = 0;
+
+    // Load saved position if any
+    const saved = localStorage.getItem("vjbot_sensei_pos");
+    if (saved) {
+      try {
+        const { x, y } = JSON.parse(saved);
+        dock.style.left = Math.min(Math.max(10, x), window.innerWidth - 70) + "px";
+        dock.style.top = Math.min(Math.max(10, y), window.innerHeight - 70) + "px";
+        dock.style.right = "auto";
+        dock.style.bottom = "auto";
+      } catch {}
+    }
+
+    const onStart = (cx, cy) => {
+      isDragging = true;
+      movedDist = 0;
+      startX = cx;
+      startY = cy;
+      const rect = dock.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      dock.classList.add("dragging");
+    };
+
+    const onMove = (cx, cy) => {
+      if (!isDragging) return;
+      const dx = cx - startX;
+      const dy = cy - startY;
+      movedDist = Math.max(movedDist, Math.hypot(dx, dy));
+      let nLeft = Math.max(8, Math.min(window.innerWidth - dock.offsetWidth - 8, initialLeft + dx));
+      let nTop = Math.max(8, Math.min(window.innerHeight - dock.offsetHeight - 8, initialTop + dy));
+      dock.style.left = nLeft + "px";
+      dock.style.top = nTop + "px";
+      dock.style.right = "auto";
+      dock.style.bottom = "auto";
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      dock.classList.remove("dragging");
+      if (movedDist > 6) {
+        const rect = dock.getBoundingClientRect();
+        localStorage.setItem("vjbot_sensei_pos", JSON.stringify({ x: rect.left, y: rect.top }));
+      }
+    };
+
+    dock.addEventListener("mousedown", (e) => {
+      onStart(e.clientX, e.clientY);
+      const mMove = (ev) => onMove(ev.clientX, ev.clientY);
+      const mUp = () => {
+        onEnd();
+        window.removeEventListener("mousemove", mMove);
+        window.removeEventListener("mouseup", mUp);
+      };
+      window.addEventListener("mousemove", mMove);
+      window.addEventListener("mouseup", mUp);
+    });
+
+    dock.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      onStart(t.clientX, t.clientY);
+    }, { passive: true });
+
+    dock.addEventListener("touchmove", (e) => {
+      if (!isDragging) return;
+      const t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }, { passive: true });
+
+    dock.addEventListener("touchend", onEnd);
+
+    if (dockBtn) {
+      dockBtn.addEventListener("click", () => {
+        if (movedDist <= 6) togglePopover();
+      });
+    }
+  }
   if (summonBtn) summonBtn.addEventListener("click", togglePopover);
   if (closeBtn) closeBtn.addEventListener("click", () => { popover.hidden = true; });
 
@@ -1053,13 +1241,12 @@ function setupFloatingSensei() {
     mascotMgr.setState("thinking");
 
     try {
-      const resp = await fetch("/api/chat", {
+      const resp = await apiFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: userId,
-          message: query,
-          api_key: getGeminiApiKey()
+          message: query
         })
       });
 
@@ -1110,60 +1297,6 @@ function setupFloatingSensei() {
 // 15. SETTINGS, GEMINI KEY & ACCOUNT DELETION
 // ==========================================
 function setupSettings() {
-  const keyInput = document.getElementById("custom-api-key-input");
-  const saveKeyBtn = document.getElementById("btn-save-api-key");
-  const eyeBtn = document.getElementById("btn-toggle-key-visibility");
-  const testKeyBtn = document.getElementById("btn-test-gemini-key");
-  const testStatus = document.getElementById("gemini-key-test-status");
-
-  if (keyInput) {
-    keyInput.value = getGeminiApiKey();
-  }
-
-  if (eyeBtn && keyInput) {
-    eyeBtn.addEventListener("click", () => {
-      keyInput.type = keyInput.type === "password" ? "text" : "password";
-      eyeBtn.textContent = keyInput.type === "password" ? "👁️" : "🔒";
-    });
-  }
-
-  if (saveKeyBtn && keyInput) {
-    saveKeyBtn.addEventListener("click", () => {
-      const val = keyInput.value.trim();
-      if (val) {
-        localStorage.setItem(API_KEY_STORAGE, val);
-        GEMINI_API_KEY = val;
-        soundEngine.playSend();
-        saveKeyBtn.textContent = "✅ Đã lưu!";
-        setTimeout(() => { saveKeyBtn.textContent = "Lưu Khóa"; }, 2000);
-      }
-    });
-  }
-
-  if (testKeyBtn && testStatus) {
-    testKeyBtn.addEventListener("click", async () => {
-      testStatus.textContent = "Đang kiểm tra kết nối...";
-      try {
-        const resp = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: "こんにちは", api_key: getGeminiApiKey() })
-        });
-        if (resp.ok) {
-          testStatus.textContent = "✅ Kết nối Gemini 2.5 Flash thành công!";
-          testStatus.style.color = "#16a34a";
-          soundEngine.playCheer();
-        } else {
-          testStatus.textContent = "❌ Lỗi kết nối hoặc khóa API không hợp lệ.";
-          testStatus.style.color = "#dc2626";
-        }
-      } catch (err) {
-        testStatus.textContent = "❌ Lỗi: " + err.message;
-        testStatus.style.color = "#dc2626";
-      }
-    });
-  }
-
   // Sound Toggle
   const soundBtn = document.getElementById("btn-toggle-sound-setting");
   if (soundBtn) {
@@ -1175,6 +1308,7 @@ function setupSettings() {
 
   // Mascots Selection Grid
   document.querySelectorAll(".mascot-choice").forEach(card => {
+    card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();card.click();}});
     card.addEventListener("click", () => {
       soundEngine.playBlip();
       mascotMgr.setMascot(card.dataset.mascot);
@@ -1183,12 +1317,12 @@ function setupSettings() {
 
   // User ID Display & Copy
   const userIdDisplay = document.getElementById("user-id-display");
-  if (userIdDisplay) userIdDisplay.textContent = userId;
+  if (userIdDisplay) userIdDisplay.textContent = signedInUser?.user_id || userId;
 
   const btnCopyUserId = document.getElementById("btn-copy-user-id");
   if (btnCopyUserId) {
     btnCopyUserId.addEventListener("click", () => {
-      navigator.clipboard?.writeText(userId);
+      navigator.clipboard?.writeText(signedInUser?.user_id || userId);
       btnCopyUserId.textContent = "✅ Đã sao chép!";
       setTimeout(() => { btnCopyUserId.textContent = "📋 Sao chép"; }, 2000);
     });
@@ -1202,13 +1336,13 @@ function setupSettings() {
         return;
       }
       try {
-        const resp = await fetch(`/api/account/delete?user_id=${encodeURIComponent(userId)}`, {
+        const resp = await apiFetch(`/api/account/delete?user_id=${encodeURIComponent(userId)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id: userId })
         });
         if (resp.ok) {
-          localStorage.clear();
+          for (const key of Object.keys(localStorage)) if(key.startsWith("vjbot_")) localStorage.removeItem(key);
           alert("Đã xoá tài khoản và toàn bộ dữ liệu trên Cloudflare D1 thành công!");
           window.location.reload();
         } else {
@@ -1225,6 +1359,21 @@ function setupSettings() {
 // 16. EVENT LISTENERS SETUP
 // ==========================================
 function setupEventListeners() {
+  document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
+  document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
+  const voiceButton=document.getElementById('btn-voice-input');
+  const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(SpeechRecognition){const recognition=new SpeechRecognition();recognition.lang='ja-JP';recognition.onresult=e=>{document.getElementById('chat-input').value=e.results[0][0].transcript;};recognition.onend=()=>voiceButton.textContent='🎙️';voiceButton.onclick=()=>{try{recognition.start();voiceButton.textContent='■';}catch{recognition.stop();}};}
+  else {voiceButton.disabled=true;voiceButton.title='Trình duyệt không hỗ trợ nhập giọng nói';}
+
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.go)));
+  document.getElementById("settings-account").addEventListener("click",openAccount);
+  document.querySelectorAll('[data-curriculum-view]').forEach(b=>b.onclick=()=>setCurriculumView(b.dataset.curriculumView));
+  document.getElementById('lesson-detail-modal').addEventListener('close',()=>{if(curriculumView==='plan' && location.hash==='#curriculum')renderStudyPlan(activeCurriculumLevel);});
+  document.getElementById("lesson-search").addEventListener("input",()=>filterCurriculum());
+  document.getElementById('lesson-load-more').addEventListener('click',()=>{lessonVisibleLimit+=24;filterCurriculum(false);});
+  document.getElementById("kaiwa-next-prompt").addEventListener("click",()=>{activeKaiwaPromptIdx++;loadKaiwaPrompt();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.getElementById("lesson-detail-modal").close();document.getElementById("level-picker").hidden=true;}});
   // Mobile sidebar drawer
   const btnMobile = document.getElementById("btn-mobile-sidebar");
   const sidebar = document.getElementById("app-sidebar");
@@ -1245,10 +1394,49 @@ function setupEventListeners() {
     });
   }
 
-  // Sidebar navigation clicks
+  // Sidebar & Mobile bottom navigation clicks
   document.querySelectorAll(".sidebar-nav-item").forEach(item => {
     item.addEventListener("click", () => switchTab(item.dataset.tab));
   });
+  document.querySelectorAll(".mobile-bottom-item").forEach(item => {
+    item.addEventListener("click", () => switchTab(item.dataset.tab));
+  });
+
+  // Daily Kanji Audio Pronunciation Button
+  const btnDailyKanjiTts = document.getElementById("btn-daily-kanji-tts");
+  if (btnDailyKanjiTts) {
+    btnDailyKanjiTts.addEventListener("click", () => {
+      const data = DAILY_KANJI_DATA[activeCurriculumLevel] || DAILY_KANJI_DATA.N5;
+      playGeminiTTS(data.char + "。" + data.sample);
+    });
+  }
+
+  // Furigana / Romaji Toggle Button
+  const btnToggleFurigana = document.getElementById("btn-toggle-furigana");
+  let isFuriganaOn = true;
+  if (btnToggleFurigana) {
+    btnToggleFurigana.addEventListener("click", () => {
+      isFuriganaOn = !isFuriganaOn;
+      btnToggleFurigana.textContent = isFuriganaOn ? "あ Furigana: Bật" : "あ Furigana: Tắt";
+      btnToggleFurigana.classList.toggle("chip-accent", isFuriganaOn);
+      soundEngine.playBlip();
+    });
+  }
+
+  // Bookmark Current Topic / Weak Spot Button
+  const btnBookmark = document.getElementById("btn-bookmark-topic");
+  if (btnBookmark) {
+    btnBookmark.addEventListener("click", () => {
+      const titleEl = document.getElementById("hero-topic-display");
+      const meanEl = document.getElementById("hero-topic-meaning");
+      const topicTitle = titleEl ? titleEl.textContent.trim() : "〜は〜です";
+      const topicDesc = meanEl ? meanEl.textContent.trim() : "Ngữ pháp Minna no Nihongo";
+      saveBookmark({ topic: topicTitle, desc: topicDesc, level: activeCurriculumLevel, time: new Date().toLocaleDateString("vi-VN") });
+      soundEngine.playCheer();
+      btnBookmark.textContent = "Đã lưu";
+      setTimeout(() => { btnBookmark.textContent = "Lưu chủ đề"; }, 1500);
+    });
+  }
 
   // Landing Page CTA buttons
   const btnLandingStart = document.getElementById("landing-btn-start");
@@ -1304,11 +1492,12 @@ function setupEventListeners() {
     btnClearChat.addEventListener("click", async () => {
       if (confirm("Bạn có muốn xóa toàn bộ lịch sử tin nhắn trong phòng học không?")) {
         try {
-          await fetch(`/api/history?user_id=${encodeURIComponent(userId)}`, { method: "DELETE" });
+          const response=await apiFetch(`/api/history?user_id=${encodeURIComponent(userId)}`, { method: "DELETE" });
+          if(!response.ok)throw new Error('delete');
           const messages = document.getElementById("chat-messages");
           if (messages) messages.innerHTML = "";
           soundEngine.playBlip();
-        } catch {}
+        } catch {renderBubble('bot','Chưa xóa được lịch sử. Hãy thử lại.');}
       }
     });
   }
@@ -1331,22 +1520,24 @@ function setupEventListeners() {
   document.querySelectorAll(".picker-opt-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       const lvl = btn.dataset.level;
-      if (levelPicker) levelPicker.hidden = true;
-      const chipText = document.getElementById("level-chip-text");
-      if (chipText) chipText.textContent = `Trình độ: ${lvl}`;
-      activeCurriculumLevel = lvl;
-
+      const status = document.getElementById("level-save-status");
+      const buttons = document.querySelectorAll(".picker-opt-btn");
+      buttons.forEach(button=>button.disabled=true);
+      status.textContent="Đang lưu…";
       try {
-        await fetch("/api/profile", {
+        const response = await apiFetch("/api/profile", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id: userId, level: lvl })
         });
-      } catch {}
-
-      if (window.location.hash.includes("curriculum")) {
-        renderCurriculum(lvl, activeCurriculumSkill);
-      }
+        if(!response.ok)throw new Error("save");
+        activeCurriculumLevel = lvl;
+        document.getElementById("level-chip-text").textContent = `Trình độ: ${lvl}`;
+        status.textContent="";
+        if (levelPicker) levelPicker.hidden = true;
+        switchTab(window.location.hash.slice(1));
+      } catch { status.textContent="Chưa lưu được trình độ. Chọn lại để thử lại."; }
+      finally { buttons.forEach(button=>button.disabled=false); }
     });
   });
 
@@ -1369,7 +1560,7 @@ function setupEventListeners() {
   const lessonModal = document.getElementById("lesson-detail-modal");
   if (btnCloseLesson && lessonModal) {
     btnCloseLesson.addEventListener("click", () => {
-      lessonModal.hidden = true;
+      lessonModal.close();
     });
   }
 
@@ -1383,6 +1574,7 @@ function setupEventListeners() {
   // Flashcard Flipper click
   const fcCard = document.getElementById("flashcard-card");
   if (fcCard) {
+    fcCard.addEventListener("keydown",e=>{if(e.target===fcCard && (e.key==="Enter" || e.key===" ")){e.preventDefault();fcCard.click();}});
     fcCard.addEventListener("click", () => {
       soundEngine.playFlip();
       fcCard.classList.toggle("flipped");
@@ -1432,30 +1624,33 @@ function setupEventListeners() {
     });
   }
 
-  function recordCardProgress(quality) {
+  let savingCard=false;
+  const pendingCardAnswers=new Map();
+  async function recordCardProgress(quality) {
+    if(savingCard)return;
     const card = fcDeck[fcIdx];
     if (!card) return;
     const isCorrect = quality >= 3;
-    fetch("/api/progress/record", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        item_id: `fc-${activeFcLevel}-${card.front}`,
-        correct: isCorrect,
-        quality: quality
-      })
-    }).catch(() => {});
+    savingCard=true;
+    if(!pendingCardAnswers.has(card.id))pendingCardAnswers.set(card.id,{item_id:card.id,display:card.front,level:card.level,item_type:'vocabulary',correct:isCorrect,quality,attempt_id:crypto.randomUUID()});
+    try { const response=await apiFetch("/api/progress/record", {
+      method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(pendingCardAnswers.get(card.id))
+    });
+    if(!response.ok)throw new Error('save');
+    pendingCardAnswers.delete(card.id);
+    if(fcIdx===fcDeck.length-1)await renderFlashcards(activeFcLevel);else nextCard();
+    } catch {document.getElementById('fc-counter').textContent='Chưa lưu được. Hãy bấm đánh giá để thử lại.';} finally {savingCard=false;}
+
   }
 
   const btnFcAgain = document.getElementById("fc-btn-again");
-  if (btnFcAgain) btnFcAgain.addEventListener("click", () => { soundEngine.playError(); recordCardProgress(1); nextCard(); });
+  if (btnFcAgain) btnFcAgain.addEventListener("click", () => { soundEngine.playError(); recordCardProgress(1); });
 
   const btnFcGood = document.getElementById("fc-btn-good");
-  if (btnFcGood) btnFcGood.addEventListener("click", () => { soundEngine.playSend(); recordCardProgress(4); nextCard(); });
+  if (btnFcGood) btnFcGood.addEventListener("click", () => { soundEngine.playSend(); recordCardProgress(4); });
 
   const btnFcEasy = document.getElementById("fc-btn-easy");
-  if (btnFcEasy) btnFcEasy.addEventListener("click", () => { soundEngine.playCheer(); recordCardProgress(5); nextCard(); });
+  if (btnFcEasy) btnFcEasy.addEventListener("click", () => { soundEngine.playCheer(); recordCardProgress(5); });
 
   // Kaiwa Audio Prompt Play
   const btnKaiwaPlay = document.getElementById("btn-kaiwa-play-prompt");
@@ -1521,7 +1716,7 @@ function setupEventListeners() {
       rec.interimResults = false;
 
       rec.onstart = () => {
-        if (micStatus) micStatus.textContent = "🎙️ Đang nghe giọng Nhật của bạn...";
+        if (micStatus) micStatus.textContent = "Đang ghi âm…";
         btnKaiwaMic.style.background = "#fee2e2";
         startAudioRecording();
       };
@@ -1564,19 +1759,18 @@ function setupEventListeners() {
         return;
       }
 
-      btnEvalKaiwa.textContent = "Sensei đang chấm điểm...";
+      btnEvalKaiwa.textContent = "Đang nhận xét…";
       const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
 
       try {
-        const resp = await fetch("/api/kaiwa/evaluate", {
+        const resp = await apiFetch("/api/kaiwa/evaluate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            scenario: activeKaiwaKey,
+            scenario_title: s?.title || activeKaiwaKey,
+            prompt_jp: document.getElementById("kaiwa-prompt-jp")?.textContent || "",
             user_speech: speech,
-            expected_answer: s?.expectedAnswer || "",
-            level: "N5",
-            api_key: getGeminiApiKey()
+            level: s?.level === "ALL" ? activeCurriculumLevel : (s?.level || activeCurriculumLevel)
           })
         });
 
@@ -1587,21 +1781,22 @@ function setupEventListeners() {
 
         if (resp.ok) {
           const evalData = await resp.json();
-          if (scoreVal) scoreVal.textContent = evalData.score || 85;
+          if (scoreVal) scoreVal.textContent = evalData.score ?? "—";
           if (feedbackText) feedbackText.textContent = evalData.feedback || "Phản xạ giao tiếp rất tốt!";
-          if (modelText) modelText.textContent = evalData.model_answer || s?.expectedAnswer || "";
+          if (modelText) modelText.textContent = evalData.model_answer || "はい、わかりました。";
           if (resultCard) resultCard.hidden = false;
           soundEngine.playCheer();
         } else {
-          if (scoreVal) scoreVal.textContent = 80;
-          if (feedbackText) feedbackText.textContent = "Câu trả lời đúng ngữ cảnh, chú ý trợ từ.";
-          if (modelText) modelText.textContent = s?.expectedAnswer || "";
+          const failure=await resp.json();
+          if (scoreVal) scoreVal.textContent = "—";
+          if (feedbackText) feedbackText.textContent = failure.detail || "Chưa thể chấm điểm. Vui lòng thử lại.";
+          if (modelText) modelText.textContent = "";
           if (resultCard) resultCard.hidden = false;
         }
       } catch {
         alert("Lỗi khi kết nối hệ thống chấm điểm.");
       } finally {
-        btnEvalKaiwa.textContent = "Gửi Sensei chấm điểm";
+        btnEvalKaiwa.textContent = "Nhờ thầy nhận xét";
       }
     });
   }
@@ -1652,24 +1847,15 @@ function setupEventListeners() {
   initLoadingScreen();
   initJlptCountdown();
   initAnatomyTypewriter();
-  setupEventListeners();
-  setupFloatingSensei();
-  setupSettings();
   mascotMgr.updateAllSpriteElements();
 
-  // Route by initial hash or default to 'landing'
-  const initialHash = window.location.hash.replace("#", "");
-  if (initialHash && TAB_TITLES[initialHash]) {
-    switchTab(initialHash);
-  } else {
-    switchTab("landing");
-  }
+  await setupAccount();
 
   // Pre-fetch greeting & user profile
   try {
-    let res = await fetch(`/api/profile?user_id=${encodeURIComponent(userId)}`);
+    let res = await apiFetch(`/api/profile?user_id=${encodeURIComponent(userId)}`);
     if (res.status === 404) {
-      res = await fetch("/api/profile", {
+      res = await apiFetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, level: "N5" }),
@@ -1685,7 +1871,19 @@ function setupEventListeners() {
     }
   } catch {}
 
+  setupEventListeners();
+  setupFloatingSensei();
+  setupSettings();
+
+  // Resolve account and saved level before rendering data-dependent routes.
+  const initialHash = window.location.hash.replace("#", "");
+  switchTab(TAB_TITLES[initialHash] ? initialHash : "landing");
   loadGreeting();
+  loadProgress();
+  try {
+    const historyResponse=await apiFetch(`/api/history?user_id=${encodeURIComponent(userId)}`);
+    if(historyResponse.ok) for(const message of await historyResponse.json()) renderBubble(message.role,message.content);
+  } catch { renderBubble("bot", "Chưa tải được lịch sử trò chuyện. Tải lại trang để thử lại."); }
 
   window.addEventListener("hashchange", () => {
     const h = window.location.hash.replace("#", "");

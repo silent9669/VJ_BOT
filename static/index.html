@@ -4,7 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VJBot — Nihongo Sensei (Reversed Japanese AI Tutor)</title>
-  
+  <meta name="description" content="Sổ học tiếng Nhật: bài học N5–N1, thẻ nhớ, luyện nói và Sensei AI.">
+  <meta name="keywords" content="VJBot, Nihongo Sensei, học tiếng Nhật, luyện thi JLPT, JLPT N5, JLPT N1, kaiwa tiếng nhật, flashcard tiếng nhật, phản xạ tiếng nhật">
+  <meta name="author" content="VJBot Team">
+
+  <!-- Open Graph & Social Cards -->
+  <meta property="og:title" content="VJBot — Nihongo Sensei (Reversed Japanese AI Tutor)">
+  <meta property="og:description" content="Nền tảng luyện thi JLPT N5–N1 & phản xạ tiếng Nhật chủ động cùng AI Sensei. Trải nghiệm trực tiếp tại https://vjbot.dangphuc.me/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vjbot.dangphuc.me/">
+  <meta property="og:image" content="https://vjbot.dangphuc.me/assets/logo-vj-8bit.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VJBot — Nihongo Sensei">
+  <meta name="twitter:description" content="Luyện thi JLPT N5–N1 & phản xạ tiếng Nhật chủ động cùng AI Sensei trên Cloudflare Edge.">
+
   <!-- 8-bit Pixel Mascot Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="alternate icon" href="favicon.ico">
@@ -12,57 +25,23 @@
   <!-- Flawless Vietnamese & Japanese Typography: Be Vietnam Pro + Inter + Noto Sans JP + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=Lexend:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <!-- Google Identity Services (GIS) for Google Sign-In -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Retro 1984 Macintosh PC Isometric Web Component (Anatomy Figures) -->
   <script src="anatomy-computer.js"></script>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="notebook.css">
 </head>
 <body>
-  <!-- 8-BIT RETRO SKETCH LOADING SCREEN (PIXELLAB + APPLE HYBRID) -->
-  <div id="app-loading-screen" class="retro-loading-overlay">
-    <div class="loading-paper-card">
-      <div class="loading-header">
-        <img src="assets/logo-vj-8bit.svg" alt="VJ 8-Bit Logo" class="loading-logo-8bit">
-        <div class="loading-title-group">
-          <h2 class="loading-title">VJBot • 日本語先生</h2>
-          <span class="loading-sub">Hệ thống gia sư AI luyện thi JLPT N5–N1</span>
-        </div>
-      </div>
-
-      <div class="loading-mascot-stage">
-        <div class="pixel-runner-box">
-          <img id="loading-mascot-img" src="assets/sensei/minh/south.png" alt="Sensei" class="pixel-sprite running-sprite">
-          <span class="runner-shadow"></span>
-        </div>
-      </div>
-
-      <div class="loading-progress-section">
-        <div class="pixel-progress-bar">
-          <div id="loading-progress-fill" class="pixel-progress-fill" style="width: 45%;"></div>
-        </div>
-        <div class="loading-status-row">
-          <span id="loading-status-text" class="loading-status-text">Đang kết nối Cloudflare D1 & Gemini AI...</span>
-          <span id="loading-percent-text" class="loading-percent-text">45%</span>
-        </div>
-      </div>
-
-      <div class="loading-tips">
-        <span class="tip-badge">💡 MẸO HỌC</span>
-        <span id="loading-tip-content">Luyện phản xạ mỗi ngày 15 phút với Sensei giúp tăng 40% khả năng nhớ từ vựng tự nhiên!</span>
-      </div>
-    </div>
-  </div>
-
   <!-- APP SHELL: TWO-COLUMN SIDEBAR + MAIN CONTENT (APPLE / SKETCH HYBRID) -->
   <div class="app-shell">
 
     <!-- 1. LEFT SIDEBAR NAVIGATION (Apple Liquid Glass / Sketch Hybrid) -->
     <aside class="app-sidebar" id="app-sidebar">
-      
+
       <!-- Sidebar Header (Contains ONLY 8-bit VJ Logo & VJBot Brand Name) -->
       <div class="sidebar-header">
         <div class="sidebar-brand">
@@ -72,9 +51,9 @@
           <div class="brand-text">
             <div class="brand-title-row">
               <h1 class="brand-name">VJBot</h1>
-              <span class="sketch-badge badge-red">8-BIT</span>
+
             </div>
-            <span class="brand-sub">日本語先生 • AI Tutor</span>
+
           </div>
         </div>
 
@@ -82,7 +61,7 @@
         <div class="sidebar-countdown-card" id="sidebar-countdown" title="Đồng hồ đếm ngược kỳ thi JLPT kế tiếp">
           <div class="countdown-badge-row">
             <span class="countdown-dot"></span>
-            <span class="countdown-label">KỲ THI JLPT KẾ TIẾP</span>
+            <span class="countdown-label">JLPT kế tiếp</span>
           </div>
           <div class="countdown-timer-display" id="jlpt-countdown-timer">
             <div class="cd-unit"><span id="cd-days">--</span><small>ngày</small></div>
@@ -97,73 +76,73 @@
 
         <!-- Student Profile Mini Chip in Sidebar -->
         <div class="sidebar-user-card">
-          <button id="level-chip" type="button" class="sketch-chip chip-level" aria-label="Change level" title="Nhấn để đổi trình độ JLPT">
+          <button id="level-chip" type="button" class="sketch-chip chip-level" aria-label="Đổi trình độ" title="Nhấn để đổi trình độ JLPT">
             <span class="chip-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
             <span id="level-chip-text">Trình độ: N5</span>
           </button>
           <div class="sketch-chip chip-streak" title="Chuỗi ngày luyện tập">
-            <span class="chip-icon">🔥</span>
-            <span id="streak-counter">3 Ngày</span>
+            <span class="chip-icon"></span>
+            <span id="streak-counter">0 ngày</span>
           </div>
         </div>
       </div>
 
       <!-- Main Navigation Menu Items -->
       <nav class="sidebar-nav" aria-label="Main Navigation">
-        
+
         <div class="sidebar-nav-section">
-          <span class="nav-section-label">Tổng quan</span>
+
           <button type="button" class="sidebar-nav-item active sketch-tab" data-tab="landing" id="tab-btn-landing">
-            <span class="nav-icon">🏠</span>
+
             <span class="nav-label">Trang chủ</span>
-            <span class="nav-badge">1984 PC</span>
+
           </button>
         </div>
 
         <div class="sidebar-nav-section">
-          <span class="nav-section-label">Luyện tập cùng Sensei</span>
-          
+
+
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom">
-            <span class="nav-icon">💬</span>
-            <span class="nav-label">Phòng học Sensei</span>
-            <span class="nav-badge badge-active">Quiz</span>
+
+            <span class="nav-label">Thầy Lâm</span>
+
           </button>
 
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum">
-            <span class="nav-icon">🗺️</span>
+
             <span class="nav-label">Lộ trình JLPT</span>
-            <span class="nav-badge">4 Kỹ năng</span>
+
           </button>
 
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards">
-            <span class="nav-icon">🃏</span>
-            <span class="nav-label">Thẻ nhớ Flashcard</span>
-            <span class="nav-badge new-badge">SRS</span>
+
+            <span class="nav-label">Thẻ nhớ</span>
+
           </button>
 
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa">
-            <span class="nav-icon">🎙️</span>
-            <span class="nav-label">Kaiwa Speaking Lab</span>
-            <span class="nav-badge tts-badge">Voice</span>
+
+            <span class="nav-label">Luyện nói</span>
+
           </button>
 
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz">
-            <span class="nav-icon">📝</span>
-            <span class="nav-label">Thi thử JLPT (Mock Exam)</span>
-            <span class="nav-badge new-badge">Mondai 1-4</span>
+
+            <span class="nav-label">Bài luyện JLPT</span>
+
           </button>
         </div>
 
         <div class="sidebar-nav-section">
-          <span class="nav-section-label">Phân tích & Cài đặt</span>
-          
+
+
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery">
-            <span class="nav-icon">📊</span>
-            <span class="nav-label">Radar Năng lực</span>
+
+            <span class="nav-label">Tiến độ</span>
           </button>
 
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings">
-            <span class="nav-icon">⚙️</span>
+
             <span class="nav-label">Hồ sơ & Cài đặt</span>
           </button>
         </div>
@@ -171,10 +150,7 @@
       </nav>
 
       <!-- Clean bottom status without bloated footer -->
-      <div class="sidebar-bottom-pill">
-        <span class="edge-dot"></span>
-        <span>Cloudflare Edge • D1 Active</span>
-      </div>
+      <a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn bài học ↗</a>
 
     </aside>
 
@@ -187,22 +163,20 @@
       <!-- TOPBAR / WINDOW CHROME -->
       <header class="main-topbar">
         <div class="topbar-left">
-          <button type="button" class="mobile-menu-btn" id="btn-mobile-sidebar" aria-label="Mở menu">
-            ☰
-          </button>
+          <button type="button" class="mobile-menu-btn" id="btn-mobile-sidebar" aria-label="Mở menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
           <img src="assets/logo-vj-8bit.svg" alt="VJ Logo" class="topbar-logo-8bit">
           <div class="breadcrumb-group">
             <span class="breadcrumb-root">VJBot</span>
             <span class="breadcrumb-sep">/</span>
-            <span class="breadcrumb-current" id="topbar-view-title">Trang chủ (1984 Macintosh PC)</span>
+            <span class="breadcrumb-current" id="topbar-view-title">Sổ tay</span>
           </div>
         </div>
 
         <!-- Topbar Quick Assistant Summon Button -->
         <div class="topbar-center">
           <button type="button" class="topbar-summon-btn" id="btn-topbar-summon" title="Gọi Sensei bất cứ lúc nào (Cmd+K)">
-            <span class="summon-icon">✨</span>
-            <span class="summon-text">Hỏi Sensei bất cứ điều gì...</span>
+            <span class="summon-icon"></span>
+            <span class="summon-text">Hỏi thầy Lâm</span>
             <kbd class="sketch-kbd">⌘K</kbd>
           </button>
         </div>
@@ -215,7 +189,7 @@
           <div class="topbar-auth" id="topbar-auth-section">
             <button type="button" class="topbar-account-btn" id="btn-topbar-account" title="Tài khoản học viên & Đồng bộ Google">
               <span class="account-avatar-wrap">
-                <img id="topbar-user-avatar" src="assets/sensei/minh/south.png" alt="Avatar" class="account-avatar-img pixel-sprite">
+                <img id="topbar-user-avatar" src="assets/lam/teacher.svg" alt="Avatar" class="account-avatar-img pixel-sprite">
               </span>
               <span id="topbar-user-name" class="account-user-name">Đăng nhập</span>
             </button>
@@ -229,77 +203,21 @@
         <!-- TAB 0: LANDING PAGE (APPLE RETRO MACINTOSH 1984 PC + TYPEWRITER + SHOWCASE) -->
         <section class="tab-panel active" id="panel-landing">
           <div class="landing-container">
-            <!-- Hero Section -->
-            <div class="landing-hero-card">
-              <div class="landing-hero-badge">
-                <img src="assets/logo-vj-8bit.svg" alt="VJ" class="hero-badge-8bit">
-                <span>VJBOT 8-BIT • HỆ THỐNG GIA SƯ AI ĐẢO CHIỀU</span>
-              </div>
-              <h1 class="landing-hero-title">
-                Chinh Phục JLPT N5–N1<br>
-                <span class="gradient-text">Cùng Sensei AI Phản Xạ Đảo Chiều</span>
-              </h1>
-              <p class="landing-hero-desc">
-                Không chỉ chờ bạn hỏi, VJBot Sensei chủ động đặt câu hỏi theo năng lực, chỉnh sửa phát âm Kaiwa thời gian thực với Google Gemini AI, và dẫn dắt bạn qua lộ trình 4 kỹ năng chuẩn Nhật Bản.
-              </p>
-
-              <div class="landing-hero-ctas">
-                <button type="button" class="hero-cta-btn primary" id="landing-btn-start">
-                  🚀 Vào phòng học Sensei ngay
-                </button>
-                <button type="button" class="hero-cta-btn secondary" id="landing-btn-curriculum">
-                  🗺️ Xem Lộ trình 4 Kỹ năng
-                </button>
-                <button type="button" class="hero-cta-btn secondary" id="landing-btn-mock-exam">
-                  📝 Thi thử JLPT N5–N1
-                </button>
-              </div>
-
-              <!-- Retro Apple Macintosh 1984 PC with Japanese Typing -->
-              <div class="landing-pc-stage">
-                <div class="landing-pc-header">
-                  <span class="pc-indicator-led"></span>
-                  <span class="landing-pc-label">APPLE MACINTOSH 1984 CLASSIC • JAPANESE TYPING TERMINAL</span>
-                </div>
-                <anatomy-computer theme="light"></anatomy-computer>
-                <div class="landing-pc-footer">
-                  <span>⌨️ Bàn phím cơ &amp; cáp xoắn cổ điển • Màn hình CRT đang gõ tiếng Nhật trực tiếp</span>
+            <div class="notebook-home">
+              <div class="notebook-intro">
+                <h1>Sổ tay<br><em>tiếng Nhật</em></h1>
+                <div class="landing-hero-ctas">
+                  <button type="button" class="hero-cta-btn primary" id="landing-btn-curriculum">Chọn bài học</button>
+                  <button type="button" class="hero-cta-btn secondary" id="landing-btn-start">Hỏi thầy Lâm</button>
                 </div>
               </div>
+              <div class="room-card"><div id="study-room" aria-label="Phòng học 3D của thầy Lâm"><img class="room-fallback" src="assets/lam/teacher.svg" alt="Thầy Lâm" width="144" height="240"></div><label class="room-angle-label">Góc nhìn<input id="room-angle" type="range" min="-30" max="30" value="0" aria-label="Xoay góc nhìn phòng học"></label><div class="room-controls"><button type="button" data-room="book">本 · Sách</button><button type="button" data-room="desk">机 · Bàn</button><button type="button" data-room="chair">椅子 · Ghế</button><button type="button" data-room="plant">植物 · Cây</button></div><div class="room-word"><strong id="room-word-jp">本は机の上にあります。</strong><span id="room-word-vi">Quyển sách ở trên bàn.</span><button type="button" id="room-audio" aria-label="Nghe câu tiếng Nhật">Nghe ↗</button></div><div class="room-quiz"><button type="button" id="room-quiz-start">Luyện đồ vật</button><p id="room-question" hidden></p><output id="room-feedback" aria-live="polite"></output></div></div>
             </div>
-
-            <!-- Bento Feature Showcase Grid -->
-            <div class="landing-features-grid">
-              <div class="feature-card">
-                <span class="feature-icon">🎯</span>
-                <h3>Gia sư Đảo chiều (Reversed Quiz)</h3>
-                <p>Sensei chủ động hỏi kiểm tra phản xạ, phát hiện chính xác lỗ hổng ngữ pháp thay vì chỉ trả lời thụ động.</p>
-              </div>
-              <div class="feature-card">
-                <span class="feature-icon">🎙️</span>
-                <h3>Kaiwa Speaking Lab với Voice AI</h3>
-                <p>Luyện phát âm qua micro, nhận điểm số 0–100 tức thì từ Gemini 2.5 Flash cùng giọng đọc tiếng Nhật siêu tự nhiên.</p>
-              </div>
-              <div class="feature-card">
-                <span class="feature-icon">🗺️</span>
-                <h3>Lộ trình 4 Kỹ năng N5–N1</h3>
-                <p>Từ vựng, Ngữ pháp, Đọc hiểu, Nghe hiểu biên soạn chuẩn theo Minna no Nihongo và Shinkanzen Master.</p>
-              </div>
-              <div class="feature-card">
-                <span class="feature-icon">📝</span>
-                <h3>Thi thử JLPT Chuẩn Mondai 1–4</h3>
-                <p>Đầy đủ câu hỏi Hán tự, Ngữ pháp dấu sao ★, Đọc hiểu với đồng hồ đếm ngược và chấm điểm tự động.</p>
-              </div>
-              <div class="feature-card">
-                <span class="feature-icon">👩‍🏫</span>
-                <h3>6 Mascots PixelLab Độc đáo</h3>
-                <p>Đồng hành cùng Thầy Minh, Cô An, Cô Chi, Cô Linh, Pip Robot hoặc Kỹ sư Bảo tùy theo phong cách của bạn.</p>
-              </div>
-              <div class="feature-card">
-                <span class="feature-icon">⚡</span>
-                <h3>Cloudflare D1 &amp; Worker Edge</h3>
-                <p>Triển khai toàn cầu trên Cloudflare Edge với cơ sở dữ liệu D1 siêu tốc, lưu trữ tiến độ an toàn tuyệt đối.</p>
-              </div>
+            <details class="anatomy-vocab"><summary>パソコン · Máy tính</summary><anatomy-computer theme="light"></anatomy-computer></details>
+            <div class="study-shortcuts">
+              <button class="study-shortcut" data-go="flashcards"><strong>Thẻ nhớ</strong></button>
+              <button class="study-shortcut" data-go="kaiwa"><strong>Luyện nói</strong></button>
+              <button class="study-shortcut" id="landing-btn-mock-exam"><strong>Bài luyện JLPT</strong></button>
             </div>
           </div>
         </section>
@@ -307,25 +225,25 @@
         <!-- TAB 1: SENSEI CLASSROOM (REVERSED QUIZ & CHAT) -->
         <section class="tab-panel" id="panel-classroom" hidden>
           <div class="classroom-layout">
-            
+
             <!-- SENSEI STAGE (MASCOT PODIUM) -->
             <aside class="sensei-stage-card" data-od-id="sensei-podium">
               <div class="tape-strip tape-top-center"></div>
 
               <div class="sensei-podium-header">
                 <span class="podium-title">SENSEI MASCOT</span>
-                <span class="sensei-mood-badge" id="sensei-mood-badge">Tươi vui 😊</span>
+                <span class="sensei-mood-badge" id="sensei-mood-badge">Tươi vui </span>
               </div>
 
               <!-- Character Box with PixelLab Sprite -->
               <div class="stage-sprite-frame">
                 <div class="pixel-spotlight"></div>
-                <img id="stage-sensei-img" src="assets/sensei/minh/south.png" alt="Sensei Sprite" class="stage-pixel-character pixel-sprite" width="128" height="128">
+                <img id="stage-sensei-img" src="assets/lam/teacher.svg" alt="Thầy Lâm" class="stage-pixel-character pixel-sprite" width="128" height="128">
                 <div class="character-shadow"></div>
               </div>
 
               <div class="stage-sensei-info">
-                <h3 class="stage-sensei-name" id="stage-sensei-name">Thầy Minh (Minh Sensei)</h3>
+                <h3 class="stage-sensei-name" id="stage-sensei-name">Thầy Lâm</h3>
                 <p class="stage-sensei-role" id="stage-sensei-role">Giáo viên luyện đề • Chuyên sâu JLPT &amp; Phản xạ nhanh</p>
               </div>
 
@@ -337,23 +255,45 @@
                 <div class="topic-level-badge" id="hero-topic-badge">JLPT N5</div>
               </div>
 
+              <!-- Daily Kanji Widget (Feature) -->
+              <div class="kanji-daily-card" id="kanji-daily-widget">
+                <div class="kanji-daily-head">
+                  <span class="kanji-badge-tag"> HÁN TỰ TRONG NGÀY</span>
+                  <span class="kanji-level-pill" id="daily-kanji-level">N5</span>
+                </div>
+                <div class="kanji-body-flex">
+                  <div class="kanji-char-box">
+                    <span class="kanji-large-char" id="daily-kanji-char">学</span>
+                    <button type="button" class="kanji-audio-btn" id="btn-daily-kanji-tts" title="Nghe phát âm">Nghe</button>
+                  </div>
+                  <div class="kanji-details">
+                    <strong class="kanji-hanviet" id="daily-kanji-hanviet">HỌC (まな・ぶ)</strong>
+                    <p class="kanji-meaning" id="daily-kanji-meaning">Học tập, tiếp thu tri thức</p>
+                    <div class="kanji-readings-row">
+                      <span class="reading-chip"><strong>On:</strong> <span id="daily-kanji-on">ガク</span></span>
+                      <span class="reading-chip"><strong>Kun:</strong> <span id="daily-kanji-kun">まな.ぶ</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Quick Stage Action Buttons -->
               <div class="stage-actions">
                 <button type="button" class="stage-btn" id="btn-practice-topic-now">
-                  <span>🎯 Luyện chủ đề này</span>
+                  <span> Luyện chủ đề này</span>
                 </button>
                 <button type="button" class="stage-btn" id="btn-change-curriculum-stage">
-                  <span>🗺️ Đổi bài học</span>
+                  <span> Đổi bài học</span>
                 </button>
               </div>
             </aside>
 
             <!-- CHAT WORKSPACE (REVERSED CHATBOT) -->
             <section class="classroom-chat-window" data-od-id="chat-window">
-              
+
               <!-- Active Recommendation Banner -->
               <div class="active-rec-banner" id="active-rec-banner">
-                <div class="rec-icon">💡</div>
+                <div class="rec-icon"></div>
                 <div class="rec-content">
                   <strong id="rec-title">Gợi ý bài học hôm nay cho bạn:</strong>
                   <p id="rec-text">Ôn tập ngữ pháp「〜は〜です / 〜じゃありません」và thử thách đề thi N5!</p>
@@ -366,17 +306,14 @@
                 <div class="chat-header-left">
                   <div class="chat-status-pulse"></div>
                   <div>
-                    <h2 class="chat-title">Phòng học tương tác cùng Sensei</h2>
-                    <span class="chat-sub">Mô hình phản xạ: Sensei đặt câu hỏi kiểm tra ngữ pháp &amp; phản xạ</span>
+                    <h2 class="chat-title">Thầy Lâm</h2>
+
                   </div>
                 </div>
                 <div class="chat-header-actions">
-                  <div class="gemini-status-badge" id="chat-gemini-badge" title="Mô hình Google Gemini AI Studio">
-                    <span class="gemini-dot"></span>
-                    <span id="gemini-status-text">Gemini 2.5 Flash: Đã kết nối</span>
-                  </div>
+
                   <button type="button" class="sketch-icon-btn" id="btn-clear-chat-history" title="Xóa lịch sử hội thoại">
-                    🗑️
+                    Xóa
                   </button>
                 </div>
               </div>
@@ -386,40 +323,39 @@
                 <!-- Welcome State -->
                 <div class="chat-welcome-state" id="chat-welcome">
                   <div class="welcome-mascot-head">
-                    <img id="welcome-mascot-img" src="assets/sensei/minh/south.png" alt="Sensei" class="pixel-sprite">
+                    <img id="welcome-mascot-img" src="assets/lam/teacher.svg" alt="Sensei" class="pixel-sprite">
                   </div>
-                  <h3 class="welcome-title">Chào bạn! Sensei đã sẵn sàng đồng hành cùng bạn!</h3>
-                  <p class="welcome-desc">
-                    Sensei sẽ chủ động đặt câu hỏi, kiểm tra ngữ pháp và chỉnh sửa phản xạ giao tiếp tiếng Nhật theo từng cấp độ JLPT N5–N1.
-                  </p>
+                  <h3 class="welcome-title">Em muốn luyện phần nào?</h3>
+
                   <div class="welcome-chips-row">
                     <button type="button" class="welcome-chip-btn" data-preset="Sensei ơi, em muốn bắt đầu luyện bài 1 ngay!">
-                      ✨ Bắt đầu bài học
+                       Bắt đầu bài học
                     </button>
                     <button type="button" class="welcome-chip-btn" data-preset="Sensei hãy đặt 1 câu hỏi kiểm tra phản xạ tiếng Nhật cho em!">
-                      🎯 Đặt câu hỏi phản xạ
+                       Đặt câu hỏi phản xạ
                     </button>
-                    <button type="button" class="welcome-chip-btn" data-preset="Sensei kiểm tra phát âm tiếng Nhật giúp em nhé!">
-                      🎙️ Luyện phát âm Kaiwa
+                    <button type="button" class="welcome-chip-btn" data-preset="Thầy hãy giúp em luyện một đoạn hội thoại tiếng Nhật.">
+                      Luyện hội thoại
                     </button>
                   </div>
                 </div>
               </div>
 
-              <!-- Quick Response Chips -->
+              <!-- Quick Response Chips with Furigana Toggle & Bookmark -->
               <div class="chat-chips-bar" id="chat-prompt-chips">
-                <button type="button" class="prompt-chip" id="btn-ask-hint">💡 Xin gợi ý</button>
-                <button type="button" class="prompt-chip" id="btn-ask-explain">📖 Giải thích ngữ pháp</button>
-                <button type="button" class="prompt-chip" id="btn-ask-example">📝 Cho thêm ví dụ</button>
-                <button type="button" class="prompt-chip" id="btn-ask-check">✍️ Kiểm tra câu của em</button>
+                <button type="button" class="prompt-chip" id="btn-bookmark-topic" title="Lưu chủ đề này vào Sổ tay điểm yếu"> Lưu điểm yếu</button>
+                <button type="button" class="prompt-chip" id="btn-ask-hint"> Xin gợi ý</button>
+                <button type="button" class="prompt-chip" id="btn-ask-explain"> Giải thích ngữ pháp</button>
+                <button type="button" class="prompt-chip" id="btn-ask-example"> Cho thêm ví dụ</button>
+                <button type="button" class="prompt-chip" id="btn-ask-check"> Kiểm tra câu của em</button>
               </div>
 
               <!-- Chat Input Bar -->
               <form class="chat-input-bar" id="chat-form" onsubmit="return false;">
                 <button type="button" class="chat-audio-btn" id="btn-voice-input" title="Nói tiếng Nhật (Nhận diện giọng nói)">
-                  <span id="mic-icon">🎙️</span>
+                  <span id="mic-icon">Nói</span>
                 </button>
-                <input type="text" id="chat-input" class="sketch-input chat-text-input" placeholder="Nhập câu trả lời bằng tiếng Nhật hoặc tiếng Việt..." autocomplete="off">
+                <input type="text" id="chat-input" class="sketch-input chat-text-input" placeholder="Viết tiếng Nhật hoặc tiếng Việt…" aria-label="Tin nhắn cho thầy Lâm" autocomplete="off">
                 <button type="submit" id="btn-send-message" class="sketch-btn-cta chat-send-btn">
                   <span>Gửi</span>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -432,7 +368,7 @@
         <!-- TAB 2: CURRICULUM (4 SKILLS ROADMAP: GRAMMAR, VOCAB, READING, LISTENING) -->
         <section class="tab-panel" id="panel-curriculum" hidden>
           <div class="curriculum-container">
-            
+
             <!-- Breadcrumb Navigation -->
             <div class="curriculum-breadcrumb-bar">
               <span class="cb-item" id="cb-root">Lộ trình</span>
@@ -445,8 +381,8 @@
             <div class="curriculum-header-card">
               <div class="curriculum-title-row">
                 <div>
-                  <h2 class="curriculum-title">🗺️ Lộ trình 4 Kỹ năng JLPT N5–N1</h2>
-                  <p class="curriculum-desc">Học toàn diện Từ vựng, Ngữ pháp, Đọc hiểu và Nghe hiểu theo giáo trình chuẩn Minna no Nihongo &amp; Shinkanzen.</p>
+                  <h2 class="curriculum-title"> Sổ bài học</h2>
+
                 </div>
                 <div class="level-badges-row" id="curriculum-level-picker">
                   <button type="button" class="level-tab-btn active" data-lvl="N5">N5 (Sơ cấp 1)</button>
@@ -457,36 +393,45 @@
                 </div>
               </div>
 
-              <!-- 4 Skills Selector Row -->
-              <div class="skill-tabs-row" id="skill-tabs-row">
-                <button type="button" class="skill-tab-btn active" data-skill="grammar">✍️ Ngữ pháp</button>
-                <button type="button" class="skill-tab-btn" data-skill="vocabulary">📖 Từ vựng</button>
-                <button type="button" class="skill-tab-btn" data-skill="reading">📰 Đọc hiểu</button>
-                <button type="button" class="skill-tab-btn" data-skill="listening">🎧 Nghe hiểu</button>
+              <div class="curriculum-view-switch" aria-label="Chế độ học">
+                <button type="button" data-curriculum-view="plan" aria-pressed="true">Lộ trình</button>
+                <button type="button" data-curriculum-view="library" aria-pressed="false">Thư viện</button>
+              </div>
+              <!-- Skill filters belong to the library view. -->
+              <div class="skill-tabs-row" id="skill-tabs-row"><button type="button" class="skill-tab-btn" data-skill="kana">Bảng chữ cái</button>
+                <button type="button" class="skill-tab-btn active" data-skill="grammar"> Ngữ pháp</button>
+                <button type="button" class="skill-tab-btn" data-skill="vocabulary"> Từ vựng</button>
+                <button type="button" class="skill-tab-btn" data-skill="kanji">漢 Hán tự</button>
+                <button type="button" class="skill-tab-btn" data-skill="reading"> Đọc hiểu</button>
+                <button type="button" class="skill-tab-btn" data-skill="listening"> Nghe hiểu</button>
               </div>
             </div>
 
+            <section id="study-plan" aria-label="Lộ trình học"></section>
+            <div id="lesson-library" hidden>
             <!-- Lessons Grid -->
-            <div class="curriculum-grid" id="curriculum-list">
+            <label class="lesson-search">Tìm bài học<input type="search" id="lesson-search" placeholder="Từ, mẫu câu, nghĩa…"></label>
+            <p id="lesson-count" class="lesson-count" aria-live="polite"></p><div class="curriculum-grid" id="curriculum-list">
               <!-- Rendered dynamically via app.js & jlpt-data.js -->
+            </div><button type="button" id="lesson-load-more" class="stage-btn" hidden>Xem thêm 24 bài</button>
             </div>
           </div>
 
           <!-- Lesson Detail Modal -->
-          <div class="lesson-detail-modal" id="lesson-detail-modal" hidden>
+          <dialog class="lesson-detail-modal" id="lesson-detail-modal" aria-labelledby="modal-lesson-title">
             <div class="lesson-modal-card">
               <div class="lesson-modal-header">
                 <div>
                   <span class="modal-lesson-badge" id="modal-lesson-badge">Bài 1 • N5</span>
                   <h2 class="modal-lesson-title" id="modal-lesson-title">...</h2>
                 </div>
-                <button type="button" class="modal-close-btn" id="btn-close-lesson-modal">✕</button>
+                <button type="button" class="modal-close-btn" id="btn-close-lesson-modal" aria-label="Đóng bài học">×</button>
               </div>
               <div class="lesson-modal-body" id="modal-lesson-body">
                 <!-- Rendered dynamically -->
               </div>
             </div>
-          </div>
+          </dialog>
         </section>
 
         <!-- TAB 3: FLASHCARDS (SRS SPACED REPETITION) -->
@@ -495,8 +440,8 @@
             <div class="flashcards-header-card">
               <div class="fc-header-top">
                 <div>
-                  <h2 class="fc-title">🃏 Thẻ nhớ Từ vựng &amp; Hán tự (SRS Spaced Repetition)</h2>
-                  <p class="fc-desc">Thuật toán ghi nhớ ngắt quãng giúp tối ưu hóa khả năng khắc sâu từ vựng vào trí nhớ dài hạn.</p>
+                  <h2 class="fc-title"> Thẻ nhớ từ vựng</h2>
+
                 </div>
                 <div class="fc-level-row" id="fc-level-picker">
                   <button type="button" class="fc-lvl-btn active" data-lvl="N5">N5</button>
@@ -511,13 +456,13 @@
             <!-- Flashcard Stage -->
             <div class="flashcard-stage">
               <div class="flashcard-card-wrap">
-                <div class="flashcard-flipper" id="flashcard-card">
+                <div class="flashcard-flipper" id="flashcard-card" tabindex="0" role="group" aria-label="Thẻ nhớ, nhấn Enter để lật">
                   <!-- Front Side -->
                   <div class="card-face card-front">
                     <span class="card-hint">NHẤN VÀO THẺ ĐỂ LẬT NGHĨA</span>
                     <div class="card-badge-row">
                       <span class="card-badge" id="fc-badge-lvl">N5 Từ vựng</span>
-                      <button type="button" class="card-audio-btn" id="btn-fc-audio-front" title="Nghe phát âm">🔊</button>
+                      <button type="button" class="card-audio-btn" id="btn-fc-audio-front" title="Nghe phát âm">Nghe</button>
                     </div>
                     <div class="card-japanese-text" id="fc-front-text">私</div>
                     <div class="card-reading-text" id="fc-reading-text">わたし (watashi)</div>
@@ -528,7 +473,7 @@
                     <span class="card-hint">NGHĨA &amp; VÍ DỤ</span>
                     <div class="card-badge-row">
                       <span class="card-badge" id="fc-badge-back">Ý nghĩa</span>
-                      <button type="button" class="card-audio-btn" id="btn-fc-audio-back" title="Nghe câu ví dụ">🔊</button>
+                      <button type="button" class="card-audio-btn" id="btn-fc-audio-back" title="Nghe câu ví dụ">Nghe</button>
                     </div>
                     <div class="card-meaning-text" id="fc-back-meaning">Tôi (đại từ nhân xưng ngôi thứ nhất)</div>
                     <div class="card-example-box">
@@ -543,9 +488,9 @@
               <div class="fc-controls-bar">
                 <div class="fc-counter-pill" id="fc-counter">Thẻ 1 / 15</div>
                 <div class="fc-srs-btns">
-                  <button type="button" class="srs-btn srs-again" id="fc-btn-again">🔴 Chưa nhớ (Lặp lại)</button>
-                  <button type="button" class="srs-btn srs-good" id="fc-btn-good">🟡 Tạm nhớ</button>
-                  <button type="button" class="srs-btn srs-easy" id="fc-btn-easy">🟢 Thuộc lòng</button>
+                  <button type="button" class="srs-btn srs-again" id="fc-btn-again"> Chưa nhớ</button>
+                  <button type="button" class="srs-btn srs-good" id="fc-btn-good"> Tạm nhớ</button>
+                  <button type="button" class="srs-btn srs-easy" id="fc-btn-easy"> Thuộc lòng</button>
                 </div>
                 <div class="fc-nav-btns">
                   <button type="button" class="fc-nav-btn" id="fc-btn-prev">← Trước</button>
@@ -560,9 +505,9 @@
         <section class="tab-panel" id="panel-kaiwa" hidden>
           <div class="kaiwa-container">
             <div class="kaiwa-header-card">
-              <h2 class="kaiwa-title">🎙️ Kaiwa Speaking Lab • Phòng Luyện Nói AI</h2>
-              <p class="kaiwa-desc">Luyện phản xạ giao tiếp tự nhiên trong các tình huống thực tế đời sống Nhật Bản cùng Sensei, nhận xét ngữ điệu &amp; chấm điểm 0–100.</p>
-              
+              <h2 class="kaiwa-title">Luyện nói</h2>
+
+
               <!-- Scenario Picker Grid -->
               <div class="kaiwa-scenarios-grid" id="kaiwa-scenarios-grid">
                 <!-- Rendered dynamically -->
@@ -574,9 +519,10 @@
               <div class="kaiwa-prompt-card">
                 <div class="kaiwa-prompt-header">
                   <span class="kaiwa-scenario-tag" id="kaiwa-prompt-tag">Tiệm tiện lợi (Combini)</span>
-                  <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-prompt" title="Nghe Sensei nói">🔊 Nghe Sensei</button>
+                  <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-prompt" title="Nghe Sensei nói">Nghe</button>
                 </div>
                 <div class="kaiwa-prompt-japanese" id="kaiwa-prompt-jp">いらっしゃいませ！お弁当温めますか？</div>
+                <button type="button" class="stage-btn" id="kaiwa-next-prompt">Câu tiếp →</button><p id="kaiwa-prompt-hint"></p>
                 <div class="kaiwa-prompt-vietnamese" id="kaiwa-prompt-vi">Xin chào quý khách! Cơm hộp có cần hâm nóng không ạ?</div>
               </div>
 
@@ -586,18 +532,18 @@
                   <label for="kaiwa-manual-input">Câu trả lời tiếng Nhật của bạn:</label>
                   <span class="mic-status-badge" id="kaiwa-mic-status">Micro: Sẵn sàng</span>
                 </div>
-                <textarea id="kaiwa-manual-input" class="sketch-input kaiwa-textarea" placeholder="Nhấn vào nút Micro để nói tiếng Nhật, hoặc gõ câu trả lời vào đây..." rows="3"></textarea>
+                <textarea id="kaiwa-manual-input" class="sketch-input kaiwa-textarea" placeholder="Viết hoặc đọc câu trả lời…" rows="3"></textarea>
 
                 <div class="kaiwa-actions-row">
                   <button type="button" class="kaiwa-mic-btn" id="btn-kaiwa-mic">
-                    <span id="kaiwa-mic-icon">🎙️</span>
-                    <span id="kaiwa-mic-btn-text">Bật Mic Nói</span>
+                    <span id="kaiwa-mic-icon" hidden></span>
+                    <span id="kaiwa-mic-btn-text">Ghi âm</span>
                   </button>
                   <button type="button" class="sketch-btn-cta kaiwa-eval-btn" id="btn-eval-kaiwa">
-                    <span>Gửi Sensei chấm điểm</span>
+                    <span>Nhờ thầy nhận xét</span>
                   </button>
                   <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-user" style="display: none; background: #f8fafc; border: 1.5px solid var(--border-dark); border-radius: 12px; padding: 10px 16px; font-size: 13px; font-weight: 700; color: var(--ink-dark); cursor: pointer;" title="Nghe lại bản thu âm của bạn">
-                    🎧 Nghe lại giọng bạn
+                     Nghe lại giọng bạn
                   </button>
                 </div>
               </div>
@@ -613,14 +559,14 @@
                 </div>
                 <div class="result-body">
                   <div class="result-feedback-section">
-                    <h4>💡 Nhận xét từ Sensei:</h4>
+                    <h4> Nhận xét của thầy Lâm</h4>
                     <p id="kaiwa-feedback-text">Câu trả lời rất tự nhiên và chính xác!</p>
                   </div>
                   <div class="result-model-section">
-                    <h4>✨ Câu trả lời mẫu chuẩn ngữ điệu:</h4>
+                    <h4> Câu trả lời gợi ý</h4>
                     <div class="model-sentence-row">
                       <p id="kaiwa-model-text">はい、お願いします。(Hai, onegaishimasu.)</p>
-                      <button type="button" class="card-audio-btn" id="btn-kaiwa-model-tts">🔊</button>
+                      <button type="button" class="card-audio-btn" id="btn-kaiwa-model-tts">Nghe</button>
                     </div>
                   </div>
                 </div>
@@ -635,8 +581,8 @@
             <div class="quiz-header-card">
               <div class="quiz-title-row">
                 <div>
-                  <h2 class="quiz-title">📝 Thi thử JLPT (Authentic Mock Exam Simulator)</h2>
-                  <p class="quiz-desc">Mô phỏng cấu trúc đề thi chính thức: Mondai 1 (Kanji), Mondai 2 (Từ vựng), Mondai 3 (Ngữ pháp dấu sao ★), Mondai 4 (Đọc hiểu).</p>
+                  <h2 class="quiz-title"> Bài luyện JLPT</h2>
+
                 </div>
                 <div class="quiz-level-row" id="quiz-level-picker">
                   <button type="button" class="quiz-lvl-btn active" data-lvl="N5">N5</button>
@@ -649,8 +595,9 @@
 
               <!-- Exam Selection Row -->
               <div class="quiz-test-select-row" style="display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-                <span style="font-size: 13px; font-weight: 700; color: var(--ink-muted);">Chọn mã đề:</span>
-                <div id="quiz-test-picker" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                <label for="quiz-test-picker">Bộ luyện</label>
+                <select id="quiz-test-picker" aria-label="Chọn bộ luyện"></select>
+                <span id="quiz-source-note"></span>
               </div>
 
               <!-- Exam Timer & Status Bar -->
@@ -659,7 +606,7 @@
                   <span id="quiz-q-num">Câu 1 / 4</span> • <span id="quiz-q-type">Mondai 1: Cách đọc Kanji</span>
                 </div>
                 <div class="exam-timer-box">
-                  <span>⏱️ Còn lại:</span>
+                  <span>⏱ Còn lại:</span>
                   <strong id="exam-timer-display">25:00</strong>
                 </div>
               </div>
@@ -681,7 +628,7 @@
 
               <!-- Feedback / Explanation Box -->
               <div class="quiz-feedback-box" id="quiz-feedback-box" hidden>
-                <div class="feedback-status" id="quiz-feedback-status">Chính xác! 🎉</div>
+                <div class="feedback-status" id="quiz-feedback-status">Chính xác! </div>
                 <p class="feedback-explanation" id="quiz-feedback-text">
                   「学校」đọc chuẩn là「がっこう」(âm ngắt nhỏ っ) nghĩa là trường học.
                 </p>
@@ -693,8 +640,8 @@
 
             <!-- Final Result Card -->
             <div class="quiz-result-card" id="quiz-result-card" hidden>
-              <div class="result-trophy">🏆</div>
-              <h3 class="result-title">Hoàn thành bài thi thử!</h3>
+              <div class="result-trophy"></div>
+              <h3 class="result-title">Kết quả bài luyện</h3>
               <div class="final-score-display">
                 <span id="quiz-final-score-val">100%</span>
               </div>
@@ -711,46 +658,54 @@
         <section class="tab-panel" id="panel-mastery" hidden>
           <div class="mastery-container">
             <div class="mastery-header-card">
-              <h2 class="mastery-title">📊 Radar Năng lực &amp; Phân tích Điểm yếu</h2>
-              <p class="mastery-desc">Theo dõi tiến độ tích lũy kiến thức, tỷ lệ phản xạ chính xác và các chủ đề cần ôn tập ngay.</p>
+              <h2 class="mastery-title"> Tiến độ học tập</h2>
+
             </div>
 
             <div class="mastery-grid">
               <!-- KPI Summary Cards -->
               <div class="mastery-kpi-card">
-                <div class="kpi-icon">📚</div>
+
                 <div class="kpi-info">
-                  <span class="kpi-label">Bài học đã xem</span>
-                  <strong class="kpi-val" id="mastery-lessons-count">18</strong>
+                  <span class="kpi-label">Mục đã luyện</span>
+                  <strong class="kpi-val" id="mastery-lessons-count">0</strong>
                 </div>
               </div>
               <div class="mastery-kpi-card">
-                <div class="kpi-icon">🎯</div>
+
                 <div class="kpi-info">
                   <span class="kpi-label">Tỷ lệ chính xác</span>
-                  <strong class="kpi-val" id="mastery-accuracy-rate">88%</strong>
+                  <strong class="kpi-val" id="mastery-accuracy-rate">0%</strong>
                 </div>
               </div>
               <div class="mastery-kpi-card">
-                <div class="kpi-icon">🔥</div>
+
                 <div class="kpi-info">
                   <span class="kpi-label">Chuỗi ngày học</span>
-                  <strong class="kpi-val" id="mastery-streak-val">3 Ngày</strong>
+                  <strong class="kpi-val" id="mastery-streak-val">0 ngày</strong>
                 </div>
               </div>
               <div class="mastery-kpi-card">
-                <div class="kpi-icon">📝</div>
+
                 <div class="kpi-info">
-                  <span class="kpi-label">Đề thi đã làm</span>
-                  <strong class="kpi-val" id="mastery-exams-count">5</strong>
+                  <span class="kpi-label">Câu JLPT đã luyện</span>
+                  <strong class="kpi-val" id="mastery-exams-count">0</strong>
                 </div>
               </div>
             </div>
 
             <!-- Weak Spots Revision Section -->
             <div class="weak-spots-card">
-              <h3>⚠️ Danh sách điểm yếu cần ôn tập:</h3>
+              <h3> Cần ôn lại</h3>
               <div class="weak-spots-list" id="weak-spots-list">
+                <!-- Dynamically rendered list -->
+              </div>
+            </div>
+
+            <!-- Saved Bookmarks / Sổ tay điểm yếu -->
+            <div class="bookmarks-card">
+              <h3> Đã lưu</h3>
+              <div class="bookmarked-items-list" id="bookmarked-items-list">
                 <!-- Dynamically rendered list -->
               </div>
             </div>
@@ -760,119 +715,41 @@
         <!-- TAB 7: SETTINGS, GEMINI KEY & MASCOTS -->
         <section class="tab-panel" id="panel-settings" hidden>
           <div class="settings-container">
-            
-            <!-- Gemini API Key Section -->
-            <div class="settings-card">
-              <h3 class="card-title">🔑 Khóa API Google Gemini AI Studio</h3>
-              <p class="card-desc">VJBot sử dụng Gemini 2.5 Flash cho phản xạ học tập, chấm điểm Kaiwa và giọng nói tự nhiên (TTS).</p>
-              
-              <div class="api-key-config-box">
-                <div class="api-key-input-row">
-                  <input type="password" id="custom-api-key-input" class="sketch-input api-key-field" placeholder="Nhập khóa API Gemini..." >
-                  <button type="button" class="eye-toggle-btn" id="btn-toggle-key-visibility" title="Ẩn/Hiện khóa">👁️</button>
-                  <button type="button" class="sketch-btn-cta" id="btn-save-api-key">Lưu Khóa</button>
-                </div>
-                <div class="api-key-actions-row">
-                  <button type="button" class="test-key-btn" id="btn-test-gemini-key">⚡ Kiểm tra kết nối Gemini AI</button>
-                  <span class="key-status-text" id="gemini-key-test-status">Khóa mặc định đã sẵn sàng.</span>
-                </div>
-              </div>
-            </div>
 
+            <div class="settings-card"><h3 class="card-title">Tài khoản</h3><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button><p id="account-mode">Tiến độ khách được lưu trên trình duyệt này. Đăng nhập Google để đồng bộ tiến độ mới và dùng Sensei AI.</p></div>
             <!-- Sound & Retro Effects -->
             <div class="settings-card">
-              <h3 class="card-title">🔊 Âm thanh &amp; Hiệu ứng Retro</h3>
+              <h3 class="card-title">Âm thanh</h3>
               <div class="setting-toggle-row">
                 <div>
-                  <strong>Âm thanh phản hồi 8-bit Synthesizer</strong>
+                  <strong>Âm báo khi học</strong>
                   <p>Phát hiệu ứng âm thanh nhẹ nhàng khi tương tác với Sensei, lật thẻ và hoàn thành bài thi.</p>
                 </div>
                 <button type="button" class="sketch-action-chip" id="btn-toggle-sound-setting">
-                  🔊 Bật âm thanh
+                  Bật âm thanh
                 </button>
               </div>
             </div>
 
-            <!-- Mascot Choice Section -->
-            <div class="settings-card">
-              <h3 class="card-title">👩‍🏫 Chọn Sensei đồng hành của bạn</h3>
-              <p class="card-desc">Mỗi Sensei mang phong cách hướng dẫn và giọng điệu truyền cảm hứng riêng biệt.</p>
-
-              <div class="mascot-choice-grid">
-                <div class="mascot-choice active" data-mascot="minh">
-                  <div class="choice-avatar">
-                    <img src="assets/sensei/minh/south.png" alt="Thầy Minh" class="pixel-sprite">
-                  </div>
-                  <h4 class="choice-name">Thầy Minh (Minh Sensei)</h4>
-                  <p class="choice-role">Giáo viên luyện đề • Chuyên sâu JLPT &amp; Phản xạ nhanh</p>
-                  <span class="choice-stamp">ĐANG CHỌN</span>
-                </div>
-
-                <div class="mascot-choice" data-mascot="an">
-                  <div class="choice-avatar">
-                    <img src="assets/sensei/an/south.png" alt="Cô An" class="pixel-sprite">
-                  </div>
-                  <h4 class="choice-name">Cô An (An Sensei)</h4>
-                  <p class="choice-role">Giáo viên hướng dẫn phản xạ • Tablet ngữ pháp</p>
-                  <span class="choice-stamp">CHỌN NÀY</span>
-                </div>
-
-                <div class="mascot-choice" data-mascot="chi">
-                  <div class="choice-avatar">
-                    <img src="assets/sensei/chi/south.png" alt="Cô Chi" class="pixel-sprite">
-                  </div>
-                  <h4 class="choice-name">Cô Chi (Chi Sensei)</h4>
-                  <p class="choice-role">Giáo viên tận tâm • Cặp tài liệu &amp; Kính tri thức</p>
-                  <span class="choice-stamp">CHỌN NÀY</span>
-                </div>
-
-                <div class="mascot-choice" data-mascot="linh">
-                  <div class="choice-avatar">
-                    <img src="assets/sensei/linh/south.png" alt="Cô Linh" class="pixel-sprite">
-                  </div>
-                  <h4 class="choice-name">Cô Linh (Linh Sensei)</h4>
-                  <p class="choice-role">Giáo viên dịu dàng • Sách bài tập &amp; Ân cần</p>
-                  <span class="choice-stamp">CHỌN NÀY</span>
-                </div>
-
-                <div class="mascot-choice" data-mascot="pip">
-                  <div class="choice-avatar">
-                    <img src="assets/sensei/pip/south.png" alt="Pip Robot" class="pixel-sprite">
-                  </div>
-                  <h4 class="choice-name">Pip Robot (Trợ lý AI)</h4>
-                  <p class="choice-role">Robot AI đồng hành • Phân tích dữ liệu &amp; Phản xạ nhanh</p>
-                  <span class="choice-stamp">CHỌN NÀY</span>
-                </div>
-
-                <div class="mascot-choice" data-mascot="bao">
-                  <div class="choice-avatar">
-                    <img src="assets/sensei/bao/south.png" alt="Kỹ sư Bảo" class="pixel-sprite">
-                  </div>
-                  <h4 class="choice-name">Kỹ sư Bảo (Bao Sensei)</h4>
-                  <p class="choice-role">Kỹ sư chuyên môn • Tiếng Nhật thực chiến &amp; Cơ khí/IT</p>
-                  <span class="choice-stamp">CHỌN NÀY</span>
-                </div>
-              </div>
-            </div>
-
+            <div class="settings-card teacher-profile"><img src="assets/lam/teacher.svg" alt="Thầy Lâm mặc vest" width="72" height="120"><h3>Thầy Lâm</h3></div>
             <!-- Cloudflare D1 Account & Danger Zone -->
             <div class="settings-card danger-card">
-              <h3 class="card-title" style="color: #dc2626;">🗑️ Quản lý Dữ liệu &amp; Xóa tài khoản</h3>
-              <p class="card-desc">Toàn bộ dữ liệu tiến độ học tập và lịch sử trò chuyện được lưu trên Cloudflare D1 Database.</p>
-              
+              <h3 class="card-title" style="color: #dc2626;">Xóa dữ liệu</h3>
+              <p class="card-desc">Tiến độ được lưu trên thiết bị khi học ở chế độ khách, và trên tài khoản khi đăng nhập.</p>
+
               <div class="setting-toggle-row">
                 <div>
-                  <strong>Mã định danh Người học (User ID)</strong>
+                  <strong>Mã học viên</strong>
                   <p id="user-id-display" style="font-family: var(--font-mono); font-size: 13px; color: #64748b;">...</p>
                 </div>
                 <button type="button" class="sketch-action-chip" id="btn-copy-user-id" title="Sao chép User ID">
-                  📋 Sao chép
+                   Sao chép
                 </button>
               </div>
 
               <div class="danger-action-row" style="margin-top: 18px;">
                 <button type="button" class="delete-account-btn" id="btn-delete-account">
-                  🗑️ Xoá toàn bộ tài khoản &amp; dữ liệu học tập
+                  Xóa tài khoản và tiến độ
                 </button>
               </div>
             </div>
@@ -889,10 +766,10 @@
   <!-- FLOATING SENSEI ASSISTANT WIDGET (CAN SPAWN ANYWHERE) -->
   <div class="sensei-floating-dock" id="sensei-floating-dock">
     <div class="dock-speech-bubble" id="dock-speech-bubble">
-      <span>Hỏi Sensei (⌘K)</span>
+      <span>Hỏi thầy Lâm (⌘K)</span>
     </div>
     <div class="complete-mascot-standee" id="btn-spawn-sensei-float" role="button" tabindex="0" title="Gọi trợ lý Sensei mọi nơi (Phím tắt: ⌘K)">
-      <img id="dock-mascot-img" src="assets/sensei/minh/south.png" alt="Sensei Complete Character" class="complete-character-sprite pixel-sprite">
+      <img id="dock-mascot-img" src="assets/lam/teacher.svg" alt="Thầy Lâm" class="complete-character-sprite pixel-sprite">
       <div class="dock-character-pedestal"></div>
       <span class="dock-status-dot"></span>
     </div>
@@ -902,15 +779,15 @@
   <div class="sensei-floating-popover" id="sensei-floating-popover" hidden>
     <div class="popover-header">
       <div class="popover-title-row">
-        <span class="popover-icon">👩‍🏫</span>
-        <h4>Sensei Trợ lý Mọi lúc (⌘K)</h4>
+        <span class="popover-icon">‍</span>
+        <h4>Thầy Lâm</h4>
       </div>
-      <button type="button" class="popover-close-btn" id="btn-close-popover" aria-label="Thu nhỏ">✕</button>
+      <button type="button" class="popover-close-btn" id="btn-close-popover" aria-label="Thu nhỏ">×</button>
     </div>
-    
+
     <div class="popover-body">
       <div class="popover-sensei-box">
-        <img id="popover-mascot-img" src="assets/sensei/minh/south.png" alt="Sensei" class="pixel-sprite">
+        <img id="popover-mascot-img" src="assets/lam/teacher.svg" alt="Sensei" class="pixel-sprite">
         <div class="popover-speech" id="popover-speech-text">
           Chào bạn! Cần Sensei dịch câu, giải thích ngữ pháp hay luyện phát âm thì nhắn ngay ở đây nhé! (Phím tắt: Cmd+K)
         </div>
@@ -921,21 +798,21 @@
           は vs が
         </button>
         <button type="button" class="quick-chip-btn" data-ask="Phát âm từ ありがとう">
-          🔊 ありがとう
+          Nghe ありがとう
         </button>
         <button type="button" class="quick-chip-btn" data-ask="Cho em 1 ví dụ câu tiếng Nhật thông dụng">
-          ✨ Câu ví dụ
+           Câu ví dụ
         </button>
       </div>
 
       <div class="popover-input-row">
-        <input type="text" id="popover-query-input" class="sketch-input popover-input" placeholder="Hỏi Sensei bất cứ điều gì...">
+        <input type="text" id="popover-query-input" class="sketch-input popover-input" placeholder="Hỏi thầy Lâm">
         <button type="button" id="btn-popover-send" class="popover-send-btn">Hỏi</button>
       </div>
 
       <div class="popover-actions-row">
         <button type="button" id="btn-popover-tts" class="popover-tts-btn">
-          🔊 Nghe phát âm câu trên
+          Nghe Nghe phát âm câu trên
         </button>
       </div>
     </div>
@@ -944,25 +821,25 @@
   <!-- LEVEL PICKER OVERLAY -->
   <div id="level-picker" class="picker-overlay" hidden>
     <div class="picker-card">
-      <button type="button" class="picker-close-btn" id="btn-close-picker" aria-label="Đóng bảng chọn">✕</button>
+      <button type="button" class="picker-close-btn" id="btn-close-picker" aria-label="Đóng bảng chọn">×</button>
       <div class="picker-header">
         <div class="picker-mascot-head">
-          <img src="assets/sensei/minh/south.png" alt="Sensei" class="pixel-sprite">
+          <img src="assets/lam/teacher.svg" alt="Sensei" class="pixel-sprite">
         </div>
         <div>
-          <h2>Chào bạn! Trình độ tiếng Nhật của bạn?</h2>
-          <p>Sensei sẽ thiết lập giáo trình và các câu hỏi phù hợp nhất cho bạn.</p>
+          <h2>Trình độ tiếng Nhật</h2>
+          <p id="level-save-status" role="status"></p>
         </div>
       </div>
 
       <div class="picker-options">
         <button type="button" class="picker-opt-btn" data-level="N5">
           <strong>JLPT N5 (Sơ cấp 1)</strong>
-          <span>Minna no Nihongo bài 1–25 • Từ vựng &amp; trợ từ cơ bản</span>
+          <span>Từ vựng và trợ từ cơ bản</span>
         </button>
         <button type="button" class="picker-opt-btn" data-level="N4">
           <strong>JLPT N4 (Sơ cấp 2)</strong>
-          <span>Minna no Nihongo bài 26–50 • Thể điều kiện &amp; kính ngữ sơ cấp</span>
+          <span>Thể điều kiện và kính ngữ sơ cấp</span>
         </button>
         <button type="button" class="picker-opt-btn" data-level="N3">
           <strong>JLPT N3 (Trung cấp)</strong>
@@ -980,8 +857,37 @@
     </div>
   </div>
 
+  <!-- MOBILE BOTTOM DOCK (APPLE TAB BAR FOR EASY 1-TAP NAVIGATION) -->
+  <nav class="mobile-bottom-bar" id="mobile-bottom-bar" aria-label="Mobile Navigation">
+    <button type="button" class="mobile-bottom-item active" data-tab="landing">
+
+      <span class="m-label">Trang chủ</span>
+    </button>
+    <button type="button" class="mobile-bottom-item" data-tab="classroom">
+
+      <span class="m-label">Thầy Lâm</span>
+    </button>
+    <button type="button" class="mobile-bottom-item" data-tab="curriculum">
+
+      <span class="m-label">Lộ trình</span>
+    </button>
+    <button type="button" class="mobile-bottom-item" data-tab="kaiwa">
+
+      <span class="m-label">Kaiwa</span>
+    </button>
+    <button type="button" class="mobile-bottom-item" data-tab="quiz">
+
+      <span class="m-label">Bài luyện</span>
+    </button>
+  </nav>
+
   <!-- LOAD COMPREHENSIVE DATA & APP SCRIPT -->
   <script src="jlpt-data.js"></script>
+  <dialog id="auth-dialog" aria-labelledby="auth-user"><button type="button" id="auth-close" class="modal-close-btn" aria-label="Đóng">×</button><h2 id="auth-user">Đăng nhập Google</h2><div id="google-signin"></div><p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button></dialog>
+  <script src="learning.js"></script>
+  <script src="study-plan.js"></script>
+  <script src="account.js"></script>
   <script src="app.js"></script>
+  <script type="module" src="/room.js"></script>
 </body>
 </html>

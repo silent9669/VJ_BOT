@@ -1,8 +1,11 @@
+import { authRoute, sessionUser } from './auth.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
- * D1-backed JLPT curriculum, progress, chat with Gemini 2.5 & Gemini 3.8 TTS.
+ * D1-backed JLPT curriculum, progress, chat with Gemini 3.5 & Gemini Flash TTS.
  */
 
+// Configure GEMINI_API_KEY with `wrangler secret put GEMINI_API_KEY`.
+// AI requests fail explicitly when the provider is unavailable.
 const DEFAULT_GEMINI_KEY = "";
 
 function calculateSM2(quality, repetitions, previousInterval, easeFactor) {
@@ -36,7 +39,8 @@ function jsonResponse(data, status = 200) {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
@@ -106,18 +110,38 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Handle CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-      });
+    if (request.method !== "GET" && request.method !== "HEAD" && request.headers.get("Origin") && request.headers.get("Origin") !== url.origin) {
+      return jsonResponse({detail: "Origin not allowed"}, 403);
     }
-
+    if (request.method === "OPTIONS") return new Response(null, {status:204});
     try {
+      if (url.pathname.startsWith('/api/auth/')) return await authRoute(request,env);
+      const privateRoutes = ['/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
+      if(privateRoutes.includes(url.pathname)) {
+        const user = await sessionUser(request,env);
+        if(!user) return jsonResponse({detail:'Đăng nhập Google để dùng Sensei và đồng bộ tiến độ.'},401);
+        url.searchParams.set('user_id',user.user_id);
+        if(['POST','PUT','PATCH'].includes(request.method)) {
+          const raw=await request.text();
+          if(raw.length>20000) return jsonResponse({detail:'Nội dung quá dài.'},413);
+          let body;
+          try { body=JSON.parse(raw || '{}'); } catch { return jsonResponse({detail:'Invalid JSON'},400); }
+          if(!body || Array.isArray(body) || typeof body!=='object') return jsonResponse({detail:'Invalid body'},400);
+          body.user_id=user.user_id;
+          delete body.api_key;
+          if(body.level && !['N5','N4','N3','N2','N1'].includes(body.level)) return jsonResponse({detail:'Invalid level'},400);
+          for(const field of ['message','text','user_speech','prompt_jp']) {
+            if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Invalid '+field},400);
+          }
+          request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
+        }
+        if(['/api/chat','/api/tts','/api/kaiwa/evaluate'].includes(url.pathname) && request.method==='POST') {
+          const bucket=Math.floor(Date.now()/60000);
+          const usage=await env.DB.prepare('INSERT INTO ai_usage(user_id,bucket,count) VALUES(?,?,1) ON CONFLICT(user_id,bucket) DO UPDATE SET count=count+1 RETURNING count').bind(user.user_id,bucket).first();
+          if(usage.count>20) return jsonResponse({detail:'Bạn hãy đợi một phút rồi thử lại.'},429);
+          await env.DB.prepare('DELETE FROM ai_usage WHERE bucket < ?').bind(bucket-60).run();
+        }
+      }
       // Favicon handler (prevent 500/404)
       if (url.pathname === "/favicon.ico") {
         return new Response(FAVICON_SVG, {
@@ -175,38 +199,11 @@ export default {
           return jsonResponse({ user_id: userId, level, track, updated_at: now });
         }
 
-        if (request.method === "DELETE") {
-          const userId = url.searchParams.get("user_id");
-          if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
-
-          try {
-            await env.DB.prepare("DELETE FROM progress WHERE user_id = ?").bind(userId).run();
-            await env.DB.prepare("DELETE FROM profiles WHERE user_id = ?").bind(userId).run();
-            await env.DB.prepare("DELETE FROM conversations WHERE user_id = ?").bind(userId).run();
-          } catch (e) {
-            console.error("Account delete error:", e);
-          }
-          return jsonResponse({ success: true, message: "Account and all progress data deleted" });
-        }
       }
-
-      // 2b. Account Delete API
-      if (url.pathname === "/api/account/delete" && (request.method === "POST" || request.method === "DELETE")) {
-        let userId = url.searchParams.get("user_id");
-        if (!userId && request.method === "POST") {
-          const b = await request.json().catch(() => ({}));
-          userId = b.user_id;
-        }
-        if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
-
-        try {
-          await env.DB.prepare("DELETE FROM progress WHERE user_id = ?").bind(userId).run();
-          await env.DB.prepare("DELETE FROM profiles WHERE user_id = ?").bind(userId).run();
-          await env.DB.prepare("DELETE FROM conversations WHERE user_id = ?").bind(userId).run();
-        } catch (e) {
-          console.error("Account delete error:", e);
-        }
-        return jsonResponse({ success: true, message: "Account and all learning data deleted" });
+      if (url.pathname === '/api/account/delete' && request.method === 'POST') {
+        const userId=url.searchParams.get('user_id');
+        await env.DB.batch(['progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+        return jsonResponse({success:true});
       }
 
       // 3. Curriculum API
@@ -283,7 +280,7 @@ export default {
         if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
 
         const rows = await env.DB.prepare(`
-          SELECT p.item_id, p.item_type, p.jlpt_level, p.correct, p.incorrect, p.last_reviewed, p.next_review, p.interval_days, p.ease_factor, c.display, c.meaning_vi, c.meaning_en
+          SELECT p.item_id, p.item_type, p.jlpt_level, p.correct, p.incorrect, p.last_reviewed, p.next_review, p.interval_days, p.ease_factor, p.last_correct, p.response_text, COALESCE(c.display, p.display, p.item_id) AS display, c.meaning_vi, c.meaning_en
           FROM progress p
           LEFT JOIN curriculum_items c ON p.item_id = c.item_id
           WHERE p.user_id = ?
@@ -304,15 +301,19 @@ export default {
         });
 
         const total = totalCorrect + totalIncorrect;
-        const accuracy = total > 0 ? Math.round((totalCorrect / total) * 100) : 100;
+        const accuracy = total > 0 ? Math.round((totalCorrect / total) * 100) : 0;
+        const days=await env.DB.prepare('SELECT day FROM study_days WHERE user_id = ? ORDER BY day DESC LIMIT 400').bind(userId).all();
+        const dates=new Set(days.results.map(d=>d.day));let streak=0;const date=new Date();
+        if(!dates.has(date.toISOString().slice(0,10))) date.setUTCDate(date.getUTCDate()-1);
+        while(dates.has(date.toISOString().slice(0,10))){streak++;date.setUTCDate(date.getUTCDate()-1);}
 
         return jsonResponse({
           total_learned: items.length,
           total_correct: totalCorrect,
           total_incorrect: totalIncorrect,
           accuracy_rate: accuracy,
-          weak_items: weakItems,
-          streak_days: 3,
+          weak_items: items.filter(i=>(i.incorrect||0)>(i.correct||0)),
+          streak_days: streak,
           items: items.map(r => ({
             item_id: r.item_id,
             display: r.display || r.item_id,
@@ -322,6 +323,8 @@ export default {
             incorrect: r.incorrect,
             interval_days: r.interval_days,
             ease_factor: r.ease_factor,
+            last_correct: r.last_correct,
+            response_text: r.response_text,
             last_reviewed: r.last_reviewed,
             next_review: r.next_review
           }))
@@ -332,13 +335,23 @@ export default {
       if (url.pathname === "/api/progress/record" && request.method === "POST") {
         const body = await request.json();
         const { user_id, item_id, correct, quality = 4 } = body;
-        if (!user_id || !item_id) return jsonResponse({ detail: "user_id and item_id required" }, 400);
+        if (!user_id || typeof item_id!=='string' || !item_id.trim() || item_id.length>300 || typeof correct!=='boolean' || !Number.isInteger(quality) || quality<0 || quality>5) return jsonResponse({ detail: "Invalid progress record" }, 400);
 
+        if (body.display !== undefined && (typeof body.display !== 'string' || body.display.length > 2000)) return jsonResponse({detail: 'Invalid display'}, 400);
+        if (body.item_type !== undefined && !['grammar','vocabulary','kanji','kana','reading','listening','exam','production'].includes(body.item_type)) return jsonResponse({detail: 'Invalid item type'}, 400);
+
+        if(body.response_text !== undefined && (typeof body.response_text !== 'string' || body.response_text.length>4000))return jsonResponse({detail:'Invalid response text'},400);
+        const attemptId = body.attempt_id;
+        if(attemptId !== undefined && (typeof attemptId !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(attemptId))) return jsonResponse({detail:'Invalid attempt'},400);
+        if(attemptId){
+          const saved=await env.DB.prepare('SELECT result FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
+          if(saved)return jsonResponse(JSON.parse(saved.result));
+        }
         const item = await env.DB.prepare("SELECT item_type, level FROM curriculum_items WHERE item_id = ?").bind(item_id).first();
-        const itemType = item ? item.item_type : "grammar";
-        const level = item ? item.level : "N5";
+        const itemType = item ? item.item_type : (body.item_type || "grammar");
+        const level = item ? item.level : (body.level || "N5");
 
-        const existing = await env.DB.prepare("SELECT correct, incorrect, interval_days, ease_factor FROM progress WHERE user_id = ? AND item_id = ?").bind(user_id, item_id).first();
+        const existing = await env.DB.prepare("SELECT correct, incorrect, interval_days, ease_factor, repetitions FROM progress WHERE user_id = ? AND item_id = ?").bind(user_id, item_id).first();
 
         const curCorrect = existing ? existing.correct : 0;
         const curIncorrect = existing ? existing.incorrect : 0;
@@ -346,22 +359,31 @@ export default {
         const curEf = existing ? existing.ease_factor : 2.5;
 
         const q = correct ? Math.max(3, quality) : Math.min(2, quality);
-        const sm2 = calculateSM2(q, curCorrect, curInterval, curEf);
+        const sm2 = calculateSM2(q, existing?.repetitions || 0, curInterval, curEf);
         const now = new Date().toISOString();
 
-        await env.DB.prepare(`
-          INSERT INTO progress (user_id, item_id, item_type, jlpt_level, correct, incorrect, last_reviewed, next_review, interval_days, ease_factor)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        const result={status: "recorded", next_review: sm2.nextReview, interval_days: sm2.interval};
+        const writeProgress=env.DB.prepare(`
+          INSERT INTO progress (user_id, item_id, item_type, jlpt_level, correct, incorrect, last_reviewed, next_review, interval_days, ease_factor, repetitions, display, last_correct, response_text)
+          SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          WHERE NOT EXISTS (SELECT 1 FROM progress_attempts WHERE user_id=? AND attempt_id=?)
           ON CONFLICT(user_id, item_id) DO UPDATE SET
             correct = progress.correct + excluded.correct,
             incorrect = progress.incorrect + excluded.incorrect,
             last_reviewed = excluded.last_reviewed,
             next_review = excluded.next_review,
             interval_days = excluded.interval_days,
-            ease_factor = excluded.ease_factor
-        `).bind(user_id, item_id, itemType, level, correct ? 1 : 0, correct ? 0 : 1, now, sm2.nextReview, sm2.interval, sm2.easeFactor).run();
-
-        return jsonResponse({ status: "recorded", next_review: sm2.nextReview, interval_days: sm2.interval });
+            ease_factor = excluded.ease_factor,
+            repetitions = excluded.repetitions,
+            display = COALESCE(excluded.display, progress.display),
+            last_correct = excluded.last_correct,
+            response_text = COALESCE(excluded.response_text, progress.response_text)
+        `).bind(user_id, item_id, itemType, level, correct ? 1 : 0, correct ? 0 : 1, now, sm2.nextReview, sm2.interval, sm2.easeFactor, sm2.repetitions, body.display?.trim() || null,correct?1:0,body.response_text?.trim() || null,user_id,attemptId || '');
+        const writes=[writeProgress,env.DB.prepare("INSERT OR IGNORE INTO study_days(user_id,day) VALUES(?,?)").bind(user_id,now.slice(0,10))];
+        if(attemptId)writes.push(env.DB.prepare('INSERT OR IGNORE INTO progress_attempts(user_id,attempt_id,result) VALUES(?,?,?)').bind(user_id,attemptId,JSON.stringify(result)));
+        await env.DB.batch(writes);
+        if(attemptId){const saved=await env.DB.prepare('SELECT result FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();return jsonResponse(JSON.parse(saved.result));}
+        return jsonResponse(result);
       }
 
       // 7. Chat History API
@@ -374,7 +396,7 @@ export default {
           return jsonResponse({ success: true, message: "Chat history cleared" });
         }
 
-        const rows = await env.DB.prepare("SELECT role, content, timestamp FROM conversations WHERE user_id = ? ORDER BY id ASC LIMIT 50").bind(userId).all();
+        const rows = await env.DB.prepare("SELECT role, content, timestamp FROM (SELECT id, role, content, timestamp FROM conversations WHERE user_id = ? ORDER BY id DESC LIMIT 50) ORDER BY id ASC").bind(userId).all();
         return jsonResponse(rows.results || []);
       }
 
@@ -382,21 +404,22 @@ export default {
       if (url.pathname === "/api/tts" && request.method === "POST") {
         const body = await request.json();
         const text = (body.text || "").trim();
-        const voice = body.voice || "Aoede";
+        const voice = "Charon";
         if (!text) return jsonResponse({ detail: "text required" }, 400);
 
-        const apiKey = body.api_key || env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
-        const ttsUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
+        const ttsUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent";
 
         try {
           const ttsResp = await fetch(ttsUrl, {
+            signal: AbortSignal.timeout(45000),
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
               "x-goog-api-key": apiKey
             },
             body: JSON.stringify({
-              contents: [{ parts: [{ text }] }],
+              contents: [{ role:"user", parts: [{ text: "Read aloud clearly in Japanese. Read only the following text: " + text }] }],
               generationConfig: {
                 responseModalities: ["AUDIO"],
                 speechConfig: {
@@ -410,9 +433,13 @@ export default {
             })
           });
 
+          if (!ttsResp.ok) {
+            const error=await ttsResp.json().catch(()=>({}));
+            console.warn("TTS provider status",ttsResp.status,String(error.error?.message||'').replaceAll(apiKey || 'unconfigured','[redacted]').slice(0,250));
+          }
           if (ttsResp.ok) {
             const ttsData = await ttsResp.json();
-            const part = ttsData.candidates?.[0]?.content?.parts?.[0];
+            const part = ttsData.candidates?.[0]?.content?.parts?.find(p=>p.inlineData?.data);
             const audioBase64 = part?.inlineData?.data;
             const mimeType = part?.inlineData?.mimeType || "audio/wav";
             if (audioBase64) {
@@ -420,7 +447,8 @@ export default {
             }
           }
           return jsonResponse({ fallback: true, voice, text }, 200);
-        } catch {
+        } catch (error) {
+          console.warn("TTS provider error",error.name);
           return jsonResponse({ fallback: true, voice, text }, 200);
         }
       }
@@ -440,26 +468,28 @@ export default {
           });
         }
 
-        const apiKey = body.api_key || env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
+        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
         let aiEval = null;
 
         try {
-          const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+          const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
           const promptPayload = {
             contents: [{
               role: "user",
               parts: [{
-                text: "Bạn là Nihongo Sensei (giáo viên tiếng Nhật chuyên nghiệp). Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"
+                text: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"
               }]
             }]
           };
 
           const gResp = await fetch(geminiUrl, {
+            signal: AbortSignal.timeout(25000),
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
             body: JSON.stringify(promptPayload)
           });
 
+          if (!gResp.ok) console.warn("Kaiwa provider status",gResp.status);
           if (gResp.ok) {
             const gData = await gResp.json();
             const textPart = gData.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -474,7 +504,7 @@ export default {
 
         if (aiEval && typeof aiEval.score === "number") {
           return jsonResponse({
-            score: aiEval.score,
+            score: Math.max(0,Math.min(100,aiEval.score)),
             rating: aiEval.rating || (aiEval.score >= 85 ? "Xuất sắc" : "Tốt"),
             feedback: aiEval.feedback,
             model_answer: aiEval.model_answer,
@@ -483,32 +513,11 @@ export default {
           });
         }
 
-        // Rule-based fallback
-        let score = 80;
-        let rating = "Tốt";
-        let feedback = "Phản xạ giao tiếp tự nhiên! Cấu trúc câu diễn đạt rõ ý.";
-        if (cleanSpeech.includes("です") || cleanSpeech.includes("ます") || cleanSpeech.includes("ください")) {
-          score += 15;
-          rating = "Xuất sắc";
-        }
-        if (cleanSpeech.length < 3) {
-          score = Math.max(50, score - 20);
-          rating = "Cần luyện thêm";
-          feedback = "Câu hơi ngắn! Hãy thử mở rộng câu đầy đủ vị ngữ và trợ từ nhé.";
-        }
-
-        return jsonResponse({
-          score: Math.min(100, score),
-          rating,
-          feedback,
-          model_answer: "「" + cleanSpeech + "」hoặc tự nhiên hơn:「はい、かしこまりました。」",
-          user_text: cleanSpeech,
-          scenario: scenario_title
-        });
+        return jsonResponse({detail:'Sensei chưa chấm được câu trả lời. Vui lòng thử lại sau.'},503);
       }
 
       // 10. Chat Greeting API
-      if (url.pathname === "/api/chat/greeting") {
+      if (url.pathname === "/api/chat/greeting" && request.method === "POST") {
         const userId = url.searchParams.get("user_id");
         if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
 
@@ -532,7 +541,7 @@ export default {
         });
       }
 
-      // 11. Chat API (Gemini 2.5 Flash + Intelligent Pedagogical Fallback)
+      // 11. Chat API (Gemini 3.5 Flash)
       if (url.pathname === "/api/chat" && request.method === "POST") {
         const body = await request.json();
         const userId = body.user_id;
@@ -567,18 +576,20 @@ export default {
         await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp) VALUES (?, 'user', ?, ?)")
           .bind(userId, message, now).run();
 
-        // 11a. Call Gemini 2.5 Flash
+        const prior=await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? ORDER BY id DESC LIMIT 12").bind(userId).all();
+        // 11a. Call Gemini 3.5 Flash
         let botResponse = "";
-        const apiKey = body.api_key || env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
+        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
 
         try {
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
           const promptPayload = {
             contents: [
+              ...prior.results.slice(1).reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),
               {
                 role: "user",
                 parts: [{
-                  text: `Bạn là VJBot - Nihongo Sensei (giáo viên tiếng Nhật nhiệt tình, chuẩn mực).
+                  text: `Bạn là thầy Lâm, giáo viên nam dạy tiếng Nhật cho người Việt. Xưng thầy, gọi học viên là em.
 Trình độ học viên hiện tại: JLPT ${level}.
 Tin nhắn của học viên: "${message}"
 
@@ -594,6 +605,7 @@ Hướng dẫn trả lời:
           };
 
           const geminiResp = await fetch(geminiUrl, {
+            signal: AbortSignal.timeout(25000),
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -602,6 +614,7 @@ Hướng dẫn trả lời:
             body: JSON.stringify(promptPayload)
           });
 
+          if (!geminiResp.ok) console.warn("Chat provider status",geminiResp.status);
           if (geminiResp.ok) {
             const geminiData = await geminiResp.json();
             const textPart = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -613,38 +626,7 @@ Hướng dẫn trả lời:
           console.warn("Gemini chat error:", e);
         }
 
-        // 11b. Intelligent Pedagogical Fallback
-        if (!botResponse) {
-          const lower = message.toLowerCase();
-          if (lower.includes("xin gợi ý") || lower.includes("gợi ý") || lower.includes("hint")) {
-            botResponse = "💡 Gợi ý của Sensei nè: Hãy dùng cấu trúc【Chủ ngữ + は + Thông tin + です】nhé! Ví dụ nếu muốn nói 'Tôi là sinh viên':「私は学生です (Watashi wa gakusei desu)」. Thử gõ câu hoàn chỉnh xem nào!";
-          } else if (lower.includes("giải thích") || lower.includes("ngữ pháp") || lower.includes("explain")) {
-            botResponse = "📖 Giải thích ngữ pháp:\nTrợ từ「は」(đọc là wa khi làm trợ từ) đứng sau danh từ để đánh dấu chủ đề của câu.「です」đặt ở cuối câu để biểu thị sự lịch sự và khẳng định (tương đương 'thì/là' trong tiếng Việt). Hãy nhớ đọc to câu khi luyện tập nhé!";
-          } else if (lower.includes("dịch") || lower.includes("translate")) {
-            botResponse = "🌐 Dịch câu:\n「私は学生です」nghĩa là: 'Tôi là học sinh / sinh viên'. Bạn hãy thử tự nói một câu tương tự về nghề nghiệp hoặc quốc tịch của mình xem sao nhé!";
-          } else if (lower.includes("tiếp theo") || lower.includes("câu tiếp") || lower.includes("next")) {
-            botResponse = "Tuyệt vời! Tiếp theo, chúng mình chuyển sang câu hỏi nghi vấn nhé! Trong tiếng Nhật, để hỏi chỉ cần thêm「か」ở cuối câu. Bạn hãy thử hỏi Sensei: 'Sensei là người Nhật phải không?' xem nào!";
-          } else if (message.includes("です") || message.includes("ですか") || message.includes("は")) {
-            botResponse = "すばらしい！(Tuyệt vời lắm!) 🎉 Bạn đã sử dụng trợ từ và kết thúc câu rất chính xác. Cấu trúc câu tự nhiên và đúng ngữ pháp. Bây giờ, bạn hãy thử trả lời câu hỏi sau của Sensei nhé:「あなたは何才ですか。」(Bạn bao nhiêu tuổi?)";
-          } else {
-            botResponse = "Sensei đã nhận được câu trả lời của bạn:「" + message + "」. Để câu văn tự nhiên và đúng chuẩn tiếng Nhật hơn, hãy nhớ kết thúc câu bằng「です」hoặc trợ từ phù hợp nhé! Bạn có muốn thử lại hay cần Sensei gợi ý không?";
-          }
-        }
-
-        // Record progress if positive practice
-        if (message.includes("です") || message.includes("ます") || message.length > 3) {
-          try {
-            await env.DB.prepare(`
-              INSERT INTO progress (user_id, item_id, item_type, jlpt_level, correct, incorrect, last_reviewed, next_review, interval_days, ease_factor)
-              VALUES (?, 'N5-001', 'grammar', ?, 1, 0, ?, ?, 1.0, 2.5)
-              ON CONFLICT(user_id, item_id) DO UPDATE SET
-                correct = progress.correct + 1,
-                last_reviewed = excluded.last_reviewed
-            `).bind(userId, level, now, new Date(Date.now() + 86400000).toISOString()).run();
-          } catch {
-            // ignore progress update failure
-          }
-        }
+        if (!botResponse) return jsonResponse({detail:'Sensei AI hiện chưa kết nối được. Vui lòng thử lại sau.'},503);
 
         // Save bot reply
         await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp) VALUES (?, 'bot', ?, ?)")
@@ -663,20 +645,39 @@ Hướng dẫn trả lời:
       }
 
     } catch (err) {
-      return jsonResponse({ error: err.message, stack: err.stack }, 500);
+      console.error("Request failed", err.name);
+      return jsonResponse({ detail: "Không thể xử lý yêu cầu. Vui lòng thử lại." }, 500);
     }
 
-    // Default: static asset fallback
-    const res = await env.ASSETS.fetch(request);
-    if (url.pathname === "/" || url.pathname.endsWith(".html")) {
-      const newHeaders = new Headers(res.headers);
-      newHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
-      return new Response(res.body, {
-        status: res.status,
-        statusText: res.statusText,
-        headers: newHeaders,
-      });
+    if (url.pathname.startsWith('/api/')) return jsonResponse({detail:'Not found'},404);
+
+    // Default: safe static asset fallback
+    if (env.ASSETS) {
+      try {
+        const res = await env.ASSETS.fetch(request);
+        if (res.status === 404 && (url.pathname === "" || url.pathname === "/" || !url.pathname.includes("."))) {
+          const indexUrl = new URL("/index.html", request.url);
+          const indexRes = await env.ASSETS.fetch(new Request(indexUrl, request));
+          if (indexRes.ok) {
+            const h = new Headers(indexRes.headers);
+            h.set("Cache-Control", "no-cache, no-store, must-revalidate");
+            return new Response(indexRes.body, { status: 200, headers: h });
+          }
+        }
+        if (res.status < 400 && (url.pathname === "/" || url.pathname.endsWith(".html"))) {
+          const newHeaders = new Headers(res.headers);
+          newHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+          return new Response(res.body, {
+            status: res.status,
+            statusText: res.statusText,
+            headers: newHeaders,
+          });
+        }
+        return res;
+      } catch (assetErr) {
+        console.warn("Asset fetch error:", assetErr);
+      }
     }
-    return res;
+    return new Response("Not Found", { status: 404 });
   }
 };

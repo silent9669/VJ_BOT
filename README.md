@@ -1,118 +1,66 @@
-# VJBot — Nihongo Sensei (日本語先生)
+# VJBot · Sổ tay tiếng Nhật
 
-> **AI-Powered Reversed Japanese Classroom & JLPT N5–N1 Exam Simulator**  
-> Live Production: [**https://vjbot.dangphuc.me/**](https://vjbot.dangphuc.me/)
+[VJBot](https://vjbot.dangphuc.me/) is a Vietnamese learning interface for Japanese, with a sketch notebook design and one original pixel teacher: **thầy Lâm**, wearing a vest.
 
-[![CI/CD Pipeline](https://github.com/silent9669/VJ_BOT/actions/workflows/deploy.yml/badge.svg)](https://github.com/silent9669/VJ_BOT/actions/workflows/deploy.yml)
-[![Edge Deployment](https://img.shields.io/badge/Deployment-Cloudflare%20Workers-orange)](https://vjbot.dangphuc.me/)
-[![Database](https://img.shields.io/badge/Database-Cloudflare%20D1%20SQLite-blue)](https://developers.cloudflare.com/d1/)
-[![LLM Model](https://img.shields.io/badge/LLM-Google%20Gemini%202.5%20Flash-green)](https://aistudio.google.com/)
-[![Tests](https://img.shields.io/badge/Tests-46%20Passed-brightgreen)](tests/)
+## Development status
 
----
+Development resumed at the user’s request. Account persistence and login recovery fixes are deployed; the working tree remains uncommitted. See the [handoff](docs/HANDOFF.md) and [documentation index](docs/README.md) for current verification and next steps.
 
-## 🌟 Overview
+## Learning
 
-**VJBot** is a modern Japanese learning application designed with the **Reversed Classroom** pedagogy: instead of waiting passively for user prompts, **Sensei** proactively leads the learning journey, introduces JLPT topics, conducts voice drills, evaluates speech, and identifies weak grammar spots using the **SuperMemo-2 (SM-2)** spaced repetition algorithm.
+- Practical roadmaps: 20 authored situations with Vietnamese explanations, 60 contextual questions and saved written responses. A searchable catalog links 72 official Irodori lessons to original PDFs/audio; the full dictionary library remains available.
 
-The application combines **Apple Liquid Glass** design aesthetics with **8-bit retro pixel art**, featuring an interactive 1984 Macintosh retro PC with a real-time Japanese typewriter loop on the landing page.
+- Vocabulary, grammar and kanji across N5–N1, loaded on demand by level, plus 20 original kana lessons.
+- **10,720 imported OpenJLPT entries:** 7,811 vocabulary, 526 grammar patterns and 2,383 kanji records. Level assignments are community estimates, not official JLPT lists.
+- Existing Vietnamese lessons plus clearly marked English definitions and examples from OpenJLPT. English material has not been represented as a Vietnamese translation.
+- Recognition drills for every imported word and kanji, grammar meaning checks, source-linked sentence reading and synthetic-audio transcription practice. Example sentence difficulty may exceed the target word's level.
+- Twenty-card review sessions, prioritizing due cards, with SM-2 scheduling for accounts. Guest progress stays in the browser with a simpler review schedule.
+- Short JLPT-style quizzes with explanations. These are practice sets, not full official mock exams or certification scores.
+- Kaiwa accepts typed Japanese or browser speech recognition. AI evaluates the transcript, not pronunciation from audio.
 
----
+## Teacher and interface
 
-## 🚀 Key Features
+The same original SVG teacher appears in chat, the assistant dock, settings and the Three.js classroom. The classroom has selectable objects, Japanese spatial phrases, a four-object practice round, an adjustable viewpoint and equivalent keyboard-accessible controls. Animation stops when the scene is hidden or settled; reduced-motion preferences are respected. A static teacher fallback remains if WebGL is unavailable.
 
-1. **Retro 1984 Macintosh Landing Page (`<anatomy-computer>`)**:
-   - Interactive isometric 1984 Apple PC with mechanical keyboard and vintage coiled cable.
-   - CRT green phosphor display running an infinite Japanese typewriter loop.
-   - Apple-style bento grid showcasing curriculum highlights, Kaiwa speaking lab, and mock exam simulator.
+The existing computer anatomy figure is available as an optional vocabulary illustration. No React migration is required: the frontend remains HTML, CSS and JavaScript.
 
-2. **Proactive AI Classroom & Voice Assistant**:
-   - Conversational tutor powered by **Google Gemini 2.5 Flash**.
-   - Proactive questioning, grammar distinction explanations, and bilingual Vietnamese-Japanese guidance.
-   - Natural voice output with multimodal Gemini TTS.
+## Accounts and AI
 
-3. **Spawn Sensei Anywhere**:
-   - Floating Mascot Dock available at the bottom-right corner across all tabs.
-   - Global keyboard shortcut (`⌘K` / `Ctrl+K`) to summon Sensei instantly from anywhere.
+Google Identity Services returns an ID token that the Worker verifies against Google's public keys, issuer, audience, expiry and a cookie-bound nonce. Sessions use random tokens in HttpOnly cookies; only token hashes are stored in D1. Private APIs derive account ownership from the session, ignoring client-supplied user IDs.
 
-4. **4-Skill JLPT Curriculum Roadmap (N5–N1)**:
-   - Full competency tracks across **Vocabulary**, **Grammar**, **Reading**, and **Listening**.
-   - Multi-tier breadcrumb navigation (`Lộ trình > Level > Kỹ năng > Bài học`).
-   - In-depth lesson modals with formulas, audio pronunciation, and interactive drills.
+Gemini 3.5 Flash chat and Kaiwa evaluation, and Gemini 3.8 Flash TTS, require login. Provider credentials are Worker secrets and are never shipped to the browser. Chat uses recent history and lesson text when launched from a lesson. AI failures are shown explicitly; there are no fabricated assessment scores. Requests are limited to 20 AI calls per account per minute.
 
-5. **Authentic JLPT Mock Exam Simulator**:
-   - International exam structure: **Mondai 1 (Kanji)**, **Mondai 2 (Vocab)**, **Mondai 3 (Grammar Star ★)**, **Mondai 4 (Reading Comprehension)**.
-   - Available across all levels (**N5, N4, N3, N2, N1**) with test number selection (**Đề 01, Đề 02**).
-   - Dynamic exam countdown timer (20 to 40 minutes) with instant grammatical explanations.
+Required Worker secrets: `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. The current ID-token flow uses the client ID and public keys; it does not exchange an authorization code or consume the client secret. Add `https://vjbot.dangphuc.me` to the OAuth client's authorized JavaScript origins. Local Google login also requires `http://localhost:8787` as an authorized origin.
 
-6. **Kaiwa Speaking Lab with Audio Playback**:
-   - Voice recognition via native **Web Speech API** (`ja-JP`).
-   - Integrated **MediaRecorder** audio capture: learners can click **"🎧 Nghe lại giọng bạn"** to review their pronunciation against Sensei's model audio.
-   - AI evaluation with 0–100 scoring and actionable pronunciation feedback.
+Account deletion removes that account's profile, sessions, conversations and progress. Guest learning remains local and is not automatically migrated at sign-in. [Data sources and privacy](https://vjbot.dangphuc.me/sources.html).
 
-7. **Flashcards with SM-2 Spaced Repetition**:
-   - 3D perspective flip cards with Kanji, Furigana, Vietnamese definitions, and audio examples.
-   - 3-tier grading (Again, Good, Easy) dynamically adjusting review intervals in Cloudflare D1.
+## Develop and verify
 
-8. **Radar Mastery & Weak Spot Analytics**:
-   - Real-time accuracy metrics and weak spot identification.
-   - Instant "Ôn tập ngay" CTA to immediately launch tailored practice sessions with Sensei.
-
----
-
-## 🛠️ Dual-Engine Architecture
-
-| Component | Production Stack (Live) | Local / Docker Development Stack |
-| :--- | :--- | :--- |
-| **Hosting** | Cloudflare Workers (Global Edge) | FastAPI / Uvicorn Server |
-| **Database** | Cloudflare D1 (Serverless SQLite) | MongoDB 7 (Async Motor driver) |
-| **Domain** | `vjbot.dangphuc.me` | `http://localhost:8000/` |
-| **Static Assets**| Cloudflare Static Asset Binding | Starlette StaticFiles |
-| **AI LLM** | Google Gemini 2.5 Flash via REST | `google-genai` Python SDK |
-
----
-
-## 📖 Deep-Dive Documentation Index
-
-Comprehensive guides for teammates, developers, and architects are available in the [`docs/`](docs/) directory:
-
-- 📄 [**Feature Specifications (`docs/FEATURES.md`)**](docs/FEATURES.md): Detailed specs for Standalone Landing Page, OAuth 2.0 architecture, Pixel Mascot system, Level & Test Card organization, 4-skill curriculum, and voice recording pipeline.
-- 🏗️ [**System Architecture (`docs/ARCHITECTURE.md`)**](docs/ARCHITECTURE.md): Edge runtime architecture, Cloudflare D1 schemas (`profiles`, `progress`, `conversations`, `curriculum_items`), and SM-2 Spaced Repetition mathematics.
-- 📡 [**API Reference (`docs/API_REFERENCE.md`)**](docs/API_REFERENCE.md): Full documentation of all REST/Edge API endpoints with request/response schemas.
-- 🚀 [**Deployment & CI/CD (`docs/DEPLOYMENT_CICD.md`)**](docs/DEPLOYMENT_CICD.md): Cloudflare deployment commands, GitHub Actions workflow, and branch protection policy.
-- 🤝 [**Contributor Guide (`docs/CONTRIBUTING.md`)**](docs/CONTRIBUTING.md): Onboarding instructions, local testing setup, and PR-only git workflow.
-
----
-
-## ⚡ Quickstart
-
-### 1. Run Tests Locally
-```bash
-# Set up Python virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt pytest pytest-asyncio anyio httpx
-
-# Run test suite (46 tests)
-PYTHONPATH=. .venv/bin/pytest
+```sh
+npm ci
+npm run dev
+npm test
+npm run test:python
+npm run build
 ```
 
-### 2. Verify Cloudflare Edge Build
-```bash
-# Verify static asset bundling and Worker compatibility
-npx cf deploy --dry-run
+The Worker uses a `gcp:us-east4` placement hint because Google rejected TTS requests from the default execution location. Placement is a routing hint, not a data-residency guarantee.
+
+The production app is `src/worker.js` plus `static/`, deployed as the **vjbot** Worker with D1. Local Worker development uses port 8787. The Python backend remains a separate implementation and its tests do not prove deployed Worker behavior. Node 22.13+ is required for the Worker tests' SQLite adapter.
+
+`npm run build` rebuilds `static/room.js` from `src/client/room.js` before the Cloudflare dry run. `npm run deploy` does the same before deployment. Vite's warnings about classic script tags are expected: those files are copied from the public asset directory and loaded in dependency order.
+
+## Refresh lesson data
+
+```sh
+npm run data:import
+npx cf d1 migrations apply <database-id> --dir migrations
+python3 scripts/upload_lessons.py
+npm run deploy
 ```
 
-### 3. Deploy to Production
-```bash
-npx cf deploy
-```
+The importer pins OpenJLPT revision `0d1d3410bec90bd4098a7c72de820543cb4f707c` and records SHA-256 checksums in `static/openjlpt/manifest.json`. Review a new source revision and run the dataset tests before updating that pin. Uploads are idempotent and retain existing learner records.
 
----
+Contains data from **OpenJLPT** (CC BY-SA 4.0), using JMdict and KANJIDIC2 (EDRDG), Jonathan Waller's JLPT lists and Tatoeba. The imported and derived lesson datasets retain **CC BY-SA 4.0** terms. See [full attribution](static/openjlpt/NOTICE.md) and [license](static/openjlpt/LICENSE). Tatoeba sentence links identify the source and contributors.
 
-## 🔒 Security & Branch Protection
-
-- The `main` branch is protected by GitHub Ruleset **#25958093**:
-  - Direct pushes and force pushes are blocked.
-  - All changes must be submitted via a Pull Request.
-  - Merges require green status checks from the automated CI/CD pipeline (`Test & Quality Checks`).
+The [documentation index](docs/README.md) links the current architecture, API, deployment runbook and outstanding verification work.
