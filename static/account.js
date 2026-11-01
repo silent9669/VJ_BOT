@@ -11,7 +11,7 @@ async function apiFetch(path,options={}) {
 }
 
 function renderAccount(){
-  document.querySelectorAll?.('[data-enter]').forEach(b=>b.textContent=signedInUser?'Vào góc học tập ↗':'Đăng nhập Google ↗');
+  document.querySelectorAll?.('[data-enter=dashboard]').forEach(b=>b.textContent=signedInUser?'Vào học ↗':'Đăng nhập');
   document.getElementById('topbar-user-name').textContent=signedInUser?.name||'Đăng nhập';
   document.getElementById('auth-user').textContent=signedInUser?`Xin chào, ${signedInUser.name}`:'Đăng nhập Google';
   document.getElementById('google-signin').hidden=!!signedInUser;

@@ -51,7 +51,7 @@ test('browser navigation is ready even while chat history is still loading',asyn
   const init=source.slice(source.indexOf('(async function init() {'),source.indexOf('\nif (typeof window !== "undefined")'));
   const listeners=new Map();let finishHistory,restored=0;
   const noop=()=>{};
-  const c=vm.createContext({signedInUser:{name:'QA'},setupWorkspace:noop,sessionStorage:{getItem:()=>null},initLoadingScreen:noop,initJlptCountdown:noop,initAnatomyTypewriter:noop,mascotMgr:{updateAllSpriteElements:noop},setupAccount:async()=>{},setupEventListeners:noop,setupFloatingSensei:noop,setupSettings:noop,loadGreeting:noop,loadProgress:noop,renderBubble:noop,userId:'qa',location:{hash:'#curriculum'},history:{},document:{getElementById:()=>({})},window:{addEventListener:(type,fn)=>listeners.set(type,fn)},restoreAppRoute:()=>{restored++;},apiFetch:async path=>path.startsWith('/api/profile')?{ok:true,json:async()=>({level:'N5'})}:new Promise(resolve=>{finishHistory=resolve;})});
+  const c=vm.createContext({signedInUser:{name:'QA'},setupWorkspace:noop,sessionStorage:{getItem:()=>null},initLoadingScreen:noop,initAnatomyTypewriter:noop,mascotMgr:{updateAllSpriteElements:noop},setupAccount:async()=>{},setupEventListeners:noop,setupFloatingSensei:noop,setupSettings:noop,loadGreeting:noop,loadProgress:noop,renderBubble:noop,userId:'qa',location:{hash:'#curriculum'},history:{},document:{getElementById:()=>({})},window:{addEventListener:(type,fn)=>listeners.set(type,fn)},restoreAppRoute:()=>{restored++;},apiFetch:async path=>path.startsWith('/api/profile')?{ok:true,json:async()=>({level:'N5'})}:new Promise(resolve=>{finishHistory=resolve;})});
   const pending=vm.runInContext(init,c);
   await new Promise(resolve=>setTimeout(resolve,0));
   assert.ok(finishHistory,'history request started but has not finished');
@@ -65,4 +65,26 @@ test('cancelled lesson history navigation stops before loading or changing lesso
   c.ensureLessons=()=>{loaded=true;};
   c.document={getElementById(){throw new Error('cancelled route mutated the page');}};
   await c.restoreAppRoute();assert.equal(checks,1);assert.equal(loaded,false);
+});
+test('official workbook lessons keep documents, audio and answers within their year and level',async()=>{
+  const c=await navigation();
+  c.jlptResources=JSON.parse(await fs.readFile('static/course/jlpt-resources.json','utf8'));
+  for(const year of ['2012','2018'])for(const level of ['N5','N4','N3','N2','N1'])for(const type of ['V','G','R','L']){
+    const lesson=c.officialResourceLesson(level,type,year);
+    assert.equal(lesson.id,`jlpt:${year}:${level}:${type}`);
+    assert.ok(lesson.externalResources.some(r=>r.id.endsWith(':answer')));
+    assert.ok(lesson.externalResources.every(r=>r.year===year && r.level===level && r.url.includes(`/sample${year}/`)));
+    if(type==='L')assert.ok(lesson.externalResources.some(r=>r.kind==='audio'));
+  }
+  assert.equal(c.officialResourceLesson('N5','V').id,'jlpt:2018:N5:V');
+  assert.equal(c.officialResourceLesson('N5','V','2099'),null);
+});
+test('reloading a 2012 resource route restores that workbook instead of the 2018 default',async()=>{
+  const c=await navigation();let opened;
+  c.jlptResources=JSON.parse(await fs.readFile('static/course/jlpt-resources.json','utf8'));
+  c.location={hash:'#curriculum/N3/lesson/listening/jlpt%3A2012%3AN3%3AL'};
+  c.document={getElementById:()=>({})};c.switchTab=()=>true;c.ensureLessons=async()=>{};c.loadPracticalCourse=async()=>{};
+  c.createStudyPlan=()=>[];c.window={JLPT_DATA:{curriculum:{N3:{skills:{listening:[]}}}}};
+  c.showLessonDetail=lesson=>{opened=lesson;};
+  await c.restoreAppRoute();assert.equal(opened.id,'jlpt:2012:N3:L');
 });

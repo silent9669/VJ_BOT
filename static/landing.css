@@ -1,0 +1,40 @@
+/* Compact editorial landing, using the app's original paper artwork. */
+body[data-page=landing]{background:var(--paper)}
+body[data-page=landing] .app-sidebar,body[data-page=landing] .main-topbar,body[data-page=landing] .mobile-bottom-bar,body[data-page=landing] #sensei-floating-dock{display:none!important}
+body[data-page=landing] .app-main{margin:0;width:100%;height:auto;overflow:visible}
+body[data-page=landing] .app-shell{display:block}
+#panel-landing{padding:0!important;max-width:1120px!important;background:var(--paper);margin:auto}
+.public-nav{padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line)}
+.public-brand{font-size:24px;font-weight:700;letter-spacing:-1px;display:flex;gap:10px;align-items:center}
+.public-nav>div{display:flex;gap:24px;align-items:center}
+.public-nav a,.public-footer a{color:var(--ink);text-decoration:none}
+.public-nav a:not(.public-brand):hover,.public-footer a:hover{text-decoration:underline;text-underline-offset:4px}
+.public-login,.public-cta{min-height:44px;background:var(--ink);color:var(--sheet);border:1px solid var(--ink);border-radius:4px;padding:10px 16px;font:500 14px var(--font-sans);cursor:pointer;text-decoration:none;display:inline-flex;gap:24px;align-items:center;justify-content:space-between}
+.public-hero{padding:40px 32px;display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center}
+.public-hero h1{font-size:clamp(38px,4.5vw,60px);line-height:1.12;letter-spacing:-.05em;font-weight:600;color:var(--ink)}
+.public-hero h1 em{font-family:var(--serif);font-weight:400}
+.public-hero-copy>p{font-size:16px;line-height:1.7;max-width:360px;margin:20px 0 24px;color:var(--muted)}
+.learning-collage{position:relative;isolation:isolate;height:320px;background:#e6e3d3;overflow:hidden;border:1px solid var(--line)}
+.collage-sun{position:absolute;width:190px;height:190px;background:#cf6b50;border-radius:50%;right:-24px;top:24px}
+.collage-sheet{position:absolute;left:24px;top:24px;width:55%;height:270px;background:var(--sheet);padding:20px;transform:rotate(-7deg);border:1px solid #ccc8b9;display:flex;flex-direction:column;justify-content:space-between}
+.collage-sheet>span{font-size:11px}.collage-sheet strong{white-space:nowrap;font:40px/1.45 var(--font-jp);letter-spacing:2px;color:var(--accent)}
+.learning-collage>img{position:absolute;right:0;bottom:0;height:275px;width:200px;object-fit:contain;image-rendering:pixelated}
+.public-courses{margin:0 32px;padding:24px 0;border-block:1px solid var(--line)}
+.public-courses h2{font-size:17px;font-weight:600;margin-bottom:16px}
+.public-levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0}
+.public-levels button{background:transparent;border:0;border-right:1px solid var(--line);text-align:left;padding:8px 20px;display:grid;grid-template-columns:1fr auto;gap:6px;cursor:pointer;color:var(--ink);min-width:0}
+.public-levels button:first-child{padding-left:0}.public-levels button:last-child{border-right:0}
+.public-levels strong{font-size:28px;font-weight:500;grid-column:1}
+.public-levels button>span:nth-child(2){font-size:13px;grid-column:1;color:var(--muted)}
+.public-levels button>span:last-child{grid-column:2;grid-row:1/3;align-self:center;font-size:20px}
+.public-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:16px 32px;gap:24px}
+.public-tools button{display:flex;align-items:center;justify-content:space-between;gap:12px;background:none;border:0;color:var(--ink);padding:12px 0;min-height:44px;text-align:left;cursor:pointer;font-size:14px}
+.public-footer{margin:0 32px;padding:20px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:20px;font-size:12px;color:var(--muted)}
+@media(hover:hover){.public-cta:hover,.public-login:hover{background:var(--accent)}.public-levels button:hover{background:#e4e9dc}.public-tools button:hover{color:var(--accent);text-decoration:underline;text-underline-offset:4px}}
+@media(max-width:700px){
+ .public-nav{padding:16px 20px}.public-nav>div{gap:12px}.public-nav>div>a{display:none}.public-login{font-size:12px;padding:10px 12px}
+ .public-hero{padding:28px 20px;gap:24px;grid-template-columns:1fr}.public-hero h1{font-size:clamp(36px,9vw,50px)}.public-hero-copy>p{margin:16px 0 20px;font-size:15px}
+ .learning-collage{height:200px}.collage-sheet{height:180px;top:14px;left:28px;width:50%;padding:12px 20px}.collage-sheet strong{font-size:24px;line-height:1.3}.collage-sun{width:160px;height:160px;right:12px;top:16px}.learning-collage>img{height:195px;width:160px;right:16px}
+ .public-courses{margin:0 20px;padding:20px 0}.public-levels{grid-template-columns:1fr}.public-levels button{grid-template-columns:48px 1fr 20px;align-items:center;padding:10px 0;border-right:0;border-bottom:1px solid var(--line);gap:12px}.public-levels button:last-child{border-bottom:0}.public-levels strong{font-size:24px}.public-levels button>span:nth-child(2){grid-column:2}.public-levels button>span:last-child{grid-column:3;grid-row:1}
+ .public-tools{grid-template-columns:1fr;padding:12px 20px;gap:0}.public-footer{margin:0 20px;font-size:11px;gap:12px}
+}

@@ -120,7 +120,7 @@ test('Erin contains 25 sourced lessons with distinct publisher activity links',a
   assert.equal(catalog.lessons.length,25);assert.equal(new Set(catalog.lessons.map(l=>l.id)).size,25);
   assert.equal(catalog.pages.length,26);
   for(const lesson of catalog.lessons){
-    assert.ok(lesson.title.length>5);assert.equal(lesson.resources.length,4);
+    assert.ok(lesson.title.length>5);assert.equal(lesson.resources.length,9);
     assert.ok(catalog.pages.some(p=>p.url===lesson.page_url && /^[a-f0-9]{64}$/.test(p.sha256)));
     for(const resource of lesson.resources){const url=new URL(resource.url);assert.equal(url.hostname,'www.erin.jpf.go.jp');assert.ok(url.pathname.startsWith(`/en/lesson/${String(lesson.number).padStart(2,'0')}/`));}
   }
