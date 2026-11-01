@@ -18,17 +18,16 @@ flowchart LR
 | Source | Responsibility |
 | --- | --- |
 | `src/worker.js` | API routing, D1 queries, SRS scheduling, AI calls and asset responses |
-| `src/auth.js` | Google JWT verification, nonce cookies and hashed session tokens |
+| `src/auth.js` | Password registration/login, scrypt, Google JWT verification, nonce cookies and hashed session tokens |
 | `cloudflare.config.ts` | Worker, D1, secrets and placement binding |
 | `vite.config.ts` | Cloudflare Vite integration; `static/` as public assets |
 | `static/index.html` | Page structure and dialogs |
 | `static/app.js` | Navigation, chat, lessons, cards, quizzes and progress UI |
-| `static/account.js` | Session setup, Google button, authenticated requests and guest storage |
+| `static/account.js` | Session setup, password forms, Google button and authenticated requests |
 | `static/study-plan.js` | Guided units, stable review sets and progress-derived next lesson |
 | `static/learning.js` | On-demand lessons, furigana and exercise interactions |
 | `static/notebook.css` | Notebook design layered over existing `style.css` |
-| `src/client/room.js` | Three.js classroom; generated bundle is `static/room.js` |
-| `static/assets/lam/teacher.svg` | Original teacher asset; generator in `scripts/build_teacher.py` |
+| `static/assets/lam/teacher.svg` | Licensed Avataaars teacher; provenance in the adjacent ATTRIBUTION.md |
 | `static/openjlpt/` | Pinned source data, checksums and license notices |
 | `migrations/` | Authoritative D1 schema evolution |
 
@@ -37,11 +36,13 @@ flowchart LR
 | Table | Stored data |
 | --- | --- |
 | `profiles` | Account ID, target level, track, update timestamp |
+| `password_accounts` | Independent email identity, display name, salted scrypt hash |
+| `auth_attempts` | Hashed IP and IP/email rate-limit buckets |
 | `sessions` | SHA-256 session token hash, account ID, name, expiry |
 | `curriculum_lessons` | Lesson grouping metadata |
 | `curriculum_items` | Search/review item identity, level, display, reading, meanings and source |
 | `progress` | Per-account/item counters, review dates, interval, ease and consecutive repetitions |
-| `conversations` | Account-scoped user/bot messages and timestamps |
+| `conversations` | Account-scoped user/bot messages, timestamps and optional retry request IDs |
 | `progress_attempts` | Per-account answer receipts for safe retry |
 | `study_days` | Per-account UTC dates used for streaks |
 | `ai_usage` | Per-account minute buckets used for rate limiting |
@@ -56,6 +57,8 @@ Account progress is saved through the Worker into D1. Guest progress and level s
 
 ## Authentication and AI
 
+Email/password accounts use scrypt (N=16384, r=8, p=5), a random salt, and separate identities from Google. There is no email verification, automatic account linking or password recovery.
+
 Google ID tokens are verified using Google's JWKS, RS256, issuer, audience, expiry, verified email and a nonce bound to an HttpOnly cookie. Random 32-byte session tokens expire after seven days; D1 stores only their hashes. HTTPS cookies use Secure and SameSite=Lax. Private routes obtain ownership from the session and ignore client-provided account IDs/API keys.
 
 Worker secrets hold provider credentials. Chat/Kaiwa use `gemini-3.5-flash`; speech uses `gemini-3.8-flash-tts` with the male Charon voice. TTS falls back to browser speech when provider audio is unavailable. Chat uses recent saved messages and bounded lesson context. Kaiwa assesses text/transcription, not audio pronunciation.
@@ -64,11 +67,11 @@ The `gcp:us-east4` placement hint resolved an observed Google TTS location rejec
 
 ## Rendering
 
-The classroom uses original procedural geometry and the shared teacher sprite. Animation uses delta time and stops when hidden or settled. Resources are disposed on page exit. A static fallback and HTML object buttons remain available. No React/R3F migration was introduced into this vanilla application.
+The vanilla frontend uses a public account-entry landing, dashboard, collapsible rail and full-width chat. The former 3D classroom and computer anatomy activity and their dependencies have been removed.
 
 ## Practical course and official resources
 
-`static/course/practical.json` is the editable source for original scenarios, Vietnamese explanations, prerequisites, contextual questions and writing rubrics. `study-plan.js` assembles three steps per unit. Completion uses the latest correct answer; written production is self-assessment. Migration 0006 stores latest correctness and private written responses.
+`static/course/practical.json` is the editable source for original scenarios, Vietnamese explanations, prerequisites, contextual questions and writing rubrics. `study-plan.js` puts vocabulary and theory steps in the roadmap, while retaining production lessons in the library and exams in Practice. Completion uses the latest correct answer; written production is self-assessment. Migration 0006 stores latest correctness and private written responses.
 
 `python3 scripts/crawl_course_sources.py` refreshes `static/course/sources.json` from official Japan Foundation lesson/audio pages. It stores retrieval time, page SHA256, publisher and public links, not PDF/audio bodies. `static/source-catalog.js` exposes the catalog with book/search controls. Irodori copyright terms apply separately from OpenJLPT licensing.
 

@@ -13,7 +13,7 @@ function authorizePage(tab,route={}){
   sessionStorage.setItem('vjbot_return_route',appRouteHash(tab,route));
   history.replaceState(null,'','#landing');
   switchTab('landing',{fromHistory:true});
-  openAccount('Đăng nhập Google để vào khu học tập.');
+  openAccount();
   return false;
 }
 function handleSessionExpired(){simulationSavedVersion=simulationSaveVersion;switchTab('landing');}
@@ -66,7 +66,12 @@ async function renderDashboard(){
     const response=await apiFetch('/api/progress');if(!response.ok)throw new Error('progress');
     const [progress,completed]=await Promise.all([response.json(),loadCompletions()]);
     const due=(progress.items || []).filter(i=>i.next_review && new Date(i.next_review)<=new Date()).length;
-    host.innerHTML=`<div class="dashboard-next"><div><span>${activeCurriculumLevel}</span><h2>Tiếp tục bài học</h2><a class="public-cta" href="#curriculum/${activeCurriculumLevel}">Mở lộ trình ↗</a></div><img src="assets/courses/${activeCurriculumLevel.toLowerCase()}.svg" alt="" width="260" height="150"></div><dl class="dashboard-numbers"><div><dt>Đã hoàn thành</dt><dd>${completed.size}</dd></div><div><dt>Mục đến hạn ôn</dt><dd>${due}</dd></div><div><dt>Ngày liên tiếp</dt><dd>${Number(progress.streak_days)||0}</dd></div></dl><div class="dashboard-tools">${Object.entries(featureNames).map(([key,name])=>`<a href="#${key}"><h2>${name}</h2><span aria-hidden="true">↗</span></a>`).join('')}<a href="#classroom"><h2>Học cùng thầy Lâm</h2><span aria-hidden="true">↗</span></a></div><section class="dashboard-recent"><h2>Vừa hoàn thành</h2>${[...completed.values()].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,5).map(i=>`<p><span>${escapeHtml(i.level)}</span> ${escapeHtml(i.title)}</p>`).join('') || '<p>Chưa có bài hoàn thành.</p>'}</section>`;
+    await Promise.all([ensureLessons(activeCurriculumLevel),loadPracticalCourse()]);
+    const units=createStudyPlan(activeCurriculumLevel);
+    const next=units.filter(u=>!u.optional && !completed.has(u.id)).flatMap(u=>u.steps).find(step=>!completed.has(activityId(step.lesson,activeCurriculumLevel,step.skill)));
+    const nextTitle=next?.lesson.title || 'Ôn lại bài học';
+    const nextHref=next?appRouteHash('lesson',{level:activeCurriculumLevel,skill:next.skill,id:activityId(next.lesson,activeCurriculumLevel,next.skill)}):`#curriculum/${activeCurriculumLevel}`;
+    host.innerHTML=`<div class="dashboard-overview"><a class="dashboard-next" href="${escapeHtml(nextHref)}"><div><span>${activeCurriculumLevel} · Học tiếp</span><h2>${escapeHtml(nextTitle)}</h2><strong>Mở bài học ↗</strong></div><img src="assets/courses/${activeCurriculumLevel.toLowerCase()}.svg" alt="" width="180" height="120"></a><dl class="dashboard-numbers"><div><dt>Hoàn thành</dt><dd>${completed.size}</dd></div><div><dt>Đến hạn ôn</dt><dd>${due}</dd></div><div><dt>Ngày liên tiếp</dt><dd>${Number(progress.streak_days)||0}</dd></div></dl></div><div class="dashboard-grid"><section><h2 class="dashboard-section-title">Luyện tập</h2><div class="dashboard-tools">${Object.entries(featureNames).map(([key,name],index)=>`<a href="#${key}/${activeCurriculumLevel}"><span class="dashboard-tool-symbol" aria-hidden="true">${['あ','話','字','問'][index]}</span><h3>${name}</h3><span aria-hidden="true">↗</span></a>`).join('')}<a href="#classroom"><span class="dashboard-tool-symbol" aria-hidden="true">↔</span><h3>Chat với thầy Lâm</h3><span aria-hidden="true">↗</span></a><a href="#curriculum"><span class="dashboard-tool-symbol" aria-hidden="true">本</span><h3>Lộ trình N5–N1</h3><span aria-hidden="true">↗</span></a></div></section><section class="dashboard-recent"><h2 class="dashboard-section-title">Vừa hoàn thành</h2>${[...completed.values()].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,5).map(i=>`<p><span>${escapeHtml(i.level)}</span>${escapeHtml(i.title)}</p>`).join('') || '<div class="dashboard-empty"><span aria-hidden="true">—</span><p>Chưa có bài hoàn thành.</p></div>'}</section></div>`;
   }catch{host.textContent='Chưa tải được tiến độ. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=renderDashboard;host.append(retry);}
 }
 function addPracticeSets(level){

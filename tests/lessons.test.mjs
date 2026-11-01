@@ -56,9 +56,9 @@ test('practical roadmaps follow authored goals and link only verified source rec
     assert.equal(units.filter(u=>u.type==='situation').length,course.units.filter(u=>u.level===level).length);
     context.window.createStudyPlan(level);assert.equal(context.window.JLPT_DATA.exams[level].length,count);
     for(const unit of units.filter(u=>u.type==='situation')){
-      assert.equal(unit.steps.length,5);assert.ok(unit.steps.slice(0,3).every(s=>s.ids.length));
-      assert.equal(unit.steps[3].kind,'kaiwa');assert.equal(unit.steps[4].kind,'test');
-      assert.equal(unit.steps[4].lesson.id,`test:${context.examIdentity(level,unit.examIndex)}`);
+      assert.equal(unit.steps.length,2);assert.ok(unit.steps.every(s=>s.ids.length));
+      assert.deepEqual(Array.from(unit.steps,s=>s.skill),['vocabulary','reading']);
+      assert.ok(context.window.JLPT_DATA.exams[level][unit.examIndex].questions.length);
       assert.equal(unit.exam.questions.length,3);assert.ok(unit.exam.questions.every(q=>q.passage && q.explanation));
     }
     const chapters=units.filter(u=>u.type==='grammar');assert.equal(chapters.length,8);

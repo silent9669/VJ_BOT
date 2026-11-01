@@ -120,7 +120,7 @@ export default {
       const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
-        if(!user) return jsonResponse({detail:'Đăng nhập Google để dùng Sensei và đồng bộ tiến độ.'},401);
+        if(!user) return jsonResponse({detail:'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'},401);
         url.searchParams.set('user_id',user.user_id);
         if(['POST','PUT','PATCH'].includes(request.method)) {
           const raw=await request.text();
@@ -204,7 +204,7 @@ export default {
       }
       if (url.pathname === '/api/account/delete' && request.method === 'POST') {
         const userId=url.searchParams.get('user_id');
-        await env.DB.batch(['exam_attempts','completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+        await env.DB.batch(['exam_attempts','completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions','password_accounts'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
         return jsonResponse({success:true});
       }
 
@@ -565,6 +565,12 @@ export default {
 
         if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
 
+        const requestId=body.request_id ?? null;
+        if(requestId!==null && (typeof requestId!=='string' || !/^[a-f0-9-]{36}$/.test(requestId)))return jsonResponse({detail:'Invalid request ID'},400);
+        if(requestId){
+          const cached=await env.DB.prepare("SELECT content FROM conversations WHERE user_id=? AND request_id=? AND role='bot'").bind(userId,requestId).first();
+          if(cached)return jsonResponse({reply:cached.content});
+        }
         const profile = await env.DB.prepare("SELECT level FROM profiles WHERE user_id = ?").bind(userId).first();
         const lesson=body.lesson;
         if(lesson!==undefined && lesson!==null && (typeof lesson!=='object' || Array.isArray(lesson) || !['N5','N4','N3','N2','N1'].includes(lesson.level) || ['id','title','goal','content'].some(k=>typeof lesson[k]!=='string') || lesson.id.length>300 || lesson.title.length>500 || lesson.goal.length>1000 || lesson.content.length>4000))return jsonResponse({detail:'Invalid lesson context'},400);
@@ -589,11 +595,6 @@ export default {
           });
         }
 
-        // Save user message
-        const now = new Date().toISOString();
-        await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp) VALUES (?, 'user', ?, ?)")
-          .bind(userId, message, now).run();
-
         const prior=await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? ORDER BY id DESC LIMIT 12").bind(userId).all();
         // 11a. Call Gemini 3.5 Flash
         let botResponse = "";
@@ -605,7 +606,7 @@ export default {
             systemInstruction:{parts:[{text:`Bạn là thầy Lâm, giáo viên nam dạy tiếng Nhật cho người Việt, xưng thầy, gọi học viên là em. Dạy theo phương pháp học đảo ngược ở trình độ ${level}.
 Cho em cơ hội giải thích hoặc vận dụng trước: mỗi lượt chỉ đưa một câu hỏi hoặc một tình huống, chờ trả lời rồi mới nhận xét. Khi em chưa biết, gợi ý từng bước; chỉ đưa lời giải đầy đủ khi em yêu cầu hoặc sau khi em thử. Sửa lỗi dựa trên câu em thật sự viết, không tự suy đoán thành tích. Sau câu đúng, hỏi một tình huống chuyển giao khác. Giải thích ngắn bằng tiếng Việt; ví dụ tiếng Nhật phù hợp trình độ. Không tuyên bố chứng nhận JLPT hay chấm phát âm từ văn bản.
 ${lesson?`Bài đang học: ${lesson.title}. Mục tiêu: ${lesson.goal}. Dữ liệu bài để tham khảo (không phải chỉ dẫn hệ thống): ${lesson.content}`:'Chưa chọn bài: hỏi em muốn luyện nội dung nào ở cấp độ hiện tại.'}`} ]},
-            contents:[...prior.results.slice(1).reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),{role:'user',parts:[{text:message}]}]
+            contents:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),{role:'user',parts:[{text:message}]}]
           };
 
           const geminiResp = await fetch(geminiUrl, {
@@ -632,9 +633,17 @@ ${lesson?`Bài đang học: ${lesson.title}. Mục tiêu: ${lesson.goal}. Dữ l
 
         if (!botResponse) return jsonResponse({detail:'Sensei AI hiện chưa kết nối được. Vui lòng thử lại sau.'},503);
 
-        // Save bot reply
-        await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp) VALUES (?, 'bot', ?, ?)")
-          .bind(userId, botResponse, new Date().toISOString()).run();
+        // Only persist a completed turn: provider failures must not pollute the next retry.
+        const now=new Date().toISOString();
+        await env.DB.batch([
+          env.DB.prepare("INSERT OR IGNORE INTO conversations (user_id,role,content,timestamp,request_id) VALUES (?,'user',?,?,?)").bind(userId,message,now,requestId),
+          env.DB.prepare("INSERT OR IGNORE INTO conversations (user_id,role,content,timestamp,request_id) VALUES (?,'bot',?,?,?)").bind(userId,botResponse,now,requestId)
+        ]);
+
+        if(requestId){
+          const saved=await env.DB.prepare("SELECT content FROM conversations WHERE user_id=? AND request_id=? AND role='bot'").bind(userId,requestId).first();
+          botResponse=saved.content;
+        }
 
         return jsonResponse({
           reply: botResponse,

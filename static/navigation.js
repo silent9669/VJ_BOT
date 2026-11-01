@@ -91,7 +91,7 @@ async function renderLevelCards(){
   }finally{host.setAttribute('aria-busy','false');}
 }
 function setupSidebar(){
-  const sidebar=document.getElementById('app-sidebar'),toggle=document.getElementById('btn-mobile-sidebar'),backdrop=document.getElementById('sidebar-backdrop');
+  const sidebar=document.getElementById('app-sidebar'),toggle=document.getElementById('btn-mobile-sidebar'),backdrop=document.getElementById('sidebar-backdrop'),railToggle=document.getElementById('sidebar-toggle');
   const mobile=matchMedia('(max-width: 899px)');
   let expanded=localStorage.getItem('vjbot_sidebar_expanded')==='true';
   const paths={dashboard:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',kanji:'M4 4h16M12 2v6M6 9h12M12 9v12M4 20l8-8 8 8',landing:'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9',classroom:'M4 4h16v12H4zM8 21l4-5 4 5M8 8h8M8 12h4',curriculum:'M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3zM12 6v16',flashcards:'M7 3h14v15H7zM3 7v14h14',kaiwa:'M4 4h16v12H9l-5 5zM8 8h8M8 12h5',quiz:'M6 3h12v18H6zM9 7h6M9 11h6M9 15h4',mastery:'M4 20V10M10 20V4M16 20v-7M22 20H2',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
@@ -104,12 +104,13 @@ function setupSidebar(){
     sidebar.classList.toggle('open',mobile.matches && open);backdrop.classList.toggle('active',mobile.matches && open);
     sidebar.inert=mobile.matches && !open;
     const isOpen=mobile.matches?open:expanded;
-    toggle.setAttribute('aria-expanded',String(isOpen));toggle.setAttribute('aria-label',isOpen?'Thu gọn menu':'Mở menu');
+    for(const control of [toggle,railToggle]){control.setAttribute('aria-expanded',String(isOpen));control.setAttribute('aria-label',isOpen?'Thu gọn menu':'Mở menu');control.title=isOpen?'Thu gọn menu':'Mở menu';}
     document.querySelector('.app-main').inert=mobile.matches && open;
     document.querySelector('.mobile-bottom-bar').inert=mobile.matches && open;
   }
   window.closeAppSidebar=()=>draw(false);
-  toggle.onclick=()=>{if(mobile.matches){draw(!sidebar.classList.contains('open'));sidebar.querySelector('button')?.focus();}else{expanded=!expanded;localStorage.setItem('vjbot_sidebar_expanded',String(expanded));draw();}};
+  toggle.onclick=()=>{if(mobile.matches){draw(!sidebar.classList.contains('open'));document.getElementById('sidebar-close').focus();}else{expanded=!expanded;localStorage.setItem('vjbot_sidebar_expanded',String(expanded));draw();}};
+  railToggle.onclick=toggle.onclick;
   const close=document.getElementById('sidebar-close');close.onclick=()=>{draw(false);toggle.focus();};
   backdrop.onclick=()=>{draw(false);toggle.focus();};
   document.addEventListener('keydown',event=>{

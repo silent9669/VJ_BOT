@@ -68,3 +68,16 @@ test('returning from lesson chat preserves feature route for reload',async()=>{
     assert.equal(route.owner,owner);assert.equal(c.findFeatureLesson(owner,route.level,route.id).id,item.id);
   }
 });
+
+test('writing lessons remain resolvable while the roadmap only contains theory, vocabulary and grammar',async()=>{
+  const c=await context();
+  for(const level of ['N5','N4','N3','N2','N1']){
+    await c.ensureLessons(level);const units=c.createStudyPlan(level);
+    assert.ok(units.every(unit=>unit.steps.every(step=>['kana','grammar','vocabulary','reading'].includes(step.skill) && !step.kind)));
+    for(const unit of units.filter(unit=>unit.type==='situation')){
+      const writing=c.window.JLPT_DATA.curriculum[level].skills.production.find(lesson=>lesson.id===unit.id+':production');
+      assert.ok(writing);assert.equal(writing.production.prompt,unit.production.prompt);
+      assert.ok(c.featureLessons('quiz',level).some(lesson=>c.activityId(lesson)===`test:${level}:${unit.exam.id}`));
+    }
+  }
+});

@@ -18,7 +18,7 @@ For the separate Python suite, create a virtual environment, install `requiremen
 ## Product and code conventions
 
 - Preserve the notebook/sketch direction and the existing stack. No unrequested React migration.
-- Use one male pixel teacher, Lâm, wearing a vest. Edit the original generator/asset consistently.
+- Use one consistent teacher, Lâm, wearing a blazer. Preserve the licensed portrait attribution beside the SVG.
 - Keep text concise. Avoid taglines, redundant helper labels, emoji-heavy navigation and decorative dashboards.
 - Retain keyboard access, native dialog behavior, readable mobile layouts and reduced motion.
 - Keep Three.js animation time-based; stop idle/hidden rendering and clean up GPU resources.
