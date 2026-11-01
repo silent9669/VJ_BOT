@@ -4,7 +4,7 @@
 
 ## Development status
 
-The compact interface and expanded resource catalog are locally verified on `feature/compact-learning`; this pass has not been deployed. See the [handoff](docs/HANDOFF.md) for verification and scope.
+The compact interface and expanded resource catalog are verified locally. Merges to `main` run the test suite and deploy through GitHub Actions. See the [handoff](docs/HANDOFF.md) for verification and scope.
 
 ## Learning
 

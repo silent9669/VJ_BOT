@@ -1,6 +1,6 @@
 ## 2026-11-01 · Compact interface and expanded resources
 
-Locally implemented on `feature/compact-learning`; not deployed in this pass.
+Implemented on `feature/compact-learning`; the user authorized merging to `main` and verifying deployment. GitHub Actions tests and deploys each main update. The checks below describe local verification; hosted deployment is verified separately.
 
 - Landing reduced to a short editorial hero, N5–N1 selector and learning shortcuts, using the supplied OpenDesign reference and existing original artwork. Removed repeated promotional sections, countdown, draggable teacher dock, duplicate mascot displays, and internal account IDs from settings. Assistant remains available in the header and through Cmd/Ctrl+K.
 - Level shelves and vocabulary/conversation lessons use compact rows. Vocabulary, Kanji and conversation lists support search; dashboard, lessons, quizzes, chat, progress and settings have tighter spacing. Sound has a persistent, accessible on/off state. Mobile drawer retains Escape handling and focus return.
