@@ -25,7 +25,7 @@ def parse_lesson(html, number):
         raise ValueError(f'Missing heading: {number}')
     title = ' '.join(unescape(re.sub('<[^>]+>', ' ', heading[1])).split())
     resources = []
-    for slug, label in [('basic', 'Hội thoại cơ bản'), ('advanced', 'Hội thoại mở rộng'), ('key-phrases', 'Mẫu câu'), ('vocabulary', 'Từ vựng')]:
+    for slug, label in [('basic', 'Hội thoại cơ bản'), ('advanced', 'Hội thoại mở rộng'), ('key-phrases', 'Mẫu câu'), ('vocabulary', 'Từ vựng'), ('what-is-this', 'Đồ vật Nhật Bản'), ('let-us-see', 'Khám phá văn hóa'), ('let-us-try', 'Trải nghiệm'), ('onomatopoeia', 'Từ tượng thanh'), ('world', 'Học viên thế giới')]:
         path = f'/en/lesson/{number:02d}/{slug}/'
         if f'href="{path}"' not in html:
             raise ValueError(f'Missing resource: {path}')
