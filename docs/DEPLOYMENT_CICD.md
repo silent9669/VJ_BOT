@@ -27,7 +27,7 @@ npm run build
 npm run deploy
 ```
 
-Both build/deploy scripts rebuild `static/room.js` from `src/client/room.js`. Do not bypass them with a direct CLI deploy after editing 3D source. Vite warns about classic script tags in static HTML; these scripts are served as public files in dependency order.
+The dashboard no longer bundles a 3D room. Vite warns about classic script tags in static HTML; these scripts are served as public files in dependency order.
 
 `npm run build` is a Cloudflare dry run; `npm run deploy` changes production. It does not automatically apply migrations or import curriculum. Record the returned version and verify the custom domain after deploying.
 
@@ -37,7 +37,7 @@ Both build/deploy scripts rebuild `static/room.js` from `src/client/room.js`. Do
 npx cf d1 migrations apply eb0d49a5-7a90-4219-968c-5fcb04390859 --dir migrations
 ```
 
-Migrations 0001–0005 were applied during this work. Inspect migration tracking before future schema work; use new migrations rather than modifying already-applied migrations.
+Apply through migration 0010 for password accounts and chat request identities. Inspect migration tracking before future schema work; use new migrations rather than modifying already-applied migrations.
 
 To refresh the pinned dataset after reviewing the upstream change:
 

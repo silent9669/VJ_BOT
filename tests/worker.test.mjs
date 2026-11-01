@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -174,4 +174,59 @@ test('exam attempts persist only for the session owner and reject invalid state'
   for(const patch of [{answers:[[9]]},{section:-1},{paper_id:'N9:2018'},{deadline:Date.now()+86400000},{status:'passed'}])assert.equal((await worker.fetch(request('/api/exam-attempts',{...attempt,...patch}),env)).status,400);
   await worker.fetch(request('/api/account/delete',{}),env);
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM exam_attempts').first()).n,0);
+});
+
+test('password accounts register, rotate sessions, isolate data and delete credentials',async()=>{
+  const env={DB:database()};
+  const auth=(path,body,cookie='')=>worker.fetch(new Request('https://vjbot.test/api/auth/'+path,{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify(body)}),env);
+  const body={email:' Learner@example.test ',name:'Learner',password:'local-test-password-2026'};
+  const registered=await auth('register',body);assert.equal(registered.status,200);
+  const cookie=registered.headers.get('set-cookie').split(';')[0];
+  assert.match(registered.headers.get('set-cookie'),/HttpOnly; SameSite=Lax.*Secure/);
+  const user=(await registered.json()).user;assert.match(user.user_id,/^email:/);
+  const stored=await env.DB.prepare('SELECT * FROM password_accounts').first();
+  assert.equal(stored.email,'learner@example.test');assert.notEqual(stored.password_hash,body.password);assert.equal(stored.password_hash.length,64);
+  assert.equal((await auth('register',body)).status,409);
+  for(const email of ['learner@example.test','missing@example.test']){
+    const bad=await auth('login',{email,password:'incorrect-password'});assert.equal(bad.status,401);assert.equal((await bad.json()).detail,'Email hoặc mật khẩu không đúng.');
+  }
+  const logged=await auth('login',body,cookie);assert.equal(logged.status,200);
+  const newCookie=logged.headers.get('set-cookie').split(';')[0];assert.notEqual(cookie,newCookie);
+  const privateRequest=(path,method='GET')=>new Request('https://vjbot.test'+path,{method,headers:{Cookie:newCookie}});
+  assert.equal((await worker.fetch(new Request('https://vjbot.test/api/progress',{headers:{Cookie:cookie}}),env)).status,401);
+  assert.equal((await worker.fetch(privateRequest('/api/progress?user_id=google:victim'),env)).status,200);
+  assert.equal((await worker.fetch(privateRequest('/api/account/delete','POST'),env)).status,200);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM password_accounts').first()).n,0);
+  assert.equal((await auth('login',body)).status,401);
+});
+test('password auth validates fields, rejects cross-origin creation and rate limits unknown accounts',async()=>{
+  const env={DB:database()};
+  const req=(body,headers={})=>new Request('https://vjbot.test/api/auth/login',{method:'POST',headers,body:JSON.stringify(body)});
+  for(const body of [null,{}, {email:'bad',password:'password-long-enough'},{email:'valid@example.test',password:'short'}])assert.equal((await worker.fetch(req(body),env)).status,400);
+  const valid={email:'missing@example.test',password:'password-long-enough'};
+  assert.equal((await worker.fetch(req(valid,{Origin:'https://attacker.test'}),env)).status,403);
+  for(let i=0;i<10;i++)assert.equal((await worker.fetch(req(valid),env)).status,401);
+  const limited=await worker.fetch(req(valid),env);assert.equal(limited.status,429);assert.equal(limited.headers.get('Retry-After'),'900');
+});
+
+test('shared networks support more than ten successful accounts without blocking unrelated learners',async()=>{
+  const env={DB:database()};
+  for(let i=0;i<12;i++){
+    const response=await worker.fetch(new Request('https://vjbot.test/api/auth/register',{method:'POST',headers:{'CF-Connecting-IP':'192.0.2.5'},body:JSON.stringify({email:`learner${i}@example.test`,name:'Learner',password:'shared-network-password'})}),env);
+    assert.equal(response.status,200);
+  }
+});
+test('failed chat does not persist a turn and retrying a completed request returns its saved answer once',async()=>{
+  const {env,request}=await authenticated();env.GEMINI_API_KEY='test-only';
+  const previous=globalThis.fetch;let calls=0;
+  const body={message:'こんにちは',request_id:crypto.randomUUID()};
+  try{
+    globalThis.fetch=async()=>{calls++;return Response.json({error:'upstream unavailable'},{status:503});};
+    assert.equal((await worker.fetch(request('/api/chat',body),env)).status,503);
+    assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,0);
+    globalThis.fetch=async()=>{calls++;return Response.json({candidates:[{content:{parts:[{text:'こんにちは！'}]}}]});};
+    const first=await worker.fetch(request('/api/chat',body),env);assert.equal(first.status,200);
+    const retry=await worker.fetch(request('/api/chat',body),env);assert.equal(retry.status,200);assert.equal((await retry.json()).reply,'こんにちは！');
+    assert.equal(calls,2);assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,2);
+  }finally{globalThis.fetch=previous;}
 });

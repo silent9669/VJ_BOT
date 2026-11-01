@@ -1,3 +1,12 @@
+## 2026-11-01 · Account entry and workspace refinement
+
+- Public landing follows the supplied OpenDesign Landing editorial reference and exposes login/registration only. OpenDesign MCP was unavailable; the reference was inspected directly. Teacher is a licensed Avataaars portrait in a blazer, with attribution beside the asset and on Sources.
+- Email/password accounts use salted scrypt, separate identities from Google, session rotation, owner isolation and bounded login attempts. No email verification or password recovery is implemented. Migrations 0009 and 0010 must precede deployment. Google consent remains unverified.
+- Dashboard opens the next unfinished lesson. Removed the 3D room/anatomy activities, their bundles and dependencies. Sidebar toggle sits inside the desktop rail, with centered collapsed icons and a separate mobile drawer opener. Chat spans available width and supports multiline input, retry/discard, guarded history load/delete and persisted request IDs. Failed provider turns do not enter history.
+- Roadmaps contain theory, vocabulary and grammar (including introductory kana). Tests and timed workbooks remain in Practice. Writing activities remain discoverable in the library's Viết tab, and existing writing deep links still reload.
+- Local verification: 59 Node tests, 49 Python tests, Worker build/dry run and dependency audit passed. Chrome checks used a real locally registered account: registration, sign-out/sign-in, session reload, dashboard, sidebar, chat failure/retry/discard, roadmap/test separation, writing library/deep-link reload, and 320/390/1440px layouts with reduced motion. Local Gemini is not configured; live AI success requires the production check after merge. Existing classic-script build notices and two Python dependency deprecation warnings remain.
+- Deployment is performed by the existing main-branch GitHub workflow; production results are reported separately after merge.
+
 ## 2026-11-01 · Compact interface and expanded resources
 
 Implemented on `feature/compact-learning`; the user authorized merging to `main` and verifying deployment. GitHub Actions tests and deploys each main update. The checks below describe local verification; hosted deployment is verified separately.

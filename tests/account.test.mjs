@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 function browser(fetch){
   const elements=new Map(),storage=new Map();let reloads=0;
   const element=id=>{
-    if(!elements.has(id))elements.set(id,{hidden:false,textContent:'',open:false,events:{},addEventListener(name,fn){this.events[name]=fn;},replaceChildren(){},showModal(){this.open=true;},close(){this.open=false;}});
+    if(!elements.has(id))elements.set(id,{hidden:false,textContent:'',open:false,events:{},setAttribute(){},addEventListener(name,fn){this.events[name]=fn;},replaceChildren(){},showModal(){this.open=true;},close(){this.open=false;}});
     return elements.get(id);
   };
   const configs=[],google={accounts:{id:{initialize(config){configs.push(config);},renderButton(){}}}};

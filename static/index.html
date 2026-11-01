@@ -30,8 +30,6 @@
   <!-- Google Identity Services (GIS) for Google Sign-In -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-  <!-- Retro 1984 Macintosh PC Isometric Web Component (Anatomy Figures) -->
-  <script src="anatomy-computer.js"></script>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="notebook.css">
   <link rel="stylesheet" href="practice.css">
@@ -43,6 +41,7 @@
 
     <!-- 1. LEFT SIDEBAR NAVIGATION (Apple Liquid Glass / Sketch Hybrid) -->
     <aside class="app-sidebar" id="app-sidebar" aria-label="Điều hướng">
+      <button type="button" id="sidebar-toggle" aria-label="Mở menu" aria-controls="app-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v14H4zM9 5v14M13 9l3 3-3 3"/></svg></button>
       <button type="button" id="sidebar-close" aria-label="Đóng menu">×</button>
 
       <!-- Sidebar Header (Contains ONLY 8-bit VJ Logo & VJBot Brand Name) -->
@@ -174,7 +173,7 @@
             <span id="sensei-state-tag">Sensei: Sẵn sàng</span>
           </div>
           <div class="topbar-auth" id="topbar-auth-section">
-            <button type="button" class="topbar-account-btn" id="btn-topbar-account" title="Tài khoản học viên & Đồng bộ Google">
+            <button type="button" class="topbar-account-btn" id="btn-topbar-account" title="Tài khoản học viên">
               <span class="account-avatar-wrap">
                 <img id="topbar-user-avatar" src="assets/lam/teacher.svg" alt="Avatar" class="account-avatar-img pixel-sprite">
               </span>
@@ -189,26 +188,20 @@
 
         <!-- TAB 0: LANDING PAGE (APPLE RETRO MACINTOSH 1984 PC + TYPEWRITER + SHOWCASE) -->
         <section class="tab-panel active" id="panel-landing">
-          <nav class="public-nav" aria-label="Trang giới thiệu">
+          <nav class="public-nav" aria-label="Trang chủ">
             <a href="#landing" class="public-brand"><img src="assets/logo-vj-8bit.svg" width="28" height="28" alt="">VJBot</a>
-            <div><a href="#landing-courses">Khóa học</a><a href="sources.html">Học liệu</a><button class="public-login" data-enter="dashboard">Đăng nhập</button></div>
+            <button class="public-login" data-enter="dashboard">Đăng nhập ↗</button>
           </nav>
           <div class="public-hero">
             <div class="public-hero-copy">
-              <h1>Học tiếng Nhật.<br><em>Từ N5 đến N1.</em></h1>
-              <p>Bài học, hội thoại và luyện thi cùng thầy Lâm.</p>
-              <button class="public-cta" id="landing-btn-curriculum">Chọn bài học <span aria-hidden="true">↗</span></button>
+              <h1>Tiếng Nhật,<br><em>từng ngày.</em></h1>
+              <div class="public-account-actions"><button class="public-cta" data-register>Tạo tài khoản <span aria-hidden="true">↗</span></button><button class="public-signin" data-enter="dashboard">Đăng nhập</button></div>
             </div>
-            <div class="learning-collage" aria-hidden="true"><span class="collage-sun"></span><div class="collage-sheet" lang="ja"><span>日本語のノート</span><strong>学ぶ<br>話す<br>わかる</strong></div><img src="assets/lam/teacher.svg" alt="" width="220" height="300"></div>
+            <div class="learning-collage" aria-hidden="true"><span class="collage-sun"></span><div class="collage-sheet" lang="ja"><span>日本語</span><strong>こんにちは。</strong></div><img src="assets/lam/teacher.svg" alt="" width="280" height="280"></div>
           </div>
-          <section class="public-courses" id="landing-courses" aria-labelledby="landing-courses-title">
-            <h2 id="landing-courses-title">Chọn cấp độ</h2>
-            <div class="public-levels"><button data-start-level="N5"><strong>N5</strong><span>Bắt đầu</span><span aria-hidden="true">↗</span></button><button data-start-level="N4"><strong>N4</strong><span>Nền tảng</span><span aria-hidden="true">↗</span></button><button data-start-level="N3"><strong>N3</strong><span>Trung cấp</span><span aria-hidden="true">↗</span></button><button data-start-level="N2"><strong>N2</strong><span>Nâng cao</span><span aria-hidden="true">↗</span></button><button data-start-level="N1"><strong>N1</strong><span>Chuyên sâu</span><span aria-hidden="true">↗</span></button></div>
-          </section>
-          <nav class="public-tools" aria-label="Cách học"><button id="landing-btn-start">Hội thoại cùng thầy Lâm <span aria-hidden="true">↗</span></button><button data-enter="flashcards">Ôn thẻ nhớ <span aria-hidden="true">↗</span></button><button id="landing-btn-mock-exam">Luyện thi JLPT <span aria-hidden="true">↗</span></button></nav>
-          <footer class="public-footer"><span>VJBot</span><a href="sources.html">Nguồn học liệu & quyền riêng tư ↗</a></footer>
+          <footer class="public-footer"><span>VJBot · 日本語</span><a href="sources.html">Nguồn & quyền riêng tư ↗</a></footer>
         </section>
-        <section class="tab-panel workspace-panel" id="panel-dashboard" hidden><header class="workspace-heading"><div><h1>Góc học tập</h1><p id="dashboard-greeting"></p></div><img src="assets/lam/teacher.svg" alt="Thầy Lâm" width="72" height="100"></header><div id="dashboard-content" aria-live="polite"></div><details class="dashboard-room"><summary>Phòng học tương tác</summary><div class="room-card"><div id="study-room" aria-label="Phòng học 3D của thầy Lâm"><img class="room-fallback" src="assets/lam/teacher.svg" alt="Thầy Lâm" width="144" height="240"></div><label class="room-angle-label">Góc nhìn<input id="room-angle" type="range" min="-30" max="30" value="0" aria-label="Xoay góc nhìn phòng học"></label><div class="room-controls"><button type="button" data-room="book">本 · Sách</button><button type="button" data-room="desk">机 · Bàn</button><button type="button" data-room="chair">椅子 · Ghế</button><button type="button" data-room="plant">植物 · Cây</button></div><div class="room-word"><strong id="room-word-jp">本は机の上にあります。</strong><span id="room-word-vi">Quyển sách ở trên bàn.</span><button type="button" id="room-audio" aria-label="Nghe câu tiếng Nhật">Nghe ↗</button></div><div class="room-quiz"><button type="button" id="room-quiz-start">Luyện đồ vật</button><p id="room-question" hidden></p><output id="room-feedback" aria-live="polite"></output></div></div></details><details class="anatomy-vocab"><summary>パソコン · Máy tính</summary><anatomy-computer theme="light"></anatomy-computer></details></section>
+        <section class="tab-panel workspace-panel" id="panel-dashboard" hidden><header class="workspace-heading"><div><h1>Góc học tập</h1><p id="dashboard-greeting"></p></div><img src="assets/lam/teacher.svg" alt="Thầy Lâm" width="72" height="72"></header><div id="dashboard-content" aria-live="polite"></div></section>
         <section class="tab-panel workspace-panel" id="panel-kanji" hidden><div class="skill-hub" id="kanji-hub"></div><div id="kanji-workspace" hidden></div></section>
         <!-- TAB 1: SENSEI CLASSROOM (REVERSED QUIZ & CHAT) -->
         <section class="tab-panel" id="panel-classroom" hidden>
@@ -336,12 +329,13 @@
                 <button type="button" class="prompt-chip" id="btn-ask-check"> Kiểm tra câu của em</button>
               </div>
 
+              <div id="chat-error" role="alert" hidden><span id="chat-error-text"></span><div><button type="button" id="chat-retry">Thử lại</button><button type="button" id="chat-discard" hidden>Bỏ qua</button></div></div>
               <!-- Chat Input Bar -->
               <form class="chat-input-bar" id="chat-form" onsubmit="return false;">
                 <button type="button" class="chat-audio-btn" id="btn-voice-input" title="Nói tiếng Nhật (Nhận diện giọng nói)">
                   <span id="mic-icon">Nói</span>
                 </button>
-                <input type="text" id="chat-input" class="sketch-input chat-text-input" placeholder="Viết tiếng Nhật hoặc tiếng Việt…" aria-label="Tin nhắn cho thầy Lâm" autocomplete="off">
+                <textarea id="chat-input" class="sketch-input chat-text-input" rows="2" maxlength="6000" placeholder="Viết tiếng Nhật hoặc tiếng Việt…" aria-label="Tin nhắn cho thầy Lâm"></textarea>
                 <button type="submit" id="btn-send-message" class="sketch-btn-cta chat-send-btn">
                   <span>Gửi</span>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -387,6 +381,7 @@
                 <button type="button" class="skill-tab-btn" data-skill="kanji">漢 Hán tự</button>
                 <button type="button" class="skill-tab-btn" data-skill="reading"> Đọc hiểu</button>
                 <button type="button" class="skill-tab-btn" data-skill="listening"> Nghe hiểu</button>
+                <button type="button" class="skill-tab-btn" data-skill="production">Viết</button>
               </div>
             </div>
 
@@ -838,7 +833,22 @@
 
   <!-- LOAD COMPREHENSIVE DATA & APP SCRIPT -->
   <script src="jlpt-data.js"></script>
-  <dialog id="auth-dialog" aria-labelledby="auth-user"><button type="button" id="auth-close" class="modal-close-btn" aria-label="Đóng">×</button><h2 id="auth-user">Đăng nhập Google</h2><div id="google-signin"></div><p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button></dialog>
+  <dialog id="auth-dialog" aria-labelledby="auth-user">
+    <button type="button" id="auth-close" class="modal-close-btn" aria-label="Đóng">×</button>
+    <h2 id="auth-user">Đăng nhập</h2>
+    <div id="auth-methods">
+      <div class="auth-tabs" role="group" aria-label="Tài khoản"><button type="button" id="auth-login-tab" aria-pressed="true">Đăng nhập</button><button type="button" id="auth-register-tab" aria-pressed="false">Đăng ký</button></div>
+      <form id="auth-form">
+        <label id="auth-name-label" hidden>Tên<input id="auth-name" name="name" autocomplete="name" maxlength="80"></label>
+        <label>Email<input id="auth-email" name="email" type="email" autocomplete="username" required maxlength="254"></label>
+        <label>Mật khẩu<input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" aria-describedby="auth-password-hint"></label>
+        <p id="auth-password-hint" hidden>12–128 ký tự</p>
+        <button type="submit" id="auth-submit" class="public-cta">Đăng nhập</button>
+      </form>
+      <div class="auth-divider">hoặc</div><div id="google-signin"></div><p id="google-status" role="status"></p>
+    </div>
+    <p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button>
+  </dialog>
   <script src="practice.js"></script>
   <script src="learning.js"></script>
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
@@ -846,6 +856,6 @@
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="app.js"></script>
-  <script type="module" src="/room.js"></script>
+
 </body>
 </html>

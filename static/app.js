@@ -272,61 +272,6 @@ function initLoadingScreen() {
 // ==========================================
 // 5. 1984 MACINTOSH CRT TYPEWRITER (ANATOMY FIGURES)
 // ==========================================
-function initAnatomyTypewriter() {
-  const anatomyEl = document.querySelector("anatomy-computer");
-  if (!anatomyEl || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  const PHRASES = [
-    "こんにちは、世界！",
-    "日本語を勉強しましょう！",
-    "パソコン — máy tính",
-    "キーボード — bàn phím",
-    "今日も一日がんばりましょう！"
-  ];
-
-  let phraseIdx = 0;
-  let charIdx = 0;
-  let isDeleting = false;
-
-  function tick() {
-    if(document.hidden || !anatomyEl.getClientRects().length){setTimeout(tick,1000);return;}
-    const shadow = anatomyEl.shadowRoot;
-    if (!shadow) {
-      setTimeout(tick, 300);
-      return;
-    }
-
-    const textEl = shadow.querySelector(".pc-text");
-    if (!textEl) {
-      setTimeout(tick, 300);
-      return;
-    }
-
-    const currentPhrase = PHRASES[phraseIdx];
-    if (isDeleting) {
-      charIdx--;
-      textEl.textContent = currentPhrase.substring(0, charIdx);
-    } else {
-      charIdx++;
-      textEl.textContent = currentPhrase.substring(0, charIdx);
-    }
-
-    let delay = isDeleting ? 60 : 120;
-    if (!isDeleting && charIdx === currentPhrase.length) {
-      delay = 2000;
-      isDeleting = true;
-    } else if (isDeleting && charIdx === 0) {
-      isDeleting = false;
-      phraseIdx = (phraseIdx + 1) % PHRASES.length;
-      delay = 400;
-    }
-
-    setTimeout(tick, delay);
-  }
-
-  setTimeout(tick, 400);
-}
-
 // ==========================================
 // 6. GEMINI TTS (VOICE SYNTHESIS)
 // ==========================================
@@ -488,55 +433,63 @@ function renderBubble(role, content) {
   return row;
 }
 
-let sendingMessage=false;
-async function sendMessage(text) {
-  if (sendingMessage || !text || !text.trim()) return;
-  if(!signedInUser){openAccount();return;}
-  document.getElementById('btn-send-message').disabled=true;
-  document.getElementById('chat-connection-status').textContent='Thầy đang đọc…';
-  sendingMessage=true;
-  renderBubble("user", text);
-  soundEngine.playSend();
-  mascotMgr.setState("thinking");
-
-  const inputEl = document.getElementById("chat-input");
-  if (inputEl) inputEl.value = "";
-
+let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null;
+function chatError(message,retry) {
+  const host=document.getElementById('chat-error');host.hidden=!message;
+  document.getElementById('chat-error-text').textContent=message;
+  const button=document.getElementById('chat-retry');button.hidden=!retry;button.onclick=retry;
+  const discard=document.getElementById('chat-discard');discard.hidden=!failedChatMessage;discard.onclick=()=>{failedChatMessage=null;loadChatHistory();};
+}
+async function loadChatHistory() {
+  if(chatHistoryLoading || sendingMessage || clearingChat)return;
+  chatHistoryLoading=true;chatHistoryReady=false;chatError('',null);
+  document.getElementById('chat-connection-status').textContent='Đang tải hội thoại…';
   try {
-    const resp = await apiFetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        message: text,
-        lesson: chatLessonContext
-      })
-    });
-
-    if (!resp.ok) {
-      const error=await resp.json();
-      renderBubble("bot", error.detail || "Sensei đang kết nối lại, bạn đợi một lát nhé...");
-      mascotMgr.setState("idle");
-      return;
-    }
-
-    const data = await resp.json();
-    mascotMgr.setState("speaking");
-    soundEngine.playReceive();
-
-    const reply = data.reply || data.response;
-    if(typeof reply!=="string" || !reply.trim())throw new Error("Empty AI reply");
-    renderBubble("bot", reply);
-
-    if (reply.includes("正解") || reply.includes("chính xác") || reply.includes("Đúng rồi")) {
-      mascotMgr.celebrate();
-    } else {
-      setTimeout(() => mascotMgr.setState("idle"), 2000);
-    }
-  } catch (err) {
-    renderBubble("bot", "Không kết nối được với thầy Lâm. Em hãy thử gửi lại.");
-    mascotMgr.setState("idle");
-  } finally {sendingMessage=false;document.getElementById("btn-send-message").disabled=false;document.getElementById("chat-connection-status").textContent="Sẵn sàng";}
+    const response=await apiFetch('/api/history');
+    if(!response.ok)throw new Error('history');
+    const messages=await response.json();
+    for(const row of document.querySelectorAll('#chat-messages .chat-bubble-row'))row.remove();
+    document.getElementById('chat-welcome').style.display=messages.length?'none':'';
+    for(const message of messages)renderBubble(message.role,message.content);
+    chatHistoryReady=true;chatError('',null);
+    document.getElementById('chat-connection-status').textContent='';
+  }catch{
+    document.getElementById('chat-connection-status').textContent='';
+    chatError('Chưa tải được hội thoại.',loadChatHistory);
+  }finally{chatHistoryLoading=false;}
+}
+async function sendMessage(text,retry=false) {
+  text=typeof text==='string'?text.trim():'';
+  if(sendingMessage || clearingChat || !text)return;
+  if(failedChatMessage && !retry){chatError('Tin trước chưa gửi xong. Thử lại hoặc bỏ qua.',()=>sendMessage(failedChatMessage.text,true));return;}
+  if(!signedInUser){openAccount();return;}
+  if(!chatHistoryReady){chatError('Đợi hội thoại tải xong trước khi gửi.',chatHistoryLoading?null:loadChatHistory);return;}
+  if(text.length>6000){chatError('Tin nhắn tối đa 6.000 ký tự.',null);return;}
+  const requestId=retry?failedChatMessage.id:crypto.randomUUID();
+  const lesson=retry?failedChatMessage.lesson:chatLessonContext;
+  const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
+  send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
+  document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
+  if(!retry)renderBubble('user',text);
+  if(!retry || input.value.trim()===text)input.value='';
+  soundEngine.playSend();mascotMgr.setState('thinking');
+  try {
+    const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,lesson,request_id:requestId})});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.detail || 'Chưa gửi được tin nhắn.');
+    const reply=data.reply || data.response;
+    if(typeof reply!=='string' || !reply.trim())throw new Error('Thầy chưa trả lời. Hãy thử lại.');
+    renderBubble('bot',reply);failedChatMessage=null;chatError('',null);
+    soundEngine.playReceive();mascotMgr.setState('speaking');
+    setTimeout(()=>mascotMgr.setState('idle'),2000);
+  }catch(error){
+    failedChatMessage={text,id:requestId,lesson};
+    chatError(error.name==='TimeoutError'?'Kết nối quá lâu. Hãy thử lại.':error.message==='Failed to fetch'?'Mất kết nối. Hãy thử lại.':error.message,()=>sendMessage(failedChatMessage.text,true));
+    mascotMgr.setState('idle');
+  }finally{
+    sendingMessage=false;send.disabled=false;clear.disabled=false;
+    document.getElementById('chat-connection-status').textContent='';
+  }
 }
 
 async function loadGreeting() {
@@ -582,7 +535,7 @@ function filterCurriculum(reset=true){
 }
 
 async function renderCurriculum(level = "N5", skill = "grammar") {
-  if((skill==='kana' && level!=='N5') || !window.JLPT_DATA.curriculum[level].skills[skill])skill='grammar';
+  if((skill==='kana' && level!=='N5') || !learningSkills.includes(skill))skill='grammar';
   const request=++curriculumRequest;
   document.getElementById('study-plan').hidden=curriculumView!=='plan';
   document.getElementById('lesson-library').hidden=curriculumView!=='library';
@@ -591,7 +544,7 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
   const loadingHost=document.getElementById(curriculumView==='plan'?'study-plan':'curriculum-list');
   if(loadingHost.dataset.level!==level || !loadingHost.textContent)loadingHost.textContent='Đang tải bài học…';
   loadingHost.dataset.level=level;
-  try { await Promise.all([ensureLessons(level),loadCompletions()]); }
+  try { await Promise.all([ensureLessons(level),loadCompletions(),loadPracticalCourse()]);createStudyPlan(level); }
   catch {
     if(request!==curriculumRequest)return;
     loadingHost.textContent='Chưa tải được bài học. ';
@@ -611,7 +564,8 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
     grammar: "Ngữ pháp",
     vocabulary: "Từ vựng",
     reading: "Đọc hiểu",
-    listening: "Nghe hiểu"
+    listening: "Nghe hiểu",
+    production: "Viết"
   };
   if (cbLevel) cbLevel.textContent = level;
   if (cbSkill) cbSkill.textContent = skillNames[skill] || skill;
@@ -743,6 +697,8 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   const hasPractice=Boolean(item.production || item.dictation || lessonQuestions(item,level,skill).length);
   const modes=body.querySelector('.lesson-mode-switch');
   modes.hidden=!hasPractice;
+  const practiceLabel=item.production?'Thực hành viết':item.dictation?'Nghe và chép':'5 câu kiểm tra';
+  modes.querySelector('[data-lesson-mode=practice]').textContent=practiceLabel;
   const selectMode=mode=>{
     body.dataset.mode=mode;
     body.querySelector('#lesson-reference').hidden=mode!=='read';
@@ -753,7 +709,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   };
   modes.querySelectorAll('button').forEach(b=>b.onclick=()=>selectMode(b.dataset.lessonMode));
   if(hasPractice){
-    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent='Làm 5 câu kiểm tra';
+    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent=item.production || item.dictation?practiceLabel:'Làm 5 câu kiểm tra';
     start.onclick=()=>{selectMode('practice');body.querySelector('#lesson-exercises legend, #lesson-exercises textarea, #lesson-exercises button')?.focus();};
     body.querySelector('#lesson-reference').append(start);
   }
@@ -1290,7 +1246,7 @@ function setupEventListeners() {
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
   const voiceButton=document.getElementById('btn-voice-input');
   const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(SpeechRecognition){const recognition=new SpeechRecognition();recognition.lang='ja-JP';recognition.onresult=e=>{document.getElementById('chat-input').value=e.results[0][0].transcript;};recognition.onend=()=>voiceButton.textContent='🎙️';voiceButton.onclick=()=>{try{recognition.start();voiceButton.textContent='■';}catch{recognition.stop();}};}
+  if(SpeechRecognition){const recognition=new SpeechRecognition();recognition.lang='ja-JP';recognition.onresult=e=>{document.getElementById('chat-input').value=e.results[0][0].transcript;};recognition.onend=()=>{voiceButton.textContent='Nói';voiceButton.setAttribute('aria-pressed','false');};recognition.onerror=()=>chatError('Chưa nhận được giọng nói. Kiểm tra quyền micro hoặc nhập tin nhắn.',null);voiceButton.onclick=()=>{try{recognition.start();voiceButton.textContent='Dừng';voiceButton.setAttribute('aria-pressed','true');}catch{recognition.stop();}};}
   else {voiceButton.disabled=true;voiceButton.title='Trình duyệt không hỗ trợ nhập giọng nói';}
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
@@ -1394,10 +1350,13 @@ function setupEventListeners() {
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   if (chatForm && chatInput) {
+    chatInput.addEventListener('keydown',event=>{
+      if(event.key==='Enter' && !event.shiftKey && !event.isComposing){event.preventDefault();chatForm.requestSubmit();}
+    });
     chatForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const txt = chatInput.value;
-      sendMessage(txt);
+      if(e.isComposing)return;
+      sendMessage(chatInput.value);
     });
   }
 
@@ -1405,14 +1364,19 @@ function setupEventListeners() {
   const btnClearChat = document.getElementById("btn-clear-chat-history");
   if (btnClearChat) {
     btnClearChat.addEventListener("click", async () => {
+      if(sendingMessage || clearingChat || !chatHistoryReady)return;
       if (confirm("Bạn có muốn xóa toàn bộ lịch sử tin nhắn trong phòng học không?")) {
+        clearingChat=true;btnClearChat.disabled=true;document.getElementById("btn-send-message").disabled=true;chatError("",null);
         try {
           const response=await apiFetch(`/api/history?user_id=${encodeURIComponent(userId)}`, { method: "DELETE" });
           if(!response.ok)throw new Error('delete');
           const messages = document.getElementById("chat-messages");
-          if (messages) messages.innerHTML = "";
+          if(messages)for(const row of messages.querySelectorAll('.chat-bubble-row'))row.remove();
+          const welcome=document.getElementById('chat-welcome');if(welcome)welcome.style.display='';
+          failedChatMessage=null;chatError('',null);
           soundEngine.playBlip();
-        } catch {renderBubble('bot','Chưa xóa được lịch sử. Hãy thử lại.');}
+        } catch {chatError('Chưa xóa được lịch sử.',()=>btnClearChat.click());}
+        finally{clearingChat=false;btnClearChat.disabled=false;document.getElementById('btn-send-message').disabled=false;}
       }
     });
   }
@@ -1751,7 +1715,6 @@ function setupEventListeners() {
 // ==========================================
 (async function init() {
   initLoadingScreen();
-  initAnatomyTypewriter();
   mascotMgr.updateAllSpriteElements();
 
   setupWorkspace();
@@ -1789,10 +1752,7 @@ function setupEventListeners() {
   if(!signedInUser)return;
   loadGreeting();
   loadProgress();
-  try {
-    const historyResponse=await apiFetch(`/api/history?user_id=${encodeURIComponent(userId)}`);
-    if(historyResponse.ok) for(const message of await historyResponse.json()) renderBubble(message.role,message.content);
-  } catch { renderBubble("bot", "Chưa tải được lịch sử trò chuyện. Tải lại trang để thử lại."); }
+  await loadChatHistory();
 
 })();
 

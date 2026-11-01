@@ -1,6 +1,6 @@
 # VJBot · Sổ tay tiếng Nhật
 
-[VJBot](https://vjbot.dangphuc.me/) is a Vietnamese learning interface for Japanese, with a sketch notebook design and one original pixel teacher: **thầy Lâm**, wearing a vest.
+[VJBot](https://vjbot.dangphuc.me/) is a Vietnamese learning interface for Japanese, with a sketch notebook design and an illustrated **thầy Lâm**, wearing a blazer ([Avataaars attribution](static/assets/lam/ATTRIBUTION.md)).
 
 ## Development status
 
@@ -8,23 +8,25 @@ The compact interface and expanded resource catalog are verified locally. Merges
 
 ## Learning
 
-- Landing-first learning: choose N5–N1, open one of 40 grammar chapters or 20 authored situations with Vietnamese explanations, 60 contextual questions and saved written responses. Reversible completion across lessons/Kaiwa/tests and lesson-grounded reversed chat. Crawled catalogs link 111 JLPT workbook resources (2012/2018), 225 Erin activities across 25 lessons, and 72 official Irodori lessons to publisher materials; the full dictionary library remains available.
+- Sign in or register from the public landing, then choose N5–N1, open one of 40 grammar chapters or 20 authored situations with Vietnamese explanations, 60 contextual questions and saved written responses. Reversible completion across lessons/Kaiwa/tests and lesson-grounded reversed chat. Crawled catalogs link 111 JLPT workbook resources (2012/2018), 225 Erin activities across 25 lessons, and 72 official Irodori lessons to publisher materials; the full dictionary library remains available.
 
 - Vocabulary, grammar and kanji across N5–N1, loaded on demand by level, plus 20 original kana lessons.
 - **10,720 imported OpenJLPT entries:** 7,811 vocabulary, 526 grammar patterns and 2,383 kanji records. Level assignments are community estimates, not official JLPT lists.
 - Existing Vietnamese lessons plus clearly marked English definitions and examples from OpenJLPT. English material has not been represented as a Vietnamese translation.
 - Recognition drills for every imported word and kanji, grammar meaning checks, source-linked sentence reading and synthetic-audio transcription practice. Example sentence difficulty may exceed the target word's level.
-- Twenty-card review sessions, prioritizing due cards, with SM-2 scheduling for accounts. Guest progress stays in the browser with a simpler review schedule.
+- Twenty-card review sessions, prioritizing due cards, with SM-2 scheduling for accounts. Learning routes require an account.
 - Short JLPT-style quizzes with explanations. These are practice sets, not full official mock exams or certification scores.
 - Kaiwa accepts typed Japanese or browser speech recognition. AI evaluates the transcript, not pronunciation from audio.
 
 ## Teacher and interface
 
-The original SVG teacher appears on the landing, in chat and in the optional Three.js classroom. The header button and Cmd/Ctrl+K open the assistant. Compact level rows, searchable vocabulary/Kanji/conversation lists, and expandable publisher resources keep the learning workspace focused. The classroom has selectable objects, Japanese spatial phrases, a four-object practice round, an adjustable viewpoint and equivalent keyboard-accessible controls. Animation stops when the scene is hidden or settled; reduced-motion preferences are respected. A static teacher fallback remains if WebGL is unavailable.
+The public page contains account entry only. The dashboard opens the next unfinished lesson and shows progress and practice tools. The desktop sidebar has an internal expand/collapse control; chat fills the available workspace. The 3D classroom and computer anatomy activities have been removed. The frontend remains HTML, CSS and JavaScript.
 
-The existing computer anatomy figure is available as an optional vocabulary illustration. No React migration is required: the frontend remains HTML, CSS and JavaScript.
+Roadmaps contain theory, vocabulary and grammar (including introductory kana). Tests and timed workbooks stay in Practice; writing lessons remain available in the library and through saved links. Chat supports multiline input (Shift+Enter), retry/discard and persisted request identities for safe retries.
 
 ## Accounts and AI
+
+Email/password registration is also available. Passwords use salted scrypt (N=16384, r=8, p=5); login limits are 10 attempts per IP/email pair and 100 per IP per 15-minute bucket. Email accounts are independent of Google accounts. Email verification and password recovery are not implemented.
 
 Google Identity Services returns an ID token that the Worker verifies against Google's public keys, issuer, audience, expiry and a cookie-bound nonce. Sessions use random tokens in HttpOnly cookies; only token hashes are stored in D1. Private APIs derive account ownership from the session, ignoring client-supplied user IDs.
 
@@ -32,7 +34,7 @@ Gemini 3.5 Flash chat and Kaiwa evaluation, and Gemini 3.8 Flash TTS, require lo
 
 Required Worker secrets: `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. The current ID-token flow uses the client ID and public keys; it does not exchange an authorization code or consume the client secret. Add `https://vjbot.dangphuc.me` to the OAuth client's authorized JavaScript origins. Local Google login also requires `http://localhost:8787` as an authorized origin.
 
-Account deletion removes that account's profile, sessions, conversations and progress. Guest learning remains local and is not automatically migrated at sign-in. [Data sources and privacy](https://vjbot.dangphuc.me/sources.html).
+Account deletion removes that account's credentials, profile, sessions, conversations and progress. [Data sources and privacy](https://vjbot.dangphuc.me/sources.html).
 
 ## Develop and verify
 
@@ -48,7 +50,7 @@ The Worker uses a `gcp:us-east4` placement hint because Google rejected TTS requ
 
 The production app is `src/worker.js` plus `static/`, deployed as the **vjbot** Worker with D1. Local Worker development uses port 8787. The Python backend remains a separate implementation and its tests do not prove deployed Worker behavior. Node 22.13+ is required for the Worker tests' SQLite adapter.
 
-`npm run build` rebuilds `static/room.js` from `src/client/room.js` before the Cloudflare dry run. `npm run deploy` does the same before deployment. Vite's warnings about classic script tags are expected: those files are copied from the public asset directory and loaded in dependency order.
+`npm run build` performs a Cloudflare dry run. `npm run deploy` deploys the Worker; apply migrations first. Vite's warnings about classic script tags are expected: those files are copied from the public asset directory and loaded in dependency order.
 
 ## Refresh publisher catalogs
 

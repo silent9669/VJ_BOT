@@ -1,6 +1,6 @@
 // Guided units use the same exercise IDs as lessons, so saved answers count in both views.
 const studyPlans=new Map();
-const studySkillNames={kana:'Bảng chữ cái',vocabulary:'Từ vựng',grammar:'Ngữ pháp',kanji:'Hán tự',reading:'Đọc',listening:'Nghe',production:'Thực hành'};
+const studySkillNames={kana:'Bảng chữ cái',vocabulary:'Từ vựng',grammar:'Ngữ pháp',kanji:'Hán tự',reading:'Lý thuyết',listening:'Nghe',production:'Thực hành'};
 function lessonQuestions(item,level,skill){
   return fiveLessonQuestions(item,level,skill);
 }
@@ -31,14 +31,16 @@ function createStudyPlan(level){
     const vocabulary={...common,id:unit.id+':words',title:'Từ cần dùng',summary:unit.goal,items:unit.words};
     vocabulary.drills=unit.words.map((w,i)=>({item_id:`${unit.id}:word:${i}`,q:`${w.jp} (${w.reading}) — nghĩa nào phù hợp?`,opts:unit.words.map(x=>x.vi).filter(x=>x!==w.vi).slice(0,3),ans:w.vi}));
     vocabulary.drills.forEach((q,i)=>q.opts.splice(i%(q.opts.length+1),0,q.ans));
-    const situation={...common,id:unit.id+':situation',title:'Đọc, nghe và hiểu tình huống',summary:unit.goal,formula:unit.formula,explanation:unit.note,examples:unit.dialogue,drills:unit.questions.map(q=>({...q,item_id:q.id})),resources:unit.source_ids.map(id=>practicalSources.lessons.find(s=>s.id===id)).filter(Boolean),reference_url:unit.reference_url};
+    const situation={...common,id:unit.id+':situation',title:'Lý thuyết tình huống',summary:unit.goal,formula:unit.formula,explanation:unit.note,examples:unit.dialogue,drills:unit.questions.map(q=>({...q,item_id:q.id})),resources:unit.source_ids.map(id=>practicalSources.lessons.find(s=>s.id===id)).filter(Boolean),reference_url:unit.reference_url};
     const production={...common,id:unit.id+':production',title:'Tự trả lời trong tình huống',summary:unit.goal,production:unit.production,roleplay:unit};
+    skills.production ||= [];
+    if(!skills.production.some(l=>l.id===production.id))skills.production.push(production);
     const questions=unit.questions.map((q,i)=>({id:q.id,item_id:q.id,item_type:'reading',sentence:q.q,passage:unit.dialogue.map(d=>d.jp).join('\n'),options:q.opts,answer:q.opts.indexOf(q.ans),explanation:q.explanation,type:'Hiểu tình huống',plain:true}));
     const exam={id:unit.id+':review',title:unit.title,duration_minutes:10,source:'VJBot · tình huống',questions};
-    units.push({...unit,type:'situation',steps:[step(vocabulary,'vocabulary'),step(situation,'reading'),step(production,'production')],exam});
+    units.push({...unit,type:'situation',steps:[step(vocabulary,'vocabulary'),step(situation,'reading')],exam});
   }
   const exams=window.JLPT_DATA.exams[level] ||= [];
-  for(const unit of units)if(unit.exam){unit.examIndex=exams.length;exams.push(unit.exam);unit.steps.push({kind:'kaiwa',skill:'kaiwa',lesson:{id:`kaiwa:${unit.id}`,title:'Luyện nói tình huống'},ids:[],unit},{kind:'test',skill:'test',lesson:{id:`test:${level}:${unit.exam.id}`,title:'Kiểm tra tình huống'},ids:[],unit});}
+  for(const unit of units)if(unit.exam){unit.examIndex=exams.length;exams.push(unit.exam);}
   studyPlans.set(level,units);return units;
 }
 function examIdentity(level,index){
@@ -55,8 +57,6 @@ function studyStepState(step,records){
   return {reviewed,total:step.ids.length,complete:step.ids.length>0 && reviewed===step.ids.length,needsReview:attempted && reviewed<step.ids.length};
 }
 function openStudyStep(step,level){
-  if(step.kind==='kaiwa'){startCourseKaiwa(step.unit);return;}
-  if(step.kind==='test'){showLessonDetail(featureLessons('quiz',level)[step.unit.examIndex],level,'reading',false,'quiz');return;}
   showLessonDetail(step.lesson,level,step.skill);
 }
 let studyPlanRequest=0;
@@ -93,27 +93,7 @@ async function renderStudyPlan(level){
       detail.addEventListener('toggle',()=>{if(detail.open)for(const other of host.querySelectorAll('.plan-unit'))if(other!==detail)other.open=false;});
       host.querySelector('.plan-units').append(detail);
     }
-    const official=document.createElement('details');official.className='official-level-resources';official.innerHTML='<summary>Tài liệu JLPT chính thức</summary>';
-    for(const year of ['2018','2012']){
-      const group=document.createElement('div');const heading=document.createElement('h3');heading.textContent=year;group.append(heading);
-      for(const type of ['V','G','R','L']){
-        const main=jlptResources.resources.find(r=>r.id===`jlpt:${year}:${level}:${type}`);
-        const button=document.createElement('button');button.className='stage-btn';button.textContent=main.title;
-        button.onclick=()=>showLessonDetail(officialResourceLesson(level,type,year),level,type==='L'?'listening':'reading');
-        group.append(button);
-      }
-      official.append(group);
-    }
-    host.append(official);
-    if(level==='N5' || level==='N4'){
-      const extra=document.createElement('details');extra.className='course-supplements';
-      extra.innerHTML='<summary>Hội thoại video · Erin</summary><p>Japan Foundation · 25 bài bổ trợ sơ cấp. Không quy đổi chính thức sang JLPT.</p>';
-      for(const lesson of erinResources.lessons){
-        const button=document.createElement('button');button.type='button';button.textContent=`${lesson.number}. ${lesson.title}`;
-        button.onclick=()=>showLessonDetail(erinResourceLesson(lesson),level,'listening');extra.append(button);
-      }
-      host.append(extra);
-    }
+
   }catch{if(request!==studyPlanRequest)return;host.textContent='Chưa tải được lộ trình. ';const retry=document.createElement('button');retry.type='button';retry.textContent='Thử lại';retry.onclick=()=>renderStudyPlan(level);host.append(retry);}
 }
 let curriculumView='plan';

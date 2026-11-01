@@ -32,11 +32,11 @@ Authenticated reversed chat uses thầy Lâm and saved conversation context. It 
 
 ## Accounts
 
-Google sign-in is implemented, with D1 profiles, sessions, conversations and progress. Account deletion targets the authenticated account's records. Guests can study locally; guest history is not automatically transferred to an account. Real Google consent and cross-browser persistence still need the verification listed in [HANDOFF.md](HANDOFF.md).
+Email/password registration and Google sign-in are implemented, with D1 profiles, sessions, conversations and progress. Account deletion targets the authenticated account's records. Learning routes require an account. Email verification and password recovery are not implemented. Real Google consent and cross-browser persistence still need the verification listed in [HANDOFF.md](HANDOFF.md).
 
 ## Interface
 
-Warm paper, sketch rules, restrained colors, mobile navigation and one consistent male teacher Lâm in a vest. The Three.js classroom supports object selection, spatial Japanese phrases, viewpoint adjustment and a four-object quiz. Keyboard controls and reduced-motion support accompany visual interactions. The computer anatomy figure is optional vocabulary content.
+Warm paper, compact navigation and a licensed Avataaars teacher in a blazer. The public landing exposes account entry; dashboard and chat use the available workspace. The sidebar toggle sits inside the desktop rail. The 3D room and anatomy activity have been removed. Roadmaps contain theory, vocabulary and grammar, with tests in Practice.
 
 ## Source licensing
 

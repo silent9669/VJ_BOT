@@ -8,12 +8,11 @@
   },
   "scripts": {
     "dev": "cf dev --port 8787",
-    "build": "npm run build:room && cf deploy --dry-run",
+    "build": "cf deploy --dry-run",
     "test": "node --test tests/*.test.mjs",
     "test:python": "PYTHONPATH=. .venv/bin/pytest tests/ -q",
     "data:import": "python3 scripts/import_lessons.py",
-    "deploy": "npm run build:room && cf deploy",
-    "build:room": "node scripts/build_room.mjs"
+    "deploy": "cf deploy"
   },
   "repository": {
     "type": "git",
@@ -40,13 +39,12 @@
   "homepage": "https://vjbot.dangphuc.me",
   "devDependencies": {
     "@cloudflare/vite-plugin": "^2.0.0-beta.v.5",
-    "anatomy-figures": "^0.1.0",
     "cf": "^1.0.0-beta.23",
     "esbuild": "^0.28.2",
     "wrangler": "^4.153.0"
   },
   "dependencies": {
-    "jose": "^6.2.14",
-    "three": "^0.187.0"
+    "@noble/hashes": "^2.4.0",
+    "jose": "^6.2.14"
   }
 }
