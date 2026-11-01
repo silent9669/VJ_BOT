@@ -25,7 +25,7 @@ function setupWorkspace(){
 }
 function featureLevelCards(feature){
   const host=document.getElementById(`${feature}-hub`);
-  host.innerHTML=`<header class="workspace-heading"><h1>${featureNames[feature]}</h1><span>Chọn cấp độ</span></header><div class="level-cards">${learningLevels.map(level=>`<a class="level-course-card" href="#${feature}/${level}"><div class="level-cover" data-level="${level}"><img src="assets/courses/${level.toLowerCase()}.svg" alt="" width="300" height="168"></div><div class="level-card-content"><h2>${level}</h2><div class="level-card-footer"><span>${featureNames[feature]}</span><span aria-hidden="true">↗</span></div></div></a>`).join('')}</div>`;
+  host.innerHTML=`<header class="workspace-heading"><h1>${featureNames[feature]}</h1></header><div class="level-cards">${learningLevels.map(level=>`<a class="level-course-card" href="#${feature}/${level}"><div class="level-cover" data-level="${level}"><img src="assets/courses/${level.toLowerCase()}.svg" alt="" width="300" height="168"></div><div class="level-card-content"><h2>${level}</h2><div class="level-card-footer"><span aria-hidden="true">↗</span></div></div></a>`).join('')}</div>`;
 }
 async function renderFeaturePage(feature,route){
   const version=featureVersion;
@@ -48,12 +48,14 @@ async function renderFeaturePage(feature,route){
   try{
     await ensureLessons(route.level);if(version!==featureVersion)return;
     host.replaceChildren();
-    for(const lesson of window.JLPT_DATA.curriculum[route.level].skills.kanji){
+    const lessons=window.JLPT_DATA.curriculum[route.level].skills.kanji;
+    for(const lesson of lessons){
       const button=document.createElement('button');button.className='kanji-set';
       const chars=document.createElement('span'),label=document.createElement('strong');
       chars.lang='ja';chars.textContent=lesson.items.slice(0,6).map(i=>i.jp).join(' ');label.textContent=`Bộ ${lesson.lesson} · ${lesson.items.length} chữ`;
       button.append(chars,label);button.onclick=()=>{showLessonDetail(lesson,route.level,'kanji');currentLesson.returnTab='kanji';};host.append(button);
     }
+    setupLessonFilter(work,lessons,'.kanji-set');
   }catch{host.textContent='Chưa tải được Kanji. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeaturePage(feature,route);host.append(retry);}
 }
 async function renderDashboard(){
@@ -64,7 +66,7 @@ async function renderDashboard(){
     const response=await apiFetch('/api/progress');if(!response.ok)throw new Error('progress');
     const [progress,completed]=await Promise.all([response.json(),loadCompletions()]);
     const due=(progress.items || []).filter(i=>i.next_review && new Date(i.next_review)<=new Date()).length;
-    host.innerHTML=`<div class="dashboard-next"><div><span>${activeCurriculumLevel}</span><h2>Tiếp tục bài học</h2><a class="public-cta" href="#curriculum/${activeCurriculumLevel}">Mở lộ trình ↗</a></div><img src="assets/courses/${activeCurriculumLevel.toLowerCase()}.svg" alt="" width="260" height="150"></div><dl class="dashboard-numbers"><div><dt>Đã hoàn thành</dt><dd>${completed.size}</dd></div><div><dt>Mục đến hạn ôn</dt><dd>${due}</dd></div><div><dt>Ngày liên tiếp</dt><dd>${Number(progress.streak_days)||0}</dd></div></dl><div class="dashboard-tools">${Object.entries(featureNames).map(([key,name])=>`<a href="#${key}"><h2>${name}</h2><span aria-hidden="true">↗</span></a>`).join('')}<a href="#classroom"><h2>Học cùng thầy Lâm</h2><span aria-hidden="true">↗</span></a></div><section class="dashboard-recent"><h2>Vừa hoàn thành</h2>${[...completed.values()].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,5).map(i=>`<p><span>${escapeHtml(i.level)}</span> ${escapeHtml(i.title)}</p>`).join('') || '<p>Chưa có bài hoàn thành. Chọn một bài trong lộ trình để bắt đầu.</p>'}</section>`;
+    host.innerHTML=`<div class="dashboard-next"><div><span>${activeCurriculumLevel}</span><h2>Tiếp tục bài học</h2><a class="public-cta" href="#curriculum/${activeCurriculumLevel}">Mở lộ trình ↗</a></div><img src="assets/courses/${activeCurriculumLevel.toLowerCase()}.svg" alt="" width="260" height="150"></div><dl class="dashboard-numbers"><div><dt>Đã hoàn thành</dt><dd>${completed.size}</dd></div><div><dt>Mục đến hạn ôn</dt><dd>${due}</dd></div><div><dt>Ngày liên tiếp</dt><dd>${Number(progress.streak_days)||0}</dd></div></dl><div class="dashboard-tools">${Object.entries(featureNames).map(([key,name])=>`<a href="#${key}"><h2>${name}</h2><span aria-hidden="true">↗</span></a>`).join('')}<a href="#classroom"><h2>Học cùng thầy Lâm</h2><span aria-hidden="true">↗</span></a></div><section class="dashboard-recent"><h2>Vừa hoàn thành</h2>${[...completed.values()].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,5).map(i=>`<p><span>${escapeHtml(i.level)}</span> ${escapeHtml(i.title)}</p>`).join('') || '<p>Chưa có bài hoàn thành.</p>'}</section>`;
   }catch{host.textContent='Chưa tải được tiến độ. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=renderDashboard;host.append(retry);}
 }
 function addPracticeSets(level){
@@ -95,7 +97,7 @@ async function renderExamCatalog(route){
       if(!examConfig.papers.some(p=>p.level===route.level && p.year===route.id))throw new Error('paper');
       host.hidden=true;simulation.hidden=false;return renderSimulation(route.level,route.id);
     }
-    host.innerHTML=`<header class="workspace-heading"><h1>JLPT ${route.level}</h1></header><h2>Mô phỏng kỳ thi</h2><p class="exam-source-note">Đề luyện chính thức, đồng hồ theo từng phần. Điểm tự đối chiếu, không quy đổi sang thang điểm JLPT.</p><div class="exam-grid">${examConfig.papers.filter(p=>p.level===route.level).map(p=>`<a class="exam-set official" href="#quiz/${route.level}/simulation/${p.year}"><span>Japan Foundation · JEES</span><h3>Official Practice Workbook ${p.year}</h3><p>${p.sections.reduce((n,s)=>n+s.minutes,0)} phút · ${p.sections.length} phần</p><strong>Chuẩn bị thi ↗</strong></a>`).join('')}</div><h2>Bộ luyện theo chủ đề</h2><div class="exam-grid">${featureLessons('quiz',route.level).map(e=>`<a class="exam-set" href="#quiz/${route.level}/lesson/${encodeURIComponent(e.id)}"><h3>${escapeHtml(e.title)}</h3><p>${completionRecords.has(activityId(e,route.level,'quiz'))?'Đã hoàn thành':'Học bài · 5 câu kiểm tra'}</p><span>${escapeHtml(e.summary)}</span></a>`).join('')}</div>`;
+    host.innerHTML=`<header class="workspace-heading"><h1>JLPT ${route.level}</h1></header><h2>Mô phỏng kỳ thi</h2><p class="exam-source-note">Đề luyện chính thức, đồng hồ theo từng phần. Điểm tự đối chiếu, không quy đổi sang thang điểm JLPT.</p><div class="exam-grid">${examConfig.papers.filter(p=>p.level===route.level).map(p=>`<a class="exam-set official" href="#quiz/${route.level}/simulation/${p.year}"><span>Japan Foundation · JEES</span><h3>Official Practice Workbook ${p.year}</h3><p>${p.sections.reduce((n,s)=>n+s.minutes,0)} phút · ${p.sections.length} phần</p><strong>Chuẩn bị thi ↗</strong></a>`).join('')}</div><h2>Bộ luyện theo chủ đề</h2><div class="exam-grid">${featureLessons('quiz',route.level).map(e=>`<a class="exam-set" href="#quiz/${route.level}/lesson/${encodeURIComponent(e.id)}"><h3>${escapeHtml(e.title)}</h3><p>${completionRecords.has(activityId(e,route.level,'quiz'))?'Đã hoàn thành':'5 câu'}</p><span>${escapeHtml(e.summary)}</span></a>`).join('')}</div>`;
   }catch{host.hidden=false;host.textContent='Chưa mở được bộ đề. ';const b=document.createElement('button');b.textContent='Thử lại';b.onclick=()=>renderExamCatalog({...route,view:undefined});host.append(b);}
 }
 function featureLessons(feature,level){
@@ -125,7 +127,8 @@ async function renderFeatureLessonList(feature,level){
   try{
     await Promise.all([ensureLessons(level),loadPracticalCourse(),loadCompletions()]);if(version!==featureVersion)return;
     const lessons=featureLessons(feature,level);
-    host.innerHTML=`<header class="workspace-heading"><h1>${featureNames[feature]} ${level}</h1><span>${lessons.length} bài</span></header><div class="feature-lesson-grid">${lessons.map((l,i)=>`<a class="feature-lesson-card" href="#${feature}/${level}/lesson/${encodeURIComponent(l.id)}"><span class="lesson-list-number">${String(i+1).padStart(2,'0')}</span><h2>${escapeHtml(l.title)}</h2><p>${escapeHtml(l.items?.slice(0,4).map(w=>w.jp).join(' · ') || l.summary || '')}</p><span>${completionRecords.has(activityId(l,level,feature))?'Đã hoàn thành':'Học bài · 5 câu kiểm tra'} ↗</span></a>`).join('')}</div>`;
+    host.innerHTML=`<header class="workspace-heading"><h1>${featureNames[feature]} ${level}</h1><span>${lessons.length} bài</span></header><div class="feature-lesson-grid">${lessons.map((l,i)=>`<a class="feature-lesson-card" href="#${feature}/${level}/lesson/${encodeURIComponent(l.id)}"><span class="lesson-list-number">${String(i+1).padStart(2,'0')}</span><h2>${escapeHtml(l.title)}</h2><p>${escapeHtml(l.items?.slice(0,4).map(w=>w.jp).join(' · ') || l.summary || '')}</p><span>${completionRecords.has(activityId(l,level,feature))?'Đã hoàn thành':''} ↗</span></a>`).join('')}</div>`;
+    setupLessonFilter(host,lessons,'.feature-lesson-card');
   }catch{if(version!==featureVersion)return;host.textContent='Chưa tải được bài học. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeatureLessonList(feature,level);host.append(retry);}
 }
 function addFeatureLessonAction(item,level,owner){
@@ -137,4 +140,19 @@ function addFeatureLessonAction(item,level,owner){
   button.textContent=owner==='flashcards'?'Ôn bằng thẻ nhớ':'Thực hành hội thoại';
   button.onclick=()=>switchTab(owner,{level,view:owner==='flashcards'?'review':'session',id:owner==='flashcards'?item.id:item.lessonKey});
   body.querySelector('.lesson-footer').prepend(button);
+}
+
+function lessonSearchText(lesson){
+  return [lesson.title,lesson.summary,...(lesson.items || []).flatMap(item=>[item.jp,item.reading,item.ro,item.vi,item.en])].filter(Boolean).join(' ').normalize('NFKC').toLocaleLowerCase();
+}
+function setupLessonFilter(host,lessons,selector){
+  const cards=[...host.querySelectorAll(selector)],texts=lessons.map(lessonSearchText);
+  const filter=document.createElement('label');filter.className='lesson-search';filter.textContent='Tìm bài';
+  const input=document.createElement('input');input.type='search';input.placeholder='Tên bài, từ hoặc chữ Hán';filter.append(input);
+  const empty=document.createElement('p');empty.className='lesson-filter-empty';empty.hidden=true;empty.setAttribute('role','status');empty.textContent='Không tìm thấy bài.';
+  cards[0]?.parentElement.before(filter);host.append(empty);
+  input.oninput=()=>{
+    const query=input.value.trim().normalize('NFKC').toLocaleLowerCase();let visible=0;
+    cards.forEach((card,i)=>{card.hidden=!texts[i].includes(query);if(!card.hidden)visible++;});empty.hidden=visible>0;
+  };
 }

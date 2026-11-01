@@ -93,12 +93,16 @@ async function renderStudyPlan(level){
       detail.addEventListener('toggle',()=>{if(detail.open)for(const other of host.querySelectorAll('.plan-unit'))if(other!==detail)other.open=false;});
       host.querySelector('.plan-units').append(detail);
     }
-    const official=document.createElement('section');official.className='official-level-resources';official.innerHTML='<h3>Tài liệu JLPT chính thức</h3><p>Đề luyện 2018 · mở tài liệu tại jlpt.jp</p>';
-    for(const type of ['V','G','R','L']){
-      const main=jlptResources.resources.find(r=>r.id===`jlpt:2018:${level}:${type}`);
-      const button=document.createElement('button');button.className='stage-btn';button.textContent=main.title;
-      button.onclick=()=>showLessonDetail(officialResourceLesson(level,type),level,type==='L'?'listening':'reading');
-      official.append(button);
+    const official=document.createElement('details');official.className='official-level-resources';official.innerHTML='<summary>Tài liệu JLPT chính thức</summary>';
+    for(const year of ['2018','2012']){
+      const group=document.createElement('div');const heading=document.createElement('h3');heading.textContent=year;group.append(heading);
+      for(const type of ['V','G','R','L']){
+        const main=jlptResources.resources.find(r=>r.id===`jlpt:${year}:${level}:${type}`);
+        const button=document.createElement('button');button.className='stage-btn';button.textContent=main.title;
+        button.onclick=()=>showLessonDetail(officialResourceLesson(level,type,year),level,type==='L'?'listening':'reading');
+        group.append(button);
+      }
+      official.append(group);
     }
     host.append(official);
     if(level==='N5' || level==='N4'){

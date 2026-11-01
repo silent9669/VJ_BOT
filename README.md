@@ -4,11 +4,11 @@
 
 ## Development status
 
-Development resumed at the user’s request. Account persistence and login recovery fixes are deployed; the working tree remains uncommitted. See the [handoff](docs/HANDOFF.md) and [documentation index](docs/README.md) for current verification and next steps.
+The compact interface and expanded resource catalog are locally verified on `feature/compact-learning`; this pass has not been deployed. See the [handoff](docs/HANDOFF.md) for verification and scope.
 
 ## Learning
 
-- Landing-first learning: choose N5–N1, open one of 40 grammar chapters or 20 authored situations with Vietnamese explanations, 60 contextual questions and saved written responses. Reversible completion across lessons/Kaiwa/tests and lesson-grounded reversed chat. Crawled catalogs link 58 JLPT workbook resources and 72 official Irodori lessons to original PDFs/audio; the full dictionary library remains available.
+- Landing-first learning: choose N5–N1, open one of 40 grammar chapters or 20 authored situations with Vietnamese explanations, 60 contextual questions and saved written responses. Reversible completion across lessons/Kaiwa/tests and lesson-grounded reversed chat. Crawled catalogs link 111 JLPT workbook resources (2012/2018), 225 Erin activities across 25 lessons, and 72 official Irodori lessons to publisher materials; the full dictionary library remains available.
 
 - Vocabulary, grammar and kanji across N5–N1, loaded on demand by level, plus 20 original kana lessons.
 - **10,720 imported OpenJLPT entries:** 7,811 vocabulary, 526 grammar patterns and 2,383 kanji records. Level assignments are community estimates, not official JLPT lists.
@@ -20,7 +20,7 @@ Development resumed at the user’s request. Account persistence and login recov
 
 ## Teacher and interface
 
-The same original SVG teacher appears in chat, the assistant dock, settings and the Three.js classroom. The classroom has selectable objects, Japanese spatial phrases, a four-object practice round, an adjustable viewpoint and equivalent keyboard-accessible controls. Animation stops when the scene is hidden or settled; reduced-motion preferences are respected. A static teacher fallback remains if WebGL is unavailable.
+The original SVG teacher appears on the landing, in chat and in the optional Three.js classroom. The header button and Cmd/Ctrl+K open the assistant. Compact level rows, searchable vocabulary/Kanji/conversation lists, and expandable publisher resources keep the learning workspace focused. The classroom has selectable objects, Japanese spatial phrases, a four-object practice round, an adjustable viewpoint and equivalent keyboard-accessible controls. Animation stops when the scene is hidden or settled; reduced-motion preferences are respected. A static teacher fallback remains if WebGL is unavailable.
 
 The existing computer anatomy figure is available as an optional vocabulary illustration. No React migration is required: the frontend remains HTML, CSS and JavaScript.
 
@@ -49,6 +49,16 @@ The Worker uses a `gcp:us-east4` placement hint because Google rejected TTS requ
 The production app is `src/worker.js` plus `static/`, deployed as the **vjbot** Worker with D1. Local Worker development uses port 8787. The Python backend remains a separate implementation and its tests do not prove deployed Worker behavior. Node 22.13+ is required for the Worker tests' SQLite adapter.
 
 `npm run build` rebuilds `static/room.js` from `src/client/room.js` before the Cloudflare dry run. `npm run deploy` does the same before deployment. Vite's warnings about classic script tags are expected: those files are copied from the public asset directory and loaded in dependency order.
+
+## Refresh publisher catalogs
+
+```sh
+python3 scripts/crawl_course_sources.py
+python3 scripts/crawl_erin_resources.py
+python3 scripts/crawl_jlpt_resources.py
+```
+
+These bounded crawls update metadata, publisher links, retrieval dates and source hashes. They do not mirror copyrighted PDFs, video, transcripts or audio. JLPT and Erin reject incomplete indexes before replacing their catalogs. Workbook documents, answer links and audio remain separated by year and level.
 
 ## Refresh lesson data
 

@@ -51,7 +51,7 @@ async function restoreAppRoute(){
     const units=createStudyPlan(route.level);
     const lessons=[...units.flatMap(u=>u.steps.filter(s=>!s.kind).map(s=>s.lesson)),...(window.JLPT_DATA.curriculum[route.level].skills[route.skill]||[])];
     let item=lessons.find(l=>activityId(l,route.level,route.skill)===route.id);
-    if(!item && route.id.startsWith('jlpt:'))item=officialResourceLesson(route.level,route.id.split(':').at(-1));
+    if(!item && route.id.startsWith('jlpt:'))item=officialResourceLesson(route.level,route.id.split(':').at(-1),route.id.split(':')[1]);
     if(!item && route.id.startsWith('erin:')){const source=erinResources.lessons.find(l=>l.id===route.id);if(source)item=erinResourceLesson(source);}
     if(!item)throw new Error('missing');
     showLessonDetail(item,route.level,route.skill,true);
@@ -61,13 +61,13 @@ async function restoreAppRoute(){
     const retry=document.createElement('button');retry.className='stage-btn';retry.textContent='Thử lại';retry.onclick=restoreAppRoute;host.append(retry);
   }
 }
-function officialResourceLesson(level,type){
-  const main=jlptResources.resources.find(r=>r.id===`jlpt:2018:${level}:${type}`);
+function officialResourceLesson(level,type,year='2018'){
+  const main=jlptResources.resources.find(r=>r.id===`jlpt:${year}:${level}:${type}`);
   if(!main || !['V','G','R','L'].includes(type))return null;
-  return {id:main.id,title:`${level} · ${main.title}`,sourceLabel:'JLPT · tài liệu chính thức',summary:'Làm bài trên tài liệu gốc, đối chiếu đáp án, rồi đánh dấu hoàn thành tại đây.',externalResources:jlptResources.resources.filter(r=>r.level===level && (r.id===main.id || /:(answer|sheet)$/.test(r.id) || (type==='L' && (r.kind==='audio' || r.id.endsWith(':script')))))};
+  return {id:main.id,title:`${level} · ${main.title} · ${year}`,sourceLabel:'JLPT · tài liệu chính thức',summary:'Làm bài trên tài liệu gốc, đối chiếu đáp án, rồi đánh dấu hoàn thành tại đây.',externalResources:jlptResources.resources.filter(r=>r.level===level && r.year===year && (r.id===main.id || /:(answer|sheet)$/.test(r.id) || (type==='L' && (r.kind==='audio' || r.id.endsWith(':script')))))};
 }
 function erinResourceLesson(lesson){
-  return {id:lesson.id,title:lesson.title,lesson:lesson.number,sourceLabel:'Japan Foundation · Erin',summary:'Xem hội thoại cơ bản, học mẫu câu và đối chiếu với hội thoại mở rộng trên website gốc.',externalResources:lesson.resources};
+  return {id:lesson.id,title:lesson.title,lesson:lesson.number,sourceLabel:'Japan Foundation · Erin',summary:'Hội thoại, từ vựng và văn hóa tại Japan Foundation.',externalResources:lesson.resources};
 }
 async function renderLevelCards(){
   const host=document.getElementById('level-cards');
@@ -75,14 +75,14 @@ async function renderLevelCards(){
   host.textContent='Đang tải khóa học…';
   try{
     await loadPracticalCourse();
-    const descriptions=[['Bắt đầu','Chữ cái, giới thiệu bản thân và những câu dùng hằng ngày.','あ'],['Nền tảng','Kể chuyện, diễn đạt dự định và xử lý tình huống quen thuộc.','話'],['Kết nối','Đọc thông tin, trình bày ý kiến và giao tiếp tự nhiên hơn.','道'],['Mở rộng','Theo dõi lập luận, đọc bài báo và diễn đạt sắc thái.','考'],['Chuyên sâu','Phân tích quan điểm, hàm ý và văn phong trang trọng.','論']];
+    const descriptions=[['Bắt đầu','Chữ cái, giới thiệu bản thân và những câu dùng hằng ngày.'],['Nền tảng','Kể chuyện, diễn đạt dự định và xử lý tình huống quen thuộc.'],['Kết nối','Đọc thông tin, trình bày ý kiến và giao tiếp tự nhiên hơn.'],['Mở rộng','Theo dõi lập luận, đọc bài báo và diễn đạt sắc thái.'],['Chuyên sâu','Phân tích quan điểm, hàm ý và văn phong trang trọng.']];
     host.replaceChildren();
     for(const [index,level] of learningLevels.entries()){
-      const [title,description,character]=descriptions[index];
+      const [title,description]=descriptions[index];
       const chapters=courseChapters.chapters.filter(c=>c.level===level).length;
       const units=practicalCourse.units.filter(u=>u.level===level).length;
       const card=document.createElement('a');card.className='level-course-card';card.href=appRouteHash('curriculum',{level});
-      card.innerHTML=`<div class="level-cover" data-level="${level}" aria-hidden="true"><span>${level}</span><img src="assets/courses/${level.toLowerCase()}.svg" alt="" width="300" height="168"><span lang="ja">${character}</span></div><div class="level-card-content"><h3>${level} <span>${title}</span></h3><p>${description}</p><div class="level-card-footer"><span>${chapters} chương · ${units} bài tình huống</span><span aria-hidden="true">↗</span></div></div>`;
+      card.innerHTML=`<div class="level-cover" data-level="${level}" aria-hidden="true"><img src="assets/courses/${level.toLowerCase()}.svg" alt="" width="300" height="168"></div><div class="level-card-content"><h2>${level} <span>${title}</span></h2><p>${description}</p><div class="level-card-footer"><span>${chapters} chương · ${units} bài tình huống</span><span aria-hidden="true">↗</span></div></div>`;
       card.onclick=event=>{if(event.button===0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey){event.preventDefault();openLevelCourse(level);}};host.append(card);
     }
   }catch{
@@ -107,7 +107,6 @@ function setupSidebar(){
     toggle.setAttribute('aria-expanded',String(isOpen));toggle.setAttribute('aria-label',isOpen?'Thu gọn menu':'Mở menu');
     document.querySelector('.app-main').inert=mobile.matches && open;
     document.querySelector('.mobile-bottom-bar').inert=mobile.matches && open;
-    document.getElementById('sensei-floating-dock').inert=mobile.matches && open;
   }
   window.closeAppSidebar=()=>draw(false);
   toggle.onclick=()=>{if(mobile.matches){draw(!sidebar.classList.contains('open'));sidebar.querySelector('button')?.focus();}else{expanded=!expanded;localStorage.setItem('vjbot_sidebar_expanded',String(expanded));draw();}};

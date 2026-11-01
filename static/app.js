@@ -270,53 +270,6 @@ function initLoadingScreen() {
 }
 
 // ==========================================
-// 4. LIVE JLPT EXAM COUNTDOWN TIMER
-// ==========================================
-function initJlptCountdown() {
-  function updateCountdown() {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-
-    // JLPT is held on 1st Sunday of July and 1st Sunday of December
-    function getFirstSunday(year, month) {
-      const d = new Date(year, month, 1, 9, 0, 0);
-      const day = d.getDay();
-      const diff = (7 - day) % 7;
-      d.setDate(1 + diff);
-      return d;
-    }
-
-    const julyExam = getFirstSunday(currentYear, 6);
-    const decExam = getFirstSunday(currentYear, 11);
-    let target = julyExam;
-
-    if (now > julyExam) target = decExam;
-    if (now > decExam) target = getFirstSunday(currentYear + 1, 6);
-
-    const diffMs = target - now;
-    if (diffMs <= 0) return;
-
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-    const mins = Math.floor((diffMs / (1000 * 60)) % 60);
-    const secs = Math.floor((diffMs / 1000) % 60);
-
-    const dEl = document.getElementById("cd-days");
-    const hEl = document.getElementById("cd-hours");
-    const mEl = document.getElementById("cd-mins");
-    const sEl = document.getElementById("cd-secs");
-
-    if (dEl) dEl.textContent = String(days).padStart(2, "0");
-    if (hEl) hEl.textContent = String(hours).padStart(2, "0");
-    if (mEl) mEl.textContent = String(mins).padStart(2, "0");
-    if (sEl) sEl.textContent = String(secs).padStart(2, "0");
-  }
-
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
-}
-
-// ==========================================
 // 5. 1984 MACINTOSH CRT TYPEWRITER (ANATOMY FIGURES)
 // ==========================================
 function initAnatomyTypewriter() {
@@ -1191,8 +1144,6 @@ async function loadProgress() {
 // 14. FLOATING SENSEI DOCK (ANYWHERE SPAWNING)
 // ==========================================
 function setupFloatingSensei() {
-  const dock = document.getElementById("sensei-floating-dock");
-  const dockBtn = document.getElementById("btn-spawn-sensei-float");
   const popover = document.getElementById("sensei-floating-popover");
   const closeBtn = document.getElementById("btn-close-popover");
   const sendBtn = document.getElementById("btn-popover-send");
@@ -1210,91 +1161,6 @@ function setupFloatingSensei() {
     }
   }
 
-  // Draggable Anywhere Logic
-  dockBtn?.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();togglePopover();}});
-  if (dock) {
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let initialLeft = 0, initialTop = 0;
-    let movedDist = 0;
-
-    // Load saved position if any
-    const saved = localStorage.getItem("vjbot_sensei_pos");
-    if (saved) {
-      try {
-        const { x, y } = JSON.parse(saved);
-        dock.style.left = Math.min(Math.max(10, x), window.innerWidth - 70) + "px";
-        dock.style.top = Math.min(Math.max(10, y), window.innerHeight - 70) + "px";
-        dock.style.right = "auto";
-        dock.style.bottom = "auto";
-      } catch {}
-    }
-
-    const onStart = (cx, cy) => {
-      isDragging = true;
-      movedDist = 0;
-      startX = cx;
-      startY = cy;
-      const rect = dock.getBoundingClientRect();
-      initialLeft = rect.left;
-      initialTop = rect.top;
-      dock.classList.add("dragging");
-    };
-
-    const onMove = (cx, cy) => {
-      if (!isDragging) return;
-      const dx = cx - startX;
-      const dy = cy - startY;
-      movedDist = Math.max(movedDist, Math.hypot(dx, dy));
-      let nLeft = Math.max(8, Math.min(window.innerWidth - dock.offsetWidth - 8, initialLeft + dx));
-      let nTop = Math.max(8, Math.min(window.innerHeight - dock.offsetHeight - 8, initialTop + dy));
-      dock.style.left = nLeft + "px";
-      dock.style.top = nTop + "px";
-      dock.style.right = "auto";
-      dock.style.bottom = "auto";
-    };
-
-    const onEnd = () => {
-      if (!isDragging) return;
-      isDragging = false;
-      dock.classList.remove("dragging");
-      if (movedDist > 6) {
-        const rect = dock.getBoundingClientRect();
-        localStorage.setItem("vjbot_sensei_pos", JSON.stringify({ x: rect.left, y: rect.top }));
-      }
-    };
-
-    dock.addEventListener("mousedown", (e) => {
-      onStart(e.clientX, e.clientY);
-      const mMove = (ev) => onMove(ev.clientX, ev.clientY);
-      const mUp = () => {
-        onEnd();
-        window.removeEventListener("mousemove", mMove);
-        window.removeEventListener("mouseup", mUp);
-      };
-      window.addEventListener("mousemove", mMove);
-      window.addEventListener("mouseup", mUp);
-    });
-
-    dock.addEventListener("touchstart", (e) => {
-      const t = e.touches[0];
-      onStart(t.clientX, t.clientY);
-    }, { passive: true });
-
-    dock.addEventListener("touchmove", (e) => {
-      if (!isDragging) return;
-      const t = e.touches[0];
-      onMove(t.clientX, t.clientY);
-    }, { passive: true });
-
-    dock.addEventListener("touchend", onEnd);
-
-    if (dockBtn) {
-      dockBtn.addEventListener("click", () => {
-        if (movedDist <= 6) togglePopover();
-      });
-    }
-  }
   if (summonBtn) summonBtn.addEventListener("click", togglePopover);
   if (closeBtn) closeBtn.addEventListener("click", () => { popover.hidden = true; });
 
@@ -1371,9 +1237,12 @@ function setupSettings() {
   // Sound Toggle
   const soundBtn = document.getElementById("btn-toggle-sound-setting");
   if (soundBtn) {
+    soundBtn.textContent = soundEngine.enabled ? "Đang bật" : "Đang tắt";
+    soundBtn.setAttribute("aria-pressed",String(soundEngine.enabled));
     soundBtn.addEventListener("click", () => {
       const enabled = soundEngine.toggle();
-      soundBtn.textContent = enabled ? "🔊 Bật âm thanh" : "🔇 Tắt âm thanh";
+      soundBtn.textContent = enabled ? "Đang bật" : "Đang tắt";
+      soundBtn.setAttribute("aria-pressed",String(enabled));
     });
   }
 
@@ -1386,24 +1255,11 @@ function setupSettings() {
     });
   });
 
-  // User ID Display & Copy
-  const userIdDisplay = document.getElementById("user-id-display");
-  if (userIdDisplay) userIdDisplay.textContent = signedInUser?.user_id || userId;
-
-  const btnCopyUserId = document.getElementById("btn-copy-user-id");
-  if (btnCopyUserId) {
-    btnCopyUserId.addEventListener("click", () => {
-      navigator.clipboard?.writeText(signedInUser?.user_id || userId);
-      btnCopyUserId.textContent = "✅ Đã sao chép!";
-      setTimeout(() => { btnCopyUserId.textContent = "📋 Sao chép"; }, 2000);
-    });
-  }
-
   // Delete Account on Cloudflare D1
   const btnDelete = document.getElementById("btn-delete-account");
   if (btnDelete) {
     btnDelete.addEventListener("click", async () => {
-      if (!confirm("⚠️ Bạn có chắc chắn muốn xoá toàn bộ tài khoản và dữ liệu tiến độ học tập trên Cloudflare D1? Thao tác này không thể hoàn tác.")) {
+      if (!confirm("Xóa tài khoản, lịch sử và tiến độ? Thao tác này không thể hoàn tác.")) {
         return;
       }
       try {
@@ -1414,10 +1270,10 @@ function setupSettings() {
         });
         if (resp.ok) {
           for (const key of Object.keys(localStorage)) if(key.startsWith("vjbot_")) localStorage.removeItem(key);
-          alert("Đã xoá tài khoản và toàn bộ dữ liệu trên Cloudflare D1 thành công!");
+          alert("Đã xóa tài khoản và dữ liệu.");
           window.location.reload();
         } else {
-          alert("Lỗi khi xoá tài khoản trên Cloudflare.");
+          alert("Chưa xóa được tài khoản. Vui lòng thử lại.");
         }
       } catch (err) {
         alert("Lỗi: " + err.message);
@@ -1895,7 +1751,6 @@ function setupEventListeners() {
 // ==========================================
 (async function init() {
   initLoadingScreen();
-  initJlptCountdown();
   initAnatomyTypewriter();
   mascotMgr.updateAllSpriteElements();
 

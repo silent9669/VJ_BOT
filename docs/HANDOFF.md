@@ -1,3 +1,14 @@
+## 2026-11-01 · Compact interface and expanded resources
+
+Locally implemented on `feature/compact-learning`; not deployed in this pass.
+
+- Landing reduced to a short editorial hero, N5–N1 selector and learning shortcuts, using the supplied OpenDesign reference and existing original artwork. Removed repeated promotional sections, countdown, draggable teacher dock, duplicate mascot displays, and internal account IDs from settings. Assistant remains available in the header and through Cmd/Ctrl+K.
+- Level shelves and vocabulary/conversation lessons use compact rows. Vocabulary, Kanji and conversation lists support search; dashboard, lessons, quizzes, chat, progress and settings have tighter spacing. Sound has a persistent, accessible on/off state. Mobile drawer retains Escape handling and focus return.
+- Re-crawled all existing publisher catalogs. JLPT grew from 58 to 111 links by adding the 2012 workbooks. Erin grew from 100 to 225 activity links across the same 25 lessons, including culture, experiences, onomatopoeia and learners worldwide. Irodori remains 72 lessons / 1,373 audio links. These are external references, not newly authored in-app lessons or mirrored media.
+- Public resource browser groups JLPT by year/level and expands one resource row at a time. Curriculum exposes both workbook years. Reloading a 2012 lesson preserves its source year; answer keys and audio never mix between editions. New parser tests reject partial publisher pages without overwriting the prior catalog.
+- Validation: 50 Node tests, 49 Python tests, Worker build/dry run, and whitespace checks passed. Existing classic-script build notices and two Python dependency deprecation warnings remain. Ten representative new publisher endpoints returned HTTP 200.
+- Chrome DevTools: inspected landing and resource catalog on the local Worker; signed-in learning screens used a temporary local API fixture. Checked 320/390/768/1024/1440px layouts, reduced motion, lesson search/empty/reset, lesson→practice answer feedback, flashcard flip, 2012 resource selection, sound toggle/reload, and mobile drawer Escape/focus return. No page-level horizontal overflow or console errors in inspected routes; chat suggestions intentionally scroll horizontally. This does not verify Google consent, live AI calls or production persistence. Existing Worker tests cover session and save behavior.
+
 ## 2026-11-01 · Learning workspace and timed exam pass
 
 This pass replaces guest exploration with a public landing and Google sign-in before opening learning routes. Pending routes survive login. The landing follows the supplied [OpenDesign Landing](https://open-design.ai/plugins/example-open-design-landing/) editorial reference with original SVG/paper artwork; the existing vanilla stack remains.
