@@ -127,6 +127,10 @@
             <span class="nav-label">Tiến độ</span>
           </button>
 
+          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden>
+            <span class="nav-label">Quản trị</span>
+          </button>
+
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings">
 
             <span class="nav-label">Hồ sơ & Cài đặt</span>
@@ -338,7 +342,7 @@
                 <button type="button" class="prompt-chip" id="btn-ask-check"> Sửa câu của em</button>
               </div>
 
-              <div id="chat-error" role="alert" hidden><span id="chat-error-text"></span><div><button type="button" id="chat-retry">Thử lại</button><button type="button" id="chat-discard" hidden>Bỏ qua</button></div></div>
+              <div id="chat-error" role="alert" hidden><span id="chat-error-text"></span><div><button type="button" id="chat-open-settings" hidden>Cài đặt API</button><button type="button" id="chat-retry">Thử lại</button><button type="button" id="chat-discard" hidden>Bỏ qua</button></div></div>
               <!-- Chat Input Bar -->
               <form class="chat-input-bar" id="chat-form" onsubmit="return false;">
                 <button type="button" class="chat-audio-btn" id="btn-voice-input" title="Nói tiếng Nhật (Nhận diện giọng nói)">
@@ -694,10 +698,39 @@
         </section>
 
         <!-- TAB 7: SETTINGS, GEMINI KEY & MASCOTS -->
+        <section class="tab-panel" id="panel-admin" hidden>
+          <div class="settings-container"><h1>Quản trị</h1>
+            <div id="admin-stats" class="admin-stats" aria-live="polite"></div>
+            <div class="settings-card">
+              <h2 class="card-title">AI của hệ thống</h2>
+              <p id="admin-key" class="ai-source"></p>
+              <form id="admin-form" class="ai-form" autocomplete="off">
+                <label>Loại API<select id="admin-protocol"><option value="openai">OpenAI-compatible (Google)</option><option value="gemini">Gemini (Google)</option></select></label>
+                <label>Model<input id="admin-model" required maxlength="100" spellcheck="false"></label>
+                <label>Model dự phòng<input id="admin-fallbacks" maxlength="400" spellcheck="false"></label>
+                <div class="ai-actions"><button type="submit" class="public-cta">Lưu</button><button type="button" class="stage-btn" id="admin-test">Kiểm tra</button></div>
+                <p id="admin-status" role="status"></p>
+              </form>
+            </div>
+            <div class="settings-card"><h2 class="card-title">Hoạt động 7 ngày</h2><div id="admin-top"></div></div>
+          </div>
+        </section>
         <section class="tab-panel" id="panel-settings" hidden>
           <div class="settings-container"><h1>Cài đặt</h1>
 
             <div class="settings-card"><h2 class="card-title">Tài khoản</h2><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button></div>
+            <div class="settings-card" id="ai-card">
+              <h2 class="card-title">API AI</h2>
+              <p id="ai-source" class="ai-source" role="status"></p>
+              <form id="ai-form" class="ai-form" autocomplete="off">
+                <label>Loại API<select id="ai-protocol"><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select></label>
+                <label>URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false"></label>
+                <label>Model<input id="ai-model" required maxlength="100" spellcheck="false"></label>
+                <label>API key<input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false"></label>
+                <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save">Lưu và kiểm tra</button><button type="button" class="stage-btn" id="ai-remove" hidden>Xóa</button></div>
+                <p id="ai-status" role="status"></p>
+              </form>
+            </div>
             <!-- Sound & Retro Effects -->
             <div class="settings-card">
               <h2 class="card-title">Âm thanh</h2>
@@ -865,6 +898,7 @@
   <script src="learning.js"></script>
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
   <script src="account.js"></script>
+  <script src="ai-settings.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="app.js"></script>

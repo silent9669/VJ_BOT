@@ -38,7 +38,8 @@ const TAB_TITLES = {
   kaiwa: "Luyện nói",
   quiz: "Bài luyện JLPT",
   mastery: "Tiến độ",
-  settings: "Cài đặt"
+  settings: "Cài đặt",
+  admin: "Quản trị"
 };
 
 // ==========================================
@@ -386,6 +387,8 @@ function switchTab(tabId, route={}) {
     renderBookmarks();
   } else if (tabId === "classroom") {
     renderDailyKanji(activeCurriculumLevel);
+  } else if (tabId === "settings" || tabId === "admin") {
+    window.renderAiPanels?.(tabId);
   }
   return true;
 }
@@ -438,6 +441,7 @@ function chatError(message,retry) {
   const host=document.getElementById('chat-error');host.hidden=!message;
   document.getElementById('chat-error-text').textContent=message;
   const button=document.getElementById('chat-retry');button.hidden=!retry;button.onclick=retry;
+  const open=document.getElementById('chat-open-settings');open.hidden=!/Cài đặt/.test(message||'');open.onclick=()=>switchTab('settings');
   const discard=document.getElementById('chat-discard');discard.hidden=!failedChatMessage;discard.onclick=()=>{failedChatMessage=null;loadChatHistory();};
 }
 async function loadChatHistory() {
@@ -452,6 +456,7 @@ async function loadChatHistory() {
     document.getElementById('chat-welcome').style.display=messages.length?'none':'';
     for(const message of messages)renderBubble(message.role,message.content);
     chatHistoryReady=true;chatError('',null);
+    globalThis.checkAiReady?.();
     document.getElementById('chat-connection-status').textContent='';
   }catch{
     document.getElementById('chat-connection-status').textContent='';

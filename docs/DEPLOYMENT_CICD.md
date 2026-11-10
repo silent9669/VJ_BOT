@@ -69,6 +69,10 @@ Before a later deployment, record the current version and choose a compatible ro
 - Keep one lockfile (`package-lock.json`). A second one changes which package manager Workers Builds picks.
 - Rollback: Worker versions in the dashboard; D1 migrations are not undone.
 
-## AI chat (Google AI Studio free tier)
+## AI chat, admin and bring-your-own API
 
-Create a key at https://aistudio.google.com/api-keys, then add it as the secret `GEMINI_API_KEY` (dashboard: Worker `vjbot` > Settings > Variables and Secrets) for production, or put it in `.dev.vars` (see `.dev.vars.example`) for local dev. `src/gemini.js` tries `gemini-3.8-flash` (newest free Flash), `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash` in order on 404/429/5xx; set the `GEMINI_MODELS` variable (comma list) to change the order. Free-tier quota is per project per model, shared by all learners.
+- **Who can use the platform AI:** only an admin. Admin = a Google account whose verified email is in the secret `ADMIN_EMAILS` (comma list). The grant is recorded at Google sign-in and re-checked against the secret on every request, so removing an email revokes admin. Password accounts are never admin (their email is unverified). After adding or changing `ADMIN_EMAILS`, the admin must sign out and sign in with Google once.
+- **Everyone else:** Settings > API AI. Choose OpenAI-compatible, Claude (Anthropic) or Gemini, a base URL (https only; blank = the vendor default), a model and an API key. Keys are stored AES-GCM encrypted in D1 (`ai_providers`) with the secret `AI_KEY_SECRET`; changing that secret makes saved keys unreadable and users must re-enter them. Calls go server-side to the user's URL only, never with the platform key.
+- **Platform AI:** the secret `GEMINI_API_KEY` (create at https://aistudio.google.com/api-keys) is used only against Google endpoints: the OpenAI-compatible endpoint by default (`gemini-3.8-flash`, fallbacks `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash`) or Gemini native. Admin panel (sidebar "Quản trị") changes protocol, model and fallbacks and shows activity. An admin who saves their own API in Settings uses that instead.
+- **Text-to-speech** still uses `GEMINI_API_KEY` for every signed-in learner (rate limited, 20 AI calls a minute per account).
+- **Secrets:** `GEMINI_API_KEY`, `ADMIN_EMAILS`, `AI_KEY_SECRET` (plus the Google ones). Local: copy `.dev.vars.example` to `.dev.vars`.

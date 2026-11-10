@@ -23,10 +23,11 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
+async function asAdmin(env){env.ADMIN_EMAILS='owner@example.test';env.GEMINI_API_KEY='platform-key';await env.DB.prepare("INSERT INTO admins VALUES('google:qa','owner@example.test','now')").run();}
 async function authenticated() {
   const DB=database(),token='a'.repeat(64);
   await DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(token),'google:qa','QA',Date.now()+60000).run();
@@ -148,19 +149,19 @@ test('completion is reversible, private, idempotent and separate from answer sco
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM completions').first()).n,0);
 });
 
-test('reversed chatbot uses selected lesson level, asks before explaining and keeps credentials server-side',async()=>{
-  const {env,request}=await authenticated(),original=globalThis.fetch;
-  env.GEMINI_API_KEY='test-only';
+test('reversed chatbot sends level, lesson and turn count to the platform OpenAI-compatible endpoint',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;await asAdmin(env);
   const lesson={id:'chapter:N3:1',title:'Giải thích kết luận',level:'N3',goal:'Giải thích lại',content:'〜わけだ'};
   globalThis.fetch=async(url,options)=>{
-    assert.match(url,/generativelanguage.googleapis.com/);assert.equal(options.headers['x-goog-api-key'],'test-only');
-    const payload=JSON.parse(options.body);assert.match(payload.systemInstruction.parts[0].text,/N3/);assert.match(payload.systemInstruction.parts[0].text,/chờ trả lời/);assert.match(payload.systemInstruction.parts[0].text,/〜わけだ/);
-    assert.equal(payload.contents.at(-1).parts[0].text,'Bắt đầu');
-    return Response.json({candidates:[{content:{parts:[{text:'Em thử giải thích mẫu này nhé?'}]}}]});
+    assert.equal(url,'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions');assert.equal(options.headers.Authorization,'Bearer platform-key');
+    const payload=JSON.parse(options.body),system=payload.messages[0];assert.equal(payload.model,'gemini-3.8-flash');assert.equal(system.role,'system');
+    assert.match(system.content,/JLPT N3/);assert.match(system.content,/reversed classroom/);assert.match(system.content,/ONE question/);assert.match(system.content,/〜わけだ/);assert.match(system.content,/Hán Việt/);
+    assert.equal(payload.messages.at(-1).content,'Bắt đầu');assert.ok(!('max_tokens' in payload));
+    return Response.json({choices:[{message:{content:'Em thử giải thích mẫu này nhé?'}}]});
   };
   try{
     const response=await worker.fetch(request('/api/chat',{message:'Bắt đầu',lesson}),env);assert.equal(response.status,200);
-    const data=await response.json();assert.equal(data.updated_topic.level,'N3');assert.equal(data.updated_topic.id,lesson.id);assert.ok(!JSON.stringify(data).includes('test-only'));
+    const data=await response.json();assert.equal(data.updated_topic.level,'N3');assert.equal(data.updated_topic.id,lesson.id);assert.ok(!JSON.stringify(data).includes('platform-key'));
     assert.equal((await worker.fetch(request('/api/chat',{message:'test',lesson:{...lesson,content:'x'.repeat(4001)}}),env)).status,400);
   }finally{globalThis.fetch=original;}
 });
@@ -217,28 +218,78 @@ test('shared networks support more than ten successful accounts without blocking
   }
 });
 test('failed chat does not persist a turn and retrying a completed request returns its saved answer once',async()=>{
-  const {env,request}=await authenticated();env.GEMINI_API_KEY='test-only';
+  const {env,request}=await authenticated();await asAdmin(env);
   const previous=globalThis.fetch;let calls=0;
   const body={message:'こんにちは',request_id:crypto.randomUUID()};
   try{
     globalThis.fetch=async()=>{calls++;return Response.json({error:'upstream unavailable'},{status:503});};
     assert.equal((await worker.fetch(request('/api/chat',body),env)).status,503);
     assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,0);
-    globalThis.fetch=async()=>{calls++;return Response.json({candidates:[{content:{parts:[{text:'こんにちは！'}]}}]});};
+    globalThis.fetch=async()=>{calls++;return Response.json({choices:[{message:{content:'こんにちは！'}}]});};
     const first=await worker.fetch(request('/api/chat',body),env);assert.equal(first.status,200);
     const retry=await worker.fetch(request('/api/chat',body),env);assert.equal(retry.status,200);assert.equal((await retry.json()).reply,'こんにちは！');
     assert.equal(calls,5);assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,2);
   }finally{globalThis.fetch=previous;}
 });
-test('chat falls back across free-tier models, skips thought parts and reports quota or key errors',async()=>{
-  const {env,request}=await authenticated();env.GEMINI_API_KEY='test-only';
+test('platform chain falls back across models; admin settings change the platform protocol and models',async()=>{
+  const {env,request}=await authenticated();await asAdmin(env);
   const previous=globalThis.fetch,seen=[];
-  const ask=async handler=>{seen.length=0;globalThis.fetch=async url=>{seen.push(url.match(/models\/([^:]+):/)[1]);return handler(seen.length);};return worker.fetch(request('/api/chat',{message:'こんにちは'}),env);};
+  const ask=async handler=>{seen.length=0;globalThis.fetch=async(url,options)=>{seen.push([url,JSON.parse(options.body).model]);return handler(seen.length,url,options);};return worker.fetch(request('/api/chat',{message:'こんにちは'}),env);};
   try{
-    let r=await ask(n=>n===1?Response.json({},{status:404}):Response.json({candidates:[{content:{parts:[{text:'ignored',thought:true},{text:'はい、どうぞ。'}]}}]}));
-    assert.equal(r.status,200);assert.equal((await r.json()).reply,'はい、どうぞ。');assert.equal(seen.length,2);assert.notEqual(seen[0],seen[1]);
+    let r=await ask(n=>n===1?Response.json({},{status:404}):Response.json({choices:[{message:{content:'はい、どうぞ。'}}]}));
+    assert.equal(r.status,200);assert.equal((await r.json()).reply,'はい、どうぞ。');assert.deepEqual(seen.map(x=>x[1]),['gemini-3.8-flash','gemini-3.6-flash']);
     r=await ask(()=>Response.json({},{status:429}));assert.equal(r.status,429);assert.equal(seen.length,4);
-    r=await ask(()=>Response.json({},{status:403}));assert.equal(r.status,503);assert.equal(seen.length,1);assert.match((await r.json()).detail,/khóa AI/);
-    env.GEMINI_MODELS='custom-model';await ask(()=>Response.json({},{status:500}));assert.deepEqual(seen,['custom-model']);
+    r=await ask(()=>Response.json({},{status:403}));assert.equal(r.status,503);assert.equal(seen.length,1);assert.match((await r.json()).detail,/Quản trị/);
+    assert.equal((await worker.fetch(request('/api/admin/provider',{protocol:'gemini',model:'gemini-x',fallbacks:[]}),env)).status,404);
+    const put=await worker.fetch(new Request('https://vjbot.test/api/admin/provider',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'gemini',model:'gemini-x',fallbacks:['gemini-y']})}),env);assert.equal(put.status,200);
+    r=await ask((n,url,options)=>{assert.equal(options.headers['x-goog-api-key'],'platform-key');assert.match(url,/^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-x:generateContent$/);return Response.json({candidates:[{content:{parts:[{text:'bỏ',thought:true},{text:'OK'}]}}]});});
+    assert.equal((await r.json()).reply,'OK');
+    const bad=await worker.fetch(new Request('https://vjbot.test/api/admin/provider',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'openai',model:'bad model',fallbacks:[]})}),env);assert.equal(bad.status,400);
   }finally{globalThis.fetch=previous;}
+});
+const put=(request,path,body,method='PUT')=>new Request('https://vjbot.test'+path,{method,headers:request('/api/ai/settings').headers,body:body&&JSON.stringify(body)});
+test('learners without an admin grant need their own API; their key and URL are the only ones ever used',async()=>{
+  const {env,request}=await authenticated(),previous=globalThis.fetch;env.GEMINI_API_KEY='platform-key';env.AI_KEY_SECRET='local-secret';env.ADMIN_EMAILS='owner@example.test';
+  const calls=[];globalThis.fetch=async(url,options)=>{calls.push([url,options]);return Response.json({choices:[{message:{content:'ok'}}]});};
+  try{
+    let r=await worker.fetch(request('/api/chat',{message:'xin chào'}),env);assert.equal(r.status,403);assert.equal((await r.json()).code,'no_ai');assert.equal(calls.length,0);
+    assert.equal((await (await worker.fetch(request('/api/ai/settings'),env)).json()).source,'none');
+    assert.equal((await worker.fetch(request('/api/admin/overview'),env)).status,403);
+    for(const base_url of ['http://api.example.com','https://127.0.0.1/v1','https://localhost/v1','https://vjbot.workers.dev','https://user:pw@api.example.com','https://api.example.com/v1?x=1','https://intranet'])assert.equal((await worker.fetch(put(request,'/api/ai/settings',{protocol:'openai',base_url,model:'m',api_key:'sk-test-12345678'}),env)).status,400,base_url);
+    assert.equal((await worker.fetch(put(request,'/api/ai/settings',{protocol:'openai',base_url:'https://api.example.com/v1/',model:'m'}),env)).status,400);
+    assert.equal((await worker.fetch(put(request,'/api/ai/settings',{protocol:'openai',base_url:'https://api.example.com/v1/chat/completions',model:'my-model',api_key:'sk-test-12345678'}),env)).status,200);
+    const stored=await env.DB.prepare('SELECT * FROM ai_providers').first();assert.equal(stored.base_url,'https://api.example.com/v1');assert.ok(!JSON.stringify(stored).includes('sk-test-12345678'));assert.equal(stored.key_last4,'5678');
+    const view=await (await worker.fetch(request('/api/ai/settings'),env)).json();assert.equal(view.source,'own');assert.equal(view.own.key_last4,'5678');assert.ok(!JSON.stringify(view).includes('sk-test'));
+    r=await worker.fetch(request('/api/chat',{message:'xin chào'}),env);assert.equal(r.status,200);assert.equal(calls.length,1);
+    assert.equal(calls[0][0],'https://api.example.com/v1/chat/completions');assert.equal(calls[0][1].headers.Authorization,'Bearer sk-test-12345678');assert.equal(calls[0][1].redirect,'manual');assert.ok(!JSON.stringify(calls).includes('platform-key'));
+    // Updating the model keeps the saved key; a different secret can no longer decrypt it.
+    assert.equal((await worker.fetch(put(request,'/api/ai/settings',{protocol:'openai',base_url:'https://api.example.com/v1',model:'other'}),env)).status,200);
+    env.AI_KEY_SECRET='rotated';r=await worker.fetch(request('/api/chat',{message:'lại'}),env);assert.equal(r.status,409);assert.equal((await r.json()).code,'rekey');assert.equal(calls.length,1);
+    env.AI_KEY_SECRET='local-secret';assert.equal((await worker.fetch(request('/api/ai/test',{}),env)).status,200);
+    await worker.fetch(request('/api/account/delete',{}),env);assert.equal((await env.DB.prepare('SELECT count(*) n FROM ai_providers').first()).n,0);
+  }finally{globalThis.fetch=previous;}
+});
+test('Anthropic and Gemini native requests use their own headers and history rules',async()=>{
+  const {env,request}=await authenticated(),previous=globalThis.fetch;env.AI_KEY_SECRET='local-secret';
+  await env.DB.prepare("INSERT INTO conversations(user_id,role,content,timestamp) VALUES('google:qa','bot','Chào em',?)").bind(new Date().toISOString()).run();
+  let seen;globalThis.fetch=async(url,options)=>{seen={url,options,body:JSON.parse(options.body)};return Response.json(seen.url.includes('anthropic')?{content:[{type:'text',text:'Claude ok'}]}:{candidates:[{content:{parts:[{text:'Gemini ok'}]}}]});};
+  try{
+    await worker.fetch(put(request,'/api/ai/settings',{protocol:'anthropic',base_url:'https://api.anthropic.com',model:'claude-sonnet-5-5',api_key:'sk-ant-12345678'}),env);
+    let r=await worker.fetch(request('/api/chat',{message:'Bắt đầu'}),env);assert.equal((await r.json()).reply,'Claude ok');
+    assert.equal(seen.url,'https://api.anthropic.com/v1/messages');assert.equal(seen.options.headers['x-api-key'],'sk-ant-12345678');assert.ok(!seen.options.headers.Authorization);
+    assert.equal(seen.body.max_tokens,1024);assert.match(seen.body.system,/Thầy Lâm/);assert.equal(seen.body.messages[0].role,'user');assert.equal(seen.body.messages.length,1);
+    await worker.fetch(put(request,'/api/ai/settings',{protocol:'gemini',base_url:'',model:'gemini-3.8-flash',api_key:'AIza-12345678'}),env);
+    r=await worker.fetch(request('/api/chat',{message:'Tiếp'}),env);assert.equal((await r.json()).reply,'Gemini ok');
+    assert.equal(seen.url,'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent');assert.equal(seen.options.headers['x-goog-api-key'],'AIza-12345678');assert.ok(seen.body.systemInstruction);
+  }finally{globalThis.fetch=previous;}
+});
+test('admin status needs a Google row, a verified email in the current ADMIN_EMAILS and an admin-only overview',async()=>{
+  const {env,request}=await authenticated();
+  const {isAdmin,recordAdminLogin}=await import('../src/admin.js');
+  await recordAdminLogin(env,'google:qa','Owner@Example.test');assert.equal(await isAdmin(env,'google:qa'),false);
+  env.ADMIN_EMAILS='owner@example.test';await recordAdminLogin(env,'google:qa','Owner@Example.test');assert.equal(await isAdmin(env,'google:qa'),true);
+  await env.DB.prepare("INSERT INTO admins VALUES('email:pw','owner@example.test','now')").run();assert.equal(await isAdmin(env,'email:pw'),false);
+  assert.equal((await (await worker.fetch(request('/api/auth/session'),env)).json()).user.is_admin,true);
+  const overview=await (await worker.fetch(request('/api/admin/overview'),env)).json();assert.equal(overview.platform.protocol,'openai');assert.equal(typeof overview.users,'number');assert.ok(Array.isArray(overview.top));
+  env.ADMIN_EMAILS='';assert.equal(await isAdmin(env,'google:qa'),false);assert.equal((await worker.fetch(request('/api/admin/overview'),env)).status,403);
 });

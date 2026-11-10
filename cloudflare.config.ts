@@ -13,6 +13,8 @@ export default defineConfig({
       GEMINI_API_KEY: bindings.secret(),
       GOOGLE_CLIENT_ID: bindings.secret(),
       GOOGLE_CLIENT_SECRET: bindings.secret(),
+      ADMIN_EMAILS: bindings.secret(),
+      AI_KEY_SECRET: bindings.secret(),
       DB: bindings.d1({
         id: "eb0d49a5-7a90-4219-968c-5fcb04390859"
       }),

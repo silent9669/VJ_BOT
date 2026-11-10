@@ -17,6 +17,7 @@ function renderAccount(){
   document.getElementById('auth-methods').hidden=!!signedInUser;
   document.getElementById('google-signin').hidden=!!signedInUser;
   document.getElementById('auth-logout').hidden=!signedInUser;
+  document.getElementById('tab-btn-admin').hidden=!signedInUser?.is_admin;
 }
 async function openAccount(message=''){
   const dialog=document.getElementById('auth-dialog');

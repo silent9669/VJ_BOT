@@ -1,5 +1,6 @@
 import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { isAdmin, recordAdminLogin } from './admin.js';
 const googleKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 const cookieValue = (request, name) => (request.headers.get('Cookie') || '').split(';').map(s => s.trim()).find(s => s.startsWith(name + '='))?.slice(name.length + 1);
 const randomToken = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2,'0')).join('');
@@ -77,7 +78,10 @@ export async function authRoute(request,env) {
     const nonce=randomToken();
     return json({client_id:env.GOOGLE_CLIENT_ID || '',nonce},200,{'Set-Cookie':cookie('vj_nonce',nonce,600,request)});
   }
-  if (path==='/api/auth/session' && request.method==='GET') return json({user:await sessionUser(request,env)});
+  if (path==='/api/auth/session' && request.method==='GET') {
+    const user=await sessionUser(request,env);
+    return json({user:user && {...user,is_admin:await isAdmin(env,user.user_id)}});
+  }
   if (path==='/api/auth/logout' && request.method==='POST') {
     const token=cookieValue(request,'vj_session');
     if(token) await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await hashToken(token)).run();
@@ -98,6 +102,7 @@ export async function authRoute(request,env) {
     } catch { return json({detail:'Không xác thực được Google. Vui lòng thử lại.'},401); }
     const userId='google:'+payload.sub;
     const name=typeof payload.name==='string' ? payload.name.slice(0,100) : 'Học viên';
+    await recordAdminLogin(env,userId,payload.email);
     return createSession(request,env,userId,name);
   }
   return json({detail:'Not found'},404);
