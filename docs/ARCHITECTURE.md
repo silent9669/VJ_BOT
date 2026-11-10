@@ -1,84 +1,95 @@
-# Production architecture
+# Kiến trúc hiện tại
 
-The deployed app is a Cloudflare Worker with static assets and D1. The Python/FastAPI implementation is separate and is not the deployed API behind the website.
+VJBot là một Cloudflare Worker duy nhất, vừa phục vụ file tĩnh vừa chạy API, lưu dữ liệu trong D1. Giao diện là HTML/CSS/JavaScript thuần (không framework, không bundler). Không có AI dùng chung: mỗi người dùng tự gắn API của mình.
 
 ```mermaid
 flowchart LR
-  B[Browser: notebook UI] --> A[Worker static assets]
-  B --> W[Worker API]
-  B --> G[Google sign-in]
-  G -->|ID token via browser| W
-  W --> D[(Cloudflare D1)]
-  W --> M[Gemini chat, Kaiwa and TTS]
-  A --> J[Versioned lesson JSON]
+  B[Trình duyệt: SPA thuần] -->|file tĩnh| A[Worker assets]
+  B -->|/api/*| W[Worker src/worker.js]
+  B -->|ID token| G[Google Identity]
+  G -->|ID token qua trình duyệt| W
+  W --> D[(D1)]
+  W -->|API key của người dùng| P[OpenAI-compatible / Claude / Gemini]
+  GH[GitHub main] --> WB[Workers Builds]
+  WB -->|npm test, migrate, cf deploy| W
 ```
 
-## Source map
+Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoDB cũ, không được deploy và không phải API của website. `wrangler.config.ts` không được dùng (deploy dùng `cloudflare.config.ts`).
 
-| Source | Responsibility |
+## Bản đồ mã nguồn
+
+| Đường dẫn | Vai trò |
 | --- | --- |
-| `src/worker.js` | API routing, D1 queries, SRS scheduling, AI calls and asset responses |
-| `src/auth.js` | Password registration/login, scrypt, Google JWT verification, nonce cookies and hashed session tokens |
-| `cloudflare.config.ts` | Worker, D1, secrets and placement binding |
-| `vite.config.ts` | Cloudflare Vite integration; `static/` as public assets |
-| `static/index.html` | Page structure and dialogs |
-| `static/app.js` | Navigation, chat, lessons, cards, quizzes and progress UI |
-| `static/account.js` | Session setup, password forms, Google button and authenticated requests |
-| `static/study-plan.js` | Guided units, stable review sets and progress-derived next lesson |
-| `static/learning.js` | On-demand lessons, furigana and exercise interactions |
-| `static/notebook.css` | Notebook design layered over existing `style.css` |
-| `static/assets/lam/teacher.svg` | Licensed Avataaars teacher; provenance in the adjacent ATTRIBUTION.md |
-| `static/openjlpt/` | Pinned source data, checksums and license notices |
-| `migrations/` | Authoritative D1 schema evolution |
+| `src/worker.js` | Điểm vào. Kiểm tra Origin, định tuyến, xác thực phiên, giới hạn tốc độ, các route dữ liệu (hồ sơ, tiến độ SM-2, hoàn thành, lịch sử, chat, Kaiwa, TTS, xóa tài khoản) và trả file tĩnh |
+| `src/auth.js` | Đăng ký/đăng nhập mật khẩu (scrypt), xác minh Google ID token, phiên 7 ngày (chỉ lưu băm SHA-256), `is_admin` trong `/api/auth/session` |
+| `src/admin.js` | Quyền admin: tài khoản Google có email đã xác minh nằm trong secret `ADMIN_EMAILS` |
+| `src/providers.js` | API riêng của từng người dùng: mã hóa AES-GCM, `/api/ai/*`, `/api/admin/overview`, `askAI`, giọng đọc Gemini |
+| `src/llm.js` | Gọi ba loại API (OpenAI-compatible, Anthropic, Gemini), kiểm tra URL, chuẩn hóa lượt hội thoại |
+| `src/prompt.js` | System prompt lớp học đảo ngược của thầy Lâm |
+| `src/exams.js` | Lưu và kiểm tra trạng thái bài thi thử |
+| `cloudflare.config.ts` | Worker `vjbot`, D1, secrets, placement `gcp:us-east4` |
+| `migrations/` | Lược đồ D1 (0001–0011). Không sửa migration đã chạy; thêm file mới |
+| `static/index.html` | Toàn bộ khung trang, dialog đăng nhập, panel các tab |
+| `static/app.js` | Điều hướng tab, chat, thẻ nhớ, Kaiwa, quiz, tiến độ, âm thanh |
+| `static/account.js`, `ai-settings.js` | Phiên, đăng nhập, `apiFetch`; thẻ API AI trong Cài đặt, panel Quản trị, cổng chat |
+| `static/learning.js`, `study-plan.js`, `lesson-checks.js`, `completion.js`, `practice.js` | Dựng bài học từ dữ liệu, lộ trình, 5 câu kiểm tra, đánh dấu hoàn thành, luyện tập |
+| `static/navigation.js`, `workspace.js` | Route theo hash, sidebar, dashboard, level hub |
+| `static/vi-labels.js` | Nhãn và công thức ngữ pháp tiếng Việt, nạp từ điển dịch |
+| `static/*.css` | Nhiều lớp CSS chồng lên nhau, xem [ROADMAP](ROADMAP.md) |
+| `static/course/` | `chapters.json` (40 chương), `practical.json` (20 tình huống), `exams.json`, `*-resources.json`, `vi-grammar.json`, `vi-dict.json` (tùy chọn) |
+| `static/openjlpt/` | Dữ liệu OpenJLPT cố định phiên bản (CC BY-SA 4.0) |
+| `scripts/` | Python: crawl nguồn, import dữ liệu, `translate_corpus.py` |
+| `tests/` | `*.test.mjs` (Node, chạy trong CI) và `test_*.py` (cho `app/` và scripts) |
 
-## Database ownership
+## Luồng một request
 
-| Table | Stored data |
+1. `Origin` khác origin của Worker với method ghi: từ chối 403.
+2. `/api/auth/*`: `authRoute` (không cần phiên).
+3. `/api/ai/*`, `/api/admin/*`: `aiRoute` tự kiểm tra phiên, giới hạn 4 KB body.
+4. Các route riêng tư: cần cookie `vj_session`. Worker ghi đè `user_id` bằng chủ phiên, bỏ `api_key` do client gửi, giới hạn 20 KB body, kiểm tra cấp độ. `/api/chat`, `/api/tts`, `/api/kaiwa/evaluate` (và `/api/ai/test`) tính vào hạn mức 20 lần/phút mỗi tài khoản (`ai_usage`).
+5. Không khớp route `/api/*`: 404 JSON. Còn lại: file tĩnh, rơi về `index.html`.
+
+## Mô hình dữ liệu (D1)
+
+| Bảng | Nội dung |
 | --- | --- |
-| `profiles` | Account ID, target level, track, update timestamp |
-| `password_accounts` | Independent email identity, display name, salted scrypt hash |
-| `auth_attempts` | Hashed IP and IP/email rate-limit buckets |
-| `sessions` | SHA-256 session token hash, account ID, name, expiry |
-| `curriculum_lessons` | Lesson grouping metadata |
-| `curriculum_items` | Search/review item identity, level, display, reading, meanings and source |
-| `progress` | Per-account/item counters, review dates, interval, ease and consecutive repetitions |
-| `conversations` | Account-scoped user/bot messages, timestamps and optional retry request IDs |
-| `progress_attempts` | Per-account answer receipts for safe retry |
-| `study_days` | Per-account UTC dates used for streaks |
-| `ai_usage` | Per-account minute buckets used for rate limiting |
+| `profiles` | Cấp độ, track của tài khoản |
+| `password_accounts`, `auth_attempts` | Danh tính email/mật khẩu (scrypt) và bộ đếm chống dò |
+| `sessions` | Băm token phiên, `user_id`, tên, hạn |
+| `admins` | `user_id` Google và email đã xác minh lúc đăng nhập |
+| `ai_providers` | Mỗi người dùng một API: `protocol`, `base_url`, `model`, `key_enc` (AES-GCM, gắn `user_id`), `key_last4` |
+| `app_settings` | Khóa/giá trị chung, hiện chưa dùng |
+| `curriculum_lessons`, `curriculum_items` | Danh mục phẳng (10.983 mục) cho `/api/curriculum`, chủ đề tiếp theo |
+| `progress`, `progress_attempts` | Bộ đếm SM-2 và biên nhận trả lời an toàn khi thử lại |
+| `completions` | Đánh dấu hoàn thành, tách khỏi điểm |
+| `exam_attempts` | Trạng thái bài thi thử mới nhất theo đề |
+| `conversations` | Tin nhắn chat theo tài khoản, `request_id` chống gửi trùng |
+| `study_days`, `ai_usage` | Chuỗi ngày học, bộ đếm hạn mức theo phút |
 
-Migrations `0001_base.sql`, `0002_sessions.sql`, `0003_srs_repetitions.sql` `0004_progress_display.sql` `0005_progress_attempts.sql` and `0006_learning_responses.sql` were applied locally and to production during this work. Read the migration files for exact columns; do not recreate tables from older documentation.
+Xóa tài khoản (`/api/account/delete`) xóa mọi bảng trên theo `user_id`.
 
-## Lesson data and persistence
+## Xác thực và quyền
 
-The lesson library reads versioned JSON assets and builds lesson groups in the browser. D1 stores a flattened curriculum used by `/api/curriculum`, topic selection and progress joins. Rich examples are not all duplicated into D1. Refreshing content requires rebuilding the asset dataset **and** importing its generated SQL.
+- **Google**: Worker xác minh chữ ký (JWKS), issuer, audience, hạn, `email_verified` và nonce gắn cookie HttpOnly. Đăng nhập Google ghi `admins` nếu email nằm trong `ADMIN_EMAILS`.
+- **Mật khẩu**: scrypt N=16384, r=8, p=5, giới hạn 10 lần/cặp IP+email và 100 lần/IP mỗi 15 phút. Không có xác minh email hay khôi phục mật khẩu, nên tài khoản này không bao giờ là admin.
+- **Admin**: `isAdmin` kiểm tra cả dòng trong `admins` lẫn secret hiện tại, nên xóa email khỏi `ADMIN_EMAILS` là thu hồi ngay. Admin chỉ xem thống kê, không có đặc quyền AI.
 
-Account progress is saved through the Worker into D1. Guest progress and level stay in browser local storage with a simpler review schedule; they do not automatically migrate on sign-in. Generated exercises can have IDs absent from `curriculum_items`; optional display labels are stored directly on each account’s progress row. Older unlabeled records gain labels when answered again.
+## Lớp AI
 
-## Authentication and AI
+- Không có khóa hệ thống. `resolveProvider` chỉ đọc API người dùng đã lưu. Chưa lưu: `403 {code:'no_ai'}`; không giải mã được (đổi `AI_KEY_SECRET`): `409 {code:'rekey'}`.
+- Ba giao thức trong `src/llm.js`: OpenAI-compatible (`/chat/completions`, Bearer, không gửi `max_tokens`/`temperature`), Anthropic (`/v1/messages`, `x-api-key`, `max_tokens` 1024), Gemini (`generateContent`, `x-goog-api-key`).
+- URL do người dùng nhập phải là https công khai: chặn IP, localhost, `.local`/`.internal`, domain của chính site và `workers.dev`, có tài khoản/query/fragment. `redirect: 'manual'`, không trả lại nội dung lỗi của nhà cung cấp.
+- Mỗi yêu cầu tối đa 28 giây (trình duyệt hủy sau 35 giây). Lịch sử gửi lên là 12 tin gần nhất, được gộp để luân phiên user/assistant.
+- Chat: `reversedPrompt(level, lesson, turns)` ở `src/prompt.js`. Vòng lặp: hỏi một câu, chờ, chẩn đoán đúng câu học viên viết, sửa tối đa hai lỗi, câu tiếp theo khó/dễ hơn; bậc gợi ý; cứ 4 lượt thì bắt tự giải thích lại; xử lý riêng các tin cố định từ nút gợi ý. Chỉ văn bản thuần, tối đa khoảng 110 từ.
+- Kaiwa chấm bản chép lời (không chấm phát âm) qua cùng API; kết quả JSON được phân tích tolerant.
+- Giọng đọc: Gemini `gemini-3.8-flash-tts` chỉ khi API đã lưu là Gemini trỏ tới Google; nếu không, trình duyệt dùng Web Speech API tiếng Nhật.
 
-Email/password accounts use scrypt (N=16384, r=8, p=5), a random salt, and separate identities from Google. There is no email verification, automatic account linking or password recovery.
+## Dữ liệu bài học và ngôn ngữ
 
-Google ID tokens are verified using Google's JWKS, RS256, issuer, audience, expiry, verified email and a nonce bound to an HttpOnly cookie. Random 32-byte session tokens expire after seven days; D1 stores only their hashes. HTTPS cookies use Secure and SameSite=Lax. Private routes obtain ownership from the session and ignore client-provided account IDs/API keys.
+- `learning.js` tải `openjlpt/{vocab,grammar,kanji}-nX.json` theo cấp độ, rồi dựng bài học, bài tập và câu kiểm tra ngay trong trình duyệt.
+- Giao diện chỉ dùng tiếng Việt và tiếng Nhật. Văn bản gốc OpenJLPT là tiếng Anh; `vi-labels.js` nạp `course/vi-grammar.json` (807 chuỗi ngữ pháp trong lộ trình, dịch tay) và `course/vi-dict.json` (do `scripts/translate_corpus.py` tạo, chưa có). Chuỗi chưa có bản dịch giữ nguyên tiếng Anh.
+- Lộ trình = 40 chương ngữ pháp (`chapters.json`) + 20 tình huống thực tế (`practical.json`, tiếng Việt). Thi thử dùng `exams.json` (liên kết đề JLPT chính thức, không sao chép nội dung).
 
-Worker secrets hold provider credentials. Chat, Kaiwa and speech use only the API each learner saves (`src/providers.js`, `src/llm.js`: OpenAI-compatible, Claude or Gemini); there is no built-in AI.js`, `src/llm.js`: OpenAI-compatible, Claude or Gemini): the user's own saved API, or for admins the platform Gemini key; speech uses `gemini-3.8-flash-tts` with the male Charon voice. TTS falls back to browser speech when provider audio is unavailable. Chat uses recent saved messages and bounded lesson context. Kaiwa assesses text/transcription, not audio pronunciation.
+## Giao diện
 
-The `gcp:us-east4` placement hint resolved an observed Google TTS location rejection. It is not a data-residency guarantee or a measured latency promise.
-
-## Rendering
-
-The vanilla frontend uses a public account-entry landing, dashboard, collapsible rail and full-width chat. The former 3D classroom and computer anatomy activity and their dependencies have been removed.
-
-## Practical course and official resources
-
-`static/course/practical.json` is the editable source for original scenarios, Vietnamese explanations, prerequisites, contextual questions and writing rubrics. `study-plan.js` puts vocabulary and theory steps in the roadmap, while retaining production lessons in the library and exams in Practice. Completion uses the latest correct answer; written production is self-assessment. Migration 0006 stores latest correctness and private written responses.
-
-`python3 scripts/crawl_course_sources.py` refreshes `static/course/sources.json` from official Japan Foundation lesson/audio pages. It stores retrieval time, page SHA256, publisher and public links, not PDF/audio bodies. `static/source-catalog.js` exposes the catalog with book/search controls. Irodori copyright terms apply separately from OpenJLPT licensing.
-
-After reviewing course changes, `python3 scripts/upload_practical_course.py` upserts the 20 unit identities and 200 practice identities into the configured production D1. Authored text remains in static JSON; per-account answers remain in D1. Never reassign an existing versioned ID to a different task.
-
-## Completion and level-based learning
-
-Migration `0007_completions.sql` stores explicit learner completion separately from scored attempts. `static/completion.js` provides a shared reversible control; guest storage uses `vjbot_guest_completions`. Chapter completion can be explicitly marked or derived from marked child activities. Quiz identities include the level; previous ambiguous numeric exam IDs remain historical only.
-
-`static/course/chapters.json` maps eight curated chapters per level to pinned OpenJLPT grammar IDs. `scripts/crawl_jlpt_resources.py` reproducibly indexes the official 2018 workbook page into `jlpt-resources.json`; no copyrighted question/audio bodies are copied. `buildLessonContext` supplies bounded real lesson material to the Worker. Its Gemini system instruction asks for explanation/application before feedback. The browser never receives the shared API secret.
+Một trang, các `section.tab-panel`, chuyển bằng `switchTab` và hash (`#dashboard`, `#classroom`, `#curriculum/N5/lesson/grammar/<id>`, `#settings`, `#admin`). Các script là classic script nạp theo thứ tự cuối `index.html`; hàm toàn cục dùng chung. Landing và hộp đăng nhập nằm trong `landing.css`.

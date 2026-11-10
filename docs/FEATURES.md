@@ -1,43 +1,54 @@
-# Implemented features and limits
+# Tính năng hiện có
 
-## Guided learning and review sets
+Giao diện chỉ dùng tiếng Việt và tiếng Nhật. Mọi tính năng học tập cần đăng nhập. Chat, chấm Kaiwa và giọng đọc Gemini cần người dùng tự gắn API (không có AI dùng chung).
 
-Opening the app starts on the landing page. Choose N5–N1 to open a compact chapter list; expand a chapter, choose a lesson, and use the next-lesson action. The library retains all vocabulary, grammar, kanji, reading and listening groups.
+## Luồng người dùng
 
-The guided sequence has 40 curated grammar chapters (eight per level, 163 source pattern references) and 20 authored practical units (N5: 6, N4: 5, N3: 4, N2: 3, N1: 2). Each practical unit connects vocabulary, comprehension, written production, Kaiwa and its contextual test. Grammar source explanations remain English. This is an editorial learning sequence, not an official exhaustive JLPT syllabus.
+```mermaid
+flowchart TD
+  L[Landing] --> R[Đăng ký / Đăng nhập]
+  R --> D[Góc học tập: Học tiếp]
+  D --> S{Đã gắn API?}
+  S -- chưa --> B[Banner Kết nối API] --> C[Cài đặt: API AI] --> T[Lưu và kiểm tra]
+  S -- rồi --> Q
+  T --> Q[Chat với thầy Lâm]
+  D --> K[Lộ trình, bài học, 5 câu kiểm tra]
+  K -->|Luyện với thầy Lâm| Q
+  K --> M[Đánh dấu hoàn thành, Bài tiếp]
+```
 
-Every lesson, Kaiwa prompt, finished test, roadmap chapter and lesson-linked reversed-chat activity has a reversible completion control. Completion is explicit learner bookkeeping, independent of exercise correctness, self-assessment and SM-2 scheduling. Account completions persist in D1; guest completions persist locally. The progress screen lists marked activities. Old answer records are preserved; ambiguous legacy exam IDs are not migrated into the new level-qualified identities.
+## Học
 
-The official resource crawl indexes 58 workbook links from JLPT for all five levels. Each level exposes vocabulary, grammar, reading and listening workbooks with original answer sheets, scripts and audio links. The Irodori catalog retains 72 lessons and 1,373 MP3 links. Copyrighted PDFs/audio remain on publisher servers; only link metadata is stored. Irodori levels are not official JLPT equivalents. Authored content still needs human editorial review.
+- **Lộ trình N5–N1**: 40 chương ngữ pháp (8 mỗi cấp, 163 mẫu câu, giải thích tiếng Việt) và 20 tình huống thực tế viết riêng bằng tiếng Việt (N5: 6, N4: 5, N3: 4, N2: 3, N1: 2). Mỗi tình huống gồm từ cần dùng, hiểu tình huống, tự trả lời bằng văn bản, Kaiwa và bài kiểm tra riêng. Chương kana là tùy chọn.
+- **Thư viện**: từ vựng, ngữ pháp, Hán tự, đọc, nghe, viết theo cấp độ (10.720 mục OpenJLPT: 7.811 từ, 526 ngữ pháp, 2.383 Hán tự; 20 bài kana). Phần từ vựng/Hán tự/câu ví dụ trong thư viện còn tiếng Anh cho đến khi chạy `scripts/translate_corpus.py`.
+- **Mỗi bài**: tham khảo, 5 câu kiểm tra dựng từ chính ví dụ và bài tập của bài, xem lại câu sai, nút "Luyện với thầy Lâm" (cố định ở đáy màn hình), đánh dấu hoàn thành có thể hoàn tác (độc lập với điểm).
+- **Thẻ nhớ**: buổi 20 thẻ ưu tiên thẻ đến hạn, lịch SM-2 (đặt lại sau khi sai).
+- **Luyện nói (Kaiwa)**: gõ hoặc nói (nhận dạng giọng nói của trình duyệt); AI chấm bản chép lời, không chấm phát âm.
+- **Bài luyện JLPT**: bộ câu hỏi theo chủ đề và bài thi thử có tính giờ theo từng phần dựa trên đề chính thức 2012/2018 (liên kết tới nguồn; điểm thô, không phải thang điểm JLPT). Mỗi đề lưu bài làm gần nhất.
+- **Tiến độ**: số mục, độ chính xác, chuỗi ngày, bài đã hoàn thành, sổ điểm yếu.
 
-Lesson and quiz saves offer retry after failure. Optional attempt IDs prevent repeated save requests from incrementing counters twice. Guest receipts retain the last 100 attempts per item; signed-in receipts are stored in D1 and removed on account deletion.
+## Chat với thầy Lâm (lớp học đảo ngược)
 
-## Lessons
+Người học đã đọc bài; trong chat thầy hỏi, em tự nói và viết. Mỗi lượt: một câu hỏi, chờ trả lời, chẩn đoán đúng câu học viên viết, sửa tối đa hai lỗi kèm lý do, rồi một câu tiếp theo khó hơn hoặc dễ hơn. Có bậc gợi ý, nhắc "tự giải thích" mỗi 4 lượt, tóm tắt khi "kết thúc". Các nút gợi ý nhanh gửi những câu cố định mà prompt đã biết cách xử lý. Chi tiết trong `src/prompt.js`.
 
-- N5–N1 vocabulary, grammar and kanji, loaded once per selected level.
-- 10,720 imported OpenJLPT records: 7,811 vocabulary, 526 grammar and 2,383 kanji. Production D1 contains 10,983 items: those records, 63 existing records and 200 practical-course identities.
-- 20 original kana lessons cover 46 hiragana and 46 katakana. These are frontend lessons, not an additional 92 imported D1 entries.
-- Expandable vocabulary/kanji details, readings, examples, furigana, radicals, stroke counts and related words where provided.
-- Recognition drills for imported words/kanji and meaning checks for grammar. Exercises show one question at a time, feedback and final score.
-- Attributed sentence reading and listening transcription. Listening is self-rated after revealing the transcript.
-- Search and level/skill filters, 24-card initial page, load-more and keyboard-accessible detail dialogs.
+Chat mang theo bài đang học (cấp độ, tiêu đề, mục tiêu, nội dung giới hạn 4.000 ký tự), có thử lại/bỏ qua khi lỗi, `request_id` chống gửi trùng, và không lưu lượt bị lỗi vào lịch sử.
 
-OpenJLPT definitions are English and marked EN; existing Vietnamese lessons remain. Community level assignments are not official JLPT lists. Sentence difficulty may exceed the word's assigned level. Entries, generated lesson groups and authored lessons are distinct counts.
+## API AI của người dùng
 
-## Practice and AI
+Cài đặt > API AI: chọn OpenAI-compatible, Claude (Anthropic) hoặc Gemini, nhập URL (bỏ trống để dùng mặc định), model và API key; "Lưu và kiểm tra". Khóa được mã hóa phía máy chủ và không bao giờ hiển thị lại (chỉ 4 ký tự cuối). Chưa có API thì ô chat bị khóa và có nút dẫn tới Cài đặt.
 
-Flashcards use 20-card sessions prioritized by due dates. Signed-in progress uses SM-2 scheduling with repetitions reset after a miss; guests use local storage and simpler scheduling. Short JLPT-style quiz sets provide answer explanations; they are not complete official mock exams.
+## Quản trị
 
-Authenticated reversed chat uses thầy Lâm and saved conversation context. It asks the learner to explain or apply the selected material before offering correction and another question. Lesson context includes actual examples, passages or listening scripts, with an explicit selected level. Kaiwa accepts typing or browser speech transcription and evaluates the transcript. No claim of pronunciation analysis is made. Japanese audio uses server-side TTS or browser speech fallback, subject to browser voices/support.
+Chỉ tài khoản Google có email đã xác minh trong `ADMIN_EMAILS` thấy mục "Quản trị": số người dùng, người hoạt động 7 ngày, tin nhắn 24 giờ, số người dùng API riêng, danh sách hoạt động nhiều nhất. Admin không có quyền AI đặc biệt.
 
-## Accounts
+## Tài khoản và dữ liệu
 
-Email/password registration and Google sign-in are implemented, with D1 profiles, sessions, conversations and progress. Account deletion targets the authenticated account's records. Learning routes require an account. Email verification and password recovery are not implemented. Real Google consent and cross-browser persistence still need the verification listed in [HANDOFF.md](HANDOFF.md).
+Google và email/mật khẩu (không có xác minh email hay khôi phục mật khẩu). Xóa tài khoản xóa toàn bộ dữ liệu của tài khoản, kể cả API đã lưu. Tiến độ khách không có: mọi tuyến học cần đăng nhập.
 
-## Interface
+## Giao diện
 
-Warm paper, compact navigation and a licensed Avataaars teacher in a blazer. The public landing exposes account entry; dashboard and chat use the available workspace. The sidebar toggle sits inside the desktop rail. The 3D room and anatomy activity have been removed. Roadmaps contain theory, vocabulary and grammar, with tests in Practice.
+Giấy ấm, sidebar thu gọn (rail 76 px, mở rộng được), landing có khung chat minh họa, hộp đăng nhập hai cột, nút cảm ứng tối thiểu 44 px trên điện thoại, tôn trọng `prefers-reduced-motion`. Ảnh thầy Lâm là Avataaars có giấy phép (xem `static/assets/lam/ATTRIBUTION.md`).
 
-## Source licensing
+## Nguồn và giấy phép
 
-Dataset revision: `0d1d3410bec90bd4098a7c72de820543cb4f707c` from `evanclan/OpenJLPT`. Imported/derived data retains CC BY-SA 4.0 terms. See [NOTICE](../static/openjlpt/NOTICE.md), [LICENSE](../static/openjlpt/LICENSE), [manifest](../static/openjlpt/manifest.json) and the public [sources page](https://vjbot.dangphuc.me/sources.html).
+OpenJLPT, bản `0d1d3410bec90bd4098a7c72de820543cb4f707c` (`evanclan/OpenJLPT`), CC BY-SA 4.0: xem [NOTICE](../static/openjlpt/NOTICE.md), [LICENSE](../static/openjlpt/LICENSE), [manifest](../static/openjlpt/manifest.json) và trang [Nguồn](https://vjbot.dangphuc.me/sources.html). Tài liệu Irodori và JLPT/Japan Foundation chỉ được liên kết, không sao chép. Mức độ N5–N1 của OpenJLPT là ước lượng của cộng đồng, không phải danh sách chính thức.

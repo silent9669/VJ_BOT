@@ -1,68 +1,54 @@
-# Cloudflare Worker API
+# API Worker
 
-Base URL: `https://vjbot.dangphuc.me`. Source: [`src/worker.js`](../src/worker.js) and [`src/auth.js`](../src/auth.js). This describes the deployed Worker, not the separate Python API.
+Tất cả route nằm dưới `/api`, trả JSON `{detail}` khi lỗi. Route "riêng tư" cần cookie `vj_session`; Worker lấy `user_id` từ phiên và bỏ qua `user_id`/`api_key` do client gửi. Thiếu phiên: `401`.
 
-JSON responses use `Cache-Control: no-store`. Private routes require the `vj_session` HttpOnly cookie; clients must not supply API credentials. Client `user_id` fields/query parameters are ignored for ownership. Mutating requests with an Origin different from the request origin are rejected.
+## Công khai
 
-## Public and authentication routes
+| Route | Mô tả |
+| --- | --- |
+| `GET /api/health` | `{status, app, edge, d1_items}` |
+| `GET /api/curriculum?level=N5` | Danh mục phẳng từ `curriculum_items` |
+| `GET /api/auth/config` | `{client_id, nonce}` (đặt cookie `vj_nonce`) |
+| `GET /api/auth/session` | `{user: {user_id, name, is_admin} \| null}` |
+| `POST /api/auth/register` | `{name, email, password}`: mật khẩu 12–128 ký tự |
+| `POST /api/auth/login` | `{email, password}` |
+| `POST /api/auth/google` | `{credential}`: Google ID token |
+| `POST /api/auth/logout` | Xóa phiên |
 
-| Method | Route | Contract |
-| --- | --- | --- |
-| GET | `/api/health` | `{status, app, edge, d1_items}`; queries D1, not merely process liveness |
-| GET | `/api/curriculum?level=N5` | Array of flattened curriculum records; level optional; no pagination currently |
-| GET | `/api/auth/config` | `{client_id, nonce}` and a ten-minute nonce cookie; client ID is public configuration |
-| GET | `/api/auth/session` | `{user: null}` or `{user: {user_id, name}}` |
-| POST | `/api/auth/register` | `{name,email,password}`; name 1–80, password 12–128 characters; creates an independent email account and session |
-| POST | `/api/auth/login` | `{email,password}`; generic 401 for invalid credentials; rotates the current session |
-| POST | `/api/auth/google` | `{credential}` containing a Google ID token; verifies claims and creates session/profile |
-| POST | `/api/auth/logout` | Deletes active session, clears cookie; `{ok: true}` |
+## Học tập (riêng tư)
 
-The Google credential response includes `{user}` and session cookies. The current GIS flow does not exchange an authorization code or use the stored OAuth client secret.
+| Route | Mô tả |
+| --- | --- |
+| `GET/POST /api/profile` | Cấp độ và track của tài khoản |
+| `GET /api/next-topic` | Mục tiếp theo cần học |
+| `GET /api/progress` | Tổng hợp và danh sách mục đã làm |
+| `POST /api/progress/record` | `{item_id, correct, quality 0–5, attempt_id?, display?, item_type?, response_text?}`; `attempt_id` giúp thử lại không đếm hai lần |
+| `GET/POST /api/completions` | Đánh dấu hoàn thành: `{activity_id, kind, level, title, completed}` |
+| `GET/POST /api/exam-attempts` | Trạng thái bài thi thử theo đề `N5:2018` |
+| `GET/DELETE /api/history` | Lịch sử chat; DELETE xóa toàn bộ |
+| `POST /api/account/delete` | Xóa mọi dữ liệu của tài khoản |
 
-## Authenticated routes
+## AI (riêng tư, cần API của người dùng)
 
-| Method | Route | Request / response |
-| --- | --- | --- |
-| GET | `/api/completions` | `{items: [{activity_id, kind, level, title, completed_at}]}` for this account |
-| POST | `/api/completions` | `{activity_id, kind, level, title, completed}`; idempotent set/remove without changing answer scores |
-| GET | `/api/profile` | `{user_id, level, track, updated_at}`; provisions a default profile if absent |
-| POST | `/api/profile` | `{level, track?}`; upserts and returns profile |
-| GET | `/api/progress` | Totals, accuracy, streak, `weak_items`, and per-item review state |
-| POST | `/api/progress/record` | `{item_id, correct, quality?, level?, item_type?, display?, attempt_id?, response_text?}`; returns `{status, next_review, interval_days}` |
-| GET | `/api/next-topic` | Due or next curriculum item at the profile level, with reason |
-| GET | `/api/history` | Latest 50 messages in chronological order: `{role, content, timestamp}[]` |
-| DELETE | `/api/history` | Clears this account's conversation history |
-| POST | `/api/chat` | `{message, request_id?: UUID, lesson?: {id,title,level,goal,content}}`; bounded lesson context controls level and reversed teaching; returns `reply`, `response`, `updated_topic`; lesson practice may include context in the message |
-| POST | `/api/chat/greeting` | Creates and saves a greeting at the profile level |
-| POST | `/api/kaiwa/evaluate` | `{prompt_jp, user_speech, scenario_title?, context?, level?}`; score, rating, feedback, model answer and transcript |
-| POST | `/api/tts` | `{text}`; `{mimeType, audioBase64, voice}` or `{fallback: true, voice, text}` |
-| POST | `/api/account/delete` | Removes own password credential, profile, progress, chat, study days, usage and sessions; `{success: true}` |
+Chat, Kaiwa và giọng đọc dùng API người dùng đã lưu; hạn mức 20 yêu cầu/phút mỗi tài khoản (`429` khi vượt).
 
-Supported levels are N5–N1. Progress `correct` must be boolean; `quality` is an integer 0–5 (default 4). A miss forces SM-2 quality below 3 regardless of submitted quality. Known curriculum items determine their own type/level; generated exercises use submitted metadata. Optional display text is stored per account/item for generated exercises (maximum 2,000 characters); curriculum display text takes precedence. Omitting display on a later answer preserves the existing label.
+| Route | Mô tả |
+| --- | --- |
+| `POST /api/chat` | `{message ≤ 6000 ký tự, lesson?: {id,title,level,goal,content ≤ 4000}, request_id?}` → `{reply, updated_topic}`. `request_id` (UUID) bảo đảm gửi lại không tạo thêm lượt |
+| `POST /api/chat/greeting` | Lời chào cố định theo cấp độ |
+| `POST /api/kaiwa/evaluate` | `{scenario_title, context, prompt_jp, user_speech, level}` → `{score, rating, feedback, model_answer}` |
+| `POST /api/tts` | `{text}` → `{audioBase64, ...}`; `403 {code:'no_tts'}` nếu API đã lưu không phải Gemini-Google (client dùng giọng trình duyệt) |
 
-Progress items return `last_correct` (1/0, null for older records) and optional `response_text`. Written tasks use `item_type: "production"`; response text must be a string of at most 4,000 characters and remains private to the session owner. Omission preserves the saved text.
+Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` không giải mã được khóa; `429` hết lượt; `503` nhà cung cấp lỗi (thông báo tiếng Việt, không lộ nội dung lỗi gốc).
 
-An optional `attempt_id` (16–80 ASCII letters, digits or hyphens) makes saving an answer idempotent per account. Reuse it only when retrying that same answer. The Worker atomically writes progress and its receipt; a retry returns the original result.
+## API người dùng và quản trị
 
-Example, from the signed-in same-origin frontend:
+| Route | Mô tả |
+| --- | --- |
+| `GET /api/ai/settings` | `{source: 'own'\|'none', is_admin, own: {protocol, base_url, model, key_last4}, bases, can_store}`; không bao giờ trả khóa |
+| `PUT /api/ai/settings` | `{protocol: 'openai'\|'anthropic'\|'gemini', base_url (bỏ trống = mặc định), model, api_key?}`; bỏ `api_key` để giữ khóa cũ. `503` nếu thiếu `AI_KEY_SECRET` |
+| `DELETE /api/ai/settings` | Xóa API đã lưu |
+| `POST /api/ai/test` | Gửi một yêu cầu thử qua API đã lưu |
+| `GET /api/admin/overview` | Chỉ admin (`403` nếu không): `{users, active_7d, messages_24h, messages_7d, own_api_users, top[]}` |
 
-```js
-const response = await fetch('/api/progress/record', {
-  method: 'POST',
-  headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({item_id: item.id, correct: true, quality: 4})
-});
-if (!response.ok) throw new Error('Progress was not saved');
-```
-
-## Errors and limits
-
-Errors generally return `{detail}`. Missing/expired sessions return 401; invalid input 400; cross-origin mutation 403; unknown API route 404; oversized private mutation body 413. Chat, TTS and Kaiwa share a 20-request-per-minute/account limit, returning 429 when exceeded.
-
-Chat/Kaiwa provider failures return 503 instead of fabricated assessments. TTS can return a successful fallback response; HTTP 200 alone does not prove generated audio exists. An unexpected Worker error returns a generic 500 without exposing a stack trace. Route method handling is not uniformly hardened to 405; the table lists intended client methods.
-
-Completion kinds: `lesson`, `kaiwa`, `test`, `roadmap`, `chat`. IDs have at most 300 characters, titles at most 500. Test IDs include the level to avoid cross-level collisions. Migration 0007 adds the account-scoped completions table; deletion removes it with the rest of the account.
-
-Password routes use normalized email addresses and scrypt hashes. Email addresses are not verified and never automatically linked to Google identities. No recovery-email service exists. Auth limits: 10 attempts/IP+email and 100/IP per 15-minute bucket, with 429 and Retry-After. Migration 0009 adds credential and rate-limit tables.
-
-Chat request IDs scope retries to the authenticated account. Completed replies are reused; failed provider turns are not persisted. Migration 0010 adds the nullable request ID and unique account/request/role index. History deletion also deletes these receipts. Older clients can omit the ID.
+Các route `/api/ai/*` và `/api/admin/*` do `src/providers.js` xử lý riêng, tự kiểm tra phiên và giới hạn body 4 KB.
