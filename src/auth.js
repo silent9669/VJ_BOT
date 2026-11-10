@@ -86,7 +86,8 @@ export async function authRoute(request,env) {
       await env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(user.user_id).run();
       return json({user:null},200,{'Set-Cookie':cookie('vj_session','',0,request)});
     }
-    return json({user:user && {...user,is_admin:await isAdmin(env,user.user_id)}});
+    const email=user && (await env.DB.prepare('SELECT email FROM profiles WHERE user_id=?').bind(user.user_id).first())?.email;
+    return json({user:user && {...user,email:email||null,is_admin:await isAdmin(env,user.user_id)}});
   }
   if (path==='/api/auth/logout' && request.method==='POST') {
     const token=cookieValue(request,'vj_session');

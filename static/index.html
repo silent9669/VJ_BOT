@@ -9,6 +9,7 @@
   <meta name="author" content="VJBot Team">
 
   <!-- Open Graph & Social Cards -->
+  <meta name="color-scheme" content="light">
   <meta property="og:title" content="VJBot · Học tiếng Nhật cùng thầy Lâm">
   <meta property="og:description" content="Luyện JLPT N5–N1 theo lớp học đảo ngược: thầy Lâm hỏi, em tự trả lời. Dùng API AI của chính bạn.">
   <meta property="og:type" content="website">
@@ -33,7 +34,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="notebook.css">
   <link rel="stylesheet" href="practice.css">
-  <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="motion.css"><link rel="stylesheet" href="mascot.css">
+  <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="surfaces.css"><link rel="stylesheet" href="motion.css"><link rel="stylesheet" href="mascot.css">
 </head>
 <body data-page="landing">
   <!-- APP SHELL: TWO-COLUMN SIDEBAR + MAIN CONTENT (APPLE / SKETCH HYBRID) -->
@@ -416,10 +417,13 @@
 
         <section class="tab-panel lesson-page" id="panel-lesson" aria-labelledby="modal-lesson-title" hidden>
           <nav class="learning-breadcrumb" aria-label="Đường dẫn bài học"><button type="button" id="lesson-all-levels">Cấp độ</button><span aria-hidden="true">/</span><button type="button" id="btn-close-lesson-modal">Về khóa học</button><span aria-hidden="true">/</span><span aria-current="page">Bài học</span></nav>
-          <article id="lesson-page">
-            <header class="lesson-page-header"><span class="modal-lesson-badge" id="modal-lesson-badge"></span><h1 id="modal-lesson-title" tabindex="-1">Bài học</h1></header>
-            <div id="modal-lesson-body"></div>
-          </article>
+          <div class="lesson-layout">
+            <article id="lesson-page">
+              <header class="lesson-page-header"><span class="modal-lesson-badge" id="modal-lesson-badge"></span><h1 id="modal-lesson-title" tabindex="-1">Bài học</h1></header>
+              <div id="modal-lesson-body"></div>
+            </article>
+            <aside id="lesson-outline" class="lesson-outline" aria-label="Trong chương" hidden></aside>
+          </div>
         </section>
 
         <!-- TAB 3: FLASHCARDS (SRS SPACED REPETITION) -->
@@ -716,48 +720,38 @@
           </div>
         </section>
         <section class="tab-panel" id="panel-settings" hidden>
-          <div class="settings-container"><h1>Cài đặt</h1>
-
-            <div class="settings-card"><h2 class="card-title">Tài khoản</h2><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button></div>
-            <div class="settings-card" id="ai-card">
-              <h2 class="card-title">API AI</h2>
-              <p id="ai-source" class="ai-source" role="status"></p>
-              <form id="ai-form" class="ai-form" autocomplete="off">
-                <label>Loại API<select id="ai-protocol"><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select></label>
-                <label>URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false"></label>
-                <label>Model<input id="ai-model" required maxlength="100" spellcheck="false"></label>
-                <label>API key<input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false"></label>
-                <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save">Lưu và kiểm tra</button><button type="button" class="stage-btn" id="ai-chat" hidden>Chat với thầy Lâm</button><button type="button" class="stage-btn" id="ai-remove" hidden>Xóa</button></div>
-                <p id="ai-status" role="status"></p>
-              </form>
+          <div class="settings-container settings-layout"><h1>Cài đặt</h1>
+            <nav class="settings-nav" aria-label="Mục cài đặt"><button type="button" data-target="settings-account-card" aria-current="true">Tài khoản</button><button type="button" data-target="ai-card">API AI</button><button type="button" data-target="settings-sound-card">Âm thanh</button><button type="button" data-target="settings-danger-card">Dữ liệu</button></nav>
+            <div class="settings-stack">
+              <section class="settings-card" id="settings-account-card">
+                <header class="card-head"><h2 class="card-title">Tài khoản</h2></header>
+                <div class="account-row"><span class="account-initial" id="settings-initial" aria-hidden="true"></span><div class="account-who"><strong id="settings-name"></strong><span id="settings-email"></span></div><span class="status-pill" id="settings-kind"></span></div>
+                <div class="card-actions"><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button><button type="button" class="stage-btn" id="settings-logout">Đăng xuất</button></div>
+              </section>
+              <section class="settings-card" id="ai-card">
+                <header class="card-head"><h2 class="card-title">API AI</h2><span class="status-pill" id="ai-pill" data-state="none">Chưa kết nối</span></header>
+                <p id="ai-source" class="ai-source" role="status"></p>
+                <form id="ai-form" class="ai-form" autocomplete="off">
+                  <select id="ai-protocol" hidden><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select>
+                  <div class="segmented" role="group" aria-label="Loại API" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
+                  <label class="field-wide">URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false"></label>
+                  <label>Model<input id="ai-model" required maxlength="100" spellcheck="false"></label>
+                  <div class="model-chips" id="ai-models" aria-label="Gợi ý model"></div>
+                  <label>API key<span class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Hiện API key">Hiện</button></span></label>
+                  <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save">Lưu và kiểm tra</button><button type="button" class="stage-btn" id="ai-chat" hidden>Chat với thầy Lâm</button><button type="button" class="stage-btn" id="ai-remove" hidden>Xóa</button></div>
+                  <p id="ai-status" role="status"></p>
+                </form>
+              </section>
+              <section class="settings-card" id="settings-sound-card">
+                <header class="card-head"><h2 class="card-title">Âm thanh</h2></header>
+                <div class="setting-toggle-row"><strong>Âm báo khi học</strong><button type="button" class="sketch-action-chip" id="btn-toggle-sound-setting" aria-label="Âm báo khi học" aria-pressed="true">Bật âm thanh</button></div>
+              </section>
+              <section class="settings-card danger-card" id="settings-danger-card">
+                <header class="card-head"><h2 class="card-title">Xóa dữ liệu</h2></header>
+                <p class="card-desc">Xóa vĩnh viễn tài khoản, lịch sử và tiến độ.</p>
+                <div class="card-actions"><button type="button" class="delete-account-btn" id="btn-delete-account">Xóa tài khoản và tiến độ</button></div>
+              </section>
             </div>
-            <!-- Sound & Retro Effects -->
-            <div class="settings-card">
-              <h2 class="card-title">Âm thanh</h2>
-              <div class="setting-toggle-row">
-                <div>
-                  <strong>Âm báo khi học</strong>
-
-                </div>
-                <button type="button" class="sketch-action-chip" id="btn-toggle-sound-setting" aria-label="Âm báo khi học" aria-pressed="true">
-                  Bật âm thanh
-                </button>
-              </div>
-            </div>
-
-
-            <!-- Cloudflare D1 Account & Danger Zone -->
-            <div class="settings-card danger-card">
-              <h2 class="card-title" style="color: #dc2626;">Xóa dữ liệu</h2>
-              <p class="card-desc">Xóa vĩnh viễn tài khoản, lịch sử và tiến độ.</p>
-
-              <div class="danger-action-row" style="margin-top: 18px;">
-                <button type="button" class="delete-account-btn" id="btn-delete-account">
-                  Xóa tài khoản và tiến độ
-                </button>
-              </div>
-            </div>
-
           </div>
         </section>
 
@@ -781,7 +775,7 @@
       <div class="popover-sensei-box">
         <img id="popover-mascot-img" src="assets/lam/teacher.svg" alt="Thầy Lâm" class="pixel-sprite">
         <div class="popover-speech" id="popover-speech-text">
-          Chào bạn! Cần Sensei dịch câu, giải thích ngữ pháp hay luyện phát âm thì nhắn ngay ở đây nhé! (Phím tắt: Cmd+K)
+          Em cần dịch câu, giải thích ngữ pháp hay luyện phát âm? Hỏi thầy nhé.
         </div>
       </div>
 
@@ -896,6 +890,7 @@
           <label>Email<input id="auth-email" name="email" type="email" autocomplete="username" required maxlength="254"></label>
           <label>Mật khẩu<span class="auth-password-wrap"><input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" aria-describedby="auth-password-hint"><button type="button" id="auth-password-toggle" aria-pressed="false" aria-label="Hiện mật khẩu">Hiện</button></span></label>
           <p id="auth-password-hint" hidden>12–128 ký tự</p>
+          <div class="auth-meter" id="auth-meter" data-ok="false" hidden><i></i></div>
           <button type="submit" id="auth-submit" class="public-cta">Đăng nhập</button>
         </form>
         <div class="auth-divider">hoặc</div><div id="google-signin"></div><p id="google-status" role="status"></p>

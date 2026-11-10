@@ -2,7 +2,8 @@
 (function () {
   const el = id => document.getElementById(id);
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
-  const SOURCE = {own: 'Đang dùng API của bạn.', none: 'Chưa có API. Thêm API key để chat với thầy Lâm.'};
+  const PRESETS = {openai: [], anthropic: ['claude-sonnet-5-5', 'claude-haiku-5-5'], gemini: ['gemini-3.8-flash', 'gemini-3.5-flash-lite']};
+  const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
     const response = await apiFetch(path, options);
     const data = await response.json().catch(() => ({}));
@@ -11,16 +12,42 @@
   }
   const send = (path, method, body) => call(path, {method, headers: {'Content-Type': 'application/json'}, body: body && JSON.stringify(body)});
 
+  // Keeps the segmented control, URL placeholder and model suggestions in step with the hidden select.
+  function syncProtocol() {
+    const protocol = el('ai-protocol').value;
+    document.querySelectorAll('#ai-segments button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.protocol === protocol)));
+    el('ai-base').placeholder = BASES[protocol];
+    el('ai-models').replaceChildren(...PRESETS[protocol].map(model => {
+      const chip = document.createElement('button');
+      chip.type = 'button'; chip.textContent = model;
+      chip.onclick = () => { el('ai-model').value = model; };
+      return chip;
+    }));
+  }
+  const pill = (state, text) => { el('ai-pill').dataset.state = state; el('ai-pill').textContent = text; };
+
+  function renderAccountCard() {
+    const user = signedInUser;
+    if (!user) return;
+    el('settings-initial').textContent = (user.name || '?').trim().charAt(0).toUpperCase();
+    el('settings-name').textContent = user.name || 'Học viên';
+    el('settings-email').textContent = user.email || '';
+    el('settings-kind').textContent = user.user_id.startsWith('google:') ? KIND.google : KIND.email;
+  }
+
   async function renderSettings() {
+    renderAccountCard();
     const status = el('ai-status');
     status.textContent = '';
     try {
       const data = await call('/api/ai/settings');
       const own = data.own;
-      el('ai-source').textContent = SOURCE[data.source];
+      el('ai-source').textContent = data.source === 'none' ? 'Thêm API key để chat với thầy Lâm.' : '';
+      el('ai-source').hidden = data.source !== 'none';
+      pill(own ? 'saved' : 'none', own ? 'Đã lưu ••••' + own.key_last4 : 'Chưa kết nối');
       el('ai-protocol').value = own?.protocol || 'openai';
       el('ai-base').value = own?.base_url || '';
-      el('ai-base').placeholder = BASES[el('ai-protocol').value];
+      syncProtocol();
       el('ai-model').value = own?.model || '';
       el('ai-key').value = '';
       el('ai-key').placeholder = own ? '••••' + own.key_last4 : 'sk-…';
@@ -56,7 +83,7 @@
   // There is no built-in AI: chat stays closed (with one clear next step) until the learner saves an API.
   const openAiSettings = () => {
     switchTab('settings');
-    setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); el('ai-protocol').focus({preventScroll: true}); }, 250);
+    setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); document.querySelector('#ai-segments button').focus({preventScroll: true}); }, 250);
   };
   async function aiSource() {
     try { return (await call('/api/ai/settings')).source; } catch { return 'unknown'; }
@@ -82,7 +109,19 @@
   el('chat-gate-open').addEventListener('click', openAiSettings);
   el('ai-chat').addEventListener('click', () => switchTab('classroom'));
 
-  el('ai-protocol').addEventListener('change', () => { el('ai-base').placeholder = BASES[el('ai-protocol').value]; });
+  document.querySelectorAll('#ai-segments button').forEach(button => button.addEventListener('click', () => { el('ai-protocol').value = button.dataset.protocol; syncProtocol(); }));
+  el('ai-key-toggle').addEventListener('click', () => {
+    const show = el('ai-key').type === 'password';
+    el('ai-key').type = show ? 'text' : 'password';
+    el('ai-key-toggle').textContent = show ? 'Ẩn' : 'Hiện';
+    el('ai-key-toggle').setAttribute('aria-pressed', String(show));
+  });
+  el('settings-logout').addEventListener('click', () => el('auth-logout').click());
+  document.querySelectorAll('.settings-nav button').forEach(button => button.addEventListener('click', () => {
+    document.querySelectorAll('.settings-nav button').forEach(b => b.removeAttribute('aria-current'));
+    button.setAttribute('aria-current', 'true');
+    el(button.dataset.target).scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+  }));
   el('ai-form').addEventListener('submit', async event => {
     event.preventDefault();
     const status = el('ai-status'), save = el('ai-save');
@@ -100,6 +139,7 @@
     const kept = status.textContent;
     await renderSettings();
     status.textContent = kept;
+    pill(connected ? 'ok' : 'error', connected ? 'Kết nối được' : 'Lỗi kết nối');
     el('ai-chat').hidden = !connected;
     window.checkAiReady();
   });

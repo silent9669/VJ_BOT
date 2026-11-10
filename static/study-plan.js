@@ -59,6 +59,29 @@ function studyStepState(step,records){
 function openStudyStep(step,level){
   showLessonDetail(step.lesson,level,step.skill);
 }
+// Right-hand outline of the chapter this lesson belongs to: where you are, what is done, one click to any step.
+async function renderLessonOutline(item,level,skill,owner){
+  const host=document.getElementById('lesson-outline');
+  host.hidden=true;host.replaceChildren();
+  if(owner)return;
+  const id=activityId(item,level,skill),unit=(studyPlans.get(level)||[]).find(u=>u.steps.some(s=>activityId(s.lesson,level,s.skill)===id));
+  if(!unit)return;
+  let completed;try{completed=await loadCompletions();}catch{completed=new Set();}
+  if(!currentLesson || activityId(currentLesson.item,level,currentLesson.skill)!==id)return;
+  const done=unit.steps.filter(s=>completed.has(activityId(s.lesson,level,s.skill))).length;
+  const head=document.createElement('header'),title=document.createElement('strong'),count=document.createElement('span'),bar=document.createElement('progress');
+  title.textContent=unit.title;count.textContent=`${done}/${unit.steps.length}`;bar.max=unit.steps.length;bar.value=done;bar.setAttribute('aria-label','Tiến độ chương');
+  head.append(title,count);host.append(head,bar);
+  const list=document.createElement('ol');
+  for(const step of unit.steps){
+    const stepId=activityId(step.lesson,level,step.skill),li=document.createElement('li'),button=document.createElement('button');
+    button.type='button';button.dataset.done=String(completed.has(stepId));if(stepId===id)button.setAttribute('aria-current','step');
+    const label=document.createElement('span');label.textContent=step.lesson.title;
+    const kind=document.createElement('small');kind.textContent=studySkillNames[step.skill]||'';
+    button.append(label,kind);button.onclick=()=>openStudyStep(step,level);li.append(button);list.append(li);
+  }
+  host.append(list);host.hidden=false;
+}
 let studyPlanRequest=0;
 async function renderStudyPlan(level){
   const request=++studyPlanRequest,host=document.getElementById('study-plan');

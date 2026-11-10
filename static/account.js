@@ -61,6 +61,7 @@ function setAuthMode(register) {
   document.getElementById('auth-name').required=register;
   document.getElementById('auth-password').autocomplete=register?'new-password':'current-password';
   document.getElementById('auth-password-hint').hidden=!register;
+  document.getElementById('auth-meter').hidden=!register;
   document.getElementById('auth-login-tab').setAttribute('aria-pressed',String(!register));
   document.getElementById('auth-register-tab').setAttribute('aria-pressed',String(register));
   document.getElementById('auth-submit').textContent=register?'Tạo tài khoản':'Đăng nhập';
@@ -70,7 +71,15 @@ function setAuthMode(register) {
 async function setupAccount() {
   document.getElementById('btn-topbar-account').addEventListener('click',()=>openAccount());
   document.getElementById('auth-close').addEventListener('click',()=>document.getElementById('auth-dialog').close());
-  const dialog=document.getElementById('auth-dialog'),password=document.getElementById('auth-password'),toggle=document.getElementById('auth-password-toggle');
+  const dialog=document.getElementById('auth-dialog'),password=document.getElementById('auth-password'),toggle=document.getElementById('auth-password-toggle'),meter=document.getElementById('auth-meter');
+  password.addEventListener('input',()=>{
+    const filled=Math.min(1,password.value.length/12);
+    meter.firstElementChild.style.width=filled*100+'%';meter.dataset.ok=String(password.value.length>=12);
+  });
+  for(const field of document.querySelectorAll?.('#auth-form input')||[]){
+    field.addEventListener('invalid',()=>field.setAttribute('aria-invalid','true'));
+    field.addEventListener('input',()=>field.removeAttribute('aria-invalid'));
+  }
   dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
   toggle.onclick=()=>{const show=password.type==='password';password.type=show?'text':'password';toggle.textContent=show?'Ẩn':'Hiện';toggle.setAttribute('aria-pressed',String(show));toggle.setAttribute('aria-label',show?'Ẩn mật khẩu':'Hiện mật khẩu');};
   document.querySelectorAll?.('[data-level]').forEach(button=>button.onclick=()=>{

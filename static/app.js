@@ -649,19 +649,20 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   let examplesHtml = "";
   if (item.examples && item.examples.length > 0) {
     examplesHtml = `
-      <div style="margin-top: 20px;">
-        <h4 style="font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 10px;">Ví dụ</h4>
-        ${item.examples.map(ex => `
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <p style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">${furiganaHtml(ex.furigana || ex.jp)}</p>
-              <p style="font-size: 12px; color: #64748b; font-family: var(--font-mono); margin-bottom: 2px;">${escapeHtml(ex.ro)}</p>
-              <p style="font-size: 13px; color: #334155;">${escapeHtml(ex.vi)}</p>${ex.source ? `<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>` : ""}
+      <section class="lesson-section">
+        <h3 class="lesson-section-title">Ví dụ</h3>
+        <ol class="example-list">${item.examples.map((ex, index) => `
+          <li class="example-card">
+            <span class="example-index" aria-hidden="true">${index + 1}</span>
+            <div class="example-text">
+              <p class="example-jp" lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p>
+              ${ex.ro ? `<p class="example-ro">${escapeHtml(ex.ro)}</p>` : ""}
+              <p class="example-vi">${escapeHtml(ex.vi)}</p>${ex.source ? `<a class="example-source" href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>` : ""}
             </div>
-            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}" style="flex-shrink: 0; background: #fff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 6px 10px; cursor: pointer;">Nghe</button>
-          </div>
-        `).join("")}
-      </div>
+            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}">Nghe</button>
+          </li>`).join("")}
+        </ol>
+      </section>
     `;
   }
 
@@ -678,16 +679,12 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   body.innerHTML = `
     <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">5 câu kiểm tra</button></div>
     <div id="lesson-reference">
-    <div style="margin-bottom: 16px;">
-      <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT" : "Bài học"))}</span>
-      <p style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 4px 0 10px;">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
-      ${item.formula ? `
-        <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; font-family: var(--font-mono); font-size: 13px; color: #1e40af; margin-bottom: 12px;">
-          <strong>Cấu trúc:</strong> ${escapeHtml(item.formula)}
-        </div>
-      ` : ""}
-      <p style="font-size: 14px; color: #475569; line-height: 1.6;">${escapeHtml(item.explanation || item.summary || "")}</p>
-    </div>
+    <section class="lesson-intro">
+      <span class="lesson-source">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT" : "Bài học"))}</span>
+      <p class="lesson-meaning">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
+      ${item.formula ? `<div class="lesson-formula"><span>Cấu trúc</span><code>${escapeHtml(item.formula)}</code></div>` : ""}
+      ${item.explanation || item.summary ? `<p class="lesson-explain">${escapeHtml(item.explanation || item.summary || "")}</p>` : ""}
+    </section>
     ${item.resources?.length ? `<aside class="lesson-resources"><h4>Học tiếp từ nguồn gốc</h4>${item.resources.map(r=>`<p>${escapeHtml(r.publisher)} · ${escapeHtml(r.title)}</p><a href="${escapeHtml(r.pdf_url)}" target="_blank" rel="noopener">Mở bài PDF</a> ${r.audio_page_url?`<a href="${escapeHtml(r.audio_page_url)}" target="_blank" rel="noopener">Nghe bản gốc</a>`:''}`).join('')}<p>Bài trong app được biên soạn riêng; nguồn gốc dùng hệ A1/A2/A2–B1.</p></aside>` : ''}
     ${examplesHtml}
     ${vocabularyHtml}
@@ -695,9 +692,9 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     ${listeningHtml}
     ${item.externalResources?.length?`<div class="external-resources">${item.externalResources.map(r=>`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)} ↗</a>`).join('')}</div>`:''}
     </div><div id="lesson-exercises" hidden></div><div id="lesson-completion"></div>
-    <div class="lesson-footer" style="margin-top: 24px; display: flex; gap: 10px;">
-      <button type="button" class="sketch-btn-cta modal-practice-btn" style="flex: 1; padding: 10px;">Luyện với thầy Lâm</button>
-      <button type="button" class="stage-btn modal-close-action" style="padding: 10px 18px;">Đóng</button>
+    <div class="lesson-footer">
+      <button type="button" class="sketch-btn-cta modal-practice-btn">Luyện với thầy Lâm</button>
+      <button type="button" class="stage-btn modal-close-action">Đóng</button>
     </div>
   `;
 
@@ -748,6 +745,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   if (btnClose){btnClose.textContent="Về khóa học";btnClose.addEventListener("click",returnToCourse);}
 
   addFeatureLessonAction(item,level,owner);
+  renderLessonOutline(item,level,skill,owner);
   body.scrollTop=0;
   title.focus({preventScroll:true});
 }
