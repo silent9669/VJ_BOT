@@ -20,6 +20,7 @@ dist/
 
 # Screenshots & logs
 *.png
+!static/assets/lam/**/*.png
 uvicorn.log
 node_modules/
 scripts/update_app.js
