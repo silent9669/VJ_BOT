@@ -81,6 +81,11 @@ export async function authRoute(request,env) {
   }
   if (path==='/api/auth/session' && request.method==='GET') {
     const user=await sessionUser(request,env);
+    // A Google account must have its name and verified email on file; older sessions predate that, so sign in again once.
+    if(user?.user_id.startsWith('google:') && !(await env.DB.prepare('SELECT email FROM profiles WHERE user_id=?').bind(user.user_id).first())?.email) {
+      await env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(user.user_id).run();
+      return json({user:null},200,{'Set-Cookie':cookie('vj_session','',0,request)});
+    }
     return json({user:user && {...user,is_admin:await isAdmin(env,user.user_id)}});
   }
   if (path==='/api/auth/logout' && request.method==='POST') {

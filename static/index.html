@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="notebook.css">
   <link rel="stylesheet" href="practice.css">
-  <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="motion.css">
+  <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="motion.css"><link rel="stylesheet" href="mascot.css">
 </head>
 <body data-page="landing">
   <!-- APP SHELL: TWO-COLUMN SIDEBAR + MAIN CONTENT (APPLE / SKETCH HYBRID) -->
@@ -709,6 +709,7 @@
               <h2 class="card-title">Người dùng</h2>
               <input id="admin-search" class="admin-search" type="search" placeholder="Tìm theo tên, email hoặc ID" aria-label="Tìm người dùng" maxlength="80" autocomplete="off">
               <div id="admin-users" class="admin-users" aria-live="polite"></div>
+              <button type="button" class="stage-btn admin-danger" id="admin-purge" hidden></button>
               <div class="admin-pager"><button type="button" class="stage-btn" id="admin-prev">Trước</button><span id="admin-range"></span><button type="button" class="stage-btn" id="admin-next">Sau</button></div>
             </div>
             <div class="settings-card"><h2 class="card-title">Hoạt động 7 ngày</h2><div id="admin-top"></div></div>
@@ -803,7 +804,7 @@
 
       <div class="popover-actions-row">
         <button type="button" id="btn-popover-tts" class="popover-tts-btn">
-          Nghe Nghe phát âm câu trên
+          Nghe phát âm câu trên
         </button>
       </div>
     </div>
@@ -913,6 +914,7 @@
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="app.js"></script>
+  <script src="mascot.js"></script>
 
 </body>
 </html>

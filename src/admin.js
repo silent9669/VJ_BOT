@@ -40,7 +40,8 @@ export async function listUsers(env, url) {
   const where = q ? " WHERE p.user_id LIKE ?2 ESCAPE '\\' OR p.name LIKE ?2 ESCAPE '\\' OR p.email LIKE ?2 ESCAPE '\\'" : '';
   const rows = await env.DB.prepare(`${USER_SELECT.replace('?', '?1')}${where} ORDER BY COALESCE(p.last_login,p.updated_at) DESC LIMIT 25 OFFSET ${offset}`).bind(...(q ? [Date.now(), like] : [Date.now()])).all();
   const total = await env.DB.prepare(`SELECT count(*) n FROM profiles p${where.replaceAll('?2', '?1')}`).bind(...(q ? [like] : [])).first();
-  return {users: rows.results.map(shape), total: total.n, offset};
+  const guests = await env.DB.prepare("SELECT count(*) n FROM profiles WHERE user_id NOT LIKE 'google:%' AND user_id NOT LIKE 'email:%'").first();
+  return {users: rows.results.map(shape), total: total.n, offset, guests: guests.n};
 }
 
 export async function userDetail(env, id) {
@@ -69,4 +70,11 @@ export async function userAction(env, adminId, data) {
   if (data.action === 'delete' && id === adminId) return 'Không thể tự xóa tài khoản đang dùng tại đây.';
   await ACTIONS[data.action](env, id);
   return null;
+}
+
+// Old anonymous profiles (neither Google nor email) cannot sign in again; this removes them and their data.
+export async function purgeGuests(env) {
+  const ids = (await env.DB.prepare("SELECT user_id FROM profiles WHERE user_id NOT LIKE 'google:%' AND user_id NOT LIKE 'email:%'").all()).results.map(r => r.user_id);
+  for (let i = 0; i < ids.length; i += 10) await Promise.all(ids.slice(i, i + 10).map(id => deleteUserData(env, id)));
+  return ids.length;
 }

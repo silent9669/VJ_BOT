@@ -11,6 +11,8 @@ Danh sách này dựa trên trạng thái thật của mã nguồn và productio
 
 ## Chất lượng và kỹ thuật
 
+0. **Tài nguyên pixel.** Thầy Lâm pixel dùng ảnh 4 hướng và 4 khung thở lấy từ bộ nhân vật Pixel Lab cũ (`static/assets/sensei/minh`); chưa có khung vẫy tay hay đi bộ thật nên bước đi là hiệu ứng nhún. Tạo bộ khung riêng rồi xóa các thư mục `static/assets/sensei/*` không dùng.
+
 5. **Dọn mã cũ.** `app/`, `Dockerfile`, `docker-compose.yml`, `requirements.txt`, `pytest.ini`, `tests/test_*.py` (trừ phần của `scripts/`) và `wrangler.config.ts` không thuộc hệ thống đang chạy. Quyết định xóa hay giữ, rồi bỏ `python.yml` nếu không còn gì để kiểm tra. Secret `GEMINI_API_KEY` không còn được đọc: xóa khỏi Worker và khỏi `cloudflare.config.ts`.
 6. **Gộp CSS.** `style.css` (5.800 dòng) cộng `notebook.css`, `layout.css`, `workspace.css`, `practice.css`, `landing.css` chồng lên nhau và ghi đè bằng `!important`. Chọn một lớp token (màu, khoảng cách, chữ), chuyển dần từng màn hình, xóa luật chết. Xong khi mỗi màn hình chỉ cần một file.
 7. **Tách `app.js` và `worker.js`.** `app.js` (1.800 dòng) và `worker.js` (630 dòng, nhiều route viết dày) khó đọc và khó thử. Tách route dữ liệu (hồ sơ, tiến độ, hoàn thành, lịch sử) thành module như `auth.js`/`providers.js`; chuyển các script sang ES module để Vite đóng gói (hiện build luôn cảnh báo "can't be bundled without type=module").
