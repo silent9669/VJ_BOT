@@ -23,6 +23,7 @@ async function openAccount(message=''){
   if(dialog.open)return;
   setAuthMode(false);
   dialog.showModal();
+  if(!signedInUser)document.getElementById('auth-email').focus();
   document.getElementById('auth-status').textContent=typeof message==='string'?message:'';
   if(!signedInUser)await prepareGoogleSignIn();
 }
@@ -63,10 +64,19 @@ function setAuthMode(register) {
   document.getElementById('auth-register-tab').setAttribute('aria-pressed',String(register));
   document.getElementById('auth-submit').textContent=register?'Tạo tài khoản':'Đăng nhập';
   document.getElementById('auth-status').textContent='';
+  document.getElementById(register?'auth-name':'auth-email').focus();
 }
 async function setupAccount() {
   document.getElementById('btn-topbar-account').addEventListener('click',()=>openAccount());
   document.getElementById('auth-close').addEventListener('click',()=>document.getElementById('auth-dialog').close());
+  const dialog=document.getElementById('auth-dialog'),password=document.getElementById('auth-password'),toggle=document.getElementById('auth-password-toggle');
+  dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+  toggle.onclick=()=>{const show=password.type==='password';password.type=show?'text':'password';toggle.textContent=show?'Ẩn':'Hiện';toggle.setAttribute('aria-pressed',String(show));toggle.setAttribute('aria-label',show?'Ẩn mật khẩu':'Hiện mật khẩu');};
+  document.querySelectorAll?.('[data-level]').forEach(button=>button.onclick=()=>{
+    const route='#curriculum/'+button.dataset.level;
+    if(signedInUser){location.hash=route;return;}
+    sessionStorage.setItem('vjbot_return_route',route);openAccount();setAuthMode(true);
+  });
   const status=document.getElementById('auth-status');
   document.getElementById('auth-login-tab').onclick=()=>setAuthMode(false);
   document.getElementById('auth-register-tab').onclick=()=>setAuthMode(true);

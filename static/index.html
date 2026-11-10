@@ -190,15 +190,24 @@
         <section class="tab-panel active" id="panel-landing">
           <nav class="public-nav" aria-label="Trang chủ">
             <a href="#landing" class="public-brand"><img src="assets/logo-vj-8bit.svg" width="28" height="28" alt="">VJBot</a>
-            <button class="public-login" data-enter="dashboard">Đăng nhập ↗</button>
+            <div class="public-nav-actions"><button class="public-login" data-enter="dashboard">Đăng nhập</button><button class="public-cta" data-register>Bắt đầu</button></div>
           </nav>
           <div class="public-hero">
             <div class="public-hero-copy">
               <h1>Tiếng Nhật,<br><em>từng ngày.</em></h1>
+              <div class="public-levels" role="group" aria-label="Chọn cấp độ"><button type="button" data-level="N5">N5</button><button type="button" data-level="N4">N4</button><button type="button" data-level="N3">N3</button><button type="button" data-level="N2">N2</button><button type="button" data-level="N1">N1</button></div>
               <div class="public-account-actions"><button class="public-cta" data-register>Tạo tài khoản <span aria-hidden="true">↗</span></button><button class="public-signin" data-enter="dashboard">Đăng nhập</button></div>
             </div>
-            <div class="learning-collage" aria-hidden="true"><span class="collage-sun"></span><div class="collage-sheet" lang="ja"><span>日本語</span><strong>こんにちは。</strong></div><img src="assets/lam/teacher.svg" alt="" width="280" height="280"></div>
+            <div class="public-demo" aria-hidden="true">
+              <img class="demo-sun" src="assets/landing-sun.svg" alt="" width="220" height="220">
+              <div class="demo-chat">
+                <div class="demo-msg demo-teacher"><img src="assets/lam/teacher.svg" alt="" width="36" height="36"><p lang="vi">Trợ từ 「は」 đọc là gì? Em thử nói trước nhé.</p></div>
+                <div class="demo-msg demo-learner"><p lang="ja">「わ」です。私は学生です。</p></div>
+                <div class="demo-msg demo-teacher"><img src="assets/lam/teacher.svg" alt="" width="36" height="36"><p lang="vi">Đúng. Giờ nói: em là giáo viên.</p></div>
+              </div>
+            </div>
           </div>
+          <ol class="public-steps"><li><b>1</b>Đọc bài</li><li><b>2</b>Thầy hỏi, em trả lời</li><li><b>3</b>Nhận xét, tình huống mới</li></ol>
           <footer class="public-footer"><span>VJBot · 日本語</span><a href="sources.html">Nguồn & quyền riêng tư ↗</a></footer>
         </section>
         <section class="tab-panel workspace-panel" id="panel-dashboard" hidden><header class="workspace-heading"><div><h1>Góc học tập</h1><p id="dashboard-greeting"></p></div><img src="assets/lam/teacher.svg" alt="Thầy Lâm" width="72" height="72"></header><div id="dashboard-content" aria-live="polite"></div></section>
@@ -834,20 +843,23 @@
   <!-- LOAD COMPREHENSIVE DATA & APP SCRIPT -->
   <script src="jlpt-data.js"></script>
   <dialog id="auth-dialog" aria-labelledby="auth-user">
-    <button type="button" id="auth-close" class="modal-close-btn" aria-label="Đóng">×</button>
-    <h2 id="auth-user">Đăng nhập</h2>
-    <div id="auth-methods">
-      <div class="auth-tabs" role="group" aria-label="Tài khoản"><button type="button" id="auth-login-tab" aria-pressed="true">Đăng nhập</button><button type="button" id="auth-register-tab" aria-pressed="false">Đăng ký</button></div>
-      <form id="auth-form">
-        <label id="auth-name-label" hidden>Tên<input id="auth-name" name="name" autocomplete="name" maxlength="80"></label>
-        <label>Email<input id="auth-email" name="email" type="email" autocomplete="username" required maxlength="254"></label>
-        <label>Mật khẩu<input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" aria-describedby="auth-password-hint"></label>
-        <p id="auth-password-hint" hidden>12–128 ký tự</p>
-        <button type="submit" id="auth-submit" class="public-cta">Đăng nhập</button>
-      </form>
-      <div class="auth-divider">hoặc</div><div id="google-signin"></div><p id="google-status" role="status"></p>
+    <aside class="auth-aside" aria-hidden="true"><img src="assets/landing-sun.svg" alt="" width="120" height="120"><img src="assets/lam/teacher.svg" alt="" width="132" height="132"></aside>
+    <div class="auth-main">
+      <button type="button" id="auth-close" class="modal-close-btn" aria-label="Đóng">×</button>
+      <h2 id="auth-user">Đăng nhập</h2>
+      <div id="auth-methods">
+        <div class="auth-tabs" role="group" aria-label="Tài khoản"><button type="button" id="auth-login-tab" aria-pressed="true">Đăng nhập</button><button type="button" id="auth-register-tab" aria-pressed="false">Đăng ký</button></div>
+        <form id="auth-form">
+          <label id="auth-name-label" hidden>Tên<input id="auth-name" name="name" autocomplete="name" maxlength="80"></label>
+          <label>Email<input id="auth-email" name="email" type="email" autocomplete="username" required maxlength="254"></label>
+          <label>Mật khẩu<span class="auth-password-wrap"><input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" aria-describedby="auth-password-hint"><button type="button" id="auth-password-toggle" aria-pressed="false" aria-label="Hiện mật khẩu">Hiện</button></span></label>
+          <p id="auth-password-hint" hidden>12–128 ký tự</p>
+          <button type="submit" id="auth-submit" class="public-cta">Đăng nhập</button>
+        </form>
+        <div class="auth-divider">hoặc</div><div id="google-signin"></div><p id="google-status" role="status"></p>
+      </div>
+      <p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button>
     </div>
-    <p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button>
   </dialog>
   <script src="practice.js"></script>
   <script src="learning.js"></script>
