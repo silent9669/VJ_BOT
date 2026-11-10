@@ -65,7 +65,7 @@ Before a later deployment, record the current version and choose a compatible ro
 - **GitHub Actions** only checks: `ci.yml` runs `npm ci`, `npm test`, `npm run build` on PRs and `main`; `python.yml` runs pytest only when `app/`, `scripts/` or Python tests change. No Cloudflare credentials live in GitHub.
 - **Cloudflare Workers Builds** is the only deployer. Pushing to `main` builds and deploys; teammates need repo push access and Cloudflare dashboard access to view build logs, not API tokens.
 - Dashboard settings (Worker `vjbot` > Settings > Builds): Production branch `main`; Build command `npm test`; Deploy command `npm run release` (applies D1 migrations, then `cf deploy`); Root directory `/`. The Workers Builds API token needs Workers Scripts Edit and D1 Edit.
-- Non-production branches: disable branch builds, or set their deploy command to `npm run build`. Never leave the default `npx wrangler versions upload`: `wrangler.config.ts` has no Worker entrypoint.
+- Previews are disabled (`cf builds workers update <worker-id> --previews-enabled false`). The default preview command `npx wrangler preview` fails on this `cf` project, and a preview Worker would share the production D1 binding.
 - Keep one lockfile (`package-lock.json`). A second one changes which package manager Workers Builds picks.
 - Rollback: Worker versions in the dashboard; D1 migrations are not undone.
 
