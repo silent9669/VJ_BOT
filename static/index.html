@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="notebook.css">
   <link rel="stylesheet" href="practice.css">
-  <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css"><link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="motion.css">
 </head>
 <body data-page="landing">
   <!-- APP SHELL: TWO-COLUMN SIDEBAR + MAIN CONTENT (APPLE / SKETCH HYBRID) -->
@@ -238,7 +238,7 @@
 
               <div class="stage-sensei-info">
                 <h3 class="stage-sensei-name" id="stage-sensei-name">Thầy Lâm</h3>
-                <p class="stage-sensei-role" id="stage-sensei-role">Tiếng Nhật · Học đảo ngược</p>
+                <p class="stage-sensei-role" id="stage-sensei-role">Tiếng Nhật · Lớp học đảo ngược</p>
               </div>
 
               <!-- Active Topic Card -->
@@ -705,6 +705,12 @@
         <section class="tab-panel" id="panel-admin" hidden>
           <div class="settings-container"><h1>Quản trị</h1>
             <div id="admin-stats" class="admin-stats" aria-live="polite"></div>
+            <div class="settings-card">
+              <h2 class="card-title">Người dùng</h2>
+              <input id="admin-search" class="admin-search" type="search" placeholder="Tìm theo tên, email hoặc ID" aria-label="Tìm người dùng" maxlength="80" autocomplete="off">
+              <div id="admin-users" class="admin-users" aria-live="polite"></div>
+              <div class="admin-pager"><button type="button" class="stage-btn" id="admin-prev">Trước</button><span id="admin-range"></span><button type="button" class="stage-btn" id="admin-next">Sau</button></div>
+            </div>
             <div class="settings-card"><h2 class="card-title">Hoạt động 7 ngày</h2><div id="admin-top"></div></div>
           </div>
         </section>
@@ -868,6 +874,15 @@
 
   <!-- LOAD COMPREHENSIVE DATA & APP SCRIPT -->
   <script src="jlpt-data.js"></script>
+  <dialog id="admin-user-dialog" class="admin-user-dialog" aria-labelledby="admin-user-name">
+    <button type="button" id="admin-user-close" class="modal-close-btn" aria-label="Đóng">×</button>
+    <h2 id="admin-user-name"></h2>
+    <p id="admin-user-meta" class="ai-source"></p>
+    <dl id="admin-user-stats" class="admin-user-stats"></dl>
+    <form id="admin-level-form" class="admin-level-form"><label>Cấp độ<select id="admin-level"><option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option></select></label><button type="submit" class="stage-btn">Lưu cấp độ</button></form>
+    <div class="admin-user-actions" id="admin-user-actions"></div>
+    <p id="admin-user-status" role="status"></p>
+  </dialog>
   <dialog id="auth-dialog" aria-labelledby="auth-user">
     <aside class="auth-aside" aria-hidden="true"><img src="assets/landing-sun.svg" alt="" width="120" height="120"><img src="assets/lam/teacher.svg" alt="" width="132" height="132"></aside>
     <div class="auth-main">
@@ -893,6 +908,7 @@
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
   <script src="account.js"></script>
   <script src="ai-settings.js"></script>
+  <script src="admin-users.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="app.js"></script>

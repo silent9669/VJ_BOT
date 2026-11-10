@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -63,7 +63,7 @@ test('AI rate limit stops before the provider and account deletion is isolated',
   const {env,request}=await authenticated();
   await env.DB.prepare('INSERT INTO ai_usage VALUES(?,?,20)').bind('google:qa',Math.floor(Date.now()/60000)).run();
   assert.equal((await worker.fetch(request('/api/chat',{message:'hello'}),env)).status,429);
-  await env.DB.prepare("INSERT INTO profiles VALUES('victim','N5','openjlpt','now')").run();
+  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('victim','N5','openjlpt','now')").run();
   assert.equal((await worker.fetch(request('/api/account/delete',{user_id:'victim'}),env)).status,200);
   assert.ok(await env.DB.prepare("SELECT * FROM profiles WHERE user_id='victim'").first());
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM sessions').first()).n,0);
@@ -298,4 +298,37 @@ test('admin status needs a Google row, a verified email in the current ADMIN_EMA
   assert.equal((await (await worker.fetch(request('/api/auth/session'),env)).json()).user.is_admin,true);
   const overview=await (await worker.fetch(request('/api/admin/overview'),env)).json();assert.equal(typeof overview.users,'number');assert.ok(Array.isArray(overview.top));
   env.ADMIN_EMAILS='';assert.equal(await isAdmin(env,'google:qa'),false);assert.equal((await worker.fetch(request('/api/admin/overview'),env)).status,403);
+});
+
+test('admins manage users: list, search, detail and every action; others are refused',async()=>{
+  const {env,request}=await authenticated();env.ADMIN_EMAILS='owner@example.test';env.AI_KEY_SECRET='local-secret';
+  const post=(path,body)=>worker.fetch(request(path,body),env),get=path=>worker.fetch(request(path),env);
+  assert.equal((await get('/api/admin/users')).status,403);assert.equal((await post('/api/admin/user',{id:'x',action:'delete'})).status,403);
+  const {recordAdminLogin}=await import('../src/admin.js');await recordAdminLogin(env,'google:qa','owner@example.test');
+  const now=new Date().toISOString();
+  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name) VALUES('google:qa','N5','openjlpt',?,'QA')").bind(now).run();
+  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email,created_at,last_login) VALUES('google:alice','N4','openjlpt',?,'Alice Nguyen','alice@example.test',?,?)").bind(now,now,now).run();
+  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name) VALUES('legacy-guest-1','N5','openjlpt',?,NULL)").bind(now).run();
+  await env.DB.prepare("INSERT INTO conversations(user_id,role,content,timestamp) VALUES('google:alice','user','xin chào',?),('google:alice','bot','chào em',?)").bind(now,now).run();
+  await env.DB.prepare("INSERT INTO completions(user_id,activity_id,kind,level,title,completed_at) VALUES('google:alice','a1','lesson','N4','Bài 1',?)").bind(now).run();
+  await env.DB.prepare("INSERT INTO sessions VALUES('hash-alice','google:alice','Alice Nguyen',?)").bind(Date.now()+60000).run();
+  await worker.fetch(new Request('https://vjbot.test/api/ai/settings',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'openai',base_url:'',model:'m',api_key:'sk-test-12345678'})}),env);
+  const list=await (await get('/api/admin/users')).json();assert.equal(list.total,3);
+  const alice=list.users.find(u=>u.user_id==='google:alice');assert.deepEqual([alice.name,alice.email,alice.kind,alice.level,alice.messages,alice.completed,alice.sessions],['Alice Nguyen','alice@example.test','google','N4',1,1,1]);
+  assert.equal(list.users.find(u=>u.user_id==='legacy-guest-1').kind,'guest');assert.equal(list.users.find(u=>u.user_id==='google:qa').admin,true);
+  assert.deepEqual((await (await get('/api/admin/users?q=alice')).json()).users.map(u=>u.user_id),['google:alice']);
+  assert.equal((await (await get('/api/admin/users?q=%25')).json()).total,0);
+  assert.equal((await get('/api/admin/user?id=nobody')).status,404);
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'set_level',level:'N9'})).status,400);
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'set_level',level:'N2'})).status,200);
+  assert.equal((await (await get('/api/admin/user?id=google:alice')).json()).level,'N2');
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'clear_chat'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM conversations WHERE user_id='google:alice'").first()).n,0);
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'reset_progress'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM completions WHERE user_id='google:alice'").first()).n,0);
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'revoke_sessions'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM sessions WHERE user_id='google:alice'").first()).n,0);
+  await env.DB.prepare("INSERT INTO ai_providers VALUES('google:alice','openai','https://api.example.com/v1','m','x','1234',?)").bind(now).run();
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'remove_api'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM ai_providers WHERE user_id='google:alice'").first()).n,0);
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'explode'})).status,400);
+  assert.equal((await post('/api/admin/user',{id:'google:qa',action:'delete'})).status,400);
+  assert.equal((await post('/api/admin/user',{id:'google:alice',action:'delete'})).status,200);
+  assert.equal((await env.DB.prepare("SELECT count(*) n FROM profiles WHERE user_id='google:alice'").first()).n,0);assert.equal((await get('/api/admin/user?id=google:alice')).status,404);
 });

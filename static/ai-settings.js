@@ -48,6 +48,7 @@
         return line;
       }));
     } catch (error) { stats.textContent = error.message; }
+    window.renderAdminUsers?.();
   }
 
   window.renderAiPanels = tab => (tab === 'admin' ? renderAdmin() : renderSettings());
