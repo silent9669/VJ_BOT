@@ -332,3 +332,18 @@ test('admins manage users: list, search, detail and every action; others are ref
   assert.equal((await post('/api/admin/user',{id:'google:alice',action:'delete'})).status,200);
   assert.equal((await env.DB.prepare("SELECT count(*) n FROM profiles WHERE user_id='google:alice'").first()).n,0);assert.equal((await get('/api/admin/user?id=google:alice')).status,404);
 });
+
+test('thầy Lâm receives the current screen and learner notes wherever he is summoned',async()=>{
+  const {env,request}=await authenticated(),previous=globalThis.fetch;await withApi(env,request);
+  await env.DB.prepare("INSERT INTO progress(user_id,item_id,item_type,jlpt_level,correct,incorrect,display) VALUES('google:qa','x1','grammar','N5',0,3,'〜は'),('google:qa','x2','grammar','N5',5,0,'〜です')").run();
+  let system='';globalThis.fetch=async(url,options)=>{system=JSON.parse(options.body).messages[0].content;return Response.json({choices:[{message:{content:'ok'}}]});};
+  try{
+    const screen={route:'quiz/N3',title:'Luyện thi',level:'N3',text:'Câu 2: 〜わけだ nghĩa là gì?\n<script>alert(1)</script>'};
+    assert.equal((await worker.fetch(request('/api/chat',{message:'câu này là gì?',screen}),env)).status,200);
+    assert.match(system,/JLPT N3/);assert.match(system,/<screen route="quiz\/N3" title="Luyện thi">Câu 2: 〜わけだ nghĩa là gì\?/);assert.ok(!system.includes('<script>'));
+    assert.match(system,/Weakest items: 〜は\./);assert.ok(!system.includes('〜です.'));assert.match(system,/never reveal the answer/);
+    for(const bad of ['text',{route:1,title:'',text:''},{route:'x',title:'y'},[]])assert.equal((await worker.fetch(request('/api/chat',{message:'hi',screen:bad}),env)).status,400);
+    system='';await worker.fetch(request('/api/chat',{message:'xin chào'}),env);assert.ok(!system.includes('SCREEN ('));
+    await worker.fetch(request('/api/chat',{message:'dài',screen:{...screen,text:'x'.repeat(9000)}}),env);assert.ok(system.length<20000);assert.ok(!system.includes('x'.repeat(3600)));
+  }finally{globalThis.fetch=previous;}
+});

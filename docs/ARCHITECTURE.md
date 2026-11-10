@@ -32,6 +32,7 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 | `static/index.html` | Toàn bộ khung trang, dialog đăng nhập, panel các tab |
 | `static/app.js` | Điều hướng tab, chat, thẻ nhớ, Kaiwa, quiz, tiến độ, âm thanh |
 | `static/account.js`, `ai-settings.js`, `admin-users.js` | Phiên, đăng nhập, `apiFetch`; thẻ API AI trong Cài đặt, panel Quản trị, cổng chat; danh sách và hộp thoại quản lý người dùng |
+| `static/teacher-context.js` | Chụp chữ của màn hình học đang mở (`teacherScreen()`), nhớ màn hình vừa rời đi 30 phút để chat và ô ⌘K vẫn biết người học vừa xem gì |
 | `static/learning.js`, `study-plan.js`, `lesson-checks.js`, `completion.js`, `practice.js` | Dựng bài học từ dữ liệu, lộ trình, 5 câu kiểm tra, đánh dấu hoàn thành, luyện tập |
 | `static/navigation.js`, `workspace.js` | Route theo hash, sidebar, dashboard, level hub |
 | `static/vi-labels.js` | Nhãn và công thức ngữ pháp tiếng Việt, nạp từ điển dịch |
@@ -80,7 +81,8 @@ Xóa tài khoản (`/api/account/delete`) xóa mọi bảng trên theo `user_id`
 - Ba giao thức trong `src/llm.js`: OpenAI-compatible (`/chat/completions`, Bearer, không gửi `max_tokens`/`temperature`), Anthropic (`/v1/messages`, `x-api-key`, `max_tokens` 1024), Gemini (`generateContent`, `x-goog-api-key`).
 - URL do người dùng nhập phải là https công khai: chặn IP, localhost, `.local`/`.internal`, domain của chính site và `workers.dev`, có tài khoản/query/fragment. `redirect: 'manual'`, không trả lại nội dung lỗi của nhà cung cấp.
 - Mỗi yêu cầu tối đa 28 giây (trình duyệt hủy sau 35 giây). Lịch sử gửi lên là 12 tin gần nhất, được gộp để luân phiên user/assistant.
-- Chat: `reversedPrompt(level, lesson, turns)` ở `src/prompt.js`. Vòng lặp: hỏi một câu, chờ, chẩn đoán đúng câu học viên viết, sửa tối đa hai lỗi, câu tiếp theo khó/dễ hơn; bậc gợi ý; cứ 4 lượt thì bắt tự giải thích lại; xử lý riêng các tin cố định từ nút gợi ý. Chỉ văn bản thuần, tối đa khoảng 110 từ.
+- Ngữ cảnh: mọi nơi gọi thầy Lâm (chat, ô ⌘K ở bất kỳ màn hình nào) gửi kèm `screen` (route, tiêu đề, cấp độ, chữ trên màn hình, tối đa 3.500 ký tự). Máy chủ làm sạch rồi đưa vào prompt cùng "LEARNER NOTES" (số mục đã học, 5 mục yếu nhất từ bảng `progress`). Prompt coi cả hai là dữ liệu, không phải chỉ dẫn, và cấm lộ đáp án bài tập đang hiển thị.
+- Chat: `reversedPrompt(level, lesson, turns, screen, learner)` ở `src/prompt.js`. Vòng lặp: hỏi một câu, chờ, chẩn đoán đúng câu học viên viết, sửa tối đa hai lỗi, câu tiếp theo khó/dễ hơn; bậc gợi ý; cứ 4 lượt thì bắt tự giải thích lại; xử lý riêng các tin cố định từ nút gợi ý. Chỉ văn bản thuần, tối đa khoảng 110 từ.
 - Kaiwa chấm bản chép lời (không chấm phát âm) qua cùng API; kết quả JSON được phân tích tolerant.
 - Giọng đọc: Gemini `gemini-3.8-flash-tts` chỉ khi API đã lưu là Gemini trỏ tới Google; nếu không, trình duyệt dùng Web Speech API tiếng Nhật.
 

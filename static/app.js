@@ -321,6 +321,7 @@ async function playGeminiTTS(text, voice = "Charon") {
 // ==========================================
 function switchTab(tabId, route={}) {
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
+  globalThis.rememberTeacherScreen?.();
   featureVersion++;
   quizRequest++;fcRequest++;kaiwaRenderRequest++;
   clearInterval(simulationInterval);
@@ -361,6 +362,7 @@ function switchTab(tabId, route={}) {
   // Update URL hash
   const targetHash=appRouteHash(tabId,route);
   if(!route.fromHistory && location.hash!==targetHash)history.pushState(null,'',targetHash);
+  globalThis.markTeacherScreen?.();
 
   window.scrollTo({top:0,behavior:'instant'});
   document.querySelector('.app-main').scrollTop=0;
@@ -472,6 +474,7 @@ async function sendMessage(text,retry=false) {
   if(text.length>6000){chatError('Tin nhắn tối đa 6.000 ký tự.',null);return;}
   const requestId=retry?failedChatMessage.id:crypto.randomUUID();
   const lesson=retry?failedChatMessage.lesson:chatLessonContext;
+  const screen=retry?failedChatMessage.screen:globalThis.teacherScreen?.();
   const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
   send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
@@ -479,7 +482,7 @@ async function sendMessage(text,retry=false) {
   if(!retry || input.value.trim()===text)input.value='';
   soundEngine.playSend();mascotMgr.setState('thinking');
   try {
-    const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,lesson,request_id:requestId})});
+    const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,lesson,screen,request_id:requestId})});
     const data=await response.json();
     if(!response.ok)throw new Error(data.detail || 'Chưa gửi được tin nhắn.');
     const reply=data.reply || data.response;
@@ -488,7 +491,7 @@ async function sendMessage(text,retry=false) {
     soundEngine.playReceive();mascotMgr.setState('speaking');
     setTimeout(()=>mascotMgr.setState('idle'),2000);
   }catch(error){
-    failedChatMessage={text,id:requestId,lesson};
+    failedChatMessage={text,id:requestId,lesson,screen};
     chatError(error.name==='TimeoutError'?'Kết nối quá lâu. Hãy thử lại.':error.message==='Failed to fetch'?'Mất kết nối. Hãy thử lại.':error.message,()=>sendMessage(failedChatMessage.text,true));
     mascotMgr.setState('idle');
   }finally{
@@ -1144,7 +1147,8 @@ function setupFloatingSensei() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: userId,
-          message: query
+          message: query,
+          screen: globalThis.teacherScreen?.()
         })
       });
 

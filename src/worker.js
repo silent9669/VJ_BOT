@@ -1,7 +1,7 @@
 import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
 import { deleteUserData } from './admin.js';
-import { reversedPrompt } from './prompt.js';
+import { cleanScreen, learnerSnapshot, reversedPrompt } from './prompt.js';
 import { aiRoute, askAI, googleSpeechKey, rateLimited } from './providers.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
@@ -548,7 +548,9 @@ export default {
         const profile = await env.DB.prepare("SELECT level FROM profiles WHERE user_id = ?").bind(userId).first();
         const lesson=body.lesson;
         if(lesson!==undefined && lesson!==null && (typeof lesson!=='object' || Array.isArray(lesson) || !['N5','N4','N3','N2','N1'].includes(lesson.level) || ['id','title','goal','content'].some(k=>typeof lesson[k]!=='string') || lesson.id.length>300 || lesson.title.length>500 || lesson.goal.length>1000 || lesson.content.length>4000))return jsonResponse({detail:'Invalid lesson context'},400);
-        const level = lesson?.level || profile?.level || 'N5';
+        const screen=cleanScreen(body.screen);
+        if(body.screen!==undefined && body.screen!==null && !screen)return jsonResponse({detail:'Invalid screen context'},400);
+        const level = lesson?.level || screen?.level || profile?.level || 'N5';
 
         // Greeting request
         if (body.type === "greeting" || message === "") {
@@ -571,7 +573,7 @@ export default {
 
         const prior=await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? ORDER BY id DESC LIMIT 12").bind(userId).all();
         const asked=await askAI(env,userId,{
-          system:reversedPrompt(level,lesson,prior.results.filter(m=>m.role==='user').length),
+          system:reversedPrompt(level,lesson,prior.results.filter(m=>m.role==='user').length,screen,await learnerSnapshot(env,userId)),
           turns:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'assistant':'user',content:m.content})),{role:'user',content:message}]
         });
         if (asked.response) return asked.response;
