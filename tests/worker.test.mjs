@@ -23,7 +23,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -295,6 +295,7 @@ test('admin status needs a Google row, a verified email in the current ADMIN_EMA
   await recordAdminLogin(env,'google:qa','Owner@Example.test');assert.equal(await isAdmin(env,'google:qa'),false);
   env.ADMIN_EMAILS='owner@example.test';await recordAdminLogin(env,'google:qa','Owner@Example.test');assert.equal(await isAdmin(env,'google:qa'),true);
   await env.DB.prepare("INSERT INTO admins VALUES('email:pw','owner@example.test','now')").run();assert.equal(await isAdmin(env,'email:pw'),false);
+  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','owner@example.test')").run();
   assert.equal((await (await worker.fetch(request('/api/auth/session'),env)).json()).user.is_admin,true);
   const overview=await (await worker.fetch(request('/api/admin/overview'),env)).json();assert.equal(typeof overview.users,'number');assert.ok(Array.isArray(overview.top));
   env.ADMIN_EMAILS='';assert.equal(await isAdmin(env,'google:qa'),false);assert.equal((await worker.fetch(request('/api/admin/overview'),env)).status,403);
@@ -346,4 +347,37 @@ test('thầy Lâm receives the current screen and learner notes wherever he is s
     system='';await worker.fetch(request('/api/chat',{message:'xin chào'}),env);assert.ok(!system.includes('SCREEN ('));
     await worker.fetch(request('/api/chat',{message:'dài',screen:{...screen,text:'x'.repeat(9000)}}),env);assert.ok(system.length<20000);assert.ok(!system.includes('x'.repeat(3600)));
   }finally{globalThis.fetch=previous;}
+});
+
+test('Google accounts without a stored name and email must sign in again; email accounts are backfilled',async()=>{
+  const {env,request}=await authenticated();
+  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('google:qa','N5','openjlpt','now')").run();
+  const response=await worker.fetch(request('/api/auth/session'),env);
+  assert.equal((await response.json()).user,null);assert.match(response.headers.get('set-cookie'),/vj_session=;.*Max-Age=0/);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM sessions').first()).n,0);
+  const again=await authenticated();
+  await again.env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','qa@example.test')").run();
+  assert.equal((await (await worker.fetch(again.request('/api/auth/session'),again.env)).json()).user.user_id,'google:qa');
+  const db=again.env.DB;
+  await db.prepare("INSERT INTO password_accounts(user_id,email,name,password_hash,salt,created_at) VALUES('email:p1','p1@example.test','Pham','h','s','now')").run();
+  await db.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('email:p1','N5','openjlpt','2026-01-01')").run();
+  await db.prepare("INSERT INTO sessions VALUES('h-g','legacy-guest','Khách',?)").bind(Date.now()+1000).run();
+  await db.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('legacy-guest','N5','openjlpt','2026-01-01')").run();
+  const {readFileSync}=await import('node:fs');for(const statement of readFileSync('migrations/0013_identity_backfill.sql','utf8').split(';\n').map(s=>s.replace(/^--.*$/gm,'').trim()).filter(Boolean))await db.prepare(statement).run();
+  const rows=await db.prepare("SELECT user_id,name,email,created_at FROM profiles WHERE user_id IN ('email:p1','legacy-guest') ORDER BY user_id").all();
+  assert.deepEqual(rows.results.map(r=>[r.user_id,r.name,r.email,r.created_at]),[['email:p1','Pham','p1@example.test','2026-01-01'],['legacy-guest','Khách',null,'2026-01-01']]);
+});
+test('admins can purge old anonymous profiles without touching real accounts',async()=>{
+  const {env,request}=await authenticated();env.ADMIN_EMAILS='owner@example.test';
+  const post=path=>worker.fetch(request(path,{}),env),run=sql=>env.DB.prepare(sql).run();
+  await run("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','owner@example.test')");
+  await run("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:keep','N5','openjlpt','now','Keep','k@example.test')");
+  await run("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('g1','N5','openjlpt','now'),('g2','N5','openjlpt','now')");
+  await run("INSERT INTO conversations(user_id,role,content,timestamp) VALUES('g1','user','hi','now'),('google:keep','user','hi','now')");
+  assert.equal((await post('/api/admin/purge-guests')).status,403);
+  const {recordAdminLogin}=await import('../src/admin.js');await recordAdminLogin(env,'google:qa','owner@example.test');
+  assert.equal((await (await worker.fetch(request('/api/admin/users'),env)).json()).guests,2);
+  assert.equal((await (await post('/api/admin/purge-guests')).json()).removed,2);
+  assert.equal((await env.DB.prepare("SELECT count(*) n FROM profiles").first()).n,2);
+  assert.deepEqual((await env.DB.prepare("SELECT user_id FROM conversations").all()).results.map(r=>r.user_id),['google:keep']);
 });

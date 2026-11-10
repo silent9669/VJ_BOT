@@ -9,7 +9,7 @@ Tất cả route nằm dưới `/api`, trả JSON `{detail}` khi lỗi. Route "r
 | `GET /api/health` | `{status, app, edge, d1_items}` |
 | `GET /api/curriculum?level=N5` | Danh mục phẳng từ `curriculum_items` |
 | `GET /api/auth/config` | `{client_id, nonce}` (đặt cookie `vj_nonce`) |
-| `GET /api/auth/session` | `{user: {user_id, name, is_admin} \| null}` |
+| `GET /api/auth/session` | `{user: {user_id, name, is_admin} \| null}`. Phiên Google chưa có email trong hồ sơ bị hủy và trả `null` (phải đăng nhập lại) |
 | `POST /api/auth/register` | `{name, email, password}`: mật khẩu 12–128 ký tự |
 | `POST /api/auth/login` | `{email, password}` |
 | `POST /api/auth/google` | `{credential}`: Google ID token |
@@ -50,7 +50,8 @@ Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` kh
 | `DELETE /api/ai/settings` | Xóa API đã lưu |
 | `POST /api/ai/test` | Gửi một yêu cầu thử qua API đã lưu |
 | `GET /api/admin/overview` | Chỉ admin (`403` nếu không): `{users, active_7d, messages_24h, messages_7d, own_api_users, top[]}` |
-| `GET /api/admin/users?q=&offset=` | Danh sách 25 người dùng mỗi trang, tìm theo tên/email/ID: `{users[], total, offset}`; mỗi người có `kind` (`google`\|`email`\|`guest`), `level`, `messages`, `items`, `completed`, `sessions`, `api`, `last_login`, `admin` |
+| `GET /api/admin/users?q=&offset=` | Danh sách 25 người dùng mỗi trang, tìm theo tên/email/ID: `{users[], total, offset, guests}`; mỗi người có `kind` (`google`\|`email`\|`guest`), `level`, `messages`, `items`, `completed`, `sessions`, `api`, `last_login`, `admin` |
+| `POST /api/admin/purge-guests` | Xóa các hồ sơ khách cũ (không phải Google hay email) cùng dữ liệu: `{removed}` |
 | `GET /api/admin/user?id=` | Chi tiết một người dùng (cùng trường như trên); `404` nếu không có |
 | `POST /api/admin/user` | `{id, action, level?}` với `action` là `set_level` (cần `level` N5–N1), `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. Không thể `delete` chính tài khoản đang dùng |
 

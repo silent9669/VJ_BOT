@@ -1,0 +1,23 @@
+/* Pixel thầy Lâm. Sits above content, below the ask popover (z-index 10000) and dialogs (top layer). */
+#lam-walker{position:fixed;left:0;bottom:14px;z-index:40;width:72px;height:72px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform}
+#lam-walker[hidden]{display:none}
+#lam-walker img{display:block;width:72px;height:72px;image-rendering:pixelated;pointer-events:none;transform-origin:50% 90%}
+#lam-walker::after{content:"";position:absolute;left:50%;bottom:6px;width:34px;height:8px;margin-left:-17px;border-radius:50%;background:rgba(41,40,35,.22);z-index:-1;transition:transform .2s var(--ease-out,ease),opacity .2s}
+#lam-walker[data-mode=drag]{cursor:grabbing}
+#lam-walker[data-mode=drag] img{transform:translateY(-8px) scale(1.08)}
+#lam-walker[data-mode=drag]::after{transform:scale(.7);opacity:.5}
+#lam-walker:focus-visible{outline:2px dashed var(--accent,#ad392e);outline-offset:4px;border-radius:8px}
+.lam-speech{position:absolute;bottom:calc(100% - 4px);left:50%;transform:translateX(-50%);width:max-content;max-width:220px;padding:8px 12px;background:var(--paper-card,#fffdf7);color:var(--ink,#292823);border:1px solid var(--line,#d5d0c3);border-radius:10px;font-size:13px;line-height:1.4;box-shadow:var(--elev-2,0 6px 18px rgba(41,40,35,.12));pointer-events:none;z-index:1}
+.lam-speech::after{content:"";position:absolute;top:100%;left:50%;margin-left:-5px;border:5px solid transparent;border-top-color:var(--paper-card,#fffdf7)}
+.lam-speech[hidden]{display:none}
+
+@media(prefers-reduced-motion:no-preference){
+  @keyframes lam-step{50%{transform:translateY(-4px) rotate(2deg)}}
+  @keyframes lam-hop{40%{transform:translateY(-10px)}70%{transform:translateY(0) scaleY(.94)}}
+  @keyframes lam-pop{from{opacity:0;transform:translateX(-50%) translateY(6px) scale(.96)}}
+  #lam-walker[data-mode=walk] img{animation:lam-step .36s steps(2,jump-none) infinite}
+  #lam-walker[data-mode=hover] img{animation:lam-hop .5s var(--ease-out,ease)}
+  .lam-speech:not([hidden]){animation:lam-pop var(--dur-2,200ms) var(--ease-out,ease)}
+}
+@media(max-width:899px){#lam-walker{cursor:pointer;left:auto;right:12px;bottom:76px}.lam-speech{left:auto;right:0;transform:none}.lam-speech::after{left:auto;right:30px}}
+@media print{#lam-walker{display:none}}

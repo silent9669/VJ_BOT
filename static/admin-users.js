@@ -26,6 +26,8 @@
     try {
       const data = await call(`/api/admin/users?offset=${offset}&q=${encodeURIComponent(query)}`);
       total = data.total;
+      el('admin-purge').hidden = !data.guests;
+      el('admin-purge').textContent = `Dọn ${data.guests} tài khoản khách cũ`;
       host.replaceChildren(...(data.users.length ? data.users : [null]).map(user => {
         if (!user) return node('p', 'Không có người dùng.', 'ai-source');
         const row = node('button', undefined, 'admin-user-row'), who = node('span', undefined, 'admin-user-who');
@@ -73,6 +75,10 @@
 
   window.renderAdminUsers = () => { offset = 0; load(); };
   el('admin-search').addEventListener('input', event => { clearTimeout(timer); timer = setTimeout(() => { query = event.target.value.trim(); offset = 0; load(); }, 250); });
+  el('admin-purge').addEventListener('click', async () => {
+    if (!confirm('Xóa vĩnh viễn các tài khoản khách cũ (không có Google hay email) và dữ liệu của chúng?')) return;
+    try { await call('/api/admin/purge-guests', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}); window.renderAiPanels('admin'); } catch (error) { el('admin-users').textContent = error.message; }
+  });
   el('admin-prev').addEventListener('click', () => { offset = Math.max(0, offset - 25); load(); });
   el('admin-next').addEventListener('click', () => { offset += 25; load(); });
   el('admin-user-close').addEventListener('click', () => el('admin-user-dialog').close());

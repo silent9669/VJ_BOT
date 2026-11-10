@@ -28,11 +28,12 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 | `src/prompt.js` | System prompt lớp học đảo ngược của thầy Lâm |
 | `src/exams.js` | Lưu và kiểm tra trạng thái bài thi thử |
 | `cloudflare.config.ts` | Worker `vjbot`, D1, secrets, placement `gcp:us-east4` |
-| `migrations/` | Lược đồ D1 (0001–0012). Không sửa migration đã chạy; thêm file mới |
+| `migrations/` | Lược đồ D1 (0001–0013). Không sửa migration đã chạy; thêm file mới |
 | `static/index.html` | Toàn bộ khung trang, dialog đăng nhập, panel các tab |
 | `static/app.js` | Điều hướng tab, chat, thẻ nhớ, Kaiwa, quiz, tiến độ, âm thanh |
 | `static/account.js`, `ai-settings.js`, `admin-users.js` | Phiên, đăng nhập, `apiFetch`; thẻ API AI trong Cài đặt, panel Quản trị, cổng chat; danh sách và hộp thoại quản lý người dùng |
 | `static/teacher-context.js` | Chụp chữ của màn hình học đang mở (`teacherScreen()`), nhớ màn hình vừa rời đi 30 phút để chat và ô ⌘K vẫn biết người học vừa xem gì |
+| `static/mascot.js`, `mascot.css` | Thầy Lâm pixel: đi dạo ngang trang, phản ứng khi rê chuột (câu chào theo màn hình đang xem), bấm để mở ô hỏi, kéo thả đi bất kỳ đâu (vị trí lưu trong `localStorage`), nhấp đúp để về sàn. Ảnh trong `static/assets/lam/pixel/` (4 hướng + 4 khung thở). Giảm chuyển động: đứng yên. Màn hình hẹp: đỗ góc phải trên thanh dưới |
 | `static/learning.js`, `study-plan.js`, `lesson-checks.js`, `completion.js`, `practice.js` | Dựng bài học từ dữ liệu, lộ trình, 5 câu kiểm tra, đánh dấu hoàn thành, luyện tập |
 | `static/navigation.js`, `workspace.js` | Route theo hash, sidebar, dashboard, level hub |
 | `static/vi-labels.js` | Nhãn và công thức ngữ pháp tiếng Việt, nạp từ điển dịch |
@@ -54,7 +55,7 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 
 | Bảng | Nội dung |
 | --- | --- |
-| `profiles` | Cấp độ, track; `name`, `email` (Google: đã xác minh), `created_at`, `last_login` ghi mỗi lần đăng nhập (migration 0012) |
+| `profiles` | Cấp độ, track; `name`, `email` (Google: đã xác minh), `created_at`, `last_login` ghi mỗi lần đăng nhập (migration 0012; 0013 điền lại từ `password_accounts` và `sessions`) |
 | `password_accounts`, `auth_attempts` | Danh tính email/mật khẩu (scrypt) và bộ đếm chống dò |
 | `sessions` | Băm token phiên, `user_id`, tên, hạn |
 | `admins` | `user_id` Google và email đã xác minh lúc đăng nhập |
@@ -73,6 +74,7 @@ Xóa tài khoản (`/api/account/delete`) xóa mọi bảng trên theo `user_id`
 
 - **Google**: Worker xác minh chữ ký (JWKS), issuer, audience, hạn, `email_verified` và nonce gắn cookie HttpOnly. Đăng nhập Google ghi `admins` nếu email nằm trong `ADMIN_EMAILS`.
 - **Mật khẩu**: scrypt N=16384, r=8, p=5, giới hạn 10 lần/cặp IP+email và 100 lần/IP mỗi 15 phút. Không có xác minh email hay khôi phục mật khẩu, nên tài khoản này không bao giờ là admin.
+- **Danh tính bắt buộc**: tài khoản Google phải có tên và email đã xác minh trong `profiles`. Phiên Google cũ chưa có email bị hủy ở lần gọi `/api/auth/session` kế tiếp, người dùng đăng nhập lại một lần để ghi lại.
 - **Admin**: `isAdmin` kiểm tra cả dòng trong `admins` lẫn secret hiện tại, nên xóa email khỏi `ADMIN_EMAILS` là thu hồi ngay. Admin chỉ xem thống kê, không có đặc quyền AI.
 
 ## Lớp AI

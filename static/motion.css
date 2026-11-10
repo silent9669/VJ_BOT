@@ -10,7 +10,8 @@
 dialog[open]{box-shadow:var(--elev-3)}
 dialog::backdrop{background:rgba(23,41,27,.4);backdrop-filter:blur(3px)}
 .lesson-footer{box-shadow:0 -8px 16px -12px rgba(41,40,35,.25)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 
 @media(prefers-reduced-motion:no-preference){
   @keyframes panel-in{from{opacity:0;transform:translateY(10px)}}
