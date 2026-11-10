@@ -9,6 +9,8 @@ concurrency:
 # Deploys are done by Cloudflare Workers Builds (see docs/DEPLOYMENT_CICD.md); this only gates changes.
 jobs:
   check:
+    # Name matches the required status check in the "Protect main branch" ruleset.
+    name: Test & Quality Checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
