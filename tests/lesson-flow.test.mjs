@@ -58,7 +58,7 @@ test('returning from lesson chat preserves feature route for reload',async()=>{
   vm.runInContext(app.slice(app.indexOf('function startReversedLesson(')),c);
   const host={replaceChildren(){},append(...children){this.children=children;}};
   c.document={getElementById:()=>host,createElement:()=>({})};
-  c.mountCompletion=()=>{};c.sendMessage=()=>{};c.buildLessonContext=item=>item;
+  c.mountCompletion=()=>{};c.sendMessage=()=>{};c.updateHeroTopic=()=>{};c.buildLessonContext=item=>item;
   let destination;
   c.showLessonDetail=(item,level,skill,fromHistory,owner)=>{destination=c.appRouteHash('lesson',{id:item.id,level,skill,owner});};
   for(const owner of ['flashcards','kaiwa','quiz']){

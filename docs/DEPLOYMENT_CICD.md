@@ -60,8 +60,15 @@ The Worker uses `gcp:us-east4` placement because the default location caused Goo
 
 Before a later deployment, record the current version and choose a compatible rollback version using the CLI's Worker version/deployment commands. A Worker rollback does not undo D1 migrations or learner writes; keep schema changes compatible and plan data recovery separately.
 
-## GitHub workflow
+## CI and deploy (one deployer)
 
-`.github/workflows/deploy.yml` runs Python tests, Node Worker/data tests and `npm run build` for pull requests/pushes to main. Its deployment job runs `npm run deploy` only for pushes to main, using the configured Cloudflare token/account ID.
+- **GitHub Actions** only checks: `ci.yml` runs `npm ci`, `npm test`, `npm run build` on PRs and `main`; `python.yml` runs pytest only when `app/`, `scripts/` or Python tests change. No Cloudflare credentials live in GitHub.
+- **Cloudflare Workers Builds** is the only deployer. Pushing to `main` builds and deploys; teammates need repo push access and Cloudflare dashboard access to view build logs, not API tokens.
+- Dashboard settings (Worker `vjbot` > Settings > Builds): Production branch `main`; Build command `npm test`; Deploy command `npm run release` (applies D1 migrations, then `cf deploy`); Root directory `/`. The Workers Builds API token needs Workers Scripts Edit and D1 Edit.
+- Non-production branches: disable branch builds, or set their deploy command to `npm run build`. Never leave the default `npx wrangler versions upload`: `wrangler.config.ts` has no Worker entrypoint.
+- Keep one lockfile (`package-lock.json`). A second one changes which package manager Workers Builds picks.
+- Rollback: Worker versions in the dashboard; D1 migrations are not undone.
 
-The new workflow changes are local and uncommitted. Hosted CI and branch protection have not been verified for this state. Do not infer them from successful local tests or the direct Cloudflare deployment. Future schema-changing releases need an explicit migration step; the workflow currently does not apply migrations.
+## AI chat (Google AI Studio free tier)
+
+Create a key at https://aistudio.google.com/api-keys, then add it as the secret `GEMINI_API_KEY` (dashboard: Worker `vjbot` > Settings > Variables and Secrets) for production, or put it in `.dev.vars` (see `.dev.vars.example`) for local dev. `src/gemini.js` tries `gemini-3.8-flash` (newest free Flash), `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash` in order on 404/429/5xx; set the `GEMINI_MODELS` variable (comma list) to change the order. Free-tier quota is per project per model, shared by all learners.
