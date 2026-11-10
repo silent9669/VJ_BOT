@@ -38,7 +38,8 @@ const TAB_TITLES = {
   kaiwa: "Luyện nói",
   quiz: "Bài luyện JLPT",
   mastery: "Tiến độ",
-  settings: "Cài đặt"
+  settings: "Cài đặt",
+  admin: "Quản trị"
 };
 
 // ==========================================
@@ -386,6 +387,8 @@ function switchTab(tabId, route={}) {
     renderBookmarks();
   } else if (tabId === "classroom") {
     renderDailyKanji(activeCurriculumLevel);
+  } else if (tabId === "settings" || tabId === "admin") {
+    window.renderAiPanels?.(tabId);
   }
   return true;
 }
@@ -438,6 +441,7 @@ function chatError(message,retry) {
   const host=document.getElementById('chat-error');host.hidden=!message;
   document.getElementById('chat-error-text').textContent=message;
   const button=document.getElementById('chat-retry');button.hidden=!retry;button.onclick=retry;
+  const open=document.getElementById('chat-open-settings');open.hidden=!/Cài đặt/.test(message||'');open.onclick=()=>switchTab('settings');
   const discard=document.getElementById('chat-discard');discard.hidden=!failedChatMessage;discard.onclick=()=>{failedChatMessage=null;loadChatHistory();};
 }
 async function loadChatHistory() {
@@ -452,6 +456,7 @@ async function loadChatHistory() {
     document.getElementById('chat-welcome').style.display=messages.length?'none':'';
     for(const message of messages)renderBubble(message.role,message.content);
     chatHistoryReady=true;chatError('',null);
+    globalThis.checkAiReady?.();
     document.getElementById('chat-connection-status').textContent='';
   }catch{
     document.getElementById('chat-connection-status').textContent='';
@@ -601,7 +606,7 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
       <h3 style="font-family: var(--font-sans); font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">${escapeHtml(item.title || item.jp || "Bài học")}</h3>
       <p style="font-family: var(--font-sans); font-size: 13px; color: #475569; margin-bottom: 12px; line-height: 1.4;">${escapeHtml(item.meaning_vi || item.vi || item.translation || item.summary || item.script_vi || "")}</p>
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-        <span style="font-size: 12px; color: #64748b; font-family: var(--font-mono);">${item.source ? "OpenJLPT · EN" : item.reading || item.ro || (item.items ? `${item.items.length} mục` : "")}</span>
+        <span style="font-size: 12px; color: #64748b; font-family: var(--font-mono);">${item.source ? "OpenJLPT" : item.reading || item.ro || (item.items ? `${item.items.length} mục` : "")}</span>
         <span class="open-lesson-btn" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">${completionRecords.has(activityId(item,level,skill))?'Hoàn thành':'Học bài →'}</span>
       </div>
     </div>
@@ -671,7 +676,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">5 câu kiểm tra</button></div>
     <div id="lesson-reference">
     <div style="margin-bottom: 16px;">
-      <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT · EN" : "Bài học"))}</span>
+      <span style="font-size: 11px; font-weight: 800; color: #2563eb; text-transform: uppercase;">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT" : "Bài học"))}</span>
       <p style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 4px 0 10px;">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
       ${item.formula ? `
         <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; font-family: var(--font-mono); font-size: 13px; color: #1e40af; margin-bottom: 12px;">

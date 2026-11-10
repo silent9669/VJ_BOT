@@ -11,9 +11,10 @@ async function ensureLessons(level) {
       return response.json();
     }));
     const skills=window.JLPT_DATA.curriculum[level].skills;
-    const examples = row => (row.examples || []).map(e => ({jp:e.ja,vi:e.en,source:e.tatoeba_id ? `https://tatoeba.org/sentences/show/${e.tatoeba_id}` : '',furigana:e.furigana}));
-    for(let i=0;i<vocab.length;i+=20) skills.vocabulary.push({lesson:i/20+1,id:`openjlpt:${level}:vocabulary-group:${i/20+1}`,title:`${vocab[i].word} — ${vocab[Math.min(i+19,vocab.length-1)].word}`,summary:`Từ vựng ${i/20+1} · ${Math.min(20,vocab.length-i)} từ`,source:'OpenJLPT',language:'en',items:vocab.slice(i,i+20).map(v=>({id:`openjlpt:${level}:vocabulary:${v.id}`,jp:v.word,reading:v.reading,ro:v.romaji,vi:v.meanings.join('; '),examples:examples(v)}))});
-    const vocabularyMeanings=[...new Set(vocab.map(v=>v.meanings.join('; ')))];
+    const dict=await loadViDict(),T=text=>dict[text]||text;
+    const examples = row => (row.examples || []).map(e => ({jp:e.ja,vi:T(e.en),source:e.tatoeba_id ? `https://tatoeba.org/sentences/show/${e.tatoeba_id}` : '',furigana:e.furigana}));
+    for(let i=0;i<vocab.length;i+=20) skills.vocabulary.push({lesson:i/20+1,id:`openjlpt:${level}:vocabulary-group:${i/20+1}`,title:`${vocab[i].word} — ${vocab[Math.min(i+19,vocab.length-1)].word}`,summary:`Từ vựng ${i/20+1} · ${Math.min(20,vocab.length-i)} từ`,source:'OpenJLPT',language:'en',items:vocab.slice(i,i+20).map(v=>({id:`openjlpt:${level}:vocabulary:${v.id}`,jp:v.word,reading:v.reading,ro:v.romaji,vi:v.meanings.map(T).join('; '),examples:examples(v)}))});
+    const vocabularyMeanings=[...new Set(vocab.map(v=>v.meanings.map(T).join('; ')))];
     // Recognition drills use distinct source glosses, with a stable item ID for progress.
     for(const lesson of skills.vocabulary.filter(l=>l.source==='OpenJLPT')) {
       lesson.drills=lesson.items.map((word,index)=>{
@@ -27,21 +28,21 @@ async function ensureLessons(level) {
     const sentences=vocab.flatMap(v=>(v.examples||[]).filter(e=>e.ja&&e.en&&e.tatoeba_id).map(e=>({...e,word:v.word}))).filter(e=>{if(seen.has(e.ja))return false;seen.add(e.ja);return true;});
     for(let i=0;i<sentences.length;i+=10) {
       const batch=sentences.slice(i,i+10),number=i/10+1;
-      const targetWords=[...new Set(batch.map(e=>e.word))].map(word=>vocab.find(v=>v.word===word)).filter(Boolean).map(v=>({jp:v.word,reading:v.reading,vi:v.meanings.join('; ')}));
-      const common={targetWords,lesson:number,source:'OpenJLPT',language:'en',summary:'Câu ví dụ theo từ vựng · bản dịch tiếng Anh',examples:batch.map(e=>({jp:e.ja,vi:e.en,source:`https://tatoeba.org/sentences/show/${e.tatoeba_id}`,furigana:e.furigana}))};
+      const targetWords=[...new Set(batch.map(e=>e.word))].map(word=>vocab.find(v=>v.word===word)).filter(Boolean).map(v=>({jp:v.word,reading:v.reading,vi:v.meanings.map(T).join('; ')}));
+      const common={targetWords,lesson:number,source:'OpenJLPT',language:'en',summary:'Câu ví dụ theo từ vựng',examples:batch.map(e=>({jp:e.ja,vi:T(e.en),source:`https://tatoeba.org/sentences/show/${e.tatoeba_id}`,furigana:e.furigana}))};
       skills.reading.push({...common,id:`sentences:${level}:${number}`,title:`Đọc câu ${number} · ${batch[0].word}`});
       skills.listening.push({...common,id:`listening:${level}:${number}`,title:`Nghe chép câu ${number} · ${batch[0].word}`,dictation:true});
     }
-    skills.grammar.push(...grammar.map((g,i)=>({lesson:i+1,id:`openjlpt:${level}:grammar:${g.id}`,title:g.pattern,meaning_vi:g.meaning,formula:g.formation,explanation:g.notes,reading:g.romaji,examples:examples(g),source:'OpenJLPT',language:'en'})));
+    skills.grammar.push(...grammar.map((g,i)=>({lesson:i+1,id:`openjlpt:${level}:grammar:${g.id}`,title:viPatternLabel(g.pattern),meaning_vi:T(g.meaning),formula:viFormula(g.formation),explanation:T(g.notes),reading:g.romaji,examples:examples(g),source:'OpenJLPT',language:'en'})));
     skills.kanji=[];
-    for(let i=0;i<kanji.length;i+=20) skills.kanji.push({lesson:i/20+1,id:`openjlpt:${level}:kanji-group:${i/20+1}`,title:`${kanji[i].character} — ${kanji[Math.min(i+19,kanji.length-1)].character}`,summary:`Hán tự ${i/20+1}`,source:'OpenJLPT',language:'en',items:kanji.slice(i,i+20).map(k=>({id:`openjlpt:${level}:kanji:${k.character}`,jp:k.character,reading:[...(k.onyomi||[]),...(k.kunyomi||[])].join(' · '),vi:k.meanings.join('; '),strokes:k.strokes,radical:k.radical,onyomi:k.onyomi||[],kunyomi:k.kunyomi||[],words:k.words||[]}))});
+    for(let i=0;i<kanji.length;i+=20) skills.kanji.push({lesson:i/20+1,id:`openjlpt:${level}:kanji-group:${i/20+1}`,title:`${kanji[i].character} — ${kanji[Math.min(i+19,kanji.length-1)].character}`,summary:`Hán tự ${i/20+1}`,source:'OpenJLPT',language:'en',items:kanji.slice(i,i+20).map(k=>({id:`openjlpt:${level}:kanji:${k.character}`,jp:k.character,reading:[...(k.onyomi||[]),...(k.kunyomi||[])].join(' · '),vi:k.meanings.map(T).join('; '),strokes:k.strokes,radical:k.radical,onyomi:k.onyomi||[],kunyomi:k.kunyomi||[],words:k.words||[]}))});
     const makeDrill=(q,answer,choices,id,index)=>{
       const wrong=[...new Set(choices)].filter(x=>x&&x!==answer);
       const offset=index%Math.max(1,wrong.length-2),opts=wrong.slice(offset,offset+3);
       opts.splice(index%(opts.length+1),0,answer);return {q,ans:answer,opts,item_id:id};
     };
-    for(const lesson of skills.grammar.filter(l=>l.source))lesson.drills=[makeDrill(`Mẫu ${lesson.title} có nghĩa gì?`,lesson.meaning_vi,grammar.map(g=>g.meaning),lesson.id,lesson.lesson)];
-    for(const lesson of skills.kanji)lesson.drills=lesson.items.map((k,i)=>makeDrill(`${k.jp} — nghĩa nào đúng?`,k.vi,kanji.map(k=>k.meanings.join('; ')),k.id,i));
+    for(const lesson of skills.grammar.filter(l=>l.source))lesson.drills=[makeDrill(`Mẫu ${lesson.title} có nghĩa gì?`,lesson.meaning_vi,grammar.map(g=>T(g.meaning)),lesson.id,lesson.lesson)];
+    for(const lesson of skills.kanji)lesson.drills=lesson.items.map((k,i)=>makeDrill(`${k.jp} — nghĩa nào đúng?`,k.vi,kanji.map(k=>k.meanings.map(T).join('; ')),k.id,i));
     for(const lesson of skills.reading.filter(l=>l.source))lesson.drills=lesson.examples.slice(0,5).map((e,i)=>makeDrill(`Chọn bản dịch: ${e.jp}`,e.vi,lesson.examples.map(e=>e.vi),`${lesson.id}:${i}`,i));
     if(level==='N5') {
       const rows=[['あいうえお','アイウエオ',['a','i','u','e','o']],['かきくけこ','カキクケコ',['ka','ki','ku','ke','ko']],['さしすせそ','サシスセソ',['sa','shi','su','se','so']],['たちつてと','タチツテト',['ta','chi','tsu','te','to']],['なにぬねの','ナニヌネノ',['na','ni','nu','ne','no']],['はひふへほ','ハヒフヘホ',['ha','hi','fu','he','ho']],['まみむめも','マミムメモ',['ma','mi','mu','me','mo']],['やゆよ','ヤユヨ',['ya','yu','yo']],['らりるれろ','ラリルレロ',['ra','ri','ru','re','ro']],['わをん','ワヲン',['wa','wo','n']]];

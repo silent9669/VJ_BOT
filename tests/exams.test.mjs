@@ -30,7 +30,7 @@ test('private navigation sends guests to login and remembers the intended page',
 });
 test('all levels add ten distinct mixed sets alongside numeric seeded exam IDs',async()=>{
   const c=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(fs.readFileSync('static/'+path,'utf8'))})});
-  for(const file of ['jlpt-data.js','learning.js','workspace.js'])vm.runInContext(fs.readFileSync('static/'+file,'utf8'),c);
+  for(const file of ['jlpt-data.js','vi-labels.js','learning.js','workspace.js'])vm.runInContext(fs.readFileSync('static/'+file,'utf8'),c);
   for(const level of ['N5','N4','N3','N2','N1']){
     await c.ensureLessons(level);c.addPracticeSets(level);c.addPracticeSets(level);
     const mixed=c.window.JLPT_DATA.exams[level].filter(e=>typeof e.id==='string'&&e.id.startsWith('mixed:'));assert.equal(mixed.length,10);

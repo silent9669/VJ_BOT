@@ -19,6 +19,7 @@ test('pinned lesson files are intact and every record has an identity, reading o
 test('all levels load once with answerable exercises and attributed reading/listening practice',async()=>{
   const context=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(await fs.readFile('static/'+path,'utf8'))})});
   vm.runInContext(await fs.readFile('static/jlpt-data.js','utf8'),context);
+  vm.runInContext(await fs.readFile('static/vi-labels.js','utf8'),context);
   vm.runInContext(await fs.readFile('static/learning.js','utf8'),context);
   for(const level of levels){
     await context.window.ensureLessons(level);const skills=context.window.JLPT_DATA.curriculum[level].skills;
@@ -36,7 +37,7 @@ test('all levels load once with answerable exercises and attributed reading/list
 
 test('practical roadmaps follow authored goals and link only verified source records',async()=>{
   const context=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(await fs.readFile('static/'+path,'utf8'))})});
-  for(const file of ['jlpt-data.js','learning.js','lesson-checks.js','study-plan.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
+  for(const file of ['jlpt-data.js','vi-labels.js','learning.js','lesson-checks.js','study-plan.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
   const course=JSON.parse(await fs.readFile('static/course/practical.json','utf8'));
   const sources=JSON.parse(await fs.readFile('static/course/sources.json','utf8'));
   const sourceIds=new Set(sources.lessons.map(s=>s.id));assert.equal(sourceIds.size,72);
@@ -94,7 +95,7 @@ test('exam identities never share completion or answers between levels',async()=
 
 test('reversed lesson context includes the actual reading and listening material',async()=>{
   const context=vm.createContext({window:{}});
-  for(const file of ['learning.js','completion.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
+  for(const file of ['vi-labels.js','learning.js','completion.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
   for(const item of [{passage:'私は毎日七時に起きます。',translation:'Tôi dậy lúc 7 giờ.'},{script_jp:'次の電車は三番線です。',script_vi:'Tàu tiếp theo ở sân ga 3.'}]){
     const result=context.buildLessonContext({id:'source',title:'Reading',...item},'N5','reading');
     for(const value of Object.values(item))assert.ok(result.content.includes(value));

@@ -61,7 +61,7 @@ Email/password accounts use scrypt (N=16384, r=8, p=5), a random salt, and separ
 
 Google ID tokens are verified using Google's JWKS, RS256, issuer, audience, expiry, verified email and a nonce bound to an HttpOnly cookie. Random 32-byte session tokens expire after seven days; D1 stores only their hashes. HTTPS cookies use Secure and SameSite=Lax. Private routes obtain ownership from the session and ignore client-provided account IDs/API keys.
 
-Worker secrets hold provider credentials. Chat/Kaiwa use the AI Studio free-tier chain in `src/gemini.js` (`gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash`; override with the `GEMINI_MODELS` var); speech uses `gemini-3.8-flash-tts` with the male Charon voice. TTS falls back to browser speech when provider audio is unavailable. Chat uses recent saved messages and bounded lesson context. Kaiwa assesses text/transcription, not audio pronunciation.
+Worker secrets hold provider credentials. Chat, Kaiwa and speech use only the API each learner saves (`src/providers.js`, `src/llm.js`: OpenAI-compatible, Claude or Gemini); there is no built-in AI.js`, `src/llm.js`: OpenAI-compatible, Claude or Gemini): the user's own saved API, or for admins the platform Gemini key; speech uses `gemini-3.8-flash-tts` with the male Charon voice. TTS falls back to browser speech when provider audio is unavailable. Chat uses recent saved messages and bounded lesson context. Kaiwa assesses text/transcription, not audio pronunciation.
 
 The `gcp:us-east4` placement hint resolved an observed Google TTS location rejection. It is not a data-residency guarantee or a measured latency promise.
 

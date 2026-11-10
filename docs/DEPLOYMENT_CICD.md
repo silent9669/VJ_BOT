@@ -69,6 +69,10 @@ Before a later deployment, record the current version and choose a compatible ro
 - Keep one lockfile (`package-lock.json`). A second one changes which package manager Workers Builds picks.
 - Rollback: Worker versions in the dashboard; D1 migrations are not undone.
 
-## AI chat (Google AI Studio free tier)
+## AI (bring your own API) and admin
 
-Create a key at https://aistudio.google.com/api-keys, then add it as the secret `GEMINI_API_KEY` (dashboard: Worker `vjbot` > Settings > Variables and Secrets) for production, or put it in `.dev.vars` (see `.dev.vars.example`) for local dev. `src/gemini.js` tries `gemini-3.8-flash` (newest free Flash), `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash` in order on 404/429/5xx; set the `GEMINI_MODELS` variable (comma list) to change the order. Free-tier quota is per project per model, shared by all learners.
+- **No built-in AI.** Chat, Kaiwa grading and Gemini speech all use the API the learner saves in Settings > API AI (OpenAI-compatible, Claude or Gemini: base URL, model, key). Without one, chat shows a gate with a button to Settings. Browser speech synthesis is the fallback for audio unless the saved API is Gemini on Google.
+- **Keys:** stored AES-GCM encrypted in D1 (`ai_providers`) with the secret `AI_KEY_SECRET`; changing that secret makes saved keys unreadable (users re-enter them). Calls go server-side to the user's own URL (https only; no IPs, localhost or our own hosts; redirects blocked). Provider error bodies are never returned.
+- **Admin** = Google account whose verified email is in the secret `ADMIN_EMAILS` (comma list). Granted at Google sign-in and re-checked against the secret on every request; password accounts are never admin. After changing `ADMIN_EMAILS` the admin signs in with Google once. The admin panel ("Quản trị") shows activity only; admins get no AI privileges.
+- **Secrets in use:** `ADMIN_EMAILS`, `AI_KEY_SECRET`, `GOOGLE_CLIENT_ID` (and `GOOGLE_CLIENT_SECRET`). `GEMINI_API_KEY` is no longer read and can be deleted from the Worker.
+- **Vietnamese/Japanese only:** roadmap grammar is translated in `static/course/vi-grammar.json`. The rest of the OpenJLPT corpus (vocabulary, kanji, sentences) is English until you run `scripts/translate_corpus.py` with your own API, which writes `static/course/vi-dict.json`.

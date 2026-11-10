@@ -1,6 +1,7 @@
 import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
-import { generate, failureMessage, reversedPrompt } from './gemini.js';
+import { reversedPrompt } from './prompt.js';
+import { aiRoute, askAI, googleSpeechKey, rateLimited } from './providers.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
  * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
@@ -115,6 +116,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, {status:204});
     try {
       if (url.pathname.startsWith('/api/auth/')) return await authRoute(request,env);
+      if (url.pathname.startsWith('/api/ai/') || url.pathname.startsWith('/api/admin/')) return await aiRoute(request,env,url);
       const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
@@ -135,10 +137,7 @@ export default {
           request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
         }
         if(['/api/chat','/api/tts','/api/kaiwa/evaluate'].includes(url.pathname) && request.method==='POST') {
-          const bucket=Math.floor(Date.now()/60000);
-          const usage=await env.DB.prepare('INSERT INTO ai_usage(user_id,bucket,count) VALUES(?,?,1) ON CONFLICT(user_id,bucket) DO UPDATE SET count=count+1 RETURNING count').bind(user.user_id,bucket).first();
-          if(usage.count>20) return jsonResponse({detail:'Bạn hãy đợi một phút rồi thử lại.'},429);
-          await env.DB.prepare('DELETE FROM ai_usage WHERE bucket < ?').bind(bucket-60).run();
+          if(await rateLimited(env,user.user_id)) return jsonResponse({detail:'Bạn hãy đợi một phút rồi thử lại.'},429);
         }
       }
       if(url.pathname==='/api/exam-attempts')return await examRoute(request,url,env,url.searchParams.get('user_id'));
@@ -202,7 +201,7 @@ export default {
       }
       if (url.pathname === '/api/account/delete' && request.method === 'POST') {
         const userId=url.searchParams.get('user_id');
-        await env.DB.batch(['exam_attempts','completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions','password_accounts'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+        await env.DB.batch(['exam_attempts','completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions','password_accounts','ai_providers','admins'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
         return jsonResponse({success:true});
       }
 
@@ -421,7 +420,8 @@ export default {
         const voice = "Charon";
         if (!text) return jsonResponse({ detail: "text required" }, 400);
 
-        const apiKey = env.GEMINI_API_KEY || "";
+        const apiKey = await googleSpeechKey(env, url.searchParams.get("user_id"));
+        if (!apiKey) return jsonResponse({ detail: "Thêm API Gemini trong Cài đặt để nghe giọng thầy Lâm.", code: "no_tts" }, 403);
         const ttsUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent";
 
         try {
@@ -483,12 +483,10 @@ export default {
         }
 
         let aiEval = null;
-        const evaluation = await generate(env, {
-          contents: [{role: "user", parts: [{text: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"}]}],
-          generationConfig: {responseMimeType: "application/json"}
-        });
+        const asked = await askAI(env, url.searchParams.get("user_id"), {turns: [{role: "user", content: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"}], json: true});
+        if (asked.response) return asked.response;
         try {
-          if (evaluation.text) aiEval = JSON.parse(evaluation.text.replace(/^```json/i, "").replace(/```$/i, "").trim());
+          aiEval = JSON.parse((asked.text.match(/\{[\s\S]*\}/) || [""])[0]);
         } catch (e) {
           console.warn("Kaiwa JSON parse failed");
         }
@@ -571,12 +569,12 @@ export default {
         }
 
         const prior=await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? ORDER BY id DESC LIMIT 12").bind(userId).all();
-        const reply=await generate(env,{
-          systemInstruction:{parts:[{text:reversedPrompt(level,lesson)}]},
-          contents:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),{role:'user',parts:[{text:message}]}]
+        const asked=await askAI(env,userId,{
+          system:reversedPrompt(level,lesson,prior.results.filter(m=>m.role==='user').length),
+          turns:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'assistant':'user',content:m.content})),{role:'user',content:message}]
         });
-        if (!reply.text) return jsonResponse({detail:failureMessage(reply.status)},reply.status===429?429:503);
-        let botResponse=reply.text;
+        if (asked.response) return asked.response;
+        let botResponse=asked.text;
 
         // Only persist a completed turn: provider failures must not pollute the next retry.
         const now=new Date().toISOString();

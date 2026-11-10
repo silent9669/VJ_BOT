@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 async function context(){
   const c=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(fs.readFileSync('static/'+path,'utf8'))})});
-  for(const file of ['jlpt-data.js','learning.js','lesson-checks.js','study-plan.js','workspace.js','completion.js'])vm.runInContext(fs.readFileSync('static/'+file,'utf8'),c);
+  for(const file of ['jlpt-data.js','vi-labels.js','learning.js','lesson-checks.js','study-plan.js','workspace.js','completion.js'])vm.runInContext(fs.readFileSync('static/'+file,'utf8'),c);
   const app=fs.readFileSync('static/app.js','utf8');vm.runInContext(app.slice(app.indexOf('function installCourseKaiwa(){'),app.indexOf('function startCourseKaiwa')),c);
   await c.loadPracticalCourse();return c;
 }

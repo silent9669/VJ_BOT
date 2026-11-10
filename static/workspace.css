@@ -56,3 +56,16 @@ img[src="assets/lam/teacher.svg"]{image-rendering:auto!important;object-fit:cont
 #lesson-page,.sketch-canvas{overflow:clip!important}
 @media(max-width:768px){.lesson-footer{flex-wrap:nowrap!important;gap:8px!important;padding:8px 0!important}.lesson-footer.lesson-footer>*{flex:1 1 0!important;flex-basis:0!important;min-width:0;min-height:44px;padding:6px!important;font-size:13px!important;line-height:1.25}.lesson-footer.lesson-footer>.modal-practice-btn{flex:2 1 0!important;flex-basis:0!important}}
 @media(max-width:768px){.prompt-chip,.modal-tts-btn,.card-audio-btn,#btn-clear-chat-history,#btn-topbar-account,.level-chip,#lesson-all-levels,#btn-close-lesson-modal{min-height:44px;min-width:44px}}
+.ai-form{display:grid;gap:14px;max-width:520px}.ai-form label{display:grid;gap:6px;font-size:13px}
+.ai-form input,.ai-form select{width:100%;min-width:0;min-height:44px;padding:10px 12px;background:var(--sheet,#fff);color:var(--ink);border:1px solid #a8aea3;border-radius:4px;font:inherit;font-size:16px}
+.ai-form input:focus-visible,.ai-form select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ai-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.ai-actions .public-cta{gap:0}
+.ai-source{margin:0 0 14px;font-size:13px;color:var(--muted)}#ai-status,#admin-status{margin:0;font-size:13px;color:var(--accent);min-height:1em}
+.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px}.admin-stats>div{display:flex;flex-direction:column-reverse;gap:6px;padding:16px;background:var(--paper-card,#fffdf7);border:1px solid var(--line);border-radius:6px}.admin-stats strong{font-size:28px;font-weight:600}.admin-stats span{font-size:12px;color:var(--muted)}
+#admin-top p{display:flex;justify-content:space-between;gap:12px;margin:0;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}#admin-top p:last-child{border-bottom:0}
+#chat-open-settings{min-height:44px;padding:6px 14px;border:1px solid var(--ink);border-radius:4px;background:transparent;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+@media(max-width:768px){.admin-stats{grid-template-columns:repeat(2,1fr)}}
+.chat-ai-gate{display:grid;justify-items:center;gap:14px;padding:28px 20px;border-top:1px solid var(--line);text-align:center}.chat-ai-gate h2{margin:0;font-size:20px;letter-spacing:-.03em}.chat-ai-gate .public-cta{gap:0}
+.classroom-chat-window[data-ai=none] #chat-welcome,.classroom-chat-window[data-ai=none] .chat-chips-bar,.classroom-chat-window[data-ai=none] #chat-error{display:none}
+.classroom-chat-window[data-ai=none] #chat-input,.classroom-chat-window[data-ai=none] #btn-send-message{opacity:.5}
+.ai-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 18px;margin-bottom:16px;background:#f3dcd5;border:1px solid #d9a89c;border-radius:6px}.ai-banner p{margin:0;font-size:14px}.ai-banner .public-cta{gap:0}

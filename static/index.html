@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VJBot — Nihongo Sensei (Reversed Japanese AI Tutor)</title>
-  <meta name="description" content="Sổ học tiếng Nhật: bài học N5–N1, thẻ nhớ, luyện nói và Sensei AI.">
+  <title>VJBot · Học tiếng Nhật cùng thầy Lâm</title>
+  <meta name="description" content="Học tiếng Nhật N5–N1: bài học, thẻ nhớ, luyện nói và chat với thầy Lâm.">
   <meta name="keywords" content="VJBot, Nihongo Sensei, học tiếng Nhật, luyện thi JLPT, JLPT N5, JLPT N1, kaiwa tiếng nhật, flashcard tiếng nhật, phản xạ tiếng nhật">
   <meta name="author" content="VJBot Team">
 
   <!-- Open Graph & Social Cards -->
-  <meta property="og:title" content="VJBot — Nihongo Sensei (Reversed Japanese AI Tutor)">
-  <meta property="og:description" content="Nền tảng luyện thi JLPT N5–N1 & phản xạ tiếng Nhật chủ động cùng AI Sensei. Trải nghiệm trực tiếp tại https://vjbot.dangphuc.me/">
+  <meta property="og:title" content="VJBot · Học tiếng Nhật cùng thầy Lâm">
+  <meta property="og:description" content="Luyện JLPT N5–N1 theo lớp học đảo ngược: thầy Lâm hỏi, em tự trả lời. Dùng API AI của chính bạn.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vjbot.dangphuc.me/">
   <meta property="og:image" content="https://vjbot.dangphuc.me/assets/logo-vj-8bit.svg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="VJBot — Nihongo Sensei">
-  <meta name="twitter:description" content="Luyện thi JLPT N5–N1 & phản xạ tiếng Nhật chủ động cùng AI Sensei trên Cloudflare Edge.">
+  <meta name="twitter:title" content="VJBot · Học tiếng Nhật cùng thầy Lâm">
+  <meta name="twitter:description" content="Luyện JLPT N5–N1 theo lớp học đảo ngược cùng thầy Lâm.">
 
   <!-- 8-bit Pixel Mascot Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -48,7 +48,7 @@
       <div class="sidebar-header">
         <div class="sidebar-brand">
           <div class="vj-8bit-logo-wrap" title="VJBot 8-bit Logo">
-            <img src="assets/logo-vj-8bit.svg" alt="VJ 8-Bit Logo" class="vj-8bit-logo-img">
+            <img src="assets/logo-vj-8bit.svg" alt="Logo VJBot" class="vj-8bit-logo-img">
           </div>
           <div class="brand-text">
             <div class="brand-title-row">
@@ -73,7 +73,7 @@
       </div>
 
       <!-- Main Navigation Menu Items -->
-      <nav class="sidebar-nav" aria-label="Main Navigation">
+      <nav class="sidebar-nav" aria-label="Điều hướng chính">
 
         <div class="sidebar-nav-section">
 
@@ -127,6 +127,10 @@
             <span class="nav-label">Tiến độ</span>
           </button>
 
+          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden>
+            <span class="nav-label">Quản trị</span>
+          </button>
+
           <button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings">
 
             <span class="nav-label">Hồ sơ & Cài đặt</span>
@@ -150,7 +154,7 @@
       <header class="main-topbar">
         <div class="topbar-left">
           <button type="button" class="mobile-menu-btn" id="btn-mobile-sidebar" aria-label="Mở menu" aria-controls="app-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-          <img src="assets/logo-vj-8bit.svg" alt="VJ Logo" class="topbar-logo-8bit">
+          <img src="assets/logo-vj-8bit.svg" alt="Logo VJBot" class="topbar-logo-8bit">
           <div class="breadcrumb-group">
             <span class="breadcrumb-root">VJBot</span>
             <span class="breadcrumb-sep">/</span>
@@ -160,7 +164,7 @@
 
         <!-- Topbar Quick Assistant Summon Button -->
         <div class="topbar-center">
-          <button type="button" class="topbar-summon-btn" id="btn-topbar-summon" aria-label="Hỏi thầy Lâm" title="Gọi Sensei bất cứ lúc nào (Cmd+K)">
+          <button type="button" class="topbar-summon-btn" id="btn-topbar-summon" aria-label="Hỏi thầy Lâm" title="Gọi Sensei bất cứ lúc nào (⌘K)">
             <span class="summon-icon"></span>
             <span class="summon-text">Hỏi thầy Lâm</span>
             <kbd class="sketch-kbd">⌘K</kbd>
@@ -175,7 +179,7 @@
           <div class="topbar-auth" id="topbar-auth-section">
             <button type="button" class="topbar-account-btn" id="btn-topbar-account" title="Tài khoản học viên">
               <span class="account-avatar-wrap">
-                <img id="topbar-user-avatar" src="assets/lam/teacher.svg" alt="Avatar" class="account-avatar-img pixel-sprite">
+                <img id="topbar-user-avatar" src="assets/lam/teacher.svg" alt="Ảnh đại diện" class="account-avatar-img pixel-sprite">
               </span>
               <span id="topbar-user-name" class="account-user-name">Đăng nhập</span>
             </button>
@@ -279,7 +283,7 @@
             </aside>
 
             <!-- CHAT WORKSPACE (REVERSED CHATBOT) -->
-            <section class="classroom-chat-window" data-od-id="chat-window">
+            <section class="classroom-chat-window" data-od-id="chat-window" data-ai="unknown">
 
               <!-- Active Recommendation Banner -->
               <div class="active-rec-banner" id="active-rec-banner">
@@ -330,6 +334,10 @@
               </div>
 
               <!-- Quick Response Chips with Furigana Toggle & Bookmark -->
+              <div id="chat-ai-gate" class="chat-ai-gate" hidden>
+                <h2>Kết nối API để chat với thầy Lâm</h2>
+                <button type="button" class="public-cta" id="chat-gate-open">Thêm API</button>
+              </div>
               <div class="chat-chips-bar" id="chat-prompt-chips">
                 <button type="button" class="prompt-chip" id="btn-bookmark-topic" title="Lưu chủ đề này vào Sổ tay điểm yếu"> Lưu điểm yếu</button>
                 <button type="button" class="prompt-chip" id="btn-ask-hint"> Gợi ý từng bước</button>
@@ -338,7 +346,7 @@
                 <button type="button" class="prompt-chip" id="btn-ask-check"> Sửa câu của em</button>
               </div>
 
-              <div id="chat-error" role="alert" hidden><span id="chat-error-text"></span><div><button type="button" id="chat-retry">Thử lại</button><button type="button" id="chat-discard" hidden>Bỏ qua</button></div></div>
+              <div id="chat-error" role="alert" hidden><span id="chat-error-text"></span><div><button type="button" id="chat-open-settings" hidden>Cài đặt API</button><button type="button" id="chat-retry">Thử lại</button><button type="button" id="chat-discard" hidden>Bỏ qua</button></div></div>
               <!-- Chat Input Bar -->
               <form class="chat-input-bar" id="chat-form" onsubmit="return false;">
                 <button type="button" class="chat-audio-btn" id="btn-voice-input" title="Nói tiếng Nhật (Nhận diện giọng nói)">
@@ -694,10 +702,28 @@
         </section>
 
         <!-- TAB 7: SETTINGS, GEMINI KEY & MASCOTS -->
+        <section class="tab-panel" id="panel-admin" hidden>
+          <div class="settings-container"><h1>Quản trị</h1>
+            <div id="admin-stats" class="admin-stats" aria-live="polite"></div>
+            <div class="settings-card"><h2 class="card-title">Hoạt động 7 ngày</h2><div id="admin-top"></div></div>
+          </div>
+        </section>
         <section class="tab-panel" id="panel-settings" hidden>
           <div class="settings-container"><h1>Cài đặt</h1>
 
             <div class="settings-card"><h2 class="card-title">Tài khoản</h2><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button></div>
+            <div class="settings-card" id="ai-card">
+              <h2 class="card-title">API AI</h2>
+              <p id="ai-source" class="ai-source" role="status"></p>
+              <form id="ai-form" class="ai-form" autocomplete="off">
+                <label>Loại API<select id="ai-protocol"><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select></label>
+                <label>URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false"></label>
+                <label>Model<input id="ai-model" required maxlength="100" spellcheck="false"></label>
+                <label>API key<input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false"></label>
+                <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save">Lưu và kiểm tra</button><button type="button" class="stage-btn" id="ai-chat" hidden>Chat với thầy Lâm</button><button type="button" class="stage-btn" id="ai-remove" hidden>Xóa</button></div>
+                <p id="ai-status" role="status"></p>
+              </form>
+            </div>
             <!-- Sound & Retro Effects -->
             <div class="settings-card">
               <h2 class="card-title">Âm thanh</h2>
@@ -746,7 +772,7 @@
 
     <div class="popover-body">
       <div class="popover-sensei-box">
-        <img id="popover-mascot-img" src="assets/lam/teacher.svg" alt="Sensei" class="pixel-sprite">
+        <img id="popover-mascot-img" src="assets/lam/teacher.svg" alt="Thầy Lâm" class="pixel-sprite">
         <div class="popover-speech" id="popover-speech-text">
           Chào bạn! Cần Sensei dịch câu, giải thích ngữ pháp hay luyện phát âm thì nhắn ngay ở đây nhé! (Phím tắt: Cmd+K)
         </div>
@@ -783,7 +809,7 @@
       <button type="button" class="picker-close-btn" id="btn-close-picker" aria-label="Đóng bảng chọn">×</button>
       <div class="picker-header">
         <div class="picker-mascot-head">
-          <img src="assets/lam/teacher.svg" alt="Sensei" class="pixel-sprite">
+          <img src="assets/lam/teacher.svg" alt="Thầy Lâm" class="pixel-sprite">
         </div>
         <div>
           <h2>Trình độ tiếng Nhật</h2>
@@ -817,7 +843,7 @@
   </div>
 
   <!-- MOBILE BOTTOM DOCK (APPLE TAB BAR FOR EASY 1-TAP NAVIGATION) -->
-  <nav class="mobile-bottom-bar" id="mobile-bottom-bar" aria-label="Mobile Navigation">
+  <nav class="mobile-bottom-bar" id="mobile-bottom-bar" aria-label="Điều hướng trên điện thoại">
     <button type="button" class="mobile-bottom-item active" data-tab="dashboard">
 
       <span class="m-label">Trang chủ</span>
@@ -862,9 +888,11 @@
     </div>
   </dialog>
   <script src="practice.js"></script>
+  <script src="vi-labels.js"></script>
   <script src="learning.js"></script>
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
   <script src="account.js"></script>
+  <script src="ai-settings.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="app.js"></script>
