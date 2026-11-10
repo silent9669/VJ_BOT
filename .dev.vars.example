@@ -1,6 +1,4 @@
 # Copy to .dev.vars for local `npm run dev` (never commit .dev.vars).
-# Platform AI key (admins only). Free: https://aistudio.google.com/api-keys
-GEMINI_API_KEY=
 # Comma list of Google emails that become admin after Google sign-in
 ADMIN_EMAILS=
 # Any long random string; encrypts learners' saved API keys

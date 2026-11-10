@@ -65,3 +65,7 @@ img[src="assets/lam/teacher.svg"]{image-rendering:auto!important;object-fit:cont
 #admin-top p{display:flex;justify-content:space-between;gap:12px;margin:0;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}#admin-top p:last-child{border-bottom:0}
 #chat-open-settings{min-height:44px;padding:6px 14px;border:1px solid var(--ink);border-radius:4px;background:transparent;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 @media(max-width:768px){.admin-stats{grid-template-columns:repeat(2,1fr)}}
+.chat-ai-gate{display:grid;justify-items:center;gap:14px;padding:28px 20px;border-top:1px solid var(--line);text-align:center}.chat-ai-gate h2{margin:0;font-size:20px;letter-spacing:-.03em}.chat-ai-gate .public-cta{gap:0}
+.classroom-chat-window[data-ai=none] #chat-welcome,.classroom-chat-window[data-ai=none] .chat-chips-bar,.classroom-chat-window[data-ai=none] #chat-error{display:none}
+.classroom-chat-window[data-ai=none] #chat-input,.classroom-chat-window[data-ai=none] #btn-send-message{opacity:.5}
+.ai-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 18px;margin-bottom:16px;background:#f3dcd5;border:1px solid #d9a89c;border-radius:6px}.ai-banner p{margin:0;font-size:14px}.ai-banner .public-cta{gap:0}

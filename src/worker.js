@@ -1,7 +1,7 @@
 import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
 import { reversedPrompt } from './prompt.js';
-import { aiRoute, askAI, rateLimited } from './providers.js';
+import { aiRoute, askAI, googleSpeechKey, rateLimited } from './providers.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
  * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
@@ -420,7 +420,8 @@ export default {
         const voice = "Charon";
         if (!text) return jsonResponse({ detail: "text required" }, 400);
 
-        const apiKey = env.GEMINI_API_KEY || "";
+        const apiKey = await googleSpeechKey(env, url.searchParams.get("user_id"));
+        if (!apiKey) return jsonResponse({ detail: "Thêm API Gemini trong Cài đặt để nghe giọng thầy Lâm.", code: "no_tts" }, 403);
         const ttsUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent";
 
         try {

@@ -7,10 +7,6 @@ const text = new TextEncoder();
 const b64 = bytes => btoa(String.fromCharCode(...bytes));
 const unb64 = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 
-// The platform key is the Worker secret GEMINI_API_KEY and is only ever sent to Google, never to a configured URL.
-const PLATFORM_BASES = {openai: DEFAULT_BASES.gemini + '/v1beta/openai', gemini: DEFAULT_BASES.gemini};
-const PLATFORM_DEFAULT = {protocol: 'openai', model: 'gemini-3.8-flash', fallbacks: ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash']};
-
 export async function rateLimited(env, userId) {
   const bucket = Math.floor(Date.now() / 60000);
   const usage = await env.DB.prepare('INSERT INTO ai_usage(user_id,bucket,count) VALUES(?,?,1) ON CONFLICT(user_id,bucket) DO UPDATE SET count=count+1 RETURNING count').bind(userId, bucket).first();
@@ -35,24 +31,19 @@ async function unseal(env, userId, blob) {
   } catch { return null; }
 }
 
-async function platformConfig(env) {
-  const row = await env.DB.prepare("SELECT value FROM app_settings WHERE key='platform_ai'").first();
-  try { return {...PLATFORM_DEFAULT, ...JSON.parse(row?.value || '{}')}; } catch { return PLATFORM_DEFAULT; }
-}
-
-// Returns one provider from one source: the user's own saved API, otherwise (admins only) the platform's.
+// There is no built-in AI: a learner's chat, Kaiwa and speech all use the API they saved in Settings.
 export async function resolveProvider(env, userId) {
   const own = await env.DB.prepare('SELECT * FROM ai_providers WHERE user_id=?').bind(userId).first();
-  if (own) {
-    const apiKey = await unseal(env, userId, own.key_enc);
-    if (!apiKey) return {error: 'rekey'};
-    return {source: 'own', protocol: own.protocol, baseUrl: own.base_url, apiKey, models: [own.model]};
-  }
-  if (env.GEMINI_API_KEY && await isAdmin(env, userId)) {
-    const config = await platformConfig(env);
-    return {source: 'platform', protocol: config.protocol, baseUrl: PLATFORM_BASES[config.protocol], apiKey: env.GEMINI_API_KEY, models: [config.model, ...config.fallbacks]};
-  }
-  return null;
+  if (!own) return null;
+  const apiKey = await unseal(env, userId, own.key_enc);
+  if (!apiKey) return {error: 'rekey'};
+  return {source: 'own', protocol: own.protocol, baseUrl: own.base_url, apiKey, models: [own.model]};
+}
+
+// Gemini speech needs a Google key: only a saved Gemini API that points at Google qualifies.
+export async function googleSpeechKey(env, userId) {
+  const provider = await resolveProvider(env, userId);
+  return provider?.protocol === 'gemini' && new URL(provider.baseUrl).hostname === 'generativelanguage.googleapis.com' ? provider.apiKey : null;
 }
 
 export const NO_AI = 'Thêm API key của bạn trong Cài đặt để chat với thầy Lâm.';
@@ -65,7 +56,7 @@ export async function askAI(env, userId, request) {
   if (provider.error) return {response: json({detail: REKEY, code: 'rekey'}, 409)};
   const result = await callLLM(provider, request);
   if (result.text) return {text: result.text};
-  return {response: json({detail: failureMessage(result.status, provider.source)}, result.status === 429 ? 429 : 503)};
+  return {response: json({detail: failureMessage(result.status)}, result.status === 429 ? 429 : 503)};
 }
 
 async function body(request) {
@@ -79,15 +70,13 @@ async function overview(env) {
   const since = days => new Date(Date.now() - days * 86400000).toISOString();
   const count = async (sql, ...p) => (await env.DB.prepare(sql).bind(...p).first()).n;
   const top = await env.DB.prepare(`SELECT c.user_id, count(*) n, (SELECT name FROM sessions s WHERE s.user_id=c.user_id LIMIT 1) name FROM conversations c WHERE c.role='user' AND c.timestamp>=? GROUP BY c.user_id ORDER BY n DESC LIMIT 8`).bind(since(7)).all();
-  const config = await platformConfig(env);
   return {
     users: await count('SELECT count(*) n FROM profiles'),
     active_7d: await count("SELECT count(DISTINCT user_id) n FROM conversations WHERE timestamp>=?", since(7)),
     messages_24h: await count("SELECT count(*) n FROM conversations WHERE role='user' AND timestamp>=?", since(1)),
     messages_7d: await count("SELECT count(*) n FROM conversations WHERE role='user' AND timestamp>=?", since(7)),
     own_api_users: await count('SELECT count(*) n FROM ai_providers'),
-    top: top.results.map(r => ({name: r.name || 'Học viên ' + r.user_id.slice(-4), messages: r.n})),
-    platform: {...config, has_key: Boolean(env.GEMINI_API_KEY)}
+    top: top.results.map(r => ({name: r.name || 'Học viên ' + r.user_id.slice(-4), messages: r.n}))
   };
 }
 
@@ -99,8 +88,7 @@ export async function aiRoute(request, env, url) {
 
   if (path === '/api/ai/settings' && method === 'GET') {
     const own = await env.DB.prepare('SELECT protocol,base_url,model,key_last4 FROM ai_providers WHERE user_id=?').bind(user.user_id).first();
-    const platform = !own && admin && Boolean(env.GEMINI_API_KEY);
-    return json({source: own ? 'own' : platform ? 'platform' : 'none', is_admin: admin, own, bases: DEFAULT_BASES, can_store: Boolean(env.AI_KEY_SECRET)});
+    return json({source: own ? 'own' : 'none', is_admin: admin, own, bases: DEFAULT_BASES, can_store: Boolean(env.AI_KEY_SECRET)});
   }
   if (path === '/api/ai/settings' && method === 'PUT') {
     const data = await body(request);
@@ -133,20 +121,6 @@ export async function aiRoute(request, env, url) {
   if (path.startsWith('/api/admin/')) {
     if (!admin) return json({detail: 'Không có quyền.'}, 403);
     if (path === '/api/admin/overview' && method === 'GET') return json(await overview(env));
-    if (path === '/api/admin/provider' && method === 'PUT') {
-      const data = await body(request);
-      const models = [data?.model, ...(Array.isArray(data?.fallbacks) ? data.fallbacks : [])];
-      if (!data || !PLATFORM_BASES[data.protocol] || models.length > 6 || !models.every(modelOk)) return json({detail: 'Cấu hình không hợp lệ.'}, 400);
-      await env.DB.prepare("INSERT OR REPLACE INTO app_settings(key,value) VALUES('platform_ai',?)").bind(JSON.stringify({protocol: data.protocol, model: data.model, fallbacks: data.fallbacks || []})).run();
-      return json({ok: true});
-    }
-    if (path === '/api/admin/test' && method === 'POST') {
-      if (!env.GEMINI_API_KEY) return json({detail: 'Chưa có khóa AI của hệ thống.'}, 503);
-      if (await rateLimited(env, user.user_id)) return json({detail: 'Bạn hãy đợi một phút rồi thử lại.'}, 429);
-      const config = await platformConfig(env);
-      const result = await callLLM({source: 'platform', protocol: config.protocol, baseUrl: PLATFORM_BASES[config.protocol], apiKey: env.GEMINI_API_KEY, models: [config.model, ...config.fallbacks]}, {turns: [{role: 'user', content: 'Reply with the single word OK.'}]});
-      return result.text ? json({ok: true}) : json({detail: failureMessage(result.status, 'platform')}, 502);
-    }
   }
   return json({detail: 'Not found'}, 404);
 }

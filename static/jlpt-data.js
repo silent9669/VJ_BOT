@@ -2610,7 +2610,7 @@ window.JLPT_DATA = {
     "freestyle": {
       "id": "freestyle",
       "level": "ALL",
-      "title": "Trò chuyện Tự do (Free-style)",
+      "title": "Trò chuyện tự do",
       "desc": "Trò chuyện tự do không kịch bản cùng Sensei về mọi đề tài cuộc sống, sở thích, kế hoạch và ước mơ bằng tiếng Nhật tự nhiên.",
       "prompts": [
         {

@@ -104,9 +104,9 @@ export async function callLLM(provider, {system, turns, json = false}, {budgetMs
   return {status};
 }
 
-export function failureMessage(status, source) {
-  if (status === 429) return source === 'platform' ? 'Sensei đang quá tải lượt dùng miễn phí. Hãy thử lại sau ít phút.' : 'API của bạn báo hết lượt. Hãy thử lại sau ít phút.';
-  if (status === 401 || status === 403) return source === 'platform' ? 'Khóa AI của hệ thống chưa hợp lệ. Hãy kiểm tra trong trang Quản trị.' : 'API key bị từ chối. Kiểm tra lại trong Cài đặt.';
-  if (status === 404 || status === 400) return source === 'platform' ? 'Model của hệ thống không dùng được. Hãy đổi trong trang Quản trị.' : 'Endpoint hoặc model không đúng. Kiểm tra lại trong Cài đặt.';
-  return 'Sensei AI hiện chưa kết nối được. Vui lòng thử lại sau.';
+export function failureMessage(status) {
+  if (status === 429) return 'API của bạn báo hết lượt. Hãy thử lại sau ít phút.';
+  if (status === 401 || status === 403) return 'API key bị từ chối. Kiểm tra lại trong Cài đặt.';
+  if (status === 404 || status === 400) return 'Endpoint hoặc model không đúng. Kiểm tra lại trong Cài đặt.';
+  return 'API của bạn chưa kết nối được. Vui lòng thử lại sau.';
 }
