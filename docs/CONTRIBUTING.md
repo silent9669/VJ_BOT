@@ -1,47 +1,48 @@
-# Continuing development
+# Hướng dẫn đóng góp
 
-Read [the handoff](HANDOFF.md) and inspect `git status` before editing. Development has resumed; preserve the existing uncommitted tree. Do not switch/reset branches or merge/deploy merely to tidy it.
+## Chạy cục bộ
 
-## Local setup
-
-Use Node 22.13+ for the Worker tests' SQLite adapter. The production UI is vanilla HTML/CSS/JavaScript; Python is a separate backend implementation.
+Cần Node 22.13+ (test dùng `node:sqlite`).
 
 ```sh
 npm ci
-npm run dev
+cp .dev.vars.example .dev.vars   # điền ADMIN_EMAILS, AI_KEY_SECRET, GOOGLE_CLIENT_ID
+npm run dev                      # http://localhost:8787
 ```
 
-The local Worker runs at `http://localhost:8787`. Production secret bindings do not mean local credentials are automatically present. Keep local secret values in ignored environment configuration; check the CLI's current configuration guidance. Apply migrations to the intended local database before testing database-backed flows locally.
+- D1 cục bộ nằm trong `.cloudflare/state`. Áp migration mới vào đó trước khi thử (ví dụ `sqlite3 <file>.sqlite < migrations/00NN_*.sql`, với file nằm dưới `.cloudflare/state/v3/d1/`).
+- Đăng nhập Google cục bộ cần origin `http://localhost:8787` trong Google OAuth. Cách nhanh để thử giao diện: đăng ký tài khoản email (mật khẩu 12+ ký tự) ngay trên trang.
+- Muốn thử chat, vào Cài đặt > API AI và dùng API của bạn. Không có khóa hệ thống.
 
-For the separate Python suite, create a virtual environment, install `requirements.txt` and its test dependencies (`pytest`, `pytest-asyncio`, `httpx`), then run `npm run test:python`.
+## Quy trình
 
-## Product and code conventions
+1. Tạo nhánh từ `main`, commit nhỏ, push. CI (`Test & Quality Checks`) chạy ở mọi push.
+2. Mở PR vào `main`, squash merge sau khi check xanh và mọi thread đã giải quyết.
+3. Merge vào `main` tự deploy production (Workers Builds, kèm migration). Đừng merge khi chưa sẵn sàng deploy. Chi tiết ở [DEPLOYMENT_CICD](DEPLOYMENT_CICD.md).
+4. Không thêm dòng đồng tác giả AI vào commit/PR.
 
-- Preserve the notebook/sketch direction and the existing stack. No unrequested React migration.
-- Use one consistent teacher, Lâm, wearing a blazer. Preserve the licensed portrait attribution beside the SVG.
-- Keep text concise. Avoid taglines, redundant helper labels, emoji-heavy navigation and decorative dashboards.
-- Retain keyboard access, native dialog behavior, readable mobile layouts and reduced motion.
-- Keep Three.js animation time-based; stop idle/hidden rendering and clean up GPU resources.
-- Ground new lessons in reviewed source material. Preserve attribution, language labels and licensing; do not invent coverage claims.
-- Keep credentials server-side. Authenticate ownership in the Worker instead of trusting client IDs.
-- Keep changes scoped. Reproduce a suspected bug before changing adjacent code.
-- Do not add AI co-author attribution to commits.
-
-## Verification
+## Kiểm tra trước khi mở PR
 
 ```sh
 npm test
 npm run build
-npm run test:python
 git diff --check
 ```
 
-Run checks appropriate to the edited implementation. The Python tests do not prove Worker behavior. Use Chrome DevTools to review the actual pages, keyboard interaction, mobile layout, console, animation and fallback paths. For persistence changes, test reloads and separate account sessions against isolated QA data.
+`npm run test:python` chỉ cho `scripts/` và `app/` cũ. Test Node dùng DOM giả: với thay đổi giao diện hãy mở trang thật, kiểm tra bàn phím, 375 px và 1280 px, console, `prefers-reduced-motion`. Với thay đổi lưu dữ liệu, thử tải lại và hai tài khoản khác nhau. Đừng báo "đã xác nhận" Google login, giọng đọc hay chat khi chưa chạy thật; phân biệt rõ test cục bộ, CI và production.
 
-Do not claim Google login is verified solely because the button renders or a synthetic session works. Do not claim TTS is working from a 200 fallback response. Distinguish local tests, hosted CI and production evidence in the handoff or PR.
+## Quy ước
 
-## Source generation and Git
+- **Ngôn ngữ giao diện**: chỉ tiếng Việt và tiếng Nhật. Không thêm chuỗi tiếng Anh vào giao diện, `title`, `aria-label`, `alt`. Dữ liệu nguồn tiếng Anh đi qua `vi-labels.js`/`vi-dict.json`.
+- **Giữ stack hiện tại**: HTML/CSS/JS thuần. Không chuyển React nếu chưa thống nhất. Tránh thêm `!important` mới; xem [ROADMAP](ROADMAP.md) về việc gộp CSS.
+- **Văn bản ngắn**: bỏ khẩu hiệu, nhãn phụ, chữ trợ giúp. Nếu màn hình cần chúng mới hiểu được thì sửa bố cục.
+- **Trợ năng**: giữ điều hướng bàn phím, `dialog` gốc, mục chạm tối thiểu 44 px trên điện thoại, giảm chuyển động.
+- **Bí mật**: không để khóa ở phía trình duyệt hay trong mã. Quyền sở hữu luôn do Worker xác định từ phiên, không tin `user_id` của client. Mọi URL do người dùng nhập đi qua `cleanBaseUrl` (`src/llm.js`).
+- **Khóa AI**: chỉ dùng khóa của chính người dùng đó. Không bao giờ ghép URL của người này với khóa của người khác, và không trả lại nội dung lỗi thô từ nhà cung cấp.
+- **Nội dung bài học**: dựa trên nguồn đã duyệt, giữ ghi công và giấy phép, không tuyên bố bao phủ toàn bộ JLPT. Không đổi ID đã có sang nhiệm vụ khác (ID có phiên bản như `practical:v1:...`).
+- **Migration**: file mới, tương thích ngược, thêm vào danh sách trong `tests/worker.test.mjs`.
+- **Phạm vi**: mỗi thay đổi có lý do trực tiếp; tái hiện lỗi trước khi sửa mã lân cận.
 
-Edit `src/client/room.js`, then rebuild through `npm run build:room` (also included in build/deploy). Dataset imports and the teacher generator have separate scripts; do not run them for unrelated UI changes.
+## Thay đổi prompt của thầy Lâm
 
-When work resumes, review the dirty files before staging. Split data, auth/backend, UI and documentation into coherent changes where practical. Commit messages should explain behavior. Verify branch protections and CI state rather than assuming old documentation reflects remote configuration.
+`src/prompt.js` quyết định chất lượng dạy. Sau khi sửa: chạy `npm test`, rồi chạy tay một hội thoại 5 lượt (sai, gợi ý, đúng, tự giải thích, kết thúc) ở N5 và N3, và dán kết quả vào PR.

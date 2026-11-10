@@ -1,78 +1,79 @@
-# Cloudflare deployment
+# Triển khai và CI
 
-Read [HANDOFF.md](HANDOFF.md) first for the current deployed version and remaining verification.
-
-## Targets
+## Mục tiêu hiện tại
 
 - Site: https://vjbot.dangphuc.me/
-- Worker: `vjbot`; entrypoint `src/worker.js`.
-- D1: `eb0d49a5-7a90-4219-968c-5fcb04390859`, binding `DB`.
-- Configuration: `cloudflare.config.ts` and `vite.config.ts`.
-- Latest recorded version: `d4933bcf-41fb-401d-a620-c8411ce48666`.
+- Worker `vjbot`, entrypoint `src/worker.js`, cấu hình `cloudflare.config.ts` + `vite.config.ts`.
+- D1 `eb0d49a5-7a90-4219-968c-5fcb04390859`, binding `DB`. Không thay bằng Worker/D1 của dự án khác.
+- Placement `gcp:us-east4`: giải quyết lỗi vùng của Google TTS trước đây, không phải cam kết về dữ liệu hay độ trễ. Đừng bỏ khi chưa nghe thử giọng đọc.
 
-Do not substitute a database/Worker from another project. Verify the current CLI account and configuration before any write. The existing importer targets this production D1 ID directly; it is not a local-only command.
+## Luồng làm việc của nhóm
 
-## Secrets and Google
+```mermaid
+flowchart LR
+  A[Nhánh tính năng] -->|push| B[GitHub Actions: Test and Quality Checks]
+  A -->|PR + squash merge| M[main]
+  M --> C[Workers Builds: npm test]
+  C --> D[npm run release: migrate rồi cf deploy]
+  D --> P[vjbot.dangphuc.me]
+```
 
-The Worker has secret names `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Never put values in source, documentation, browser storage, command output or committed environment files. The current ID-token flow uses the client ID and Google's public keys; the client secret is stored but unused.
+- **GitHub Actions** chỉ kiểm tra, không giữ khóa Cloudflare. `ci.yml` chạy trên mọi push: `npm ci`, `npm test`, `npm run build` (dry run). `python.yml` chạy pytest khi `app/`, `scripts/`, test Python hoặc `requirements.txt` đổi.
+- **Ruleset "Protect main branch"**: phải qua PR và check tên `Test & Quality Checks` (tên của job trong `ci.yml`; đổi tên job là chặn merge). Thread review phải được giải quyết. Chỉ squash/merge qua PR, không push thẳng.
+- **Cloudflare Workers Builds** là nơi duy nhất deploy. Push hoặc merge vào `main` tự chạy. Đồng đội chỉ cần quyền ghi repo, không cần token Cloudflare; muốn xem log build thì cần vào dashboard Cloudflare hoặc dùng `cf builds`.
+- Cấu hình (Worker `vjbot` > Settings > Builds, hoặc `cf builds workers get <script-tag>`): nhánh `main`, build `npm test`, deploy `npm run release`, thư mục gốc `/`. Token build cần Workers Scripts Write và D1 Write. **Preview đã tắt**: lệnh mặc định `npx wrangler preview` không chạy được với project `cf`, và preview sẽ dùng chung D1 production (xem [ROADMAP](ROADMAP.md) mục staging).
+- Chỉ giữ một lockfile (`package-lock.json`); lockfile thứ hai làm Workers Builds đổi trình quản lý gói.
 
-Google OAuth authorized JavaScript origins must include `https://vjbot.dangphuc.me`. Local sign-in additionally requires `http://localhost:8787`. Rendering the Google button does not establish that the complete login flow works.
+Xem log build bằng CLI:
 
-## Build and deploy
+```sh
+npx cf builds list --external-script-id <worker-id>
+npx cf builds logs get <build-uuid>
+```
+
+## Lệnh
 
 ```sh
 npm ci
-npm test
-npm run build
-npm run deploy
+npm test          # test Node (Worker, dữ liệu, giao diện)
+npm run build     # cf deploy --dry-run
+npm run migrate   # áp migration D1 production
+npm run release   # migrate rồi deploy (Workers Builds dùng lệnh này)
+npm run deploy    # chỉ deploy, KHÔNG chạy migration
 ```
 
-The dashboard no longer bundles a 3D room. Vite warns about classic script tags in static HTML; these scripts are served as public files in dependency order.
+`npm run deploy`, `migrate` và `release` ghi vào production. Chỉ chạy tay khi cần, và ghi lại version trả về.
 
-`npm run build` is a Cloudflare dry run; `npm run deploy` changes production. It does not automatically apply migrations or import curriculum. Record the returned version and verify the custom domain after deploying.
+## Secrets
 
-## Database migrations and content
+| Secret | Vai trò |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | Xác minh Google ID token (`GOOGLE_CLIENT_SECRET` đã lưu nhưng luồng hiện tại không dùng) |
+| `ADMIN_EMAILS` | Danh sách email Google (cách nhau dấu phẩy) có quyền admin sau khi đăng nhập Google |
+| `AI_KEY_SECRET` | Chuỗi ngẫu nhiên dài để mã hóa API key người dùng. Đổi giá trị làm mọi khóa đã lưu không đọc được |
+| `GEMINI_API_KEY` | Không còn được đọc. Có thể xóa |
 
-```sh
-npx cf d1 migrations apply eb0d49a5-7a90-4219-968c-5fcb04390859 --dir migrations
-```
+Đặt secret bằng dashboard (Worker `vjbot` > Settings > Variables and Secrets) hoặc `cf workers secrets update <TÊN> --worker vjbot --type secret_text --text ...`. Không ghi giá trị vào mã, tài liệu, log hay lịch sử shell chia sẻ. Cục bộ: sao chép `.dev.vars.example` thành `.dev.vars` (đã bị ignore).
 
-Apply through migration 0010 for password accounts and chat request identities. Inspect migration tracking before future schema work; use new migrations rather than modifying already-applied migrations.
+Google OAuth cần origin `https://vjbot.dangphuc.me` (và `http://localhost:8787` cho cục bộ). Nút Google hiển thị chưa chứng minh luồng đăng nhập hoạt động.
 
-To refresh the pinned dataset after reviewing the upstream change:
+## Migration và dữ liệu
 
-```sh
-npm run data:import
-npm test
-python3 scripts/upload_lessons.py
-npm run deploy
-```
+- Thêm migration mới `migrations/00NN_*.sql`; không sửa file đã chạy. Thêm tên file vào danh sách trong `tests/worker.test.mjs` để test DB có bảng mới.
+- `npm run release` chạy migration trước khi deploy. Migration lỗi chặn deploy nhưng không tự hoàn tác; rollback Worker không hoàn tác migration, nên viết migration tương thích ngược.
+- Làm mới dữ liệu OpenJLPT: `npm run data:import`, `npm test`, `python3 scripts/upload_lessons.py` (ghi thẳng vào D1 production, theo lô 250 câu lệnh, chạy lại được), rồi deploy. Khóa nội dung tình huống: `python3 scripts/upload_practical_course.py`.
+- Bản dịch: `scripts/translate_corpus.py` (xem [ROADMAP](ROADMAP.md)). Cần `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` của bạn.
 
-The importer creates tracked JSON/attribution/checksums and ignored `data/openjlpt.sql`. The uploader submits restartable 250-statement batches and retains existing learner records. Review its current upsert fields before changing source IDs or structural metadata; it is not a general database reconciliation tool.
+## Kiểm tra sau deploy
 
-For CLI discovery use `npx cf cli search` with a generic action description; avoid putting account IDs, domains or secrets in search queries.
+1. `GET /api/health` trả `status: ok` và `d1_items` đúng (10.983).
+2. Mở trang, đăng nhập Google, vào một bài, lưu tiến độ, tải lại.
+3. Gắn một API trong Cài đặt, bấm "Lưu và kiểm tra", gửi một tin chat. Log Worker phải có `AI ok own <model>`; nếu là `AI own <model> 401/403/404/429` thì xem thông báo trong Cài đặt.
+4. Với admin: mục "Quản trị" hiện và `/api/admin/overview` trả 200.
+5. Kiểm tra console trình duyệt.
 
-## Production verification
+`/api/health` không chứng minh đăng nhập, lưu dữ liệu hay AI hoạt động.
 
-`GET /api/health` should return `status: ok` and the expected curriculum count (10,783 at handoff). Also inspect lesson loading, session behavior, progress read/write, chat history and the browser console. Use isolated QA accounts for mutations and remove only their data afterward. A health check alone does not prove login, saving or AI behavior.
+## Rollback
 
-The Worker uses `gcp:us-east4` placement because the default location caused Google TTS rejection. Do not remove it casually; verify audio, not just HTTP status, after placement/model changes.
-
-Before a later deployment, record the current version and choose a compatible rollback version using the CLI's Worker version/deployment commands. A Worker rollback does not undo D1 migrations or learner writes; keep schema changes compatible and plan data recovery separately.
-
-## CI and deploy (one deployer)
-
-- **GitHub Actions** only checks: `ci.yml` runs `npm ci`, `npm test`, `npm run build` on every push to any branch; `python.yml` runs pytest only when `app/`, `scripts/` or Python tests change. No Cloudflare credentials live in GitHub.
-- **Cloudflare Workers Builds** is the only deployer. Pushing to `main` builds and deploys; teammates need repo push access and Cloudflare dashboard access to view build logs, not API tokens.
-- Dashboard settings (Worker `vjbot` > Settings > Builds): Production branch `main`; Build command `npm test`; Deploy command `npm run release` (applies D1 migrations, then `cf deploy`); Root directory `/`. The Workers Builds API token needs Workers Scripts Edit and D1 Edit.
-- Previews are disabled (`cf builds workers update <worker-id> --previews-enabled false`). The default preview command `npx wrangler preview` fails on this `cf` project, and a preview Worker would share the production D1 binding.
-- Keep one lockfile (`package-lock.json`). A second one changes which package manager Workers Builds picks.
-- Rollback: Worker versions in the dashboard; D1 migrations are not undone.
-
-## AI (bring your own API) and admin
-
-- **No built-in AI.** Chat, Kaiwa grading and Gemini speech all use the API the learner saves in Settings > API AI (OpenAI-compatible, Claude or Gemini: base URL, model, key). Without one, chat shows a gate with a button to Settings. Browser speech synthesis is the fallback for audio unless the saved API is Gemini on Google.
-- **Keys:** stored AES-GCM encrypted in D1 (`ai_providers`) with the secret `AI_KEY_SECRET`; changing that secret makes saved keys unreadable (users re-enter them). Calls go server-side to the user's own URL (https only; no IPs, localhost or our own hosts; redirects blocked). Provider error bodies are never returned.
-- **Admin** = Google account whose verified email is in the secret `ADMIN_EMAILS` (comma list). Granted at Google sign-in and re-checked against the secret on every request; password accounts are never admin. After changing `ADMIN_EMAILS` the admin signs in with Google once. The admin panel ("Quản trị") shows activity only; admins get no AI privileges.
-- **Secrets in use:** `ADMIN_EMAILS`, `AI_KEY_SECRET`, `GOOGLE_CLIENT_ID` (and `GOOGLE_CLIENT_SECRET`). `GEMINI_API_KEY` is no longer read and can be deleted from the Worker.
-- **Vietnamese/Japanese only:** roadmap grammar is translated in `static/course/vi-grammar.json`. The rest of the OpenJLPT corpus (vocabulary, kanji, sentences) is English until you run `scripts/translate_corpus.py` with your own API, which writes `static/course/vi-dict.json`.
+Dùng version Worker trong dashboard hoặc `cf workers deployments`. Ghi lại version hiện tại trước khi deploy. Dữ liệu D1 không quay lại theo Worker; lên kế hoạch khôi phục riêng (xem [ROADMAP](ROADMAP.md)).

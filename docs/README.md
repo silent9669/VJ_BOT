@@ -1,14 +1,12 @@
-# Development documentation
+# Tài liệu
 
-Start with [HANDOFF.md](HANDOFF.md) before resuming work. Development has resumed. The handoff distinguishes the current deployment from the earlier pause snapshot.
+Bắt đầu với [Kiến trúc](ARCHITECTURE.md) để hiểu hệ thống đang chạy, rồi [Việc cần làm](ROADMAP.md) để chọn việc.
 
-| Document | Purpose |
+| Tài liệu | Nội dung |
 | --- | --- |
-| [Handoff](HANDOFF.md) | Deployment snapshot, verification, unfinished work and restart checklist |
-| [Architecture](ARCHITECTURE.md) | Production source map, database ownership and data flow |
-| [Features](FEATURES.md) | Implemented learning behavior and content limits |
-| [API reference](API_REFERENCE.md) | Worker routes, authentication and response contracts |
-| [Deployment](DEPLOYMENT_CICD.md) | Cloudflare targets, migrations, builds and CI |
-| [Contributing](CONTRIBUTING.md) | Local setup, design constraints and verification |
-
-These documents describe the current Cloudflare implementation. They replace earlier descriptions of the glass UI, older Gemini models and illustrative database schemas. Database migrations and the owning source files remain authoritative.
+| [Kiến trúc](ARCHITECTURE.md) | Sơ đồ, bản đồ mã nguồn, luồng request, bảng D1, xác thực, lớp AI, dữ liệu bài học |
+| [Tính năng](FEATURES.md) | Luồng người dùng và những gì đã có |
+| [API Worker](API_REFERENCE.md) | Các route, quyền truy cập, mã lỗi |
+| [Triển khai và CI](DEPLOYMENT_CICD.md) | Workers Builds, GitHub Actions, secrets, migration, kiểm tra sau deploy, rollback |
+| [Đóng góp](CONTRIBUTING.md) | Chạy cục bộ, quy trình PR, quy ước |
+| [Việc cần làm](ROADMAP.md) | Danh sách cải thiện theo thứ tự ưu tiên |
