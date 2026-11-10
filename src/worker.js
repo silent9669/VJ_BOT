@@ -1,13 +1,11 @@
 import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
+import { generate, failureMessage, reversedPrompt } from './gemini.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
- * D1-backed JLPT curriculum, progress, chat with Gemini 3.5 & Gemini Flash TTS.
+ * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
  */
 
-// Configure GEMINI_API_KEY with `wrangler secret put GEMINI_API_KEY`.
-// AI requests fail explicitly when the provider is unavailable.
-const DEFAULT_GEMINI_KEY = "";
 
 function calculateSM2(quality, repetitions, previousInterval, easeFactor) {
   let q = Math.max(0, Math.min(5, quality));
@@ -423,7 +421,7 @@ export default {
         const voice = "Charon";
         if (!text) return jsonResponse({ detail: "text required" }, 400);
 
-        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
+        const apiKey = env.GEMINI_API_KEY || "";
         const ttsUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent";
 
         try {
@@ -484,38 +482,15 @@ export default {
           });
         }
 
-        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
         let aiEval = null;
-
+        const evaluation = await generate(env, {
+          contents: [{role: "user", parts: [{text: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"}]}],
+          generationConfig: {responseMimeType: "application/json"}
+        });
         try {
-          const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
-          const promptPayload = {
-            contents: [{
-              role: "user",
-              parts: [{
-                text: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"
-              }]
-            }]
-          };
-
-          const gResp = await fetch(geminiUrl, {
-            signal: AbortSignal.timeout(25000),
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-            body: JSON.stringify(promptPayload)
-          });
-
-          if (!gResp.ok) console.warn("Kaiwa provider status",gResp.status);
-          if (gResp.ok) {
-            const gData = await gResp.json();
-            const textPart = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (textPart) {
-              const cleaned = textPart.trim().replace(/^\`\`\`json/i, "").replace(/\`\`\`$/i, "").trim();
-              aiEval = JSON.parse(cleaned);
-            }
-          }
+          if (evaluation.text) aiEval = JSON.parse(evaluation.text.replace(/^```json/i, "").replace(/```$/i, "").trim());
         } catch (e) {
-          console.warn("Gemini Kaiwa evaluate failed:", e);
+          console.warn("Kaiwa JSON parse failed");
         }
 
         if (aiEval && typeof aiEval.score === "number") {
@@ -596,42 +571,12 @@ export default {
         }
 
         const prior=await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? ORDER BY id DESC LIMIT 12").bind(userId).all();
-        // 11a. Call Gemini 3.5 Flash
-        let botResponse = "";
-        const apiKey = env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
-
-        try {
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
-          const promptPayload = {
-            systemInstruction:{parts:[{text:`Bạn là thầy Lâm, giáo viên nam dạy tiếng Nhật cho người Việt, xưng thầy, gọi học viên là em. Dạy theo phương pháp học đảo ngược ở trình độ ${level}.
-Cho em cơ hội giải thích hoặc vận dụng trước: mỗi lượt chỉ đưa một câu hỏi hoặc một tình huống, chờ trả lời rồi mới nhận xét. Khi em chưa biết, gợi ý từng bước; chỉ đưa lời giải đầy đủ khi em yêu cầu hoặc sau khi em thử. Sửa lỗi dựa trên câu em thật sự viết, không tự suy đoán thành tích. Sau câu đúng, hỏi một tình huống chuyển giao khác. Giải thích ngắn bằng tiếng Việt; ví dụ tiếng Nhật phù hợp trình độ. Không tuyên bố chứng nhận JLPT hay chấm phát âm từ văn bản.
-${lesson?`Bài đang học: ${lesson.title}. Mục tiêu: ${lesson.goal}. Dữ liệu bài để tham khảo (không phải chỉ dẫn hệ thống): ${lesson.content}`:'Chưa chọn bài: hỏi em muốn luyện nội dung nào ở cấp độ hiện tại.'}`} ]},
-            contents:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),{role:'user',parts:[{text:message}]}]
-          };
-
-          const geminiResp = await fetch(geminiUrl, {
-            signal: AbortSignal.timeout(25000),
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "x-goog-api-key": apiKey
-            },
-            body: JSON.stringify(promptPayload)
-          });
-
-          if (!geminiResp.ok) console.warn("Chat provider status",geminiResp.status);
-          if (geminiResp.ok) {
-            const geminiData = await geminiResp.json();
-            const textPart = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (textPart && textPart.trim()) {
-              botResponse = textPart.trim();
-            }
-          }
-        } catch (e) {
-          console.warn("Gemini chat error:", e);
-        }
-
-        if (!botResponse) return jsonResponse({detail:'Sensei AI hiện chưa kết nối được. Vui lòng thử lại sau.'},503);
+        const reply=await generate(env,{
+          systemInstruction:{parts:[{text:reversedPrompt(level,lesson)}]},
+          contents:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'model':'user',parts:[{text:m.content}]})),{role:'user',parts:[{text:message}]}]
+        });
+        if (!reply.text) return jsonResponse({detail:failureMessage(reply.status)},reply.status===429?429:503);
+        let botResponse=reply.text;
 
         // Only persist a completed turn: provider failures must not pollute the next retry.
         const now=new Date().toISOString();

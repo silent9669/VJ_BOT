@@ -227,6 +227,18 @@ test('failed chat does not persist a turn and retrying a completed request retur
     globalThis.fetch=async()=>{calls++;return Response.json({candidates:[{content:{parts:[{text:'こんにちは！'}]}}]});};
     const first=await worker.fetch(request('/api/chat',body),env);assert.equal(first.status,200);
     const retry=await worker.fetch(request('/api/chat',body),env);assert.equal(retry.status,200);assert.equal((await retry.json()).reply,'こんにちは！');
-    assert.equal(calls,2);assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,2);
+    assert.equal(calls,5);assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,2);
+  }finally{globalThis.fetch=previous;}
+});
+test('chat falls back across free-tier models, skips thought parts and reports quota or key errors',async()=>{
+  const {env,request}=await authenticated();env.GEMINI_API_KEY='test-only';
+  const previous=globalThis.fetch,seen=[];
+  const ask=async handler=>{seen.length=0;globalThis.fetch=async url=>{seen.push(url.match(/models\/([^:]+):/)[1]);return handler(seen.length);};return worker.fetch(request('/api/chat',{message:'こんにちは'}),env);};
+  try{
+    let r=await ask(n=>n===1?Response.json({},{status:404}):Response.json({candidates:[{content:{parts:[{text:'ignored',thought:true},{text:'はい、どうぞ。'}]}}]}));
+    assert.equal(r.status,200);assert.equal((await r.json()).reply,'はい、どうぞ。');assert.equal(seen.length,2);assert.notEqual(seen[0],seen[1]);
+    r=await ask(()=>Response.json({},{status:429}));assert.equal(r.status,429);assert.equal(seen.length,4);
+    r=await ask(()=>Response.json({},{status:403}));assert.equal(r.status,503);assert.equal(seen.length,1);assert.match((await r.json()).detail,/khóa AI/);
+    env.GEMINI_MODELS='custom-model';await ask(()=>Response.json({},{status:500}));assert.deepEqual(seen,['custom-model']);
   }finally{globalThis.fetch=previous;}
 });

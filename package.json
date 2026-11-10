@@ -12,7 +12,9 @@
     "test": "node --test tests/*.test.mjs",
     "test:python": "PYTHONPATH=. .venv/bin/pytest tests/ -q",
     "data:import": "python3 scripts/import_lessons.py",
-    "deploy": "cf deploy"
+    "deploy": "cf deploy",
+    "migrate": "cf d1 migrations apply eb0d49a5-7a90-4219-968c-5fcb04390859 --dir migrations",
+    "release": "npm run migrate && npm run deploy"
   },
   "repository": {
     "type": "git",

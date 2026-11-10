@@ -1149,6 +1149,10 @@ function setupFloatingSensei() {
         if (speechEl) speechEl.textContent = reply;
         mascotMgr.setState("speaking");
         soundEngine.playReceive();
+      } else {
+        const data = await resp.json().catch(() => ({}));
+        if (speechEl) speechEl.textContent = data.detail || "Sensei chưa trả lời được. Bạn thử lại nhé!";
+        mascotMgr.setState("idle");
       }
     } catch {
       if (speechEl) speechEl.textContent = "Lỗi kết nối. Bạn thử lại nhé!";
@@ -1335,16 +1339,16 @@ function setupEventListeners() {
 
   // Classroom prompt chips
   const btnAskHint = document.getElementById("btn-ask-hint");
-  if (btnAskHint) btnAskHint.addEventListener("click", () => sendMessage("Sensei hãy cho em xin gợi ý cách đặt câu này với!"));
+  if (btnAskHint) btnAskHint.addEventListener("click", () => sendMessage("Thầy gợi ý cho em từng bước nhỏ, chưa đưa đáp án vội nhé."));
 
   const btnAskExplain = document.getElementById("btn-ask-explain");
-  if (btnAskExplain) btnAskExplain.addEventListener("click", () => sendMessage("Sensei giải thích ngữ pháp này chi tiết giúp em nhé!"));
+  if (btnAskExplain) btnAskExplain.addEventListener("click", () => sendMessage("Em muốn tự giải thích mẫu câu này bằng lời của em. Thầy hỏi em rồi nhận xét nhé."));
 
   const btnAskExample = document.getElementById("btn-ask-example");
-  if (btnAskExample) btnAskExample.addEventListener("click", () => sendMessage("Sensei cho em xin thêm một vài câu ví dụ thực tế nữa nhé!"));
+  if (btnAskExample) btnAskExample.addEventListener("click", () => sendMessage("Thầy cho em một tình huống mới để em tự vận dụng nhé."));
 
   const btnAskCheck = document.getElementById("btn-ask-check");
-  if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Sensei kiểm tra giúp em xem câu này đã chuẩn ngữ pháp và tự nhiên chưa!"));
+  if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Thầy kiểm tra câu em vừa viết: đúng ngữ pháp và tự nhiên chưa, sửa giúp em nhé."));
 
   // Classroom form submit
   const chatForm = document.getElementById("chat-form");
@@ -1768,6 +1772,7 @@ if (typeof window !== "undefined") {
 
 function startReversedLesson(item,level,skill,owner=null){
   chatLessonContext=buildLessonContext(item,level,skill);
+  updateHeroTopic({display:chatLessonContext.title,meaning:chatLessonContext.goal,jlpt_level:level});
   const host=document.getElementById('chat-lesson-context');host.hidden=false;host.replaceChildren();
   const title=document.createElement('strong');title.textContent=`${level} · ${chatLessonContext.title}`;
   const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill,false,owner);

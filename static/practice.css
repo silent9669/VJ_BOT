@@ -50,3 +50,4 @@
 
 #modal-lesson-body[data-mode=practice]:has(.practice-session):not(:has(.practice-result)) .lesson-footer{display:none!important}
 @media(max-width:600px){.lesson-modal-header h2{font-size:20px!important}.lesson-footer{flex-wrap:wrap}.lesson-footer .modal-practice-btn{flex-basis:100%!important}}
+.plan-talk{border-top:1px dashed var(--practice-line,#d8d2c4);margin-top:4px}.plan-talk .plan-skill{color:var(--practice-green)}

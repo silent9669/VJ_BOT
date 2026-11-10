@@ -5,7 +5,7 @@
 - Dashboard opens the next unfinished lesson. Removed the 3D room/anatomy activities, their bundles and dependencies. Sidebar toggle sits inside the desktop rail, with centered collapsed icons and a separate mobile drawer opener. Chat spans available width and supports multiline input, retry/discard, guarded history load/delete and persisted request IDs. Failed provider turns do not enter history.
 - Roadmaps contain theory, vocabulary and grammar (including introductory kana). Tests and timed workbooks remain in Practice. Writing activities remain discoverable in the library's Viết tab, and existing writing deep links still reload.
 - Local verification: 59 Node tests, 49 Python tests, Worker build/dry run and dependency audit passed. Chrome checks used a real locally registered account: registration, sign-out/sign-in, session reload, dashboard, sidebar, chat failure/retry/discard, roadmap/test separation, writing library/deep-link reload, and 320/390/1440px layouts with reduced motion. Local Gemini is not configured; live AI success requires the production check after merge. Existing classic-script build notices and two Python dependency deprecation warnings remain.
-- Deployment is performed by the existing main-branch GitHub workflow; production results are reported separately after merge.
+- Deployment is performed by Cloudflare Workers Builds on `main`; GitHub Actions only checks (see DEPLOYMENT_CICD.md).
 
 ## 2026-11-01 · Compact interface and expanded resources
 
