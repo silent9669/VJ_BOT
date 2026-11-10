@@ -1,5 +1,5 @@
 import { sessionUser } from './auth.js';
-import { isAdmin } from './admin.js';
+import { isAdmin, listUsers, userAction, userDetail } from './admin.js';
 import { callLLM, cleanBaseUrl, DEFAULT_BASES, failureMessage } from './llm.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'no-store'}});
@@ -121,6 +121,16 @@ export async function aiRoute(request, env, url) {
   if (path.startsWith('/api/admin/')) {
     if (!admin) return json({detail: 'Không có quyền.'}, 403);
     if (path === '/api/admin/overview' && method === 'GET') return json(await overview(env));
+    if (path === '/api/admin/users' && method === 'GET') return json(await listUsers(env, url));
+    if (path === '/api/admin/user' && method === 'GET') {
+      const detail = await userDetail(env, url.searchParams.get('id') || '');
+      return detail ? json(detail) : json({detail: 'Không tìm thấy người dùng.'}, 404);
+    }
+    if (path === '/api/admin/user' && method === 'POST') {
+      const data = await body(request);
+      const error = data ? await userAction(env, user.user_id, data) : 'Dữ liệu không hợp lệ.';
+      return error ? json({detail: error}, 400) : json({ok: true});
+    }
   }
   return json({detail: 'Not found'}, 404);
 }

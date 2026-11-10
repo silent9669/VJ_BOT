@@ -1,5 +1,6 @@
 import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
+import { deleteUserData } from './admin.js';
 import { reversedPrompt } from './prompt.js';
 import { aiRoute, askAI, googleSpeechKey, rateLimited } from './providers.js';
 /**
@@ -201,7 +202,7 @@ export default {
       }
       if (url.pathname === '/api/account/delete' && request.method === 'POST') {
         const userId=url.searchParams.get('user_id');
-        await env.DB.batch(['exam_attempts','completions','progress_attempts','progress','profiles','conversations','study_days','ai_usage','sessions','password_accounts','ai_providers','admins'].map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+        await deleteUserData(env,userId);
         return jsonResponse({success:true});
       }
 

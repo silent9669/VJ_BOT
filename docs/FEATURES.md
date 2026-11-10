@@ -27,7 +27,7 @@ flowchart TD
 - **Bài luyện JLPT**: bộ câu hỏi theo chủ đề và bài thi thử có tính giờ theo từng phần dựa trên đề chính thức 2012/2018 (liên kết tới nguồn; điểm thô, không phải thang điểm JLPT). Mỗi đề lưu bài làm gần nhất.
 - **Tiến độ**: số mục, độ chính xác, chuỗi ngày, bài đã hoàn thành, sổ điểm yếu.
 
-## Chat với thầy Lâm (lớp học đảo ngược)
+## Lớp học đảo ngược cùng thầy Lâm
 
 Người học đã đọc bài; trong chat thầy hỏi, em tự nói và viết. Mỗi lượt: một câu hỏi, chờ trả lời, chẩn đoán đúng câu học viên viết, sửa tối đa hai lỗi kèm lý do, rồi một câu tiếp theo khó hơn hoặc dễ hơn. Có bậc gợi ý, nhắc "tự giải thích" mỗi 4 lượt, tóm tắt khi "kết thúc". Các nút gợi ý nhanh gửi những câu cố định mà prompt đã biết cách xử lý. Chi tiết trong `src/prompt.js`.
 
@@ -39,7 +39,7 @@ Cài đặt > API AI: chọn OpenAI-compatible, Claude (Anthropic) hoặc Gemini
 
 ## Quản trị
 
-Chỉ tài khoản Google có email đã xác minh trong `ADMIN_EMAILS` thấy mục "Quản trị": số người dùng, người hoạt động 7 ngày, tin nhắn 24 giờ, số người dùng API riêng, danh sách hoạt động nhiều nhất. Admin không có quyền AI đặc biệt.
+Chỉ tài khoản Google có email đã xác minh trong `ADMIN_EMAILS` thấy mục "Quản trị": số người dùng, người hoạt động 7 ngày, tin nhắn 24 giờ, số người dùng API riêng, danh sách hoạt động nhiều nhất, và **quản lý người dùng**: tìm theo tên/email/ID, xem chi tiết (loại tài khoản, cấp độ, số tin, tiến độ, phiên đang mở, API đã lưu), đổi cấp độ, xóa lịch sử chat, đặt lại tiến độ, xóa API đã lưu, đăng xuất mọi thiết bị, xóa tài khoản. Mỗi thao tác phá hủy đều hỏi xác nhận. Admin không đọc được nội dung chat và không có quyền AI đặc biệt.
 
 ## Tài khoản và dữ liệu
 

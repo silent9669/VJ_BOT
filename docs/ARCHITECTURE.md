@@ -22,20 +22,20 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 | --- | --- |
 | `src/worker.js` | Điểm vào. Kiểm tra Origin, định tuyến, xác thực phiên, giới hạn tốc độ, các route dữ liệu (hồ sơ, tiến độ SM-2, hoàn thành, lịch sử, chat, Kaiwa, TTS, xóa tài khoản) và trả file tĩnh |
 | `src/auth.js` | Đăng ký/đăng nhập mật khẩu (scrypt), xác minh Google ID token, phiên 7 ngày (chỉ lưu băm SHA-256), `is_admin` trong `/api/auth/session` |
-| `src/admin.js` | Quyền admin: tài khoản Google có email đã xác minh nằm trong secret `ADMIN_EMAILS` |
+| `src/admin.js` | Quyền admin (tài khoản Google có email đã xác minh nằm trong secret `ADMIN_EMAILS`), danh sách/chi tiết/thao tác người dùng, `deleteUserData` dùng chung cho xóa tài khoản |
 | `src/providers.js` | API riêng của từng người dùng: mã hóa AES-GCM, `/api/ai/*`, `/api/admin/overview`, `askAI`, giọng đọc Gemini |
 | `src/llm.js` | Gọi ba loại API (OpenAI-compatible, Anthropic, Gemini), kiểm tra URL, chuẩn hóa lượt hội thoại |
 | `src/prompt.js` | System prompt lớp học đảo ngược của thầy Lâm |
 | `src/exams.js` | Lưu và kiểm tra trạng thái bài thi thử |
 | `cloudflare.config.ts` | Worker `vjbot`, D1, secrets, placement `gcp:us-east4` |
-| `migrations/` | Lược đồ D1 (0001–0011). Không sửa migration đã chạy; thêm file mới |
+| `migrations/` | Lược đồ D1 (0001–0012). Không sửa migration đã chạy; thêm file mới |
 | `static/index.html` | Toàn bộ khung trang, dialog đăng nhập, panel các tab |
 | `static/app.js` | Điều hướng tab, chat, thẻ nhớ, Kaiwa, quiz, tiến độ, âm thanh |
-| `static/account.js`, `ai-settings.js` | Phiên, đăng nhập, `apiFetch`; thẻ API AI trong Cài đặt, panel Quản trị, cổng chat |
+| `static/account.js`, `ai-settings.js`, `admin-users.js` | Phiên, đăng nhập, `apiFetch`; thẻ API AI trong Cài đặt, panel Quản trị, cổng chat; danh sách và hộp thoại quản lý người dùng |
 | `static/learning.js`, `study-plan.js`, `lesson-checks.js`, `completion.js`, `practice.js` | Dựng bài học từ dữ liệu, lộ trình, 5 câu kiểm tra, đánh dấu hoàn thành, luyện tập |
 | `static/navigation.js`, `workspace.js` | Route theo hash, sidebar, dashboard, level hub |
 | `static/vi-labels.js` | Nhãn và công thức ngữ pháp tiếng Việt, nạp từ điển dịch |
-| `static/*.css` | Nhiều lớp CSS chồng lên nhau, xem [ROADMAP](ROADMAP.md) |
+| `static/*.css` | Nhiều lớp CSS chồng lên nhau, xem [ROADMAP](ROADMAP.md). `motion.css` nạp cuối cùng: token chuyển động (`--ease-out`, `--dur-1..3`) và độ nổi (`--elev-1..3`), hiệu ứng vào trang, so le, hover, hộp thoại; chỉ chạy khi không bật giảm chuyển động |
 | `static/course/` | `chapters.json` (40 chương), `practical.json` (20 tình huống), `exams.json`, `*-resources.json`, `vi-grammar.json`, `vi-dict.json` (tùy chọn) |
 | `static/openjlpt/` | Dữ liệu OpenJLPT cố định phiên bản (CC BY-SA 4.0) |
 | `scripts/` | Python: crawl nguồn, import dữ liệu, `translate_corpus.py` |
@@ -53,7 +53,7 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 
 | Bảng | Nội dung |
 | --- | --- |
-| `profiles` | Cấp độ, track của tài khoản |
+| `profiles` | Cấp độ, track; `name`, `email` (Google: đã xác minh), `created_at`, `last_login` ghi mỗi lần đăng nhập (migration 0012) |
 | `password_accounts`, `auth_attempts` | Danh tính email/mật khẩu (scrypt) và bộ đếm chống dò |
 | `sessions` | Băm token phiên, `user_id`, tên, hạn |
 | `admins` | `user_id` Google và email đã xác minh lúc đăng nhập |

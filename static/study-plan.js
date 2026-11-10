@@ -90,7 +90,7 @@ async function renderStudyPlan(level){
         button.onclick=()=>openStudyStep(step,level);list.append(button);
       }
       const target=unit.steps.find(s=>!marked(s)) || unit.steps[0];
-      if(target){const talk=document.createElement('button');talk.type='button';talk.className='plan-step plan-talk';talk.innerHTML='<span class="plan-skill">Thầy Lâm</span><span>Học đảo ngược: tự giải thích rồi nhận xét</span><span class="plan-step-status">Mở chat →</span>';talk.onclick=()=>{switchTab('classroom');startReversedLesson(target.lesson,level,target.skill);};list.append(talk);}
+      if(target){const talk=document.createElement('button');talk.type='button';talk.className='plan-step plan-talk';talk.innerHTML='<span class="plan-skill">Thầy Lâm</span><span>Lớp học đảo ngược</span><span class="plan-step-status">Vào lớp →</span>';talk.onclick=()=>{switchTab('classroom');startReversedLesson(target.lesson,level,target.skill);};list.append(talk);}
       const completion=document.createElement('div');list.append(completion);mountCompletion(completion,{activity_id:unit.id,kind:'roadmap',level,title:unit.title},true);
       detail.addEventListener('toggle',()=>{if(detail.open)for(const other of host.querySelectorAll('.plan-unit'))if(other!==detail)other.open=false;});
       host.querySelector('.plan-units').append(detail);

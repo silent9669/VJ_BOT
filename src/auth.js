@@ -26,13 +26,14 @@ function equalHash(a,b) {
   for(let i=0;i<a.length;i++)different|=a.charCodeAt(i)^b.charCodeAt(i);
   return different===0;
 }
-async function createSession(request,env,userId,name) {
+async function createSession(request,env,userId,name,email=null) {
   const token=randomToken();
   const previous=cookieValue(request,'vj_session');
   await env.DB.batch([
     env.DB.prepare('DELETE FROM sessions WHERE expires_at <= ? OR token_hash = ?').bind(Date.now(),previous?await hashToken(previous):''),
     env.DB.prepare('INSERT INTO sessions(token_hash,user_id,name,expires_at) VALUES(?,?,?,?)').bind(await hashToken(token),userId,name,Date.now()+7*86400000),
-    env.DB.prepare("INSERT OR IGNORE INTO profiles(user_id,level,track,updated_at) VALUES(?,'N5','openjlpt',?)").bind(userId,new Date().toISOString())
+    env.DB.prepare("INSERT OR IGNORE INTO profiles(user_id,level,track,updated_at) VALUES(?,'N5','openjlpt',?)").bind(userId,new Date().toISOString()),
+    env.DB.prepare("UPDATE profiles SET name=?,email=?,last_login=?,created_at=COALESCE(created_at,?) WHERE user_id=?").bind(name,email,new Date().toISOString(),new Date().toISOString(),userId)
   ]);
   const headers=new Headers({'Cache-Control':'no-store','Content-Type':'application/json'});
   headers.append('Set-Cookie',cookie('vj_session',token,7*86400,request));
@@ -66,10 +67,10 @@ async function passwordRoute(request,env,register) {
     await env.DB.prepare('INSERT OR IGNORE INTO password_accounts(user_id,email,name,password_hash,salt,created_at) VALUES(?,?,?,?,?,?)').bind(userId,email,name,hash,salt,new Date().toISOString()).run();
     const owner=await env.DB.prepare('SELECT user_id FROM password_accounts WHERE email=?').bind(email).first();
     if(owner?.user_id!==userId)return json({detail:'Không thể tạo tài khoản với email này.'},409);
-    return createSession(request,env,userId,name);
+    return createSession(request,env,userId,name,email);
   }
   if(!account || !equalHash(hash,account.password_hash))return json({detail:'Email hoặc mật khẩu không đúng.'},401);
-  return createSession(request,env,account.user_id,account.name);
+  return createSession(request,env,account.user_id,account.name,email);
 }
 export async function authRoute(request,env) {
   const path=new URL(request.url).pathname;
@@ -103,7 +104,7 @@ export async function authRoute(request,env) {
     const userId='google:'+payload.sub;
     const name=typeof payload.name==='string' ? payload.name.slice(0,100) : 'Học viên';
     await recordAdminLogin(env,userId,payload.email);
-    return createSession(request,env,userId,name);
+    return createSession(request,env,userId,name,payload.email.toLowerCase());
   }
   return json({detail:'Not found'},404);
 }

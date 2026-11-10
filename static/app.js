@@ -1782,5 +1782,5 @@ function startReversedLesson(item,level,skill,owner=null){
   const title=document.createElement('strong');title.textContent=`${level} · ${chatLessonContext.title}`;
   const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill,false,owner);
   const control=document.createElement('div');host.append(title,back,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${chatLessonContext.title}`});
-  sendMessage('Bắt đầu học đảo ngược bài này. Thầy hỏi một câu để em tự giải thích hoặc vận dụng; chờ câu trả lời của em trước khi đưa đáp án.');
+  sendMessage('Thầy hỏi em về bài này nhé.');
 }
