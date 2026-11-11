@@ -1,7 +1,16 @@
 let signedInUser=null,accountUnavailable=true,preparingSignIn=false;
 async function apiFetch(path,options={}) {
   if(signedInUser) {
-    const response=await fetch(path,options);
+    const owner=signedInUser.user_id;
+    const inference=['/api/chat','/api/kaiwa/evaluate','/api/tts','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
+    if(inference&&!window.VJProfiles)return Response.json({detail:'API profile support did not load. Reload before using AI.',code:'api_profile_unavailable'},{status:503});
+    let prepared=options;
+    try { if(window.VJProfiles)prepared=await VJProfiles.prepareRequest(path,options,owner); }
+    catch { return Response.json({detail:'The selected API profile is unavailable. Open Settings to choose or repair it.',code:'api_profile_unavailable'},{status:409}); }
+    if(signedInUser?.user_id!==owner)return Response.json({detail:'The signed-in account changed.'},{status:401});
+    const headers=new Headers(prepared.headers);
+    headers.set('X-VJBot-Account',owner);
+    const response=await fetch(path,{...prepared,headers});
     if(response.status===401){signedInUser=null;accountUnavailable=true;renderAccount();window.handleSessionExpired?.();openAccount('Phiên đăng nhập đã hết hạn. Đăng nhập lại để lưu tiến độ.');}
     return response;
   }

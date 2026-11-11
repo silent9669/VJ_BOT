@@ -5,6 +5,85 @@
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
   let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
   let modelSnapshot = null;
+  let profileRows = [], selectedProfile = null, profileKey = '', rendering = 0;
+  const profileChoice = profile => profile ? `${profile.scope}:${profile.id}` : '';
+  const draftKey = () => el('ai-key').value.trim() || (selectedProfile?.protocol === el('ai-protocol').value
+    && selectedProfile?.base_url === el('ai-base').value.trim() ? profileKey : '');
+  function storageHint() {
+    const local = el('ai-profile-storage').value === 'local';
+    el('ai-profile-storage-hint').textContent = local
+      ? 'Encrypted in this browser profile, not synced. The backend receives the key only during AI requests. A compromised browser can still access it.'
+      : 'Saved encrypted on the server under your account. Other devices signed into your account can use this profile.';
+  }
+  function fillProfile(profile, cache = null, key = '') {
+    selectedProfile = profile;
+    profileKey = key;
+    el('ai-profile-name').value = profile?.name || '';
+    el('ai-profile-storage').value = profile?.scope || 'local';
+    el('ai-profile-list').value = profileChoice(profile);
+    storageHint();
+    el('ai-protocol').value = profile?.protocol || 'openai';
+    el('ai-base').value = profile?.base_url || '';
+    syncProtocol();
+    el('ai-model').value = profile?.model || '';
+    el('ai-key').value = '';
+    el('ai-key').placeholder = profile ? '••••' + profile.key_last4 : 'sk-…';
+    el('ai-key').type = 'password';
+    el('ai-key-toggle').textContent = 'Show';
+    el('ai-key-toggle').setAttribute('aria-label', 'Show API key');
+    el('ai-key-toggle').setAttribute('aria-pressed', 'false');
+    el('ai-key').required = !profile;
+    el('ai-key-hint').textContent = profile ? 'Leave blank to reuse the key in this profile. A different URL or API type needs a new key.' : 'Choose a save location. Never paste your key into chat.';
+    el('ai-remove').hidden = !profile;
+    restoreModels(cache || (profile?.models?.length ? {models: profile.models, checkedAt: profile.checked_at} : null));
+    el('ai-chat').hidden = !profile?.model;
+  }
+  async function saveProfile(useModel) {
+    const owner = signedInUser?.user_id, scope = el('ai-profile-storage').value;
+    if (!owner) throw new Error('Sign in before saving a profile.');
+    const model = el('ai-models').hidden ? '' : el('ai-model-list').value;
+    if (useModel && !model) throw new Error('Check models and choose a responding result first.');
+    const snapshot = modelSnapshot;
+    const draft = {name: el('ai-profile-name').value.trim(), protocol: el('ai-protocol').value,
+      base_url: el('ai-base').value, model, api_key: draftKey(),
+      models: [...el('ai-model-list').options].map(option => option.value),
+      checked_at: snapshot?.checkedAt || selectedProfile?.checked_at || null,
+      connection_id: snapshot?.identity || selectedProfile?.connection_id || null};
+    if (!draft.name) throw new Error('Enter a profile name.');
+    const id = selectedProfile?.scope === scope ? selectedProfile.id : null;
+    let profile;
+    if (scope === 'local') {
+      profile = await VJProfiles.save(owner, {...draft, ...(id ? {id} : {})});
+    } else {
+      const result = await send('/api/ai/profiles' + (id ? '/' + encodeURIComponent(id) : ''), id ? 'PUT' : 'POST', draft);
+      profile = result.profile;
+      await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
+    }
+    if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+    VJProfiles.setActive(owner, {scope, id: profile.id});
+    modelSnapshot = null;
+    return `Saved ${profile.name} on ${scope === 'local' ? 'this device' : 'your account'}. ${model ? 'Ready to use; no models were rechecked.' : 'Choose Find usable models when ready.'}`;
+  }
+  async function profileAction(action) {
+    if (testing) return;
+    stopModels();
+    testing = true;
+    const owner = signedInUser?.user_id;
+    const controls = [...el('ai-form').querySelectorAll('input, select, button')];
+    const disabled = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
+    let message, succeeded = false;
+    try { message = await action(owner); succeeded = true; }
+    catch (error) { message = error.message; }
+    finally {
+      controls.forEach((control, index) => { control.disabled = disabled[index]; });
+      testing = false;
+    }
+    if (signedInUser?.user_id !== owner) return;
+    if (succeeded) await renderSettings();
+    el('ai-status').textContent = message || '';
+    window.checkAiReady();
+  }
   const cacheName = (owner, identity) => `vjbot_ai_models_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
   const cacheWarning = () => { el('ai-selection-hint').textContent = 'Browser storage is unavailable. These models will not be remembered after a reload.'; };
   function rememberModels(identity, draft) {
@@ -55,6 +134,8 @@
   function syncProbeBudget(owner = signedInUser?.user_id ?? null) {
     if (owner === timingIdentity) return;
     timingIdentity = owner;
+    selectedProfile = null;
+    profileKey = '';
     nextProbeAt = 0;
     dispatchedAt = Object.freeze([]);
   }
@@ -98,7 +179,7 @@
         ? el('ai-model').value : list.options[0].value;
       el('ai-model').value = list.value;
     }
-    el('ai-save').disabled = !storageEnabled || !list.value;
+    el('ai-save').disabled = !(el('ai-profile-storage').value === 'local' || storageEnabled) || !list.value;
   }
   function confirmModelChecks(total, partial, signal) {
     if (signal.aborted) return Promise.resolve(false);
@@ -123,7 +204,8 @@
     invalidateSelection();
     syncProbeBudget();
     const request = modelRequest, status = el('ai-model-status'), owner = signedInUser?.user_id;
-    const draft = {protocol: el('ai-protocol').value, base_url: el('ai-base').value, api_key: el('ai-key').value.trim()};
+    const draft = {protocol: el('ai-protocol').value, base_url: el('ai-base').value, api_key: draftKey(),
+      ...(selectedProfile?.scope === 'server' ? {profile_id: selectedProfile.id} : {})};
     if (!draft.api_key && !savedConnection) {
       status.textContent = 'Enter your API URL and key to check models.';
       return;
@@ -154,7 +236,8 @@
         return;
       }
       if (!current()) return;
-      try { if (data.connection_id) localStorage.removeItem(cacheName(owner, data.connection_id)); } catch { cacheWarning(); }
+      try { if (data.connection_id) localStorage.setItem(cacheName(owner, data.connection_id),
+        JSON.stringify({identity: data.connection_id, checkedAt: Date.now(), models: []})); } catch { cacheWarning(); }
       const ordered = VJModelScan.plan(data.models, {}, {force: true, selected: el('ai-model').value}).pending;
       progress.max = total;
       progress.value = 0;
@@ -223,42 +306,53 @@
 
   async function renderSettings() {
     if (testing) return;
+    const version = ++rendering, owner = signedInUser?.user_id;
     syncProbeBudget();
     renderAccountCard();
-    el('ai-chat').hidden = true;
-    const owner = signedInUser?.user_id;
-    const status = el('ai-status');
+    const status = el('ai-status'), pending = modelSnapshot?.owner === owner && modelSnapshot.draft?.api_key ? modelSnapshot : null;
     status.textContent = '';
     try {
-      const data = await call('/api/ai/settings');
-      if (testing || signedInUser?.user_id !== owner) return;
-      const own = data.own;
-      const pending = modelSnapshot?.owner === owner && modelSnapshot.draft?.api_key ? modelSnapshot : null;
-      const cache = pending || recalledModels(owner, own?.connection_id);
-      savedConnection = Boolean(own);
+      const data = await call('/api/ai/profiles');
+      let local = [], deviceError = '';
+      try { local = await VJProfiles.list(owner); } catch { deviceError = 'Device storage is unavailable. Choose server storage or enable browser storage.'; }
+      if (testing || version !== rendering || signedInUser?.user_id !== owner) return;
+      profileRows = [...data.profiles.map(profile => ({...profile, scope: 'server'})), ...local.map(profile => ({...profile, scope: 'local'}))];
       storageEnabled = data.can_store;
-      el('ai-source').textContent = data.source === 'none' ? 'Connect your own API to start chatting with the tutor.' : '';
-      el('ai-source').hidden = data.source !== 'none';
-      pill(own ? 'saved' : 'none', own ? 'Saved · not tested' : 'Not connected');
-      el('ai-protocol').value = pending?.draft.protocol || own?.protocol || 'openai';
-      el('ai-base').value = pending?.draft.base_url || own?.base_url || '';
-      syncProtocol();
-      el('ai-model').value = own?.model || '';
-      el('ai-key').value = pending?.draft.api_key || '';
-      el('ai-key').placeholder = own ? '••••' + own.key_last4 : 'sk-…';
-      el('ai-key').type = 'password';
-      el('ai-key-toggle').textContent = 'Show';
-      el('ai-key-toggle').setAttribute('aria-label', 'Show API key');
-      el('ai-key-toggle').setAttribute('aria-pressed', 'false');
-      el('ai-key-hint').textContent = own ? `A key ending ${own.key_last4} is saved. Leave blank to reuse it for this URL and API type. A changed connection requires a new key.` : 'Stored encrypted on the server. Never paste your key into chat.';
-      el('ai-key').required = !own;
-      el('ai-remove').hidden = !own;
-      el('ai-save').disabled = true;
-      restoreModels(cache);
+      const choice = VJProfiles.active(owner);
+      const profile = choice?.scope === 'none' ? null : choice?.scope === 'local'
+        ? profileRows.find(row => row.scope === 'local' && row.id === choice.id)
+        : profileRows.find(row => row.scope === 'server' && row.id === (choice?.scope === 'server' ? choice.id : data.active_id));
+      let key = '';
+      if (profile?.scope === 'local') key = (await VJProfiles.load(owner, profile.id)).api_key;
+      if (version !== rendering || signedInUser?.user_id !== owner) return;
+      if (!choice && profile) VJProfiles.setActive(owner, {scope: profile.scope, id: profile.id});
+      savedConnection = Boolean(profile);
+      const list = el('ai-profile-list');
+      list.replaceChildren();
+      const empty = document.createElement('option');
+      empty.value = ''; empty.textContent = 'New connection'; list.append(empty);
+      for (const row of profileRows) {
+        const option = document.createElement('option');
+        option.value = profileChoice(row);
+        option.textContent = `${row.name} · ${row.scope === 'local' ? 'This device' : 'Server'} · …${row.key_last4}`;
+        list.append(option);
+      }
+      const cache = pending || recalledModels(owner, profile?.connection_id);
+      fillProfile(profile, cache, key);
+      if (pending) {
+        el('ai-protocol').value = pending.draft.protocol;
+        el('ai-base').value = pending.draft.base_url;
+        el('ai-key').value = pending.draft.api_key;
+        el('ai-key-hint').textContent = 'This checked draft is not saved. Save the profile to keep it after reload.';
+      }
       modelSnapshot = pending;
-      if (pending) el('ai-key-hint').textContent = 'This checked connection is not saved yet. Use selected model to store the key encrypted on the server.';
-      if (!data.can_store) status.textContent = 'API key storage is not enabled on this server.';
-    } catch (error) { status.textContent = error.message; }
+      el('ai-source').hidden = Boolean(profile);
+      el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Save a connection once, then switch profiles without entering keys again.';
+      pill(profile ? 'saved' : 'none', profile ? `Using ${profile.name}` : 'No profile selected');
+      if (deviceError) status.textContent = deviceError;
+    } catch (error) {
+      if (version === rendering && signedInUser?.user_id === owner) { resetModels(); status.textContent = error.message; }
+    }
   }
 
   async function renderAdmin() {
@@ -289,7 +383,22 @@
     setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); document.querySelector('#ai-segments button').focus({preventScroll: true}); }, 250);
   };
   async function aiSource() {
-    try { return (await call('/api/ai/settings')).source; } catch { return 'unknown'; }
+    try {
+      if (!window.VJProfiles) return 'none';
+      const owner = signedInUser?.user_id, choice = owner && VJProfiles.active(owner);
+      if (choice?.scope === 'none') return 'none';
+      if (choice?.scope === 'local') {
+        const profile = await VJProfiles.load(owner, choice.id);
+        return signedInUser?.user_id === owner && profile?.model ? 'own' : 'none';
+      }
+      if (choice?.scope === 'server') {
+        const data = await call('/api/ai/profiles');
+        return data.profiles.some(profile => profile.id === choice.id && profile.model) ? 'own' : 'none';
+      }
+      const data = await call('/api/ai/settings');
+      if (data.own?.id && data.own.model) VJProfiles.setActive(owner, {scope: 'server', id: data.own.id});
+      return data.own?.model ? data.source : 'none';
+    } catch { return 'none'; }
   }
   window.checkAiReady = async () => {
     const source = await aiSource(), room = document.querySelector('.classroom-chat-window'), none = source === 'none';
@@ -329,7 +438,7 @@
   el('ai-model-list').addEventListener('change', () => {
     if (el('ai-model-list').value) el('ai-model').value = el('ai-model-list').value;
     invalidateSelection();
-    el('ai-save').disabled = !storageEnabled || !el('ai-model-list').value;
+    publishModels();
   });
   el('ai-key-toggle').addEventListener('click', () => {
     const show = el('ai-key').type === 'password';
@@ -348,39 +457,43 @@
     button.setAttribute('aria-current', 'true');
     el(button.dataset.target).scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
   }));
-  el('ai-form').addEventListener('submit', async event => {
-    event.preventDefault();
+  el('ai-profile-storage').addEventListener('change', () => { storageHint(); publishModels(); });
+  el('ai-profile-new').addEventListener('click', () => {
     if (testing) return;
-    const model = el('ai-model-list').value;
-    if (el('ai-models').hidden || !model) {
-      el('ai-status').textContent = 'Check models first, then choose a successful result.';
-      return;
-    }
-    stopModels();
-    testing = true;
-    const status = el('ai-status'), save = el('ai-save');
-    const controls = [...el('ai-form').querySelectorAll('input, select, button')];
-    const disabled = controls.map(control => control.disabled);
-    controls.forEach(control => { control.disabled = true; });
-    let saved = false;
-    save.disabled = true;
-    status.textContent = 'Saving connection…';
-    try {
-      await send('/api/ai/settings', 'PUT', {protocol: el('ai-protocol').value, base_url: el('ai-base').value, model, api_key: el('ai-key').value.trim()});
-      saved = true;
-      status.textContent = `Saved ${model}. Its last model check succeeded.`;
-    } catch (error) { status.textContent = `Connection was not saved. ${error.message}`; }
-    controls.forEach((control, index) => { control.disabled = disabled[index]; });
-    testing = false;
-    const kept = status.textContent;
-    if (saved) { modelSnapshot = null; await renderSettings(); }
-    status.textContent = kept;
-    pill(saved ? 'saved' : 'error', saved ? 'Connection saved' : 'Connection was not saved');
-    el('ai-chat').hidden = !saved;
-    window.checkAiReady();
+    ++rendering;
+    fillProfile(null);
+    savedConnection = false;
+    invalidateSelection();
+    el('ai-profile-name').focus();
   });
-  el('ai-remove').addEventListener('click', async () => {
-    if (!confirm('Remove the saved API key? Chat will be unavailable until you save another connection.')) return;
-    try { await send('/api/ai/settings', 'DELETE'); await renderSettings(); window.checkAiReady(); } catch (error) { el('ai-status').textContent = error.message; }
+  el('ai-profile-list').addEventListener('change', () => {
+    const value = el('ai-profile-list').value;
+    if (!value) { el('ai-profile-new').click(); return; }
+    const profile = profileRows.find(row => profileChoice(row) === value);
+    if (!profile) return;
+    profileAction(async owner => {
+      if (profile.scope === 'server') await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
+      else await VJProfiles.load(owner, profile.id);
+      if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+      VJProfiles.setActive(owner, {scope: profile.scope, id: profile.id});
+      modelSnapshot = null;
+      return `Using ${profile.name}. Saved models restored without checking them again.`;
+    });
+  });
+  el('ai-profile-save').addEventListener('click', () => profileAction(() => saveProfile(false)));
+  el('ai-form').addEventListener('submit', event => {
+    event.preventDefault();
+    return profileAction(() => saveProfile(true));
+  });
+  el('ai-remove').addEventListener('click', () => {
+    const profile = selectedProfile;
+    if (!profile || !confirm(`Delete ${profile.name} from ${profile.scope === 'local' ? 'this device' : 'your account'}? Other profiles will remain.`)) return;
+    return profileAction(async owner => {
+      if (profile.scope === 'local') await VJProfiles.remove(owner, profile.id);
+      else await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}`, 'DELETE');
+      VJProfiles.setActive(owner, {scope: 'none', id: ''});
+      modelSnapshot = null;
+      return 'Profile deleted. Choose another connection to continue; no fallback was selected.';
+    });
   });
 })();

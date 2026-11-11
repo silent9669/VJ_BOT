@@ -15,7 +15,7 @@ export async function isAdmin(env, userId) {
 }
 
 const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const OWNED_TABLES = ['exam_attempts', 'completions', 'progress_attempts', 'progress', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_providers', 'admins', 'profiles'];
+const OWNED_TABLES = ['exam_attempts', 'completions', 'progress_attempts', 'progress', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admins', 'profiles'];
 const RESET_TABLES = ['progress', 'progress_attempts', 'completions', 'exam_attempts', 'study_days'];
 const kindOf = id => id.startsWith('google:') ? 'google' : id.startsWith('email:') ? 'email' : 'guest';
 
@@ -29,7 +29,8 @@ const USER_SELECT = `SELECT p.user_id, COALESCE(p.name,(SELECT name FROM passwor
   (SELECT count(*) FROM progress g WHERE g.user_id=p.user_id) AS items,
   (SELECT count(*) FROM completions k WHERE k.user_id=p.user_id) AS completed,
   (SELECT count(*) FROM sessions s WHERE s.user_id=p.user_id AND s.expires_at>?) AS sessions,
-  (SELECT protocol||' · '||model||' · …'||key_last4 FROM ai_providers v WHERE v.user_id=p.user_id) AS api,
+  (SELECT protocol||' · '||model||' · …'||key_last4 FROM ai_providers v JOIN ai_active_profiles a ON a.user_id=v.user_id AND a.profile_id=v.id WHERE v.user_id=p.user_id) AS api,
+  (SELECT count(*) FROM ai_providers v WHERE v.user_id=p.user_id) AS api_profiles,
   EXISTS(SELECT 1 FROM admins m WHERE m.user_id=p.user_id) AS admin
   FROM profiles p`;
 const shape = row => ({...row, kind: kindOf(row.user_id), admin: Boolean(row.admin)});
@@ -51,7 +52,7 @@ export async function userDetail(env, id) {
 
 const ACTIONS = {
   clear_chat: (env, id) => env.DB.prepare('DELETE FROM conversations WHERE user_id=?').bind(id).run(),
-  remove_api: (env, id) => env.DB.prepare('DELETE FROM ai_providers WHERE user_id=?').bind(id).run(),
+  remove_api: (env, id) => env.DB.batch(['ai_active_profiles','ai_providers'].map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id))),
   revoke_sessions: (env, id) => env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(id).run(),
   reset_progress: (env, id) => env.DB.batch(RESET_TABLES.map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id))),
   delete: (env, id) => deleteUserData(env, id)

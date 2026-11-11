@@ -732,6 +732,18 @@
                 <header class="card-head"><div><h2 class="card-title">AI connection</h2><p class="ai-intro">Your provider. Your key. Your model.</p></div><span class="status-pill" id="ai-pill" data-state="none">Not connected</span></header>
                 <p id="ai-source" class="ai-source" role="status"></p>
                 <form id="ai-form" class="ai-form" autocomplete="off">
+                  <fieldset class="ai-step ai-profile-step">
+                    <legend>Saved API profiles</legend>
+                    <label for="ai-profile-list">Switch connection</label>
+                    <div class="ai-profile-picker"><select id="ai-profile-list" aria-describedby="ai-profile-hint"><option value="">New connection</option></select><button type="button" class="stage-btn" id="ai-profile-new">New profile</button></div>
+                    <p class="ai-field-hint" id="ai-profile-hint">Saved profiles keep their selected model and past checks. Switching does not scan models.</p>
+                    <div class="ai-profile-fields">
+                      <label>Profile name<input id="ai-profile-name" maxlength="80" autocomplete="off" placeholder="My Gemini"></label>
+                      <label>Save location<select id="ai-profile-storage" aria-describedby="ai-profile-storage-hint"><option value="local">This device only</option><option value="server">My account on the server</option></select></label>
+                    </div>
+                    <p class="ai-field-hint" id="ai-profile-storage-hint">Device keys are encrypted in this browser profile, not synced. The backend receives the key only while making AI requests. A compromised browser can still access it.</p>
+                    <div class="ai-actions"><button type="button" class="stage-btn" id="ai-profile-save">Save profile</button></div>
+                  </fieldset>
                   <fieldset class="ai-step">
                     <legend><span class="ai-step-number" aria-hidden="true">01</span> Connect your provider</legend>
                     <select id="ai-protocol" hidden><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select>
@@ -753,10 +765,10 @@
                     <label id="ai-models" hidden>Successfully checked models<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
                     <input id="ai-model" type="hidden" maxlength="100">
                     <p class="ai-field-hint" id="ai-selection-hint">Only models that returned a real response can be selected. Future quota and availability may change.</p>
-                    <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save" disabled>Use selected model</button><button type="button" class="stage-btn" id="ai-chat" hidden>Start chatting</button></div>
+                    <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save" disabled>Save &amp; use selected model</button><button type="button" class="stage-btn" id="ai-chat" hidden>Start chatting</button></div>
                     <p id="ai-status" role="status"></p>
                   </fieldset>
-                  <div class="ai-connection-footer"><span>Changing the URL, API type or key clears the model list.</span><button type="button" class="stage-btn" id="ai-remove" hidden>Remove saved key</button></div>
+                  <div class="ai-connection-footer"><span>Changing the URL, API type or key clears the model list. Saving never starts a model scan.</span><button type="button" class="stage-btn" id="ai-remove" hidden>Delete this profile</button></div>
                 </form>
                 <dialog id="ai-confirm-dialog" class="ai-confirm-dialog" aria-labelledby="ai-confirm-title" aria-describedby="ai-confirm-description ai-confirm-warning">
                   <form method="dialog">
@@ -929,6 +941,7 @@
   <script src="vi-labels.js"></script>
   <script src="learning.js"></script>
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
+  <script src="api-profiles.js"></script>
   <script src="account.js"></script>
   <script src="model-scan.js"></script>
   <script src="ai-settings.js"></script>

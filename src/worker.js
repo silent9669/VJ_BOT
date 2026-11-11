@@ -2,7 +2,7 @@ import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
 import { deleteUserData } from './admin.js';
 import { cleanScreen, learnerSnapshot, reversedPrompt } from './prompt.js';
-import { aiRoute, askAI, googleSpeechKey, rateLimited } from './providers.js';
+import { aiRoute, askAI, googleSpeechKey, rateLimited, resolveProvider } from './providers.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
  * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
@@ -122,6 +122,8 @@ export default {
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
         if(!user) return jsonResponse({detail:'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'},401);
+        const expectedAccount=request.headers.get('X-VJBot-Account');
+        if(expectedAccount!==null&&expectedAccount!==user.user_id)return jsonResponse({detail:'The signed-in account changed. Reload before using API profiles.',code:'account_changed'},409);
         url.searchParams.set('user_id',user.user_id);
         if(['POST','PUT','PATCH'].includes(request.method)) {
           const raw=await request.text();
@@ -131,6 +133,10 @@ export default {
           if(!body || Array.isArray(body) || typeof body!=='object') return jsonResponse({detail:'Invalid body'},400);
           body.user_id=user.user_id;
           delete body.api_key;
+          if (['/api/chat','/api/tts','/api/kaiwa/evaluate'].includes(url.pathname)
+            && Object.hasOwn(body, 'api_connection') && (await resolveProvider(env,user.user_id,body.api_connection))?.error) {
+            return jsonResponse({detail:'Kết nối API không hợp lệ.',code:'invalid_connection'},400);
+          }
           if(body.level && !['N5','N4','N3','N2','N1'].includes(body.level)) return jsonResponse({detail:'Invalid level'},400);
           for(const field of ['message','text','user_speech','prompt_jp','context','scenario_title']) {
             if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Invalid '+field},400);
@@ -421,14 +427,16 @@ export default {
         const voice = "Charon";
         if (!text) return jsonResponse({ detail: "text required" }, 400);
 
-        const apiKey = await googleSpeechKey(env, url.searchParams.get("user_id"));
+        const speech = await googleSpeechKey(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
+        if (speech.response) return speech.response;
+        const apiKey = speech.apiKey;
         if (!apiKey) return jsonResponse({ detail: "Thêm API Gemini trong Cài đặt để nghe giọng thầy Lâm.", code: "no_tts" }, 403);
         const ttsUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent";
 
         try {
           const ttsResp = await fetch(ttsUrl, {
             signal: AbortSignal.timeout(45000),
-            method: "POST",
+            method: "POST", redirect: "manual",
             headers: { 
               "Content-Type": "application/json",
               "x-goog-api-key": apiKey
@@ -449,8 +457,7 @@ export default {
           });
 
           if (!ttsResp.ok) {
-            const error=await ttsResp.json().catch(()=>({}));
-            console.warn("TTS provider status",ttsResp.status,String(error.error?.message||'').replaceAll(apiKey || 'unconfigured','[redacted]').slice(0,250));
+            console.warn("TTS provider status",ttsResp.status);
           }
           if (ttsResp.ok) {
             const ttsData = await ttsResp.json();
@@ -484,7 +491,7 @@ export default {
         }
 
         let aiEval = null;
-        const asked = await askAI(env, url.searchParams.get("user_id"), {turns: [{role: "user", content: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"}], json: true});
+        const asked = await askAI(env, url.searchParams.get("user_id"), {turns: [{role: "user", content: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"}], json: true}, body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
         if (asked.response) return asked.response;
         try {
           aiEval = JSON.parse((asked.text.match(/\{[\s\S]*\}/) || [""])[0]);
@@ -575,7 +582,7 @@ export default {
         const asked=await askAI(env,userId,{
           system:reversedPrompt(level,lesson,prior.results.filter(m=>m.role==='user').length,screen,await learnerSnapshot(env,userId)),
           turns:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'assistant':'user',content:m.content})),{role:'user',content:message}]
-        });
+        },body.api_connection,request.headers.get('X-VJBot-Profile')??undefined);
         if (asked.response) return asked.response;
         let botResponse=asked.text;
 

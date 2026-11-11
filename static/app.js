@@ -1236,6 +1236,7 @@ function setupSettings() {
           body: JSON.stringify({ user_id: userId })
         });
         if (resp.ok) {
+          if (window.VJProfiles) await VJProfiles.clear(signedInUser.user_id);
           for (const key of Object.keys(localStorage)) if(key.startsWith("vjbot_")) localStorage.removeItem(key);
           alert("Đã xóa tài khoản và dữ liệu.");
           window.location.reload();

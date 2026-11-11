@@ -5,10 +5,12 @@ import {readFileSync} from 'node:fs';
 import {scanner} from './fixtures/model-scan-clock.mjs';
 
 function settings({consent = true, models = ['paid', 'denied', 'working'], savedModel = 'paid', probe,
-  storage = new Map(), connection = 'bound-connection', draftConnection = connection} = {}) {
+  storage = new Map(), connection = 'bound-connection', draftConnection = connection, deviceProfiles = new Map(), activeChoice = {value: null}} = {}) {
   const elements = new Map(), requests = [], scanRuns = [];
   let clock = Date.now();
   let storedModel = savedModel;
+  let savedProfile = {id: 'saved-profile', name: 'Saved provider', protocol: 'openai', base_url: 'https://provider.example/v1',
+    model: storedModel, key_last4: 'test', connection_id: connection, models: [], checked_at: null};
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
       value: '', children: [], events: {}, attributes: {}, dataset: {}, hidden: false, disabled: false,
@@ -20,6 +22,7 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
       },
       close(value = '') { this.open = false; this.returnValue = value; this.events.close?.(); },
       click() { return this.events.click?.(); },
+      focus() {},
       setAttribute(name, value) { this.attributes[name] = value; },
       getAttribute(name) { return this.attributes[name]; },
       removeAttribute(name) { delete this.attributes[name]; },
@@ -33,6 +36,18 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
     signedInUser: {user_id: 'test:owner'}, switchTab() {},
     localStorage: {getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value),
       removeItem: key => storage.delete(key)},
+    VJProfiles: {
+      active: () => activeChoice.value, setActive: (_owner, choice) => { activeChoice.value = choice; },
+      list: async owner => [...deviceProfiles.values()].filter(p => p.owner === owner).map(({api_key, ...p}) => p),
+      load: async (owner, id) => { const profile = deviceProfiles.get(id); if (profile?.owner !== owner) throw new Error('Missing profile'); return profile; },
+      save: async (owner, draft) => {
+        const id = draft.id || 'device-' + deviceProfiles.size, old = deviceProfiles.get(id);
+        const profile = {...draft, id, owner, api_key: draft.api_key || old?.api_key, key_last4: (draft.api_key || old?.api_key || '').slice(-4)};
+        deviceProfiles.set(id, profile);
+        const {api_key, ...publicProfile} = profile; return publicProfile;
+      },
+      remove: async (_owner, id) => { deviceProfiles.delete(id); activeChoice.value = {scope: 'none', id: ''}; }
+    },
     confirm: () => { throw new Error('Browser confirmation must not be used for model checks'); },
     VJModelScan: {plan: scanner.plan, run: options => {
       scanRuns.push({mode: options.mode, dispatchedAt: options.dispatchedAt});
@@ -42,11 +57,13 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
       createElement: () => ({value: '', textContent: ''})},
     apiFetch: async (path, options = {}) => {
       requests.push({path, body: JSON.parse(options.body || '{}'), at: clock});
-      if (path === '/api/ai/settings') {
-        if (options.method === 'PUT') { storedModel = JSON.parse(options.body).model; return Response.json({ok: true}); }
-        return Response.json({source: 'own', can_store: true,
-          own: {protocol: 'openai', base_url: 'https://provider.example/v1', model: storedModel, key_last4: 'test', connection_id: connection}});
+      if (path === '/api/ai/settings') return Response.json({source: 'own', can_store: true, own: savedProfile});
+      if (path === '/api/ai/profiles') return Response.json({profiles: [savedProfile], active_id: savedProfile.id, can_store: true});
+      if (path === '/api/ai/profiles/saved-profile' && options.method === 'PUT') {
+        savedProfile = {...savedProfile, ...JSON.parse(options.body)};
+        return Response.json({profile: savedProfile});
       }
+      if (path === '/api/ai/profiles/saved-profile/activate') return Response.json({ok: true});
       if (path === '/api/ai/models') return Response.json({models, connection_id: draftConnection});
       if (path === '/api/ai/models/test') {
         const {model} = JSON.parse(options.body);
@@ -59,7 +76,7 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
   });
   context.window = context;
   vm.runInContext(readFileSync('static/ai-settings.js', 'utf8'), context);
-  return {context, element, requests, scanRuns, storage};
+  return {context, element, requests, scanRuns, storage, deviceProfiles, activeChoice};
 }
 
 test('catalog entries needing credits or denied by the key are never selectable after automatic verification', async () => {
@@ -76,7 +93,7 @@ test('catalog entries needing credits or denied by the key are never selectable 
   await ui.element('ai-form').events.submit({preventDefault() {}});
   assert.equal(ui.requests.filter(request => request.path === '/api/ai/models/test').length, 3);
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(ui.requests.find(request => request.path === '/api/ai/settings' && request.body.model)?.body.model, 'working');
+  assert.equal(ui.requests.find(request => request.path === '/api/ai/profiles/saved-profile' && request.body.model)?.body.model, 'working');
 });
 
 test('declining per-model cost consent sends no probes and offers no catalog-only choices', async () => {
@@ -234,7 +251,7 @@ test('saved verified choices survive Settings navigation and a fresh page withou
   assert.deepEqual(reloaded.element('ai-model-list').options.map(o => o.value), ['working']);
   assert.equal(reloaded.element('ai-save').disabled, false);
   assert.match(reloaded.element('ai-model-status').textContent, /previously responding.*last checked/);
-  assert.equal(reloaded.requests.some(r => r.path !== '/api/ai/settings'), false);
+  assert.equal(reloaded.requests.some(r => r.path !== '/api/ai/profiles'), false);
 });
 
 test('a checked draft survives navigation but its raw key never enters browser storage', async () => {
@@ -292,4 +309,46 @@ test('blocked browser storage keeps live results usable and explains that persis
   assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['working']);
   assert.equal(ui.element('ai-save').disabled, false);
   assert.match(ui.element('ai-selection-hint').textContent, /will not be remembered/);
+});
+
+test('a new device profile saves before scanning and restores after reload without uploading the key', async () => {
+  const ui = settings();
+  await ui.context.renderAiPanels('settings');
+  ui.element('ai-profile-new').click();
+  ui.element('ai-profile-name').value = 'Gemini demo';
+  ui.element('ai-protocol').value = 'gemini';
+  ui.element('ai-base').value = 'https://generativelanguage.googleapis.com';
+  ui.element('ai-key').value = 'private-device-profile-key';
+  await ui.element('ai-profile-save').click();
+  assert.equal(ui.deviceProfiles.size, 1);
+  assert.equal(ui.requests.some(r => r.body.api_key === 'private-device-profile-key'), false);
+  assert.equal(ui.requests.some(r => r.path === '/api/ai/models'), false);
+  const reloaded = settings({deviceProfiles: ui.deviceProfiles, activeChoice: ui.activeChoice});
+  await reloaded.context.renderAiPanels('settings');
+  assert.equal(reloaded.element('ai-profile-name').value, 'Gemini demo');
+  assert.equal(reloaded.element('ai-key').value, '');
+  assert.equal(reloaded.element('ai-key').required, false);
+  assert.equal(reloaded.element('ai-chat').hidden, true);
+  assert.equal(reloaded.requests.some(r => r.path === '/api/ai/models'), false);
+});
+
+test('a device key cannot be reused for an edited URL during discovery', async () => {
+  const deviceProfiles = new Map([['demo', {owner: 'test:owner', id: 'demo', name: 'Device API',
+    protocol: 'openai', base_url: 'https://original.example/v1', model: 'working', models: ['working'],
+    checked_at: Date.now(), connection_id: 'device-identity', api_key: 'private-device-key', key_last4: '-key'}]]);
+  const ui = settings({deviceProfiles, activeChoice: {value: {scope: 'local', id: 'demo'}}});
+  await ui.context.renderAiPanels('settings');
+  ui.element('ai-base').value = 'https://different.example/v1';
+  ui.element('ai-base').events.input();
+  await ui.element('ai-fetch-models').click();
+  assert.equal(ui.requests.find(r => r.path === '/api/ai/models').body.api_key, '');
+});
+
+test('explicit no-profile state survives Settings and does not restore a server fallback', async () => {
+  const ui = settings({activeChoice: {value: {scope: 'none', id: ''}}});
+  await ui.context.renderAiPanels('settings');
+  assert.equal(ui.element('ai-profile-list').value, '');
+  assert.equal(ui.element('ai-base').value, '');
+  await ui.context.checkAiReady();
+  assert.equal(ui.element('chat-locked').hidden, false);
 });

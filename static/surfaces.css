@@ -56,6 +56,9 @@ body[data-page=settings] #lam-walker{display:none}
 .ai-connection-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.6;color:var(--muted)}
 .ai-connection-footer .stage-btn{flex-shrink:0;color:var(--warn)}
 #ai-status:not(:empty),#admin-status:not(:empty){padding:10px 12px;border-radius:var(--r-1);background:var(--surface-2);color:var(--ink)}
+.ai-profile-picker{display:flex;gap:8px;align-items:stretch}.ai-profile-picker select{flex:1;min-width:0}.ai-profile-picker button{flex-shrink:0}
+.ai-profile-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ai-profile-fields label{display:grid;gap:6px;min-width:0}
+@media(max-width:600px){.ai-profile-fields{grid-template-columns:1fr}.ai-profile-picker{flex-wrap:wrap}.ai-profile-picker select{flex-basis:100%}}
 .setting-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .danger-card{border-color:#efb8b0;background:linear-gradient(var(--warn-bg),var(--warn-bg)) padding-box}
 .danger-card .card-title{color:var(--warn)!important}

@@ -1,6 +1,6 @@
 # API Worker
 
-Tất cả route nằm dưới `/api`, trả JSON `{detail}` khi lỗi. Route "riêng tư" cần cookie `vj_session`; Worker lấy `user_id` từ phiên và bỏ qua `user_id`/`api_key` do client gửi. Thiếu phiên: `401`.
+All routes are under `/api` and return JSON `{detail}` on errors. Private routes require the `vj_session` cookie. The Worker derives `user_id` from that session and ignores client `user_id` and top-level `api_key`. Device-only profiles use the explicitly validated transient `api_connection` object described below. A missing session returns `401`.
 
 ## Công khai
 
@@ -56,7 +56,7 @@ Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` kh
 | `GET /api/admin/user?id=` | Chi tiết một người dùng (cùng trường như trên); `404` nếu không có |
 | `POST /api/admin/user` | `{id, action, level?}` với `action` là `set_level` (cần `level` N5–N1), `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. Không thể `delete` chính tài khoản đang dùng |
 
-Các route `/api/ai/*` và `/api/admin/*` do `src/providers.js` xử lý riêng, tự kiểm tra phiên và giới hạn body 4 KB.
+Routes under `/api/ai/*` and `/api/admin/*` are handled by `src/providers.js` with session checks. Profile creation/update and active-setting writes accept at most 128 KiB of UTF-8 JSON for bounded model history; other JSON bodies retain the 4 KiB limit.
 
 ## Model discovery
 
@@ -79,11 +79,35 @@ Redirects are not followed with credentials. Pagination is bounded to five pages
 
 The settings UI runs up to four overlapping probes without a fixed four-second gap. A rolling page-memory budget allows at most 19 probe starts per 60 seconds, reserving one request for discovery under the unchanged server limit of 20 AI requests/account/minute. The same account's budget survives repeated scans and credential edits; other tabs and chat may still consume server quota. HTTP 429 reduces overlap and pauses pending candidates for `Retry-After`, or a 30-second fallback, without retrying the failed model. Stop remains available during waiting. Quota errors mean temporarily unconfirmed, not permanent denial. Revoked keys, session errors or connection changes stop dispatch and clear affected choices.
 
-**Use selected model** saves an already successful result without another inference request. The API key stays encrypted on the server; an empty key field reuses that saved key for the same URL and protocol. The settings response includes an opaque `own.connection_id`, bound to the account, protocol, normalized URL and decrypted key, but never the raw key or ciphertext.
+**Save & use selected model** saves a previously responding model without another inference request. An empty key field reuses only the chosen profile's key for the same URL and protocol. Cached choices are historical observations, not a current quota or pricing guarantee.
 
-The browser remembers only successful model IDs, their opaque connection identity and the last-check timestamp in account-scoped `vjbot_ai_models_v1` storage. Returning to Settings or reloading restores that list only for the current saved connection, without catalog or generation calls. Restored results are visibly historical; access, quota and prices may have changed. A confirmed refresh replaces the previous results rather than resurrecting models that just failed. A different account, key, URL or protocol cannot reuse the old list.
+## Saved API profiles
 
-A checked but unsaved draft survives Settings navigation in page memory only. Its raw key is never persisted in browser storage. Save with **Use selected model** once to retain the connection across page reloads. Blocked browser storage leaves live choices usable and shows that the list cannot be remembered. These browser-local model lists do not sync to another device.
+Settings supports named profiles with two explicit save locations. **This device only** is the default for new profiles. **My account on the server** is opt-in. Save a profile with its name, URL and key before fetching models, or save it after checking models. Saving and switching never start catalog or generation calls.
+
+Device profiles store keys encrypted with AES-GCM in IndexedDB, using a per-account non-extractable WebCrypto key and fresh IVs. Raw keys are not stored in localStorage. The active profile reference and historical model IDs/timestamps are non-secret metadata. This protects against casual plaintext storage inspection, not malicious same-origin scripts, browser compromise or access to an unlocked browser profile. It is not an OS credential vault.
+
+Server profiles retain encrypted keys under `AI_KEY_SECRET`, scoped to the signed-in account. Public responses include `{id, name, protocol, base_url, model, key_last4, connection_id, models, checked_at}` but never raw keys or ciphertext. The opaque connection identity binds the account, protocol, normalized URL and key. Existing single saved connections migrate into an active named profile without replacing their encrypted key.
+
+| Route | Behavior |
+| --- | --- |
+| `GET /api/ai/profiles` | `{profiles, active_id, can_store}` for the current account only |
+| `POST /api/ai/profiles` | Save a new server profile; returns `{profile}`. Does not activate or call a provider. |
+| `PUT /api/ai/profiles/{id}` | Update an owned server profile; blank key retains the existing key only for the same normalized endpoint/protocol |
+| `POST /api/ai/profiles/{id}/activate` | Persist the active server profile without inference |
+| `DELETE /api/ai/profiles/{id}` | Delete only that owned profile; deleting the active profile leaves no active server fallback |
+
+Profile bodies accept `{name, protocol, base_url, model, api_key?, models?, checked_at?, connection_id?}`. A profile may have `model: ""` until the user checks and chooses a model; inference then fails closed. At most 20 profiles are retained per account per location. History is dropped when credentials change unless fresh history binds to the new connection. Cached history is never an authorization grant.
+
+The browser remembers the active device/server choice per signed-in account. Reload restores its selected model and previous check time without scanning again. A device selection overrides only the current browser's requests; it does not overwrite the server's active profile. Deleting the selected profile does not silently switch to another, possibly paid connection. Profile switching discards in-flight discovery and old choices. Quota failures do not delete profiles, trigger paid fallback or cause automatic key rotation.
+
+For `POST /api/chat`, `/api/kaiwa/evaluate`, `/api/tts` and `/api/ai/test`, the browser sends the selected device connection as `api_connection: {protocol, base_url, model, api_key}` inside the authenticated request body. The backend validates it under the same endpoint and model restrictions, uses it only for that request, and never persists its key. The key therefore still passes through the backend during inference even when its save location is device-only. Unsupported endpoints never receive that override. Rate limits remain account-wide across all profiles. Provider quota cannot be inferred universally; later requests may return rate-limit, credit, authentication or timeout errors.
+
+Authenticated browser requests carry `X-VJBot-Account` as the expected account. The backend compares it with the actual cookie session before reading credentials, inference or profile writes; a stale tab after another tab signs into a different account receives `409 {code:"account_changed"}`. This header is a consistency guard, never authentication by itself.
+
+Explicit server choices also send `X-VJBot-Profile`; inference resolves that owned profile rather than silently following another device's changed active default. A deleted, inaccessible or malformed selected profile fails closed. Missing profile JavaScript or corrupt device selection likewise blocks inference instead of using a server fallback. Other clients without an explicit selection continue to use the account's active default.
+
+Apply `migrations/0014_api_profiles.sql` through the existing D1 migration process before deploying the new Worker. The migration preserves legacy ciphertext and the active model. Back up the database before changing its schema. CI dry-run only builds; it does not migrate production data.
 
 ### Probe timing sample
 
