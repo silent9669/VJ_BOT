@@ -3,6 +3,8 @@ import { authRoute, sessionUser } from './auth.js';
 import { deleteUserData } from './admin.js';
 import { cleanScreen, learnerSnapshot, reversedPrompt } from './prompt.js';
 import { aiRoute, askAI, googleSpeechKey, rateLimited } from './providers.js';
+import { catalogLesson, chatEnvelope, conversationScope, teacherCatalog, validLessonReference } from './tutor-context.js';
+import { KAIWA_SCHEMA, KAIWA_SYSTEM, parseKaiwaEvaluation } from './kaiwa.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
  * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
@@ -404,13 +406,18 @@ export default {
       if (url.pathname === "/api/history") {
         const userId = url.searchParams.get("user_id");
         if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+        const reference = url.searchParams.has('lesson_id') ? {id: url.searchParams.get('lesson_id'), level: url.searchParams.get('level')} : null;
+        if (reference && !validLessonReference(reference)) return jsonResponse({detail: 'Invalid lesson reference'}, 400);
+        const archived = url.searchParams.get('archive') === 'legacy';
+        const scope = archived ? 'legacy' : conversationScope('chat', reference);
 
         if (request.method === "DELETE") {
-          await env.DB.prepare("DELETE FROM conversations WHERE user_id = ?").bind(userId).run();
+          if (archived) return jsonResponse({detail: 'Legacy history is read-only'}, 405);
+          await env.DB.prepare("DELETE FROM conversations WHERE user_id = ? AND context_key = ?").bind(userId, scope).run();
           return jsonResponse({ success: true, message: "Chat history cleared" });
         }
 
-        const rows = await env.DB.prepare("SELECT role, content, timestamp FROM (SELECT id, role, content, timestamp FROM conversations WHERE user_id = ? ORDER BY id DESC LIMIT 50) ORDER BY id ASC").bind(userId).all();
+        const rows = await env.DB.prepare("SELECT role, content, timestamp FROM (SELECT id, role, content, timestamp FROM conversations WHERE user_id = ? AND context_key = ? ORDER BY id DESC LIMIT 50) ORDER BY id ASC").bind(userId, scope).all();
         return jsonResponse(rows.results || []);
       }
 
@@ -471,7 +478,16 @@ export default {
       // 9. Kaiwa Speaking Lab Evaluation API
       if (url.pathname === "/api/kaiwa/evaluate" && request.method === "POST") {
         const body = await request.json();
-        const { prompt_jp, user_speech, scenario_title, level = "N5" } = body;
+        const {user_speech, level = 'N5', scenario_id, prompt_index = 0} = body;
+        if (['scenario_title', 'context', 'prompt_jp'].some(key => Object.hasOwn(body, key))
+          || typeof scenario_id !== 'string' || scenario_id.length > 300 || !Number.isInteger(prompt_index) || prompt_index < 0) {
+          return jsonResponse({detail: 'Invalid scenario reference'}, 400);
+        }
+        const catalog = await teacherCatalog(env, level);
+        if (!catalog) return jsonResponse({detail: 'The lesson catalog is unavailable. Please try again later.'}, 503);
+        const scenario = Object.hasOwn(catalog.scenarios, scenario_id) ? catalog.scenarios[scenario_id] : null;
+        const question = scenario?.prompts[prompt_index];
+        if (!question) return jsonResponse({detail: 'Unknown scenario or question'}, 400);
         const cleanSpeech = (user_speech || "").trim();
 
         if (!cleanSpeech) {
@@ -479,28 +495,18 @@ export default {
             score: 0,
             rating: "Chưa nói",
             feedback: "Sensei chưa nghe rõ câu trả lời của bạn. Hãy nhấn Micro và nói thử nhé!",
-            model_answer: prompt_jp || "はい、わかりました。"
+            model_answer: question
           });
         }
 
-        let aiEval = null;
-        const asked = await askAI(env, url.searchParams.get("user_id"), {turns: [{role: "user", content: "Bạn là thầy Lâm, giáo viên tiếng Nhật. Chỉ đánh giá nội dung bản chép lời, không suy đoán phát âm hoặc ngữ điệu từ văn bản. Hãy đánh giá câu trả lời Kaiwa sau của học viên JLPT " + level + ":\nTình huống: " + (scenario_title || "Giao tiếp") + "\nVăn bản tình huống tham khảo: " + (body.context || "") + "\nCâu hỏi của Sensei: " + prompt_jp + "\nCâu học viên nói: " + cleanSpeech + "\n\nTrả về ĐÚNG JSON thuần (không markdown codeblock) format: {\"score\": <30-100>, \"rating\": \"<Xuất sắc|Rất tốt|Tốt|Cần luyện thêm>\", \"feedback\": \"<1-2 câu nhận xét tiếng Việt thân thiện>\", \"model_answer\": \"<câu trả lời tự nhiên nhất kèm romaji/furigana>\"}"}], json: true});
+        const asked = await askAI(env, url.searchParams.get("user_id"), {
+          system: KAIWA_SYSTEM, schema: KAIWA_SCHEMA,
+          turns: [{role: 'user', content: JSON.stringify({level, scenario: {title: scenario.title, context: scenario.context}, question, submission: cleanSpeech})}]
+        });
         if (asked.response) return asked.response;
-        try {
-          aiEval = JSON.parse((asked.text.match(/\{[\s\S]*\}/) || [""])[0]);
-        } catch (e) {
-          console.warn("Kaiwa JSON parse failed");
-        }
-
-        if (aiEval && typeof aiEval.score === "number") {
-          return jsonResponse({
-            score: Math.max(0,Math.min(100,aiEval.score)),
-            rating: aiEval.rating || (aiEval.score >= 85 ? "Xuất sắc" : "Tốt"),
-            feedback: aiEval.feedback,
-            model_answer: aiEval.model_answer,
-            user_text: cleanSpeech,
-            scenario: scenario_title
-          });
+        const aiEval = parseKaiwaEvaluation(asked.text);
+        if (aiEval) {
+          return jsonResponse({...aiEval, user_text: cleanSpeech, scenario: scenario.title});
         }
 
         return jsonResponse({detail:'Sensei chưa chấm được câu trả lời. Vui lòng thử lại sau.'},503);
@@ -516,7 +522,7 @@ export default {
 
         const greetingText = `こんにちは！Sensei chào bạn!\n\nHôm nay chúng ta cùng luyện tập phản xạ tiếng Nhật trình độ [${level}] nhé! Bạn đã sẵn sàng luyện tập cùng Sensei chưa nào? Hãy thử trả lời:「あなたのお名前は何ですか。」(Tên của bạn là gì?)`;
 
-        await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp) VALUES (?, 'bot', ?, ?)")
+        await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp, context_key) VALUES (?, 'bot', ?, ?, 'chat')")
           .bind(userId, greetingText, new Date().toISOString()).run();
 
         return jsonResponse({
@@ -541,23 +547,31 @@ export default {
 
         const requestId=body.request_id ?? null;
         if(requestId!==null && (typeof requestId!=='string' || !/^[a-f0-9-]{36}$/.test(requestId)))return jsonResponse({detail:'Invalid request ID'},400);
-        if(requestId){
-          const cached=await env.DB.prepare("SELECT content FROM conversations WHERE user_id=? AND request_id=? AND role='bot'").bind(userId,requestId).first();
-          if(cached)return jsonResponse({reply:cached.content});
-        }
         const profile = await env.DB.prepare("SELECT level FROM profiles WHERE user_id = ?").bind(userId).first();
-        const lesson=body.lesson;
-        if(lesson!==undefined && lesson!==null && (typeof lesson!=='object' || Array.isArray(lesson) || !['N5','N4','N3','N2','N1'].includes(lesson.level) || ['id','title','goal','content'].some(k=>typeof lesson[k]!=='string') || lesson.id.length>300 || lesson.title.length>500 || lesson.goal.length>1000 || lesson.content.length>4000))return jsonResponse({detail:'Invalid lesson context'},400);
+        const reference = body.lesson;
+        if (reference !== undefined && reference !== null && !validLessonReference(reference)) return jsonResponse({detail: 'Invalid lesson reference'}, 400);
         const screen=cleanScreen(body.screen);
         if(body.screen!==undefined && body.screen!==null && !screen)return jsonResponse({detail:'Invalid screen context'},400);
-        const level = lesson?.level || screen?.level || profile?.level || 'N5';
+        const level = reference?.level || screen?.level || (['N5','N4','N3','N2','N1'].includes(profile?.level) ? profile.level : 'N5');
+        const catalog = await teacherCatalog(env, level);
+        if (!catalog) return jsonResponse({detail: 'The lesson catalog is unavailable. Please try again later.'}, 503);
+        const lesson = reference ? catalogLesson(catalog, reference) : null;
+        if (reference && !lesson) return jsonResponse({detail: 'Unknown lesson reference'}, 400);
+        const channel = body.channel || 'chat';
+        if (!['chat', 'quick'].includes(channel)) return jsonResponse({detail: 'Invalid chat channel'}, 400);
+        const scope = conversationScope(channel, lesson, screen);
+        if (requestId) {
+          const cached = await env.DB.prepare("SELECT content,context_key FROM conversations WHERE user_id=? AND request_id=? AND role='bot'").bind(userId,requestId).first();
+          if (cached && cached.context_key !== scope) return jsonResponse({detail: 'Request ID belongs to another conversation'}, 409);
+          if (cached) return jsonResponse({reply: cached.content});
+        }
 
         // Greeting request
         if (body.type === "greeting" || message === "") {
           const greetingText = `こんにちは！Sensei rất vui được đồng hành cùng bạn trên hành trình chinh phục tiếng Nhật trình độ [${level}]. Hôm nay chúng mình cùng bắt đầu luyện phản xạ với cấu trúc câu đơn giản nhé! Bạn hãy thử giới thiệu tên của mình bằng mẫu câu「〜は〜です」nhé! (Ví dụ: 私はフックです)`;
           
-          await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp) VALUES (?, 'bot', ?, ?)")
-            .bind(userId, greetingText, new Date().toISOString()).run();
+          await env.DB.prepare("INSERT INTO conversations (user_id, role, content, timestamp, context_key) VALUES (?, 'bot', ?, ?, ?)")
+            .bind(userId, greetingText, new Date().toISOString(), scope).run();
 
           return jsonResponse({
             reply: greetingText,
@@ -571,10 +585,11 @@ export default {
           });
         }
 
-        const prior=await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? ORDER BY id DESC LIMIT 12").bind(userId).all();
-        const asked=await askAI(env,userId,{
-          system:reversedPrompt(level,lesson,prior.results.filter(m=>m.role==='user').length,screen,await learnerSnapshot(env,userId)),
-          turns:[...prior.results.reverse().map(m=>({role:m.role==='bot'?'assistant':'user',content:m.content})),{role:'user',content:message}]
+        const prior = await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? AND context_key=? ORDER BY id DESC LIMIT 12").bind(userId, scope).all();
+        const history = [...prior.results].reverse().map(row => ({role: row.role === 'bot' ? 'assistant' : 'user', content: row.content}));
+        const asked = await askAI(env, userId, {
+          system: reversedPrompt(level, history.filter(row => row.role === 'user').length),
+          turns: [{role: 'user', content: chatEnvelope(message, lesson, screen, await learnerSnapshot(env, userId, level, catalog), history)}]
         });
         if (asked.response) return asked.response;
         let botResponse=asked.text;
@@ -582,8 +597,8 @@ export default {
         // Only persist a completed turn: provider failures must not pollute the next retry.
         const now=new Date().toISOString();
         await env.DB.batch([
-          env.DB.prepare("INSERT OR IGNORE INTO conversations (user_id,role,content,timestamp,request_id) VALUES (?,'user',?,?,?)").bind(userId,message,now,requestId),
-          env.DB.prepare("INSERT OR IGNORE INTO conversations (user_id,role,content,timestamp,request_id) VALUES (?,'bot',?,?,?)").bind(userId,botResponse,now,requestId)
+          env.DB.prepare("INSERT OR IGNORE INTO conversations (user_id,role,content,timestamp,request_id,context_key) VALUES (?,'user',?,?,?,?)").bind(userId,message,now,requestId,scope),
+          env.DB.prepare("INSERT OR IGNORE INTO conversations (user_id,role,content,timestamp,request_id,context_key) VALUES (?,'bot',?,?,?,?)").bind(userId,botResponse,now,requestId,scope)
         ]);
 
         if(requestId){

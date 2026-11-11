@@ -49,3 +49,13 @@ test('discard reloads server history before another send is allowed',async()=>{
   b.element('chat-discard').onclick();await new Promise(resolve=>setImmediate(resolve));
   assert.equal(b.rows.length,0);assert.equal(b.element('chat-error').hidden,true);
 });
+
+test('lesson history load and deletion use the selected lesson instead of general history',async()=>{
+  const paths=[];
+  const b=chat(async(path,options)=>{paths.push({path,method:options?.method || 'GET'});return Response.json(options?.method==='DELETE'?{ok:true}:[]);});
+  b.c.chatLessonContext={id:'lesson:N5:reading:1',level:'N5'};
+  await b.c.loadChatHistory();
+  await b.element('btn-clear-chat-history').events.click();
+  const expected='/api/history?lesson_id=lesson%3AN5%3Areading%3A1&level=N5';
+  assert.deepEqual(paths,[{path:expected,method:'GET'},{path:expected,method:'DELETE'}]);
+});

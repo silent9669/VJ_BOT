@@ -43,20 +43,22 @@ export function normalizeTurns(turns) {
   return out;
 }
 
-function request(protocol, key, model, {system, turns, json}) {
+function request(protocol, key, model, {system, turns, schema}) {
   if (protocol === 'openai') {
     // No max_tokens or temperature: newer OpenAI models reject both. Reply length is bounded by the prompt.
-    return {headers: {Authorization: `Bearer ${key}`}, body: {model, messages: [...(system ? [{role: 'system', content: system}] : []), ...turns]}};
+    return {headers: {Authorization: `Bearer ${key}`}, body: {model, messages: [...(system ? [{role: 'system', content: system}] : []), ...turns],
+      ...(schema ? {response_format: {type: 'json_schema', json_schema: {name: 'kaiwa_evaluation', strict: true, schema}}} : {})}};
   }
   if (protocol === 'anthropic') {
-    return {headers: {'x-api-key': key, 'anthropic-version': '2023-06-01'}, body: {model, max_tokens: 1024, ...(system ? {system} : {}), messages: turns}};
+    return {headers: {'x-api-key': key, 'anthropic-version': '2023-06-01'}, body: {model, max_tokens: 1024, ...(system ? {system} : {}), messages: turns,
+      ...(schema ? {output_config: {format: {type: 'json_schema', schema}}} : {})}};
   }
   return {
     headers: {'x-goog-api-key': key},
     body: {
       ...(system ? {systemInstruction: {parts: [{text: system}]}} : {}),
       contents: turns.map(t => ({role: t.role === 'assistant' ? 'model' : 'user', parts: [{text: t.content}]})),
-      ...(json ? {generationConfig: {responseMimeType: 'application/json'}} : {})
+      ...(schema ? {generationConfig: {responseMimeType: 'application/json', responseJsonSchema: schema}} : {})
     }
   };
 }
@@ -72,14 +74,14 @@ function textOf(protocol, data) {
 
 // Tries provider.models in order (fallback on 404/429/5xx) inside one budget below the browser's 35s timeout.
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
-export async function callLLM(provider, {system, turns, json = false}, {budgetMs = 28000, attemptMs = 15000} = {}) {
+export async function callLLM(provider, {system, turns, schema}, {budgetMs = 28000, attemptMs = 15000} = {}) {
   const deadline = Date.now() + budgetMs, history = normalizeTurns(turns);
   let status = 503;
   for (const model of provider.models) {
     const left = deadline - Date.now();
     if (left < 1000) break;
     try {
-      const {headers, body} = request(provider.protocol, provider.apiKey, model, {system, turns: history, json});
+      const {headers, body} = request(provider.protocol, provider.apiKey, model, {system, turns: history, schema});
       const response = await fetch(endpoint(provider.protocol, provider.baseUrl, model), {
         method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(Math.min(left, attemptMs)),
         headers: {'Content-Type': 'application/json', ...headers}, body: JSON.stringify(body)

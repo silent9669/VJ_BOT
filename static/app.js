@@ -439,6 +439,9 @@ function renderBubble(role, content) {
 }
 
 let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null;
+function chatHistoryPath() {
+  return chatLessonContext ? `/api/history?lesson_id=${encodeURIComponent(chatLessonContext.id)}&level=${encodeURIComponent(chatLessonContext.level)}` : '/api/history';
+}
 function chatError(message,retry) {
   const host=document.getElementById('chat-error');host.hidden=!message;
   document.getElementById('chat-error-text').textContent=message;
@@ -451,7 +454,7 @@ async function loadChatHistory() {
   chatHistoryLoading=true;chatHistoryReady=false;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Đang tải hội thoại…';
   try {
-    const response=await apiFetch('/api/history');
+    const response=await apiFetch(chatHistoryPath());
     if(!response.ok)throw new Error('history');
     const messages=await response.json();
     for(const row of document.querySelectorAll('#chat-messages .chat-bubble-row'))row.remove();
@@ -824,9 +827,6 @@ function displayFlashcard() {
 // 11. KAIWA SPEAKING LAB CONTROLLER
 // ==========================================
 let kaiwaRenderRequest=0;
-function installCourseKaiwa(){
-  for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:unit.production.prompt,hints:unit.production.criteria}]};}
-}
 function startCourseKaiwa(unit){
   installCourseKaiwa();activeKaiwaLevel=unit.level;activeKaiwaKey=unit.id;activeKaiwaPromptIdx=0;showLessonDetail(findFeatureLesson('kaiwa',unit.level,`kaiwa-lesson:${unit.level}:${unit.id}`),unit.level,'listening',false,'kaiwa');
 }
@@ -1146,6 +1146,7 @@ function setupFloatingSensei() {
         body: JSON.stringify({
           user_id: userId,
           message: query,
+          channel: 'quick',
           screen: globalThis.teacherScreen?.()
         })
       });
@@ -1376,10 +1377,10 @@ function setupEventListeners() {
   if (btnClearChat) {
     btnClearChat.addEventListener("click", async () => {
       if(sendingMessage || clearingChat || !chatHistoryReady)return;
-      if (confirm("Bạn có muốn xóa toàn bộ lịch sử tin nhắn trong phòng học không?")) {
+      if (confirm("Xóa tin nhắn trong cuộc trò chuyện này? Các bài học khác và lịch sử lưu trữ vẫn được giữ lại.")) {
         clearingChat=true;btnClearChat.disabled=true;document.getElementById("btn-send-message").disabled=true;chatError("",null);
         try {
-          const response=await apiFetch(`/api/history?user_id=${encodeURIComponent(userId)}`, { method: "DELETE" });
+          const response=await apiFetch(chatHistoryPath(), { method: "DELETE" });
           if(!response.ok)throw new Error('delete');
           const messages = document.getElementById("chat-messages");
           if(messages)for(const row of messages.querySelectorAll('.chat-bubble-row'))row.remove();
@@ -1645,9 +1646,8 @@ function setupEventListeners() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            scenario_title: s?.title || activeKaiwaKey,
-            context: s?.context || "",
-            prompt_jp: document.getElementById("kaiwa-prompt-jp")?.textContent || "",
+            scenario_id: activeKaiwaKey,
+            prompt_index: activeKaiwaPromptIdx % Math.max(s?.prompts?.length || 0, 1),
             user_speech: speech,
             level: activeKaiwaLevel
           })
@@ -1777,12 +1777,18 @@ if (typeof window !== "undefined") {
   window.renderQuiz = renderQuiz;
 }
 
-function startReversedLesson(item,level,skill,owner=null){
+async function startReversedLesson(item,level,skill,owner=null){
+  if(sendingMessage || clearingChat || chatHistoryLoading || failedChatMessage){
+    chatError('Gửi xong hoặc bỏ tin nhắn hiện tại trước khi mở bài học khác.',null);return;
+  }
   chatLessonContext=buildLessonContext(item,level,skill);
-  updateHeroTopic({display:chatLessonContext.title,meaning:chatLessonContext.goal,jlpt_level:level});
+  updateHeroTopic({display:item.title || item.jp,meaning:item.roleplay?.goal || item.summary || item.meaning_vi || '',jlpt_level:level});
   const host=document.getElementById('chat-lesson-context');host.hidden=false;host.replaceChildren();
-  const title=document.createElement('strong');title.textContent=`${level} · ${chatLessonContext.title}`;
+  const title=document.createElement('strong');title.textContent=`${level} · ${item.title || item.jp}`;
   const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill,false,owner);
-  const control=document.createElement('div');host.append(title,back,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${chatLessonContext.title}`});
-  sendMessage('Thầy hỏi em về bài này nhé.');
+  const general=document.createElement('button');general.className='stage-btn';general.textContent='Chat chung';
+  general.onclick=async()=>{if(sendingMessage || clearingChat || chatHistoryLoading || failedChatMessage)return;chatLessonContext=null;host.hidden=true;await loadChatHistory();};
+  const control=document.createElement('div');host.append(title,back,general,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${item.title || item.jp}`});
+  await loadChatHistory();
+  if(chatHistoryReady)await sendMessage('Thầy hỏi em về bài này nhé.');
 }

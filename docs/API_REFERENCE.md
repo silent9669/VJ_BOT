@@ -25,7 +25,7 @@ Tất cả route nằm dưới `/api`, trả JSON `{detail}` khi lỗi. Route "r
 | `POST /api/progress/record` | `{item_id, correct, quality 0–5, attempt_id?, display?, item_type?, response_text?}`; `attempt_id` giúp thử lại không đếm hai lần |
 | `GET/POST /api/completions` | Đánh dấu hoàn thành: `{activity_id, kind, level, title, completed}` |
 | `GET/POST /api/exam-attempts` | Trạng thái bài thi thử theo đề `N5:2018` |
-| `GET/DELETE /api/history` | Lịch sử chat; DELETE xóa toàn bộ |
+| `GET/DELETE /api/history` | General chat history, or one lesson selected by `lesson_id` and `level`. DELETE clears only that scope. `GET ?archive=legacy` reads preserved pre-migration history; the archive is read-only. |
 | `POST /api/account/delete` | Xóa mọi dữ liệu của tài khoản |
 
 ## AI (riêng tư, cần API của người dùng)
@@ -34,12 +34,24 @@ Chat, Kaiwa và giọng đọc dùng API người dùng đã lưu; hạn mức 2
 
 | Route | Mô tả |
 | --- | --- |
-| `POST /api/chat` | `{message ≤ 6000 ký tự, lesson?: {id,title,level,goal,content ≤ 4000}, screen?: {route, title, level?, text ≤ 3500}, request_id?}`. `screen` là chữ hiển thị trên màn hình người học đang xem (sai định dạng: 400) → `{reply, updated_topic}`. `request_id` (UUID) bảo đảm gửi lại không tạo thêm lượt |
-| `POST /api/chat/greeting` | Lời chào cố định theo cấp độ |
-| `POST /api/kaiwa/evaluate` | `{scenario_title, context, prompt_jp, user_speech, level}` → `{score, rating, feedback, model_answer}` |
+| `POST /api/chat` | `{message ≤ 6000 characters, lesson?: {id,level}, screen?: {route,title,level?,text ≤ 3500}, channel?: 'chat'\|'quick', request_id?}`. Lesson IDs resolve against the server-owned catalog; unknown IDs and client-supplied lesson content return 400. Returns `{reply, updated_topic}`. A request UUID cannot be reused in another conversation scope (409). |
+| `POST /api/chat/greeting` | Fixed greeting stored only in general chat. |
+| `POST /api/kaiwa/evaluate` | `{scenario_id, prompt_index?: 0, user_speech, level}`. The server resolves the question and scenario; client-supplied `scenario_title`, `context` and `prompt_jp` are rejected. Returns `{score, rating, feedback, model_answer, user_text, scenario}` after strict validation. |
 | `POST /api/tts` | `{text}` → `{audioBase64, ...}`; `403 {code:'no_tts'}` nếu API đã lưu không phải Gemini-Google (client dùng giọng trình duyệt) |
 
 Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` không giải mã được khóa; `429` hết lượt; `503` nhà cung cấp lỗi (thông báo tiếng Việt, không lộ nội dung lỗi gốc).
+
+### Prompt-injection boundaries
+
+- Trusted tutor and grading instructions occupy the provider's system field. Screen text, canonical source material, learner notes, quoted history and the current submission occupy a JSON user envelope; embedded role labels do not create provider roles.
+- Lessons resolve by `{id,level}` against `course/teacher-N5.json` through `teacher-N1.json`, generated from the same repository-owned lesson builders as the UI. Missing catalogs return 503 before inference. `npm run teacher:catalog` regenerates them; `npm run dev`, `build` and `deploy` run it automatically.
+- Learner notes use canonical curriculum/catalog labels. Arbitrary `progress.display` values and unknown item IDs never enter the model's notes. Existing progress records and UI labels are preserved.
+- History is scoped to general chat, a canonical lesson, or a quick-chat screen route. Previous assistant responses are quoted data, never replayed as authoritative assistant messages. Migration `0015_conversation_scope.sql` archives existing rows without deleting them. Use `GET /api/history?archive=legacy` to read them. Number 0014 is reserved by the separate API-profile change; this migration does not depend on that change.
+- Kaiwa requests schema-constrained output using OpenAI `response_format.json_schema`, Anthropic `output_config.format`, or Gemini `responseJsonSchema`. Unsupported providers fail visibly; no unconstrained retry is performed. Server validation requires exactly four fields, integer score 0–100, a consistent rating and bounded nonempty feedback/model-answer strings. Invalid output returns 503, not a successful grade.
+- Kaiwa screen capture excludes generated feedback and learner submissions. It captures only the scenario and current question.
+- These are defense-in-depth boundaries, not proof that an LLM cannot be manipulated. Schema validation verifies structure, not grading truth. Model discovery and connection probes are not security evaluations.
+- Local tests use synthetic provider responses, not live attack-success measurements. No deployment or paid inference is implied.
+
 
 ## API người dùng và quản trị
 
