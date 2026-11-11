@@ -1,6 +1,6 @@
 import { sessionUser } from './auth.js';
 import { isAdmin, listUsers, purgeGuests, userAction, userDetail } from './admin.js';
-import { callLLM, cleanBaseUrl, DEFAULT_BASES, failureMessage } from './llm.js';
+import { callLLM, cleanBaseUrl, DEFAULT_BASES, failureMessage, listModels } from './llm.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'no-store'}});
 const text = new TextEncoder();
@@ -64,7 +64,7 @@ async function body(request) {
   if (raw.length > 4096) return null;
   try { const value = JSON.parse(raw || '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : null; } catch { return null; }
 }
-const modelOk = value => typeof value === 'string' && /^[\w.:\/-]{1,100}$/.test(value);
+const modelOk = value => typeof value === 'string' && value.length <= 100 && /^~?[\w.:\/-]+$/.test(value);
 
 async function overview(env) {
   const since = days => new Date(Date.now() - days * 86400000).toISOString();
@@ -97,12 +97,15 @@ export async function aiRoute(request, env, url) {
     const base = cleanBaseUrl(data.protocol, data.base_url);
     if (base.error) return json({detail: base.error}, 400);
     if (!modelOk(data.model)) return json({detail: 'Tên model không hợp lệ.'}, 400);
-    const existing = await env.DB.prepare('SELECT key_enc,key_last4 FROM ai_providers WHERE user_id=?').bind(user.user_id).first();
+    const existing = await env.DB.prepare('SELECT protocol,base_url,key_enc,key_last4 FROM ai_providers WHERE user_id=?').bind(user.user_id).first();
     let sealed = existing?.key_enc, last4 = existing?.key_last4;
     if (data.api_key !== undefined && data.api_key !== '') {
       if (typeof data.api_key !== 'string' || !/^[\x21-\x7e]{8,512}$/.test(data.api_key)) return json({detail: 'API key không hợp lệ.'}, 400);
       sealed = await seal(env, user.user_id, data.api_key);
       last4 = data.api_key.slice(-4);
+    }
+    else if (existing && (existing.protocol !== data.protocol || existing.base_url !== base.url)) {
+      return json({detail: 'Enter an API key for the new URL and protocol. The saved key cannot be transferred to another endpoint.'}, 400);
     }
     if (!sealed) return json({detail: 'Nhập API key.'}, 400);
     await env.DB.prepare('INSERT OR REPLACE INTO ai_providers(user_id,protocol,base_url,model,key_enc,key_last4,updated_at) VALUES(?,?,?,?,?,?,?)').bind(user.user_id, data.protocol, base.url, data.model, sealed, last4, new Date().toISOString()).run();
@@ -112,10 +115,49 @@ export async function aiRoute(request, env, url) {
     await env.DB.prepare('DELETE FROM ai_providers WHERE user_id=?').bind(user.user_id).run();
     return json({ok: true});
   }
+  if (path === '/api/ai/models' && method === 'POST') {
+    const data = await body(request);
+    if (!data) return json({detail: 'Invalid model discovery request.'}, 400);
+    const base = cleanBaseUrl(data.protocol, data.base_url);
+    if (base.error) return json({detail: base.error}, 400);
+    let apiKey = data.api_key;
+    if (apiKey !== undefined && apiKey !== '' && (typeof apiKey !== 'string' || !/^[\x21-\x7e]{8,512}$/.test(apiKey))) {
+      return json({detail: 'Invalid API key.'}, 400);
+    }
+    if (!apiKey) {
+      const own = await env.DB.prepare('SELECT protocol,base_url,key_enc FROM ai_providers WHERE user_id=?').bind(user.user_id).first();
+      if (!own || own.protocol !== data.protocol || own.base_url !== base.url) {
+        return json({detail: 'Enter an API key for this URL and protocol. The saved key will not be sent to a different endpoint.'}, 400);
+      }
+      apiKey = await unseal(env, user.user_id, own.key_enc);
+      if (!apiKey) return json({detail: REKEY, code: 'rekey'}, 409);
+    }
+    if (await rateLimited(env, user.user_id)) return json({detail: 'Too many requests. Try again in a minute.'}, 429);
+    const result = await listModels({protocol: data.protocol, baseUrl: base.url, apiKey});
+    if (result.models) return json(result);
+    const detail = result.status === 404 || result.status === 405
+      ? 'This API does not support model listing. Use an endpoint that provides a model catalog.'
+      : result.status === 502 ? 'The API returned an invalid model catalog. Check the API URL and provider.' : failureMessage(result.status);
+    // A provider's rejected key is not an expired VJBot session.
+    return json({detail}, [400, 404, 405, 429, 504].includes(result.status) ? result.status : 502);
+  }
   if (path === '/api/ai/test' && method === 'POST') {
     if (await rateLimited(env, user.user_id)) return json({detail: 'Bạn hãy đợi một phút rồi thử lại.'}, 429);
-    const asked = await askAI(env, user.user_id, {turns: [{role: 'user', content: 'Reply with the single word OK.'}]});
-    return asked.response || json({ok: true});
+    const provider = await resolveProvider(env, user.user_id);
+    if (!provider) return json({detail: NO_AI, code: 'no_ai'}, 403);
+    if (provider.error) return json({detail: REKEY, code: 'rekey'}, 409);
+    if (provider.protocol === 'openai' && provider.baseUrl === 'https://openrouter.ai/api/v1') {
+      const catalog = await listModels(provider);
+      if (!catalog.models) return json({detail: failureMessage(catalog.status)}, catalog.status === 429 ? 429 : 503);
+      if (!catalog.models.includes(provider.models[0])) {
+        return json({detail: catalog.free_only
+          ? 'This key has no paid budget. Choose a listed zero-price candidate; the selected model was not tested.'
+          : 'The selected model is not in this key-filtered catalog. Access was not verified; no generation was sent.'}, 403);
+      }
+    }
+    const result = await callLLM(provider, {turns: [{role: 'user', content: 'Reply with the single word OK.'}]});
+    return result.text ? json({ok: true, model: provider.models[0]})
+      : json({detail: failureMessage(result.status)}, result.status === 429 ? 429 : 503);
   }
 
   if (path.startsWith('/api/admin/')) {

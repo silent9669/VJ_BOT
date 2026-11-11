@@ -105,8 +105,106 @@ export async function callLLM(provider, {system, turns, json = false}, {budgetMs
 }
 
 export function failureMessage(status) {
-  if (status === 429) return 'API của bạn báo hết lượt. Hãy thử lại sau ít phút.';
-  if (status === 401 || status === 403) return 'API key bị từ chối. Kiểm tra lại trong Cài đặt.';
-  if (status === 404 || status === 400) return 'Endpoint hoặc model không đúng. Kiểm tra lại trong Cài đặt.';
-  return 'API của bạn chưa kết nối được. Vui lòng thử lại sau.';
+  if (status === 401) return 'The provider rejected this API key. It may be invalid, expired or revoked.';
+  if (status === 402) return 'The provider requires credits or a higher spending limit for this model.';
+  if (status === 403) return 'The provider denied access to this model or endpoint. Check key permissions and provider policies.';
+  if (status === 429) return 'The provider rate limit or quota was reached. Model access is not verified; try later.';
+  if (status === 404 || status === 400) return 'The endpoint, model or request is not supported. Check your settings.';
+  if (status === 504) return 'The provider timed out. Model access is not verified; try later.';
+  return 'The provider request failed. Model access is not verified.';
+}
+
+// Discovery does not generate content. Never follow a provider redirect with credentials.
+export async function listModels({protocol, baseUrl, apiKey}) {
+  const base = cleanBaseUrl(protocol, baseUrl);
+  if (base.error) return {status: 400};
+  const openRouter = protocol === 'openai' && base.url === 'https://openrouter.ai/api/v1';
+  const suffix = protocol === 'openai' ? '/models' : protocol === 'anthropic'
+    ? `${base.url.endsWith('/v1') ? '' : '/v1'}/models` : '/v1beta/models';
+  const endpoint = base.url + (openRouter ? '/models/user' : suffix);
+  const headers = protocol === 'openai' ? {Authorization: `Bearer ${apiKey}`}
+    : protocol === 'anthropic' ? {'x-api-key': apiKey, 'anthropic-version': '2023-06-01'}
+    : {'x-goog-api-key': apiKey};
+  const signal = AbortSignal.timeout(10000);
+  const models = new Set(), cursors = new Set();
+  let freeOnly = false;
+  const catalog = truncated => ({models: [...models].sort(), truncated,
+    scope: openRouter ? 'key_filtered' : 'provider_catalog', free_only: freeOnly});
+  let cursor = '';
+  try {
+    if (openRouter) {
+      const response = await fetch(base.url + '/key', {headers, redirect: 'manual', signal});
+      if (!response.ok) {
+        await response.body?.cancel();
+        return {status: response.status >= 300 && response.status < 400 ? 502 : response.status};
+      }
+      const {data: key} = await modelPage(response);
+      if (!key || typeof key.is_free_tier !== 'boolean'
+        || !(key.limit_remaining === null || Number.isFinite(key.limit_remaining))) return {status: 502};
+      if (key.expires_at && (!Number.isFinite(Date.parse(key.expires_at)) || Date.parse(key.expires_at) <= Date.now())) return {status: 401};
+      freeOnly = key.is_free_tier || key.limit === 0
+        || (key.limit_remaining !== null && key.limit_remaining <= 0)
+        || (Number.isFinite(key.effective_budget?.remaining_usd) && key.effective_budget.remaining_usd <= 0);
+    }
+    for (let page = 0; page < 5; page++) {
+      const url = new URL(endpoint);
+      if (openRouter) url.searchParams.set('output_modalities', 'text');
+      if (protocol === 'gemini') url.searchParams.set('pageSize', '1000');
+      if (protocol === 'anthropic') url.searchParams.set('limit', '1000');
+      if (cursor) url.searchParams.set(protocol === 'gemini' ? 'pageToken' : 'after_id', cursor);
+      const response = await fetch(url.href, {headers, redirect: 'manual', signal});
+      if (!response.ok) {
+        await response.body?.cancel();
+        return {status: response.status >= 300 && response.status < 400 ? 502 : response.status};
+      }
+      const data = await modelPage(response);
+      const rows = protocol === 'gemini' ? data.models : data.data;
+      if (!Array.isArray(rows)) return {status: 502};
+      for (const row of rows) {
+        if (openRouter && Array.isArray(row?.architecture?.output_modalities) && !row.architecture.output_modalities.includes('text')) continue;
+        if (freeOnly && !freeTextPricing(row?.pricing)) continue;
+        if (protocol === 'gemini' && (!Array.isArray(row?.supportedGenerationMethods) || !row.supportedGenerationMethods.includes('generateContent'))) continue;
+        const id = protocol === 'gemini' ? row?.name?.replace(/^models\//, '') : row?.id;
+        if (typeof id === 'string' && id.length <= 100 && /^~?[\w.:\/-]+$/.test(id) && !id.includes(apiKey)) models.add(id);
+        if (models.size === 1000) return catalog(true);
+      }
+      const next = protocol === 'gemini' ? data.nextPageToken : data.has_more ? data.last_id : '';
+      if (!next) {
+        if (data.has_more) return {status: 502};
+        return catalog(false);
+      }
+      if (typeof next !== 'string' || next.length > 2048 || cursors.has(next)) return {status: 502};
+      cursors.add(next);
+      cursor = next;
+    }
+    return catalog(true);
+  } catch {
+    return {status: signal.aborted ? 504 : 502};
+  }
+}
+
+// Unknown pricing is not evidence that a model is free.
+function freeTextPricing(pricing) {
+  const zero = value => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== ''))
+    && Number.isFinite(Number(value)) && Number(value) === 0;
+  return pricing && zero(pricing.prompt) && zero(pricing.completion)
+    && (pricing.request === undefined || zero(pricing.request))
+    && (pricing.internal_reasoning === undefined || zero(pricing.internal_reasoning));
+}
+
+async function modelPage(response) {
+  const reader = response.body.getReader(), decoder = new TextDecoder();
+  let bytes = 0, raw = '';
+  try {
+    for (;;) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > 4000000) throw new Error('Model catalog is too large');
+      raw += decoder.decode(value, {stream: true});
+    }
+    return JSON.parse(raw + decoder.decode());
+  } finally {
+    await reader.cancel();
+  }
 }

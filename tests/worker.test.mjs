@@ -381,3 +381,213 @@ test('admins can purge old anonymous profiles without touching real accounts',as
   assert.equal((await env.DB.prepare("SELECT count(*) n FROM profiles").first()).n,2);
   assert.deepEqual((await env.DB.prepare("SELECT user_id FROM conversations").all()).results.map(r=>r.user_id),['google:keep']);
 });
+
+test('model discovery uses draft credentials without saving and protects saved endpoint ownership', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  const draft = {protocol: 'openai', base_url: 'https://api.example.com/v1/chat/completions', api_key: 'draft-test-key'};
+  const seen = [];
+  globalThis.fetch = async (url, options) => {
+    seen.push({url, options});
+    return Response.json({data: [{id: 'z-model'}, {id: 'a-model'}, {id: '~vendor/model-latest'}, {id: 'a-model'}, {id: '<unsafe>'}, {id: 'draft-test-key'}, {id: '~~bad'}, {id: '~' + 'x'.repeat(100)}]});
+  };
+  try {
+    const anonymous = await worker.fetch(new Request('https://vjbot.test/api/ai/models', {method: 'POST', body: JSON.stringify(draft)}), {});
+    assert.equal(anonymous.status, 401);
+    for (const base_url of ['https://127.0.0.1/v1', 'https://localhost/v1', 'http://api.example.com/v1']) {
+      assert.equal((await worker.fetch(request('/api/ai/models', {...draft, base_url}), env)).status, 400);
+    }
+    assert.equal(seen.length, 0);
+    const result = await worker.fetch(request('/api/ai/models', draft), env);
+    assert.equal(result.status, 200);
+    assert.deepEqual(await result.json(), {models: ['a-model', 'z-model', '~vendor/model-latest'], truncated: false, scope: 'provider_catalog', free_only: false});
+    assert.equal(seen[0].url, 'https://api.example.com/v1/models');
+    assert.equal(seen[0].options.headers.Authorization, 'Bearer draft-test-key');
+    assert.equal(seen[0].options.redirect, 'manual');
+    assert.equal((await env.DB.prepare('SELECT count(*) n FROM ai_providers').first()).n, 0);
+    await withApi(env, request);
+    for (const patch of [{base_url: 'https://different.example.com/v1'}, {protocol: 'anthropic'}]) {
+      assert.equal((await worker.fetch(request('/api/ai/models', {...draft, api_key: '', ...patch}), env)).status, 400);
+    }
+    assert.equal(seen.length, 1);
+    assert.equal((await worker.fetch(request('/api/ai/models', {...draft, api_key: ''}), env)).status, 200);
+    assert.equal(seen[1].options.headers.Authorization, 'Bearer sk-test-12345678');
+    env.AI_KEY_SECRET = 'different-secret';
+    assert.equal((await worker.fetch(request('/api/ai/models', {...draft, api_key: ''}), env)).status, 409);
+    assert.equal(seen.length, 2);
+    await env.DB.prepare('INSERT OR REPLACE INTO ai_usage VALUES(?,?,20)').bind('google:qa', Math.floor(Date.now()/60000)).run();
+    assert.equal((await worker.fetch(request('/api/ai/models', draft), env)).status, 429);
+    assert.equal(seen.length, 2);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('model discovery follows native pagination and filters Gemini generation capabilities', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  const seen = [];
+  globalThis.fetch = async (url, options) => {
+    seen.push(url);
+    if (url.includes('googleapis.com')) {
+      assert.equal(options.headers['x-goog-api-key'], 'native-test-key');
+      return Response.json(url.includes('pageToken=next') ? {models: [{name: 'models/gemini-b', supportedGenerationMethods: ['generateContent']}]}
+        : {models: [{name: 'models/embedding', supportedGenerationMethods: ['embedContent']}, {name: 'models/gemini-a', supportedGenerationMethods: ['generateContent']}], nextPageToken: 'next'});
+    }
+    assert.equal(options.headers['x-api-key'], 'native-test-key');
+    assert.equal(options.headers['anthropic-version'], '2023-06-01');
+    return Response.json(url.includes('after_id=claude-a') ? {data: [{id: 'claude-b'}], has_more: false}
+      : {data: [{id: 'claude-a'}], has_more: true, last_id: 'claude-a'});
+  };
+  try {
+    for (const [protocol, base_url, models] of [
+      ['gemini', 'https://generativelanguage.googleapis.com/v1beta', ['gemini-a', 'gemini-b']],
+      ['anthropic', 'https://api.anthropic.com/v1', ['claude-a', 'claude-b']]
+    ]) {
+      const result = await worker.fetch(request('/api/ai/models', {protocol, base_url, api_key: 'native-test-key'}), env);
+      assert.equal(result.status, 200);
+      assert.deepEqual(await result.json(), {models, truncated: false, scope: 'provider_catalog', free_only: false});
+    }
+    assert.equal(seen.length, 4);
+    assert.match(seen[0], /\/v1beta\/models\?pageSize=1000$/);
+    assert.match(seen[2], /\/v1\/models\?limit=1000$/);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('model discovery fails safely on redirects, malformed catalogs and upstream errors', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  const draft = {protocol: 'openai', base_url: 'https://api.example.com/v1', api_key: 'private-test-key'};
+  let calls = 0;
+  try {
+    for (const [reply, expected] of [
+      [() => new Response('private-test-key', {status: 302, headers: {Location: 'https://other.example.com'}}), 502],
+      [() => new Response('private-test-key', {status: 401}), 502],
+      [() => new Response('private-test-key', {status: 403}), 502],
+      [() => new Response('private-test-key', {status: 429}), 429],
+      [() => new Response('private-test-key', {status: 404}), 404],
+      [() => Response.json({error: 'private-test-key'}), 502],
+      [() => new Response('x'.repeat(4000001)), 502],
+      [() => Response.json({data: []}), 200]
+    ]) {
+      globalThis.fetch = async () => { calls++; return reply(); };
+      const response = await worker.fetch(request('/api/ai/models', draft), env);
+      assert.equal(response.status, expected);
+      const payload = await response.text();
+      assert.ok(!payload.includes('private-test-key'));
+      if (expected === 200) assert.deepEqual(JSON.parse(payload), {models: [], truncated: false, scope: 'provider_catalog', free_only: false});
+    }
+    assert.equal(calls, 8);
+    globalThis.fetch = async () => Response.json({data: [{id: 'one'}], has_more: true, last_id: 'same'});
+    assert.equal((await worker.fetch(request('/api/ai/models', draft), env)).status, 502);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('OpenRouter discovery authenticates first and excludes paid or unknown-price models for a zero-budget key', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  const draft = {protocol: 'openai', base_url: 'https://openrouter.ai/api/v1', api_key: 'router-test-key'};
+  let keyStatus = 401, remaining = 0, freeTier = false, expired = false, invalidMetadata = false;
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push(url);
+    assert.equal(options.headers.Authorization, 'Bearer router-test-key');
+    assert.equal(options.redirect, 'manual');
+    assert.ok(!options.method || options.method === 'GET');
+    if (url.endsWith('/key')) return keyStatus !== 200 ? new Response('router-test-key', {status: keyStatus})
+      : Response.json({data: invalidMetadata ? {} : {is_free_tier: freeTier, limit_remaining: remaining, expires_at: expired ? '2000-01-01T00:00:00Z' : null}});
+    assert.equal(url, 'https://openrouter.ai/api/v1/models/user?output_modalities=text');
+    return Response.json({data: [
+      {id: 'free-model', pricing: {prompt: '0', completion: '0', request: '0'}},
+      {id: 'paid-model', pricing: {prompt: '0.01', completion: '0.02'}},
+      {id: 'unknown-price'}, {id: 'empty-price', pricing: {prompt: '', completion: null}},
+      {id: 'request-fee', pricing: {prompt: '0', completion: '0', request: '1'}},
+      {id: 'reasoning-fee', pricing: {prompt: '0', completion: '0', internal_reasoning: '1'}},
+      {id: 'image-only', pricing: {prompt: '0', completion: '0'}, architecture: {output_modalities: ['image']}}
+    ]});
+  };
+  try {
+    assert.equal((await worker.fetch(request('/api/ai/models', draft), env)).status, 502);
+    assert.deepEqual(calls, ['https://openrouter.ai/api/v1/key']);
+    keyStatus = 200;
+    let result = await (await worker.fetch(request('/api/ai/models', draft), env)).json();
+    assert.deepEqual(result, {models: ['free-model'], truncated: false, scope: 'key_filtered', free_only: true});
+    remaining = null; freeTier = true;
+    result = await (await worker.fetch(request('/api/ai/models', draft), env)).json();
+    assert.deepEqual(result.models, ['free-model']);
+    remaining = 5; freeTier = false;
+    result = await (await worker.fetch(request('/api/ai/models', draft), env)).json();
+    assert.equal(result.free_only, false); assert.ok(result.models.includes('paid-model'));
+    assert.ok(!result.models.includes('image-only'));
+    expired = true;
+    const before = calls.length;
+    assert.equal((await worker.fetch(request('/api/ai/models', draft), env)).status, 502);
+    assert.equal(calls.length, before + 1);
+    expired = false; invalidMetadata = true;
+    assert.equal((await worker.fetch(request('/api/ai/models', draft), env)).status, 502);
+    assert.equal(calls.length, before + 2);
+    assert.equal((await env.DB.prepare('SELECT count(*) n FROM ai_providers').first()).n, 0);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('selected-model verification blocks unlisted paid models and requires a real generation response', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  let generations = 0, generationStatus = 200;
+  globalThis.fetch = async (url, options) => {
+    if (url.endsWith('/key')) return Response.json({data: {is_free_tier: true, limit_remaining: 0}});
+    if (url.includes('/models/user')) return Response.json({data: [{id: 'free-model', pricing: {prompt: '0', completion: '0'}}]});
+    assert.equal(url, 'https://openrouter.ai/api/v1/chat/completions');
+    assert.equal(JSON.parse(options.body).model, 'free-model');
+    generations++;
+    return generationStatus === 200 ? Response.json({choices: [{message: {content: 'OK'}}]})
+      : new Response('router-test-key', {status: generationStatus});
+  };
+  try {
+    await withApi(env, request, {base_url: 'https://openrouter.ai/api/v1', model: 'paid-model'});
+    assert.equal((await worker.fetch(request('/api/ai/test', {}), env)).status, 403);
+    assert.equal(generations, 0);
+    await withApi(env, request, {base_url: 'https://openrouter.ai/api/v1', model: 'free-model'});
+    assert.deepEqual(await (await worker.fetch(request('/api/ai/test', {}), env)).json(), {ok: true, model: 'free-model'});
+    for (const status of [401, 402, 403, 429, 504]) {
+      generationStatus = status;
+      const response = await worker.fetch(request('/api/ai/test', {}), env);
+      assert.equal(response.status, status === 429 ? 429 : 503);
+      const payload = await response.json();
+      assert.equal(payload.ok, undefined);
+      assert.ok(!JSON.stringify(payload).includes('router-test-key'));
+      if (status === 403) assert.match(payload.detail, /denied access to this model/);
+      if (status === 402) assert.match(payload.detail, /credits|spending limit/);
+      if (status === 504) assert.match(payload.detail, /timed out/);
+    }
+    assert.equal(generations, 6);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('saved credentials remain bound to their endpoint while model aliases can be changed', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; throw new Error('Saving must not contact a provider'); };
+  try {
+    await withApi(env, request);
+    const original = await env.DB.prepare('SELECT * FROM ai_providers').first();
+    for (const patch of [{base_url: 'https://other.example.com/v1'}, {base_url: 'https://api.example.com/other'}, {protocol: 'anthropic'}]) {
+      for (const api_key of [undefined, '']) {
+        const response = await worker.fetch(put(request, '/api/ai/settings', {
+          protocol: 'openai', base_url: 'https://api.example.com/v1', model: 'other', api_key, ...patch
+        }), env);
+        assert.equal(response.status, 400);
+        assert.deepEqual(await env.DB.prepare('SELECT * FROM ai_providers').first(), original);
+      }
+    }
+    const settings = {protocol: 'openai', base_url: 'https://api.example.com/v1/chat/completions', model: '~vendor/model-latest'};
+    assert.equal((await worker.fetch(put(request, '/api/ai/settings', settings), env)).status, 200);
+    const alias = await env.DB.prepare('SELECT * FROM ai_providers').first();
+    assert.equal(alias.model, '~vendor/model-latest');
+    assert.equal(alias.key_enc, original.key_enc);
+    assert.equal(alias.base_url, original.base_url);
+    for (const model of ['~~bad', '~', '~' + 'x'.repeat(100), 'vendor/model?token=bad']) {
+      assert.equal((await worker.fetch(put(request, '/api/ai/settings', {...settings, model}), env)).status, 400);
+    }
+    assert.equal((await worker.fetch(put(request, '/api/ai/settings', {
+      ...settings, base_url: 'https://other.example.com/v1', api_key: 'explicit-replacement-key'
+    }), env)).status, 200);
+    const changed = await env.DB.prepare('SELECT * FROM ai_providers').first();
+    assert.equal(changed.base_url, 'https://other.example.com/v1');
+    assert.notEqual(changed.key_enc, original.key_enc);
+    assert.equal(calls, 0);
+  } finally { globalThis.fetch = previous; }
+});

@@ -2,27 +2,99 @@
 (function () {
   const el = id => document.getElementById(id);
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
-  const PRESETS = {openai: [], anthropic: ['claude-sonnet-5-5', 'claude-haiku-5-5'], gemini: ['gemini-3.8-flash', 'gemini-3.5-flash-lite']};
+  let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
   const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
     const response = await apiFetch(path, options);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || 'Không thực hiện được. Hãy thử lại.');
+    if (!response.ok) throw new Error(data.detail || 'Request failed. Please try again.');
     return data;
   }
   const send = (path, method, body) => call(path, {method, headers: {'Content-Type': 'application/json'}, body: body && JSON.stringify(body)});
 
-  // Keeps the segmented control, URL placeholder and model suggestions in step with the hidden select.
+  // Credential edits discard in-flight catalogs and all choices from the old connection.
   function syncProtocol() {
     const protocol = el('ai-protocol').value;
     document.querySelectorAll('#ai-segments button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.protocol === protocol)));
     el('ai-base').placeholder = BASES[protocol];
-    el('ai-models').replaceChildren(...PRESETS[protocol].map(model => {
-      const chip = document.createElement('button');
-      chip.type = 'button'; chip.textContent = model;
-      chip.onclick = () => { el('ai-model').value = model; };
-      return chip;
-    }));
+    resetModels();
+  }
+  function stopModels() {
+    modelRequest++;
+    modelAbort?.abort();
+    el('ai-stop-models').hidden = true;
+    el('ai-fetch-models').disabled = testing;
+    el('ai-fetch-models').setAttribute('aria-busy', 'false');
+    el('ai-load-progress').hidden = true;
+  }
+  function resetModels() {
+    stopModels();
+    el('ai-model-list').replaceChildren();
+    el('ai-models').hidden = true;
+    el('ai-model-list').disabled = true;
+    el('ai-save').disabled = true;
+    el('ai-model-status').textContent = '';
+    el('ai-selection-hint').textContent = 'Load models, choose one, then save to chat. No test message is sent.';
+  }
+  function invalidateSelection() {
+    pill('saved', 'Connection not saved');
+    el('ai-status').textContent = '';
+    el('ai-chat').hidden = true;
+  }
+  async function loadModels() {
+    if (testing) return;
+    resetModels();
+    invalidateSelection();
+    const request = modelRequest, status = el('ai-model-status'), owner = signedInUser?.user_id;
+    const draft = {protocol: el('ai-protocol').value, base_url: el('ai-base').value, api_key: el('ai-key').value.trim()};
+    if (!draft.api_key && !savedConnection) {
+      status.textContent = 'Enter your API URL and key to load models.';
+      return;
+    }
+    modelAbort = new AbortController();
+    const current = () => request === modelRequest && signedInUser?.user_id === owner;
+    el('ai-fetch-models').disabled = true;
+    el('ai-fetch-models').setAttribute('aria-busy', 'true');
+    el('ai-load-progress').hidden = false;
+    el('ai-stop-models').hidden = false;
+    status.textContent = 'Loading models…';
+    try {
+      const data = await call('/api/ai/models', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        signal: modelAbort.signal, body: JSON.stringify(draft)
+      });
+      if (!current()) return;
+      const list = el('ai-model-list');
+      const options = data.models.map(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = model;
+        return option;
+      });
+      list.replaceChildren(...options);
+      el('ai-models').hidden = !options.length;
+      list.disabled = !options.length;
+      if (options.length) {
+        list.value = data.models.includes(el('ai-model').value) ? el('ai-model').value : data.models[0];
+        el('ai-model').value = list.value;
+      }
+      el('ai-save').disabled = !storageEnabled || !list.value;
+      const scope = data.scope === 'key_filtered'
+        ? `Filtered for this key${data.free_only ? ' · zero-price models only' : ''}. Quota still applies.`
+        : 'Provider catalog · this API does not confirm per-key model access or quota.';
+      el('ai-selection-hint').textContent = scope;
+      status.textContent = `${options.length} models${data.truncated ? ' · partial list' : ''}. No test messages sent.`;
+      pill('saved', data.scope === 'key_filtered' ? 'Key-filtered list' : 'Provider catalog');
+    } catch (error) {
+      if (current()) status.textContent = error.message;
+    } finally {
+      if (current()) {
+        el('ai-fetch-models').disabled = testing;
+        el('ai-fetch-models').setAttribute('aria-busy', 'false');
+        el('ai-stop-models').hidden = true;
+        el('ai-load-progress').hidden = true;
+      }
+    }
   }
   const pill = (state, text) => { el('ai-pill').dataset.state = state; el('ai-pill').textContent = text; };
 
@@ -36,25 +108,35 @@
   }
 
   async function renderSettings() {
+    if (testing) return;
     renderAccountCard();
+    el('ai-chat').hidden = true;
     const status = el('ai-status');
     status.textContent = '';
     try {
       const data = await call('/api/ai/settings');
+      if (testing) return;
       const own = data.own;
-      el('ai-source').textContent = data.source === 'none' ? 'Thêm API key để chat với thầy Lâm.' : '';
+      savedConnection = Boolean(own);
+      storageEnabled = data.can_store;
+      el('ai-source').textContent = data.source === 'none' ? 'Connect your own API to start chatting with the tutor.' : '';
       el('ai-source').hidden = data.source !== 'none';
-      pill(own ? 'saved' : 'none', own ? 'Đã lưu ••••' + own.key_last4 : 'Chưa kết nối');
+      pill(own ? 'saved' : 'none', own ? 'Saved · not tested' : 'Not connected');
       el('ai-protocol').value = own?.protocol || 'openai';
       el('ai-base').value = own?.base_url || '';
       syncProtocol();
       el('ai-model').value = own?.model || '';
       el('ai-key').value = '';
       el('ai-key').placeholder = own ? '••••' + own.key_last4 : 'sk-…';
+      el('ai-key').type = 'password';
+      el('ai-key-toggle').textContent = 'Show';
+      el('ai-key-toggle').setAttribute('aria-label', 'Show API key');
+      el('ai-key-toggle').setAttribute('aria-pressed', 'false');
+      el('ai-key-hint').textContent = own ? `A key ending ${own.key_last4} is saved. Leave blank to reuse it for this URL and API type. A changed connection requires a new key.` : 'Stored encrypted on the server. Never paste your key into chat.';
       el('ai-key').required = !own;
       el('ai-remove').hidden = !own;
-      el('ai-save').disabled = !data.can_store;
-      if (!data.can_store) status.textContent = 'Máy chủ chưa bật lưu API key.';
+      el('ai-save').disabled = true;
+      if (!data.can_store) status.textContent = 'API key storage is not enabled on this server.';
     } catch (error) { status.textContent = error.message; }
   }
 
@@ -109,14 +191,35 @@
   el('chat-gate-open').addEventListener('click', openAiSettings);
   el('ai-chat').addEventListener('click', () => switchTab('classroom'));
 
-  document.querySelectorAll('#ai-segments button').forEach(button => button.addEventListener('click', () => { el('ai-protocol').value = button.dataset.protocol; syncProtocol(); }));
+  document.querySelectorAll('#ai-segments button').forEach(button => button.addEventListener('click', () => {
+    el('ai-protocol').value = button.dataset.protocol;
+    invalidateSelection();
+    syncProtocol();
+  }));
+  for (const id of ['ai-base', 'ai-key']) {
+    el(id).addEventListener('input', () => { resetModels(); invalidateSelection(); });
+  }
+  el('ai-fetch-models').addEventListener('click', () => loadModels());
+  el('ai-stop-models').addEventListener('click', () => {
+    stopModels();
+    el('ai-model-status').textContent = 'Loading cancelled.';
+  });
+  el('ai-model-list').addEventListener('change', () => {
+    if (el('ai-model-list').value) el('ai-model').value = el('ai-model-list').value;
+    invalidateSelection();
+    el('ai-save').disabled = !storageEnabled || !el('ai-model-list').value;
+  });
   el('ai-key-toggle').addEventListener('click', () => {
     const show = el('ai-key').type === 'password';
     el('ai-key').type = show ? 'text' : 'password';
-    el('ai-key-toggle').textContent = show ? 'Ẩn' : 'Hiện';
+    el('ai-key-toggle').textContent = show ? 'Hide' : 'Show';
+    el('ai-key-toggle').setAttribute('aria-label', show ? 'Hide API key' : 'Show API key');
     el('ai-key-toggle').setAttribute('aria-pressed', String(show));
   });
-  el('settings-logout').addEventListener('click', () => el('auth-logout').click());
+  el('settings-logout').addEventListener('click', () => {
+    resetModels();
+    el('auth-logout').click();
+  });
   document.querySelectorAll('.settings-nav button').forEach(button => button.addEventListener('click', () => {
     document.querySelectorAll('.settings-nav button').forEach(b => b.removeAttribute('aria-current'));
     button.setAttribute('aria-current', 'true');
@@ -124,27 +227,37 @@
   }));
   el('ai-form').addEventListener('submit', async event => {
     event.preventDefault();
+    if (testing) return;
+    const model = el('ai-model-list').value;
+    if (el('ai-models').hidden || !model) {
+      el('ai-status').textContent = 'Load models first, then choose a model.';
+      return;
+    }
+    stopModels();
+    testing = true;
     const status = el('ai-status'), save = el('ai-save');
-    let connected = false;
+    const controls = [...el('ai-form').querySelectorAll('input, select, button')];
+    const disabled = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
+    let saved = false;
     save.disabled = true;
-    status.textContent = 'Đang lưu…';
+    status.textContent = 'Saving connection…';
     try {
-      await send('/api/ai/settings', 'PUT', {protocol: el('ai-protocol').value, base_url: el('ai-base').value, model: el('ai-model').value.trim(), api_key: el('ai-key').value.trim()});
-      status.textContent = 'Đang kiểm tra…';
-      await send('/api/ai/test', 'POST', {});
-      status.textContent = 'Kết nối được.';
-      connected = true;
-    } catch (error) { status.textContent = error.message; }
-    save.disabled = false;
+      await send('/api/ai/settings', 'PUT', {protocol: el('ai-protocol').value, base_url: el('ai-base').value, model, api_key: el('ai-key').value.trim()});
+      saved = true;
+      status.textContent = `Saved ${model}. No test message sent.`;
+    } catch (error) { status.textContent = `Connection was not saved. ${error.message}`; }
+    controls.forEach((control, index) => { control.disabled = disabled[index]; });
+    testing = false;
     const kept = status.textContent;
-    await renderSettings();
+    if (saved) await renderSettings();
     status.textContent = kept;
-    pill(connected ? 'ok' : 'error', connected ? 'Kết nối được' : 'Lỗi kết nối');
-    el('ai-chat').hidden = !connected;
+    pill(saved ? 'saved' : 'error', saved ? 'Connection saved' : 'Connection was not saved');
+    el('ai-chat').hidden = !saved;
     window.checkAiReady();
   });
   el('ai-remove').addEventListener('click', async () => {
-    if (!confirm('Xóa API key đã lưu?')) return;
+    if (!confirm('Remove the saved API key? Chat will be unavailable until you save another connection.')) return;
     try { await send('/api/ai/settings', 'DELETE'); await renderSettings(); window.checkAiReady(); } catch (error) { el('ai-status').textContent = error.message; }
   });
 })();
