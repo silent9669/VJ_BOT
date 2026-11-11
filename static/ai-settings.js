@@ -87,6 +87,44 @@
   }
   const cacheName = (owner, identity) => `vjbot_ai_models_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
   const cacheWarning = () => { el('ai-selection-hint').textContent = 'Browser storage is unavailable. These models will not be remembered after a reload.'; };
+  const scanName = (owner, identity) => `vjbot_ai_scan_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
+  const validModel = value => typeof value === 'string' && value.length <= 100 && /^~?[\w.:/-]+$/.test(value);
+  function readScan(owner, identity) {
+    if (!owner || !identity) return null;
+    let raw;
+    try { raw = localStorage.getItem(scanName(owner, identity)); } catch { cacheWarning(); return null; }
+    if (raw === null) return null;
+    try {
+      const scan = JSON.parse(raw);
+      if (scan?.identity !== identity || !Array.isArray(scan.catalog) || scan.catalog.length > 1000
+        || !scan.catalog.every(validModel) || new Set(scan.catalog).size !== scan.catalog.length
+        || !Array.isArray(scan.entries) || scan.entries.length > scan.catalog.length
+        || new Set(scan.entries.map(entry => entry.model)).size !== scan.entries.length
+        || !scan.entries.every(entry => validModel(entry.model) && scan.catalog.includes(entry.model)
+          && ['sent', 'ok', 'failed'].includes(entry.state) && Number.isFinite(entry.at) && entry.at > 0 && entry.at <= Date.now() + 60000)
+        || !Array.isArray(scan.dispatchedAt) || scan.dispatchedAt.length > 1000
+        || !scan.dispatchedAt.every(at => Number.isFinite(at) && at > 0 && at <= Date.now() + 60000)
+        || !Number.isFinite(scan.nextAt) || scan.nextAt < 0) throw new Error();
+      return scan;
+    } catch { throw new Error('Saved scan progress is invalid. Select Recheck all models to start a new scan.'); }
+  }
+  function writeScan(owner, scan) {
+    if (!owner || !scan.identity) return;
+    try { localStorage.setItem(scanName(owner, scan.identity), JSON.stringify(scan)); } catch { cacheWarning(); }
+  }
+  function scanHint() {
+    if (activeScan) return;
+    const identity = modelSnapshot?.identity || selectedProfile?.connection_id;
+    let scan;
+    try { scan = readScan(signedInUser?.user_id, identity); }
+    catch (error) { el('ai-resume-hint').textContent = error.message; return; }
+    const remaining = scan?.catalog.filter(model => !scan.entries.some(entry => entry.model === model)).length || 0;
+    el('ai-fetch-models').textContent = el('ai-recheck-all').checked || !scan ? 'Find usable models'
+      : remaining ? `Continue ${remaining} unchecked models` : 'Show saved check results';
+    el('ai-resume-hint').textContent = scan
+      ? `${scan.entries.filter(entry => entry.state !== 'sent').length}/${scan.catalog.length} checked · ${remaining} never sent. Interrupted requests are not retried automatically.`
+      : 'Progress is saved for this account and exact API connection. Reload or Stop, then continue models not yet sent.';
+  }
   function rememberModels(identity, draft) {
     const owner = signedInUser?.user_id;
     if (!owner || !identity) return;
@@ -166,6 +204,8 @@
     el('ai-model-list').disabled = true;
     el('ai-save').disabled = true;
     el('ai-model-status').textContent = '';
+    el('ai-fetch-models').textContent = 'Find usable models';
+    el('ai-resume-hint').textContent = '';
     el('ai-selection-hint').textContent = 'Only models that returned a real response can be selected. Future quota and availability may change.';
   }
   function invalidateSelection() {
@@ -216,7 +256,7 @@
     modelAbort = new AbortController();
     activeScan = {owner, request};
     const current = () => request === modelRequest && signedInUser?.user_id === owner;
-    let checked = 0, passed = 0, total = 0, partial = '';
+    let checked = 0, passed = 0, total = 0, partial = '', releaseScan = null;
     const progress = el('ai-load-progress');
     progress.removeAttribute('value');
     el('ai-fetch-models').disabled = true;
@@ -233,21 +273,61 @@
       total = data.models.length;
       partial = data.truncated ? ' Catalog is partial.' : '';
       if (!total) { status.textContent = 'No candidate models returned.'; return; }
-      const accepted = await confirmModelChecks(total, partial, modelAbort.signal);
+      if (data.connection_id && typeof navigator !== 'undefined' && navigator.locks) {
+        const acquired = await new Promise((resolve, reject) => {
+          navigator.locks.request(scanName(owner, data.connection_id), {ifAvailable: true}, lock => {
+            if (!lock) { resolve(false); return; }
+            return new Promise(release => { releaseScan = release; resolve(true); });
+          }).catch(() => reject(new Error('Cannot coordinate this scan across tabs. Try again after closing the other scan.')));
+        });
+        if (!current()) return;
+        if (!acquired) { status.textContent = 'Another scan for this API connection is still active. Continue after it stops.'; return; }
+      }
+      const fresh = el('ai-recheck-all').checked;
+      let saved;
+      try { saved = readScan(owner, data.connection_id); } catch (error) { if (!fresh) throw error; }
+      let checkpoint = {identity: data.connection_id || null, catalog: [...data.models],
+        entries: !fresh && saved ? saved.entries.filter(entry => data.models.includes(entry.model)) : [],
+        dispatchedAt: saved?.dispatchedAt || [], nextAt: saved?.nextAt || 0};
+      const unfinished = data.models.filter(model => !checkpoint.entries.some(entry => entry.model === model));
+      checked = checkpoint.entries.filter(entry => entry.state !== 'sent').length;
+      passed = checkpoint.entries.filter(entry => entry.state === 'ok').length;
+      for (const entry of checkpoint.entries.filter(entry => entry.state === 'ok')) {
+        const option = document.createElement('option');
+        option.value = entry.model; option.textContent = entry.model; el('ai-model-list').append(option);
+      }
+      if (saved && !fresh) {
+        publishModels();
+        el('ai-selection-hint').textContent = 'Includes earlier successful checks. They were not checked again; access and quota may have changed.';
+      }
+      if (!unfinished.length) {
+        status.textContent = `Saved: ${checked}/${total} checked · ${passed} responded · ${checkpoint.entries.filter(entry => entry.state === 'sent').length} interrupted, not retried. Select Recheck all models only for a fresh scan.`;
+        return;
+      }
+      const accepted = await confirmModelChecks(unfinished.length, partial, modelAbort.signal);
       if (!current()) return;
       if (!accepted) {
-        status.textContent = 'Cancelled. No model tests were sent.';
+        status.textContent = 'Cancelled. No new model tests were sent; saved results are unchanged.';
         return;
       }
       if (!current()) return;
+      writeScan(owner, checkpoint);
       try { if (data.connection_id) localStorage.setItem(cacheName(owner, data.connection_id),
-        JSON.stringify({identity: data.connection_id, checkedAt: Date.now(), models: []})); } catch { cacheWarning(); }
-      const ordered = VJModelScan.plan(data.models, {}, {force: true, selected: el('ai-model').value}).pending;
+        JSON.stringify({identity: data.connection_id, checkedAt: Date.now(), models: checkpoint.entries.filter(entry => entry.state === 'ok').map(entry => entry.model)})); } catch { cacheWarning(); }
+      const ordered = VJModelScan.plan(unfinished, {}, {force: true, selected: el('ai-model').value}).pending;
+      const previousStarts = checkpoint.dispatchedAt.filter(at => at > Date.now() - 60000);
+      if (previousStarts.length > dispatchedAt.filter(at => at > Date.now() - 60000).length) dispatchedAt = Object.freeze(previousStarts);
+      nextProbeAt = Math.max(nextProbeAt, checkpoint.nextAt);
       progress.max = total;
-      progress.value = 0;
+      progress.value = checked;
       const result = await VJModelScan.run({
         models: ordered, mode: 'burst', signal: modelAbort.signal, current, startAt: nextProbeAt, dispatchedAt,
         maxCooldownMs: Infinity,
+        onDispatch: model => {
+          if (!current()) return;
+          checkpoint = {...checkpoint, entries: [...checkpoint.entries, {model, state: 'sent', at: Date.now()}]};
+          writeScan(owner, checkpoint);
+        },
         probe: model => call('/api/ai/models/test', {
           method: 'POST', headers: {'Content-Type': 'application/json'}, signal: modelAbort.signal,
           body: JSON.stringify({...draft, model, ...(data.connection_id ? {connection_id: data.connection_id} : {})})
@@ -256,11 +336,15 @@
           if (!current()) return;
           if (outcome.invalidate) {
             try { localStorage.removeItem(cacheName(owner, data.connection_id)); } catch { cacheWarning(); }
+            try { if (data.connection_id) localStorage.removeItem(scanName(owner, data.connection_id)); } catch { cacheWarning(); }
             resetModels();
             status.textContent = `Connection changed or key rejected. ${outcome.message}`;
             return;
           }
           checked++;
+          checkpoint = {...checkpoint, entries: checkpoint.entries.map(entry => entry.model === model
+            ? {...entry, state: outcome.ok ? 'ok' : 'failed', at: Date.now()} : entry)};
+          writeScan(owner, checkpoint);
           progress.value = checked;
           if (outcome.ok) {
             passed++;
@@ -275,6 +359,8 @@
           if (!current()) return;
           nextProbeAt = info.nextAt;
           dispatchedAt = info.dispatchedAt;
+          checkpoint = {...checkpoint, dispatchedAt: [...dispatchedAt], nextAt: nextProbeAt};
+          writeScan(owner, checkpoint);
           const wait = Math.max(0, Math.ceil((info.nextAt - Date.now()) / 1000));
           status.textContent = `Checked ${checked}/${total} · ${passed} responded${wait ? ` · waiting ${wait}s for quota` : ''}`;
         }
@@ -282,19 +368,22 @@
       if (!current()) return;
       publishModels();
       pill(passed ? 'ok' : 'saved', passed ? `${passed} models responded` : 'No confirmed models');
-      status.textContent = `${result.halted ? 'Stopped' : 'Complete'}: ${checked}/${total} checked · ${passed} responded.${partial}${result.halted ? ' Remaining models were not checked.' : ''}`;
+      const interrupted = checkpoint.entries.filter(entry => entry.state === 'sent').length;
+      status.textContent = `${result.halted ? 'Stopped' : 'Complete'}: ${checked}/${total} checked · ${passed} responded.${partial}${interrupted ? ` ${interrupted} interrupted requests were not retried.` : ''}${result.halted ? ' Continue to check models not yet sent.' : ''}`;
     } catch (error) {
       if (current()) {
         publishModels();
         status.textContent = `Stopped: ${error.message} ${checked}/${total} checked.`;
       }
     } finally {
+      releaseScan?.();
       if (activeScan?.request === request) activeScan = null;
       if (current()) {
         el('ai-fetch-models').disabled = testing;
         el('ai-fetch-models').setAttribute('aria-busy', 'false');
         el('ai-stop-models').hidden = true;
         el('ai-load-progress').hidden = true;
+        scanHint();
       }
     }
   }
@@ -354,6 +443,7 @@
         el('ai-key-hint').textContent = 'This checked draft is not saved. Save the profile to keep it after reload.';
       }
       modelSnapshot = pending;
+      scanHint();
       el('ai-source').hidden = Boolean(profile);
       el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Save a connection once, then switch profiles without entering keys again.';
       pill(profile ? 'saved' : 'none', profile ? `Using ${profile.name}` : 'No profile selected');
@@ -442,7 +532,9 @@
     stopModels();
     publishModels();
     el('ai-model-status').textContent = 'Stopped. Only completed successful responses are shown.';
+    scanHint();
   });
+  el('ai-recheck-all').addEventListener('change', scanHint);
   el('ai-model-list').addEventListener('change', () => {
     if (el('ai-model-list').value) el('ai-model').value = el('ai-model-list').value;
     invalidateSelection();

@@ -81,6 +81,12 @@ The settings UI runs up to four overlapping probes without a fixed four-second g
 
 Model discovery and verification continue when the learner visits another sidebar section. Returning to Settings preserves the current scan, progress, quota waiting and Stop control rather than reinitializing the form. A delayed older Settings response cannot overwrite a newer scan. Stop, changing credentials/profiles, logout or an account change still cancels the affected scan and discards late responses. Closing or reloading the browser page still ends the page-owned scan; it is not a server background job.
 
+### Resume an unfinished scan
+
+The browser stores a bounded `vjbot_ai_scan_v1` checkpoint per account and opaque connection identity, not the raw API key. It records the catalog, successful/failed/dispatched model IDs and rolling request timestamps/cooldown. Each dispatch is checkpointed before sending the request. Stop or reload preserves this checkpoint; continuing fetches the catalog again to validate the actual key and endpoint, then requests only model IDs never dispatched. Earlier successes remain visibly historical. Completed failures and requests interrupted after dispatch are not retried automatically, because upstream quota or charges may already have been consumed.
+
+**Continue unchecked models** is the default. If all candidates already have a dispatch record, the button shows saved results without another generation. **Recheck all models (uses quota again)** explicitly starts a fresh generation pass after confirmation, while retaining applicable cooldown/rate budget. Invalid checkpoints fail closed until an explicit fresh recheck. When Web Locks is available, a second tab cannot start a simultaneous scan for the same account/connection. Browser storage failures show a warning; progress cannot then be guaranteed across reloads. Checkpoints created before this feature are unavailable and cannot reconstruct unseen requests.
+
 **Save & use selected model** saves a previously responding model without another inference request. An empty key field reuses only the chosen profile's key for the same URL and protocol. Cached choices are historical observations, not a current quota or pricing guarantee.
 
 ## Saved API profiles

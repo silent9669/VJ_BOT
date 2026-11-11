@@ -756,6 +756,8 @@
                   <fieldset class="ai-step">
                     <legend><span class="ai-step-number" aria-hidden="true">02</span> Find usable models</legend>
                     <p class="ai-step-description">Check each model with your key. Only successful responses are offered. You confirm quota and possible charges before tests begin.</p>
+                    <label class="ai-field-hint ai-recheck"><input type="checkbox" id="ai-recheck-all"> Recheck all models (uses quota again)</label>
+                    <p class="ai-field-hint" id="ai-resume-hint" role="status">Continue only models never sent for this API connection. Interrupted requests are not retried automatically.</p>
                     <div class="ai-actions"><button type="button" class="stage-btn ai-load-button" id="ai-fetch-models">Find usable models</button><button type="button" class="stage-btn" id="ai-stop-models" hidden>Stop</button></div>
                     <progress id="ai-load-progress" aria-label="Model verification progress" hidden></progress>
                     <p id="ai-model-status" role="status" aria-live="polite"></p>

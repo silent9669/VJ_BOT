@@ -135,6 +135,7 @@ test('production scans use burst slots and retain the saved model when it verifi
 
 test('repeated scans and edited credentials share the signed-in account rolling budget', async () => {
   const ui = settings({models: Array.from({length: 10}, (_, i) => `model-${i}`)});
+  ui.element('ai-recheck-all').checked = true;
   await ui.context.renderAiPanels('settings');
   await ui.element('ai-fetch-models').events.click();
   await ui.element('ai-fetch-models').events.click();
@@ -151,18 +152,15 @@ test('repeated scans and edited credentials share the signed-in account rolling 
   assert.ok(Object.isFrozen(ui.scanRuns[1].dispatchedAt));
 });
 
-test('changing the signed-in account and logout reset the local budget', async () => {
+test('changing the signed-in account isolates its request budget from another account', async () => {
   const ui = settings({models: ['working']});
+  ui.element('ai-recheck-all').checked = true;
   await ui.context.renderAiPanels('settings');
   await ui.element('ai-fetch-models').events.click();
   ui.context.signedInUser = {user_id: 'test:other'};
   await ui.context.renderAiPanels('settings');
   await ui.element('ai-fetch-models').events.click();
   assert.equal(ui.scanRuns[1].dispatchedAt.length, 0);
-  ui.element('settings-logout').events.click();
-  await ui.context.renderAiPanels('settings');
-  await ui.element('ai-fetch-models').events.click();
-  assert.equal(ui.scanRuns[2].dispatchedAt.length, 0);
 });
 
 test('Escape closes cost consent without sending probes', async () => {
@@ -182,6 +180,7 @@ test('Stop and credential edits discard every late burst response but retain dis
     const ui = settings({models: ['one', 'two', 'three', 'four', 'five'],
       probe: model => new Promise(resolve => replies.push(() => resolve(Response.json({ok: true, model}))))});
     await ui.context.renderAiPanels('settings');
+    ui.element('ai-recheck-all').checked = true;
     const pending = ui.element('ai-fetch-models').events.click();
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(replies.length, 4);
@@ -294,6 +293,7 @@ test('a failed refresh cannot resurrect earlier successful models on reload', as
   const ui = settings({models: ['working'], probe: model => succeeds ? Response.json({ok: true, model})
     : Response.json({provider_status: 402, detail: 'Credits required'}, {status: 502})});
   await ui.context.renderAiPanels('settings');
+  ui.element('ai-recheck-all').checked = true;
   await ui.element('ai-fetch-models').events.click();
   succeeds = false;
   await ui.element('ai-fetch-models').events.click();
@@ -438,4 +438,100 @@ test('returning with another account cancels the previous account scan and disca
   replies.forEach(reply => reply());
   await pending;
   assert.deepEqual(ui.element('ai-model-list').options, []);
+});
+
+test('Stop then resume tests only models never dispatched, retaining successful results after reload', async () => {
+  const replies = new Map(), models = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+  const ui = settings({models, savedModel: 'one', probe: model => new Promise(resolve => replies.set(model, resolve))});
+  await ui.context.renderAiPanels('settings');
+  const first = ui.element('ai-fetch-models').click();
+  await new Promise(resolve => setImmediate(resolve));
+  replies.get('one')(Response.json({ok: true, model: 'one'}));
+  await new Promise(resolve => setImmediate(resolve));
+  ui.element('ai-stop-models').click();
+  for (const [model, resolve] of replies) if (model !== 'one') resolve(Response.json({ok: true, model}));
+  await first;
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 5);
+  const reloaded = settings({models, savedModel: 'one', storage: ui.storage});
+  await reloaded.context.renderAiPanels('settings');
+  assert.match(reloaded.element('ai-fetch-models').textContent, /Continue 3/);
+  await reloaded.element('ai-fetch-models').click();
+  assert.deepEqual(reloaded.requests.filter(r => r.path === '/api/ai/models/test').map(r => r.body.model), ['six', 'seven', 'eight']);
+  assert.deepEqual(reloaded.element('ai-model-list').options.map(o => o.value), ['one', 'six', 'seven', 'eight']);
+  assert.equal(reloaded.element('ai-load-progress').value, 4);
+  assert.match(reloaded.element('ai-model-status').textContent, /4 interrupted/);
+  const attempts = reloaded.requests.filter(r => r.path === '/api/ai/models/test').length;
+  await reloaded.element('ai-fetch-models').click();
+  assert.equal(reloaded.requests.filter(r => r.path === '/api/ai/models/test').length, attempts);
+});
+
+test('failed and quota responses are not retried by resume; only explicit recheck spends quota again', async () => {
+  const ui = settings();
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').click();
+  await ui.element('ai-fetch-models').click();
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 3);
+  ui.element('ai-recheck-all').checked = true;
+  await ui.element('ai-fetch-models').click();
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 6);
+});
+
+test('checkpoints bind the actual key connection, never cache a raw draft key, and do not cross accounts', async () => {
+  const ui = settings({models: ['working'], draftConnection: 'draft-identity'});
+  await ui.context.renderAiPanels('settings');
+  ui.element('ai-key').value = 'private-checkpoint-key';
+  ui.element('ai-key').events.input();
+  await ui.element('ai-fetch-models').click();
+  assert.equal(JSON.stringify([...ui.storage]).includes('private-checkpoint-key'), false);
+  const anotherKey = settings({models: ['working'], storage: ui.storage, connection: 'new-key-identity'});
+  await anotherKey.context.renderAiPanels('settings');
+  await anotherKey.element('ai-fetch-models').click();
+  assert.equal(anotherKey.requests.filter(r => r.path === '/api/ai/models/test').length, 1);
+  const anotherAccount = settings({models: ['working'], storage: ui.storage, connection: 'draft-identity'});
+  anotherAccount.context.signedInUser = {user_id: 'test:other'};
+  await anotherAccount.context.renderAiPanels('settings');
+  await anotherAccount.element('ai-fetch-models').click();
+  assert.equal(anotherAccount.requests.filter(r => r.path === '/api/ai/models/test').length, 1);
+});
+
+test('an invalid checkpoint fails closed until explicit fresh recheck', async () => {
+  const ui = settings({models: ['working']});
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').click();
+  const key = [...ui.storage.keys()].find(k => k.startsWith('vjbot_ai_scan_v1:'));
+  ui.storage.set(key, '{invalid');
+  await ui.element('ai-fetch-models').click();
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 1);
+  assert.match(ui.element('ai-model-status').textContent, /Saved scan progress is invalid/);
+  ui.element('ai-recheck-all').checked = true;
+  await ui.element('ai-fetch-models').click();
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 2);
+});
+
+test('continuing a checkpoint honors its persisted quota cooldown before dispatching new models', async () => {
+  const ui = settings({models: ['working']});
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').click();
+  const key = [...ui.storage.keys()].find(k => k.startsWith('vjbot_ai_scan_v1:'));
+  const cached = JSON.parse(ui.storage.get(key)), resumeAt = Date.now() + 30000;
+  ui.storage.set(key, JSON.stringify({...cached, catalog: ['working', 'new-model'], nextAt: resumeAt}));
+  const reloaded = settings({models: ['working', 'new-model'], storage: ui.storage});
+  await reloaded.context.renderAiPanels('settings');
+  await reloaded.element('ai-fetch-models').click();
+  const calls = reloaded.requests.filter(r => r.path === '/api/ai/models/test');
+  assert.deepEqual(calls.map(r => r.body.model), ['new-model']);
+  assert.ok(calls[0].at >= resumeAt);
+});
+
+test('another active scan lock prevents duplicate probes or resetting its checkpoint', async () => {
+  const ui = settings({models: ['working']});
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').click();
+  const before = JSON.stringify([...ui.storage]);
+  ui.element('ai-recheck-all').checked = true;
+  ui.context.navigator = {locks: {request: async (_name, _options, callback) => callback(null)}};
+  await ui.element('ai-fetch-models').click();
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 1);
+  assert.equal(JSON.stringify([...ui.storage]), before);
+  assert.match(ui.element('ai-model-status').textContent, /Another scan/);
 });
