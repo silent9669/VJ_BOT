@@ -758,6 +758,16 @@
                   </fieldset>
                   <div class="ai-connection-footer"><span>Changing the URL, API type or key clears the model list.</span><button type="button" class="stage-btn" id="ai-remove" hidden>Remove saved key</button></div>
                 </form>
+                <dialog id="ai-confirm-dialog" class="ai-confirm-dialog" aria-labelledby="ai-confirm-title" aria-describedby="ai-confirm-description ai-confirm-warning">
+                  <form method="dialog">
+                    <header><p class="ai-confirm-eyebrow">API connection</p><h2 id="ai-confirm-title">Find models you can use</h2></header>
+                    <p class="ai-confirm-count"><strong id="ai-confirm-count"></strong><span>models to check</span></p>
+                    <p id="ai-confirm-description">One short test per model. Only models that respond will appear in your list.</p>
+                    <p id="ai-confirm-warning" class="ai-confirm-warning">Tests use your quota and may charge your provider account, including paid models. Stopping cannot reverse requests already sent.</p>
+                    <p id="ai-confirm-partial" hidden>The provider returned a partial catalog. Other models will not be checked.</p>
+                    <footer><button type="submit" class="stage-btn" value="cancel" autofocus>Cancel</button><button type="submit" class="public-cta" id="ai-confirm-start" value="start">Start checks</button></footer>
+                  </form>
+                </dialog>
               </section>
               <section class="settings-card" id="settings-sound-card">
                 <header class="card-head"><h2 class="card-title">Âm thanh</h2></header>

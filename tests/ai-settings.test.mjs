@@ -12,6 +12,11 @@ function settings({consent = true} = {}) {
       value: '', children: [], events: {}, attributes: {}, dataset: {}, hidden: false, disabled: false,
       get options() { return this.children; },
       addEventListener(name, handler) { this.events[name] = handler; },
+      showModal() {
+        this.open = true;
+        if (consent !== null) queueMicrotask(() => this.close(consent ? 'start' : 'cancel'));
+      },
+      close(value = '') { this.open = false; this.returnValue = value; this.events.close?.(); },
       setAttribute(name, value) { this.attributes[name] = value; },
       getAttribute(name) { return this.attributes[name]; },
       removeAttribute(name) { delete this.attributes[name]; },
@@ -23,7 +28,7 @@ function settings({consent = true} = {}) {
   };
   const context = vm.createContext({Response, AbortController, Date, console,
     signedInUser: {user_id: 'test:owner'}, switchTab() {},
-    confirm: () => consent,
+    confirm: () => { throw new Error('Browser confirmation must not be used for model checks'); },
     VJModelScan: {plan: scanner.plan, run: options => scanner.run({...options,
       now: () => clock, sleep: async ms => { clock += ms; }})},
     document: {getElementById: element, querySelectorAll: () => [], querySelector: selector => element(selector),
@@ -74,4 +79,19 @@ test('declining per-model cost consent sends no probes and offers no catalog-onl
   assert.deepEqual(ui.element('ai-model-list').options, []);
   assert.equal(ui.element('ai-save').disabled, true);
   assert.equal(ui.element('ai-models').hidden, true);
+});
+
+test('model probes wait for explicit in-app consent and credential edits close the pending dialog', async () => {
+  const ui = settings({consent: null});
+  await ui.context.renderAiPanels('settings');
+  const pending = ui.element('ai-fetch-models').events.click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ui.element('ai-confirm-dialog').open, true);
+  assert.equal(ui.requests.some(request => request.path === '/api/ai/models/test'), false);
+  ui.element('ai-key').value = 'replacement-test-key';
+  ui.element('ai-key').events.input();
+  await pending;
+  assert.equal(ui.element('ai-confirm-dialog').open, false);
+  assert.equal(ui.requests.some(request => request.path === '/api/ai/models/test'), false);
+  assert.equal(ui.element('ai-save').disabled, true);
 });

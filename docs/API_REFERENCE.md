@@ -62,6 +62,8 @@ Các route `/api/ai/*` và `/api/admin/*` do `src/providers.js` xử lý riêng,
 
 In Settings, enter an API base URL and key, choose its protocol, then select **Find usable models**. The app fetches candidates and asks for explicit confirmation before sending one real generation request per model. These requests use quota and can incur charges, including paid models. Opening Settings or editing a key does not start tests. The UI shows only progress and, after completion or Stop, successfully responding models.
 
+The confirmation is an in-app native dialog matching the shared surface styles, not a browser `confirm()` popup. It shows the candidate count, per-model test scope, quota/charge warning and partial-catalog notice. Cancel receives initial focus; Escape or cancellation sends no probes. Only the explicit start action permits inference. Credential edits or logout abort a pending confirmation. The dialog reflows on mobile and uses 44-pixel action targets.
+
 - OpenAI-compatible: `GET <base>/models` with Bearer authentication. Custom public HTTPS endpoints use the same protocol; arbitrary authentication formats are not inferred.
 - Claude: `GET <base>/v1/models`, or `/models` when the base already ends in `/v1`, using `x-api-key` and `anthropic-version`.
 - Gemini: `GET <base>/v1beta/models` using `x-goog-api-key`; only models supporting `generateContent` are listed.

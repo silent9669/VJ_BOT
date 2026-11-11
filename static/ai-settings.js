@@ -55,6 +55,23 @@
     }
     el('ai-save').disabled = !storageEnabled || !list.value;
   }
+  function confirmModelChecks(total, partial, signal) {
+    if (signal.aborted) return Promise.resolve(false);
+    const dialog = el('ai-confirm-dialog');
+    el('ai-confirm-count').textContent = String(total);
+    el('ai-confirm-start').textContent = `Check ${total} models`;
+    el('ai-confirm-partial').hidden = !partial;
+    dialog.returnValue = '';
+    return new Promise(resolve => {
+      const cancel = () => { if (dialog.open) dialog.close('cancel'); };
+      dialog.addEventListener('close', () => {
+        signal.removeEventListener('abort', cancel);
+        resolve(!signal.aborted && dialog.returnValue === 'start');
+      }, {once: true});
+      signal.addEventListener('abort', cancel, {once: true});
+      dialog.showModal();
+    });
+  }
   async function loadModels() {
     if (testing) return;
     resetModels();
@@ -84,7 +101,9 @@
       total = data.models.length;
       partial = data.truncated ? ' Catalog is partial.' : '';
       if (!total) { status.textContent = 'No candidate models returned.'; return; }
-      if (!confirm(`Check all ${total} models with a real generation request for each? Requests use your quota and may incur charges, including paid models. Stop cannot undo requests already sent.${partial}`)) {
+      const accepted = await confirmModelChecks(total, partial, modelAbort.signal);
+      if (!current()) return;
+      if (!accepted) {
         status.textContent = 'Cancelled. No model tests were sent.';
         return;
       }

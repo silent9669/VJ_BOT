@@ -97,6 +97,18 @@ body[data-page=settings] #lam-walker{display:none}
 
 /* Dialogs, popovers and overlays share one frame. */
 dialog,.sensei-floating-popover,.picker-card{border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface);color:var(--ink);box-shadow:var(--elev-3,0 20px 56px rgba(41,40,35,.18))}
+.ai-confirm-dialog{width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:28px;overflow:auto}
+.ai-confirm-dialog form{display:grid;gap:20px}
+.ai-confirm-dialog p{margin:0;font-size:14px;line-height:1.65}
+.ai-confirm-dialog .ai-confirm-eyebrow{color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.ai-confirm-dialog h2{margin:0;font-size:24px;line-height:1.25;letter-spacing:-.025em}
+.ai-confirm-dialog .ai-confirm-count{display:flex;align-items:baseline;gap:10px;padding:16px 18px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-1)}
+.ai-confirm-count strong{font-size:32px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.ai-confirm-count span{color:var(--muted)}
+.ai-confirm-dialog .ai-confirm-warning{padding-left:12px;border-left:2px solid var(--warn);color:var(--ink)}
+.ai-confirm-dialog footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;border-top:1px solid var(--line);padding-top:20px}
+.ai-confirm-dialog footer button{min-height:44px;padding:10px 16px}
+.ai-confirm-dialog button:focus-visible{outline:3px solid var(--study-accent,#38594c);outline-offset:3px}
 .sensei-floating-popover{width:min(420px,calc(100vw - 32px));bottom:96px}
 .popover-header{background:var(--surface-2);border-bottom:1px solid var(--line);padding:10px 12px 10px 16px;color:var(--ink)}
 .popover-header h4{margin:0;font-size:15px;font-weight:600}
