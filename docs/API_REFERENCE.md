@@ -79,6 +79,8 @@ Redirects are not followed with credentials. Pagination is bounded to five pages
 
 The settings UI runs up to four overlapping probes without a fixed four-second gap. A rolling page-memory budget allows at most 19 probe starts per 60 seconds, reserving one request for discovery under the unchanged server limit of 20 AI requests/account/minute. The same account's budget survives repeated scans and credential edits; other tabs and chat may still consume server quota. HTTP 429 reduces overlap and pauses pending candidates for `Retry-After`, or a 30-second fallback, without retrying the failed model. Stop remains available during waiting. Quota errors mean temporarily unconfirmed, not permanent denial. Revoked keys, session errors or connection changes stop dispatch and clear affected choices.
 
+Model discovery and verification continue when the learner visits another sidebar section. Returning to Settings preserves the current scan, progress, quota waiting and Stop control rather than reinitializing the form. A delayed older Settings response cannot overwrite a newer scan. Stop, changing credentials/profiles, logout or an account change still cancels the affected scan and discards late responses. Closing or reloading the browser page still ends the page-owned scan; it is not a server background job.
+
 **Save & use selected model** saves a previously responding model without another inference request. An empty key field reuses only the chosen profile's key for the same URL and protocol. Cached choices are historical observations, not a current quota or pricing guarantee.
 
 ## Saved API profiles

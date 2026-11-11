@@ -352,3 +352,90 @@ test('explicit no-profile state survives Settings and does not restore a server 
   await ui.context.checkAiReady();
   assert.equal(ui.element('chat-locked').hidden, false);
 });
+
+test('returning to Settings preserves an active scan and its progress until every model completes', async () => {
+  const replies = new Map(), signals = [];
+  const ui = settings({models: ['one', 'two', 'three', 'four', 'five'], probe: (model, options) => {
+    signals.push(options.signal);
+    return new Promise(resolve => replies.set(model, resolve));
+  }});
+  await ui.context.renderAiPanels('settings');
+  const pending = ui.element('ai-fetch-models').click();
+  await new Promise(resolve => setImmediate(resolve));
+  replies.get('one')(Response.json({ok: true, model: 'one'}));
+  await new Promise(resolve => setImmediate(resolve));
+  const progress = ui.element('ai-model-status').textContent;
+  const reads = ui.requests.filter(r => r.path === '/api/ai/profiles').length;
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').click();
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/profiles').length, reads);
+  assert.equal(ui.scanRuns.length, 1);
+  assert.equal(ui.element('ai-load-progress').value, 1);
+  assert.equal(ui.element('ai-model-status').textContent, progress);
+  assert.equal(ui.element('ai-stop-models').hidden, false);
+  assert.ok(signals.every(signal => !signal.aborted));
+  for (const model of ['two', 'three', 'four', 'five']) replies.get(model)(Response.json({ok: true, model}));
+  await pending;
+  assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['one', 'two', 'three', 'four', 'five']);
+  assert.match(ui.element('ai-model-status').textContent, /Complete: 5\/5/);
+});
+
+test('navigation during catalog retrieval or pending consent neither cancels nor starts probes early', async () => {
+  const ui = settings({models: ['working'], consent: null});
+  await ui.context.renderAiPanels('settings');
+  const api = ui.context.apiFetch;
+  let releaseCatalog, catalogSignal;
+  ui.context.apiFetch = (path, options) => path === '/api/ai/models'
+    ? new Promise(resolve => { catalogSignal = options.signal; releaseCatalog = () => resolve(Response.json({models: ['working'], connection_id: 'bound-connection'})); })
+    : api(path, options);
+  const pending = ui.element('ai-fetch-models').click();
+  await new Promise(resolve => setImmediate(resolve));
+  await ui.context.renderAiPanels('settings');
+  assert.equal(catalogSignal.aborted, false);
+  releaseCatalog();
+  await new Promise(resolve => setImmediate(resolve));
+  await ui.context.renderAiPanels('settings');
+  assert.equal(ui.element('ai-confirm-dialog').open, true);
+  assert.equal(ui.requests.some(r => r.path === '/api/ai/models/test'), false);
+  ui.element('ai-confirm-dialog').close('start');
+  await pending;
+  assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['working']);
+});
+
+test('an earlier delayed Settings render cannot cancel a newly started scan', async () => {
+  const replies = [];
+  const ui = settings({models: ['one', 'two'], probe: model => new Promise(resolve => replies.push(() => resolve(Response.json({ok: true, model}))))});
+  await ui.context.renderAiPanels('settings');
+  const api = ui.context.apiFetch;
+  let releaseSettings;
+  ui.context.apiFetch = (path, options) => path === '/api/ai/profiles'
+    ? new Promise(resolve => { releaseSettings = async () => resolve(await api(path, options)); }) : api(path, options);
+  const earlierRender = ui.context.renderAiPanels('settings');
+  await new Promise(resolve => setImmediate(resolve));
+  const pending = ui.element('ai-fetch-models').click();
+  await new Promise(resolve => setImmediate(resolve));
+  await releaseSettings();
+  await earlierRender;
+  assert.equal(ui.element('ai-stop-models').hidden, false);
+  assert.equal(ui.element('ai-fetch-models').disabled, true);
+  replies.forEach(reply => reply());
+  await pending;
+  assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['one', 'two']);
+});
+
+test('returning with another account cancels the previous account scan and discards late responses', async () => {
+  const replies = [], signals = [];
+  const ui = settings({models: ['one', 'two'], probe: (model, options) => {
+    signals.push(options.signal);
+    return new Promise(resolve => replies.push(() => resolve(Response.json({ok: true, model}))));
+  }});
+  await ui.context.renderAiPanels('settings');
+  const pending = ui.element('ai-fetch-models').click();
+  await new Promise(resolve => setImmediate(resolve));
+  ui.context.signedInUser = {user_id: 'test:other'};
+  await ui.context.renderAiPanels('settings');
+  assert.ok(signals.every(signal => signal.aborted));
+  replies.forEach(reply => reply());
+  await pending;
+  assert.deepEqual(ui.element('ai-model-list').options, []);
+});

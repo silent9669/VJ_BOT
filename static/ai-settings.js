@@ -5,6 +5,7 @@
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
   let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
   let modelSnapshot = null;
+  let activeScan = null;
   let profileRows = [], selectedProfile = null, profileKey = '', rendering = 0;
   const profileChoice = profile => profile ? `${profile.scope}:${profile.id}` : '';
   const draftKey = () => el('ai-key').value.trim() || (selectedProfile?.protocol === el('ai-protocol').value
@@ -148,6 +149,8 @@
     resetModels();
   }
   function stopModels() {
+    activeScan = null;
+    rendering++;
     modelRequest++;
     modelAbort?.abort();
     el('ai-stop-models').hidden = true;
@@ -199,7 +202,7 @@
     });
   }
   async function loadModels() {
-    if (testing) return;
+    if (testing || activeScan) return;
     resetModels();
     invalidateSelection();
     syncProbeBudget();
@@ -211,6 +214,7 @@
       return;
     }
     modelAbort = new AbortController();
+    activeScan = {owner, request};
     const current = () => request === modelRequest && signedInUser?.user_id === owner;
     let checked = 0, passed = 0, total = 0, partial = '';
     const progress = el('ai-load-progress');
@@ -285,6 +289,7 @@
         status.textContent = `Stopped: ${error.message} ${checked}/${total} checked.`;
       }
     } finally {
+      if (activeScan?.request === request) activeScan = null;
       if (current()) {
         el('ai-fetch-models').disabled = testing;
         el('ai-fetch-models').setAttribute('aria-busy', 'false');
@@ -306,16 +311,19 @@
 
   async function renderSettings() {
     if (testing) return;
-    const version = ++rendering, owner = signedInUser?.user_id;
+    const owner = signedInUser?.user_id;
+    if (activeScan && activeScan.owner !== owner) resetModels();
     syncProbeBudget();
     renderAccountCard();
+    if (activeScan?.owner === owner) return;
+    const version = ++rendering;
     const status = el('ai-status'), pending = modelSnapshot?.owner === owner && modelSnapshot.draft?.api_key ? modelSnapshot : null;
     status.textContent = '';
     try {
       const data = await call('/api/ai/profiles');
       let local = [], deviceError = '';
       try { local = await VJProfiles.list(owner); } catch { deviceError = 'Device storage is unavailable. Choose server storage or enable browser storage.'; }
-      if (testing || version !== rendering || signedInUser?.user_id !== owner) return;
+      if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
       profileRows = [...data.profiles.map(profile => ({...profile, scope: 'server'})), ...local.map(profile => ({...profile, scope: 'local'}))];
       storageEnabled = data.can_store;
       const choice = VJProfiles.active(owner);
@@ -324,7 +332,7 @@
         : profileRows.find(row => row.scope === 'server' && row.id === (choice?.scope === 'server' ? choice.id : data.active_id));
       let key = '';
       if (profile?.scope === 'local') key = (await VJProfiles.load(owner, profile.id)).api_key;
-      if (version !== rendering || signedInUser?.user_id !== owner) return;
+      if (activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
       if (!choice && profile) VJProfiles.setActive(owner, {scope: profile.scope, id: profile.id});
       savedConnection = Boolean(profile);
       const list = el('ai-profile-list');
