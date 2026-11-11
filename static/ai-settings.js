@@ -3,11 +3,14 @@
   const el = id => document.getElementById(id);
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
+  let nextProbeAt = 0, timingIdentity = null;
   const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
     const response = await apiFetch(path, options);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || 'Request failed. Please try again.');
+    if (!response.ok) throw Object.assign(new Error(data.detail || 'Request failed. Please try again.'), {
+      status: response.status, providerStatus: data.provider_status, retryAfterMs: data.retry_after_ms
+    });
     return data;
   }
   const send = (path, method, body) => call(path, {method, headers: {'Content-Type': 'application/json'}, body: body && JSON.stringify(body)});
@@ -34,12 +37,23 @@
     el('ai-model-list').disabled = true;
     el('ai-save').disabled = true;
     el('ai-model-status').textContent = '';
-    el('ai-selection-hint').textContent = 'Load models, choose one, then save to chat. No test message is sent.';
+    el('ai-selection-hint').textContent = 'Only models that returned a real response can be selected. Future quota and availability may change.';
   }
   function invalidateSelection() {
     pill('saved', 'Connection not saved');
     el('ai-status').textContent = '';
     el('ai-chat').hidden = true;
+  }
+  function publishModels() {
+    const list = el('ai-model-list'), available = list.options.length > 0;
+    el('ai-models').hidden = !available;
+    list.disabled = !available;
+    if (available) {
+      list.value = [...list.options].some(option => option.value === el('ai-model').value)
+        ? el('ai-model').value : list.options[0].value;
+      el('ai-model').value = list.value;
+    }
+    el('ai-save').disabled = !storageEnabled || !list.value;
   }
   async function loadModels() {
     if (testing) return;
@@ -48,11 +62,14 @@
     const request = modelRequest, status = el('ai-model-status'), owner = signedInUser?.user_id;
     const draft = {protocol: el('ai-protocol').value, base_url: el('ai-base').value, api_key: el('ai-key').value.trim()};
     if (!draft.api_key && !savedConnection) {
-      status.textContent = 'Enter your API URL and key to load models.';
+      status.textContent = 'Enter your API URL and key to check models.';
       return;
     }
     modelAbort = new AbortController();
     const current = () => request === modelRequest && signedInUser?.user_id === owner;
+    let checked = 0, passed = 0, total = 0, partial = '';
+    const progress = el('ai-load-progress');
+    progress.removeAttribute('value');
     el('ai-fetch-models').disabled = true;
     el('ai-fetch-models').setAttribute('aria-busy', 'true');
     el('ai-load-progress').hidden = false;
@@ -64,29 +81,61 @@
         signal: modelAbort.signal, body: JSON.stringify(draft)
       });
       if (!current()) return;
-      const list = el('ai-model-list');
-      const options = data.models.map(model => {
-        const option = document.createElement('option');
-        option.value = model;
-        option.textContent = model;
-        return option;
-      });
-      list.replaceChildren(...options);
-      el('ai-models').hidden = !options.length;
-      list.disabled = !options.length;
-      if (options.length) {
-        list.value = data.models.includes(el('ai-model').value) ? el('ai-model').value : data.models[0];
-        el('ai-model').value = list.value;
+      total = data.models.length;
+      partial = data.truncated ? ' Catalog is partial.' : '';
+      if (!total) { status.textContent = 'No candidate models returned.'; return; }
+      if (!confirm(`Check all ${total} models with a real generation request for each? Requests use your quota and may incur charges, including paid models. Stop cannot undo requests already sent.${partial}`)) {
+        status.textContent = 'Cancelled. No model tests were sent.';
+        return;
       }
-      el('ai-save').disabled = !storageEnabled || !list.value;
-      const scope = data.scope === 'key_filtered'
-        ? `Filtered for this key${data.free_only ? ' · zero-price models only' : ''}. Quota still applies.`
-        : 'Provider catalog · this API does not confirm per-key model access or quota.';
-      el('ai-selection-hint').textContent = scope;
-      status.textContent = `${options.length} models${data.truncated ? ' · partial list' : ''}. No test messages sent.`;
-      pill('saved', data.scope === 'key_filtered' ? 'Key-filtered list' : 'Provider catalog');
+      if (!current()) return;
+      if (data.connection_id !== timingIdentity) {
+        nextProbeAt = 0;
+        timingIdentity = data.connection_id;
+      }
+      const ordered = VJModelScan.plan(data.models, {}, {force: true, selected: el('ai-model').value}).pending;
+      progress.max = total;
+      progress.value = 0;
+      const result = await VJModelScan.run({
+        models: ordered, signal: modelAbort.signal, current, startAt: nextProbeAt,
+        maxCooldownMs: Infinity,
+        probe: model => call('/api/ai/models/test', {
+          method: 'POST', headers: {'Content-Type': 'application/json'}, signal: modelAbort.signal,
+          body: JSON.stringify({...draft, model, ...(data.connection_id ? {connection_id: data.connection_id} : {})})
+        }),
+        onResult: (model, outcome) => {
+          if (!current()) return;
+          if (outcome.invalidate) {
+            resetModels();
+            status.textContent = `Connection changed or key rejected. ${outcome.message}`;
+            return;
+          }
+          checked++;
+          progress.value = checked;
+          if (outcome.ok) {
+            passed++;
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            el('ai-model-list').append(option);
+          }
+        },
+        onState: info => {
+          if (!current()) return;
+          nextProbeAt = info.nextAt;
+          const wait = Math.max(0, Math.ceil((info.cooldownUntil - Date.now()) / 1000));
+          status.textContent = `Checked ${checked}/${total} · ${passed} responded${wait ? ` · waiting ${wait}s for quota` : ''}`;
+        }
+      });
+      if (!current()) return;
+      publishModels();
+      pill(passed ? 'ok' : 'saved', passed ? `${passed} models responded` : 'No confirmed models');
+      status.textContent = `${result.halted ? 'Stopped' : 'Complete'}: ${checked}/${total} checked · ${passed} responded.${partial}${result.halted ? ' Remaining models were not checked.' : ''}`;
     } catch (error) {
-      if (current()) status.textContent = error.message;
+      if (current()) {
+        publishModels();
+        status.textContent = `Stopped: ${error.message} ${checked}/${total} checked.`;
+      }
     } finally {
       if (current()) {
         el('ai-fetch-models').disabled = testing;
@@ -202,7 +251,8 @@
   el('ai-fetch-models').addEventListener('click', () => loadModels());
   el('ai-stop-models').addEventListener('click', () => {
     stopModels();
-    el('ai-model-status').textContent = 'Loading cancelled.';
+    publishModels();
+    el('ai-model-status').textContent = 'Stopped. Only completed successful responses are shown.';
   });
   el('ai-model-list').addEventListener('change', () => {
     if (el('ai-model-list').value) el('ai-model').value = el('ai-model-list').value;
@@ -230,7 +280,7 @@
     if (testing) return;
     const model = el('ai-model-list').value;
     if (el('ai-models').hidden || !model) {
-      el('ai-status').textContent = 'Load models first, then choose a model.';
+      el('ai-status').textContent = 'Check models first, then choose a successful result.';
       return;
     }
     stopModels();
@@ -245,7 +295,7 @@
     try {
       await send('/api/ai/settings', 'PUT', {protocol: el('ai-protocol').value, base_url: el('ai-base').value, model, api_key: el('ai-key').value.trim()});
       saved = true;
-      status.textContent = `Saved ${model}. No test message sent.`;
+      status.textContent = `Saved ${model}. Its last model check succeeded.`;
     } catch (error) { status.textContent = `Connection was not saved. ${error.message}`; }
     controls.forEach((control, index) => { control.disabled = disabled[index]; });
     testing = false;

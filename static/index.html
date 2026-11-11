@@ -742,17 +742,17 @@
                     <p class="ai-field-hint" id="ai-key-hint">Stored encrypted on the server. Never paste your key into chat.</p>
                   </fieldset>
                   <fieldset class="ai-step">
-                    <legend><span class="ai-step-number" aria-hidden="true">02</span> Load models</legend>
-                    <p class="ai-step-description">Get the provider's model list using your API key. No test messages.</p>
-                    <div class="ai-actions"><button type="button" class="stage-btn ai-load-button" id="ai-fetch-models">Load models</button><button type="button" class="stage-btn" id="ai-stop-models" hidden>Cancel</button></div>
-                    <progress id="ai-load-progress" aria-label="Loading model list" hidden></progress>
+                    <legend><span class="ai-step-number" aria-hidden="true">02</span> Find usable models</legend>
+                    <p class="ai-step-description">Check each model with your key. Only successful responses are offered. You confirm quota and possible charges before tests begin.</p>
+                    <div class="ai-actions"><button type="button" class="stage-btn ai-load-button" id="ai-fetch-models">Find usable models</button><button type="button" class="stage-btn" id="ai-stop-models" hidden>Stop</button></div>
+                    <progress id="ai-load-progress" aria-label="Model verification progress" hidden></progress>
                     <p id="ai-model-status" role="status" aria-live="polite"></p>
                   </fieldset>
                   <fieldset class="ai-step">
                     <legend><span class="ai-step-number" aria-hidden="true">03</span> Choose &amp; start chatting</legend>
-                    <label id="ai-models" hidden>Models<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
+                    <label id="ai-models" hidden>Successfully checked models<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
                     <input id="ai-model" type="hidden" maxlength="100">
-                    <p class="ai-field-hint" id="ai-selection-hint">Load models, choose one, then save to chat. No test message is sent.</p>
+                    <p class="ai-field-hint" id="ai-selection-hint">Only models that returned a real response can be selected. Future quota and availability may change.</p>
                     <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save" disabled>Use selected model</button><button type="button" class="stage-btn" id="ai-chat" hidden>Start chatting</button></div>
                     <p id="ai-status" role="status"></p>
                   </fieldset>
@@ -920,6 +920,7 @@
   <script src="learning.js"></script>
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
   <script src="account.js"></script>
+  <script src="model-scan.js"></script>
   <script src="ai-settings.js"></script>
   <script src="admin-users.js"></script>
   <script src="teacher-context.js"></script>

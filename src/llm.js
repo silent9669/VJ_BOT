@@ -74,7 +74,7 @@ function textOf(protocol, data) {
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
 export async function callLLM(provider, {system, turns, json = false}, {budgetMs = 28000, attemptMs = 15000} = {}) {
   const deadline = Date.now() + budgetMs, history = normalizeTurns(turns);
-  let status = 503;
+  let status = 503, retryAfterMs;
   for (const model of provider.models) {
     const left = deadline - Date.now();
     if (left < 1000) break;
@@ -94,6 +94,13 @@ export async function callLLM(provider, {system, turns, json = false}, {budgetMs
         continue;
       }
       status = response.status >= 300 && response.status < 400 ? 502 : response.status;
+      retryAfterMs = undefined;
+      if (status === 429) {
+        const raw = response.headers.get('Retry-After');
+        const delay = raw && (/^\d+(?:\.\d+)?$/.test(raw.trim())
+          ? Number(raw) * 1000 : Date.parse(raw) - Date.now());
+        if (raw && Number.isFinite(delay)) retryAfterMs = Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(delay)));
+      }
       console.warn('AI', provider.source, model, status);
       if (!RETRYABLE.has(status)) break;
     } catch (error) {
@@ -101,7 +108,7 @@ export async function callLLM(provider, {system, turns, json = false}, {budgetMs
       status = 504;
     }
   }
-  return {status};
+  return {status, ...(status === 429 && retryAfterMs !== undefined ? {retryAfterMs} : {})};
 }
 
 export function failureMessage(status) {
@@ -119,6 +126,7 @@ export async function listModels({protocol, baseUrl, apiKey}) {
   const base = cleanBaseUrl(protocol, baseUrl);
   if (base.error) return {status: 400};
   const openRouter = protocol === 'openai' && base.url === 'https://openrouter.ai/api/v1';
+  const siliconFlow = protocol === 'openai' && ['https://api.siliconflow.com/v1', 'https://api.siliconflow.cn/v1'].includes(base.url);
   const suffix = protocol === 'openai' ? '/models' : protocol === 'anthropic'
     ? `${base.url.endsWith('/v1') ? '' : '/v1'}/models` : '/v1beta/models';
   const endpoint = base.url + (openRouter ? '/models/user' : suffix);
@@ -149,6 +157,7 @@ export async function listModels({protocol, baseUrl, apiKey}) {
     for (let page = 0; page < 5; page++) {
       const url = new URL(endpoint);
       if (openRouter) url.searchParams.set('output_modalities', 'text');
+      if (siliconFlow) url.searchParams.set('sub_type', 'chat');
       if (protocol === 'gemini') url.searchParams.set('pageSize', '1000');
       if (protocol === 'anthropic') url.searchParams.set('limit', '1000');
       if (cursor) url.searchParams.set(protocol === 'gemini' ? 'pageToken' : 'after_id', cursor);

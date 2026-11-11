@@ -80,6 +80,15 @@ async function overview(env) {
   };
 }
 
+// Opaque cache identity; never expose a plain hash of a learner's API key.
+async function connectionId(env, userId, protocol, baseUrl, apiKey) {
+  if (!env.AI_KEY_SECRET) return null;
+  const key = await crypto.subtle.importKey('raw', text.encode('model-scan-v1\0' + env.AI_KEY_SECRET),
+    {name: 'HMAC', hash: 'SHA-256'}, false, ['sign']);
+  const signature = await crypto.subtle.sign('HMAC', key, text.encode(JSON.stringify([userId, protocol, baseUrl, apiKey])));
+  return b64(new Uint8Array(signature));
+}
+
 // /api/ai/* (a learner's own API) and /api/admin/* (platform settings, admins only).
 export async function aiRoute(request, env, url) {
   const user = await sessionUser(request, env);
@@ -115,11 +124,13 @@ export async function aiRoute(request, env, url) {
     await env.DB.prepare('DELETE FROM ai_providers WHERE user_id=?').bind(user.user_id).run();
     return json({ok: true});
   }
-  if (path === '/api/ai/models' && method === 'POST') {
+  if (['/api/ai/models', '/api/ai/models/test'].includes(path) && method === 'POST') {
     const data = await body(request);
     if (!data) return json({detail: 'Invalid model discovery request.'}, 400);
     const base = cleanBaseUrl(data.protocol, data.base_url);
     if (base.error) return json({detail: base.error}, 400);
+    const probe = path === '/api/ai/models/test';
+    if (probe && !modelOk(data.model)) return json({detail: 'Invalid model ID.'}, 400);
     let apiKey = data.api_key;
     if (apiKey !== undefined && apiKey !== '' && (typeof apiKey !== 'string' || !/^[\x21-\x7e]{8,512}$/.test(apiKey))) {
       return json({detail: 'Invalid API key.'}, 400);
@@ -132,9 +143,23 @@ export async function aiRoute(request, env, url) {
       apiKey = await unseal(env, user.user_id, own.key_enc);
       if (!apiKey) return json({detail: REKEY, code: 'rekey'}, 409);
     }
-    if (await rateLimited(env, user.user_id)) return json({detail: 'Too many requests. Try again in a minute.'}, 429);
+    const identity = await connectionId(env, user.user_id, data.protocol, base.url, apiKey);
+    if (probe && data.connection_id !== undefined && (!identity || data.connection_id !== identity)) {
+      return json({detail: 'The API connection changed. Fetch models again before testing.'}, 409);
+    }
+    if (await rateLimited(env, user.user_id)) return json({
+      detail: 'Too many requests. Try again in a minute.', retry_after_ms: 61000 - Date.now() % 60000
+    }, 429);
+    if (probe) {
+      const provider = {protocol: data.protocol, baseUrl: base.url, apiKey, models: [data.model], source: 'draft'};
+      const result = await callLLM(provider, {turns: [{role: 'user', content: 'Reply with the single word OK.'}]});
+      return result.text ? json({ok: true, model: data.model})
+        : json({model: data.model, provider_status: result.status, detail: failureMessage(result.status),
+          ...(result.retryAfterMs !== undefined ? {retry_after_ms: result.retryAfterMs} : {})},
+          [429, 504].includes(result.status) ? result.status : 502);
+    }
     const result = await listModels({protocol: data.protocol, baseUrl: base.url, apiKey});
-    if (result.models) return json(result);
+    if (result.models) return json({...result, ...(identity ? {connection_id: identity} : {})});
     const detail = result.status === 404 || result.status === 405
       ? 'This API does not support model listing. Use an endpoint that provides a model catalog.'
       : result.status === 502 ? 'The API returned an invalid model catalog. Check the API URL and provider.' : failureMessage(result.status);

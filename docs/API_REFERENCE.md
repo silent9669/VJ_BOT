@@ -60,15 +60,21 @@ Các route `/api/ai/*` và `/api/admin/*` do `src/providers.js` xử lý riêng,
 
 ## Model discovery
 
-In Settings, enter an API base URL and key, choose its protocol, then select **Load models**. The loading indicator is indeterminate because provider pagination does not expose a reliable total. Choose a returned model and select **Use selected model** to save the connection. Loading and saving send no inference requests.
+In Settings, enter an API base URL and key, choose its protocol, then select **Find usable models**. The app fetches candidates and asks for explicit confirmation before sending one real generation request per model. These requests use quota and can incur charges, including paid models. Opening Settings or editing a key does not start tests. The UI shows only progress and, after completion or Stop, successfully responding models.
 
 - OpenAI-compatible: `GET <base>/models` with Bearer authentication. Custom public HTTPS endpoints use the same protocol; arbitrary authentication formats are not inferred.
 - Claude: `GET <base>/v1/models`, or `/models` when the base already ends in `/v1`, using `x-api-key` and `anthropic-version`.
 - Gemini: `GET <base>/v1beta/models` using `x-goog-api-key`; only models supporting `generateContent` are listed.
 - OpenRouter at `https://openrouter.ai/api/v1`: validates the key with `/key`, then requests `/models/user?output_modalities=text`. Free-tier or exhausted budgets only receive models with explicit zero token prices and no declared request/reasoning fees. Authentication failures never fall back to a public catalog.
 
-`scope: "key_filtered"` indicates provider-side account filtering. `scope: "provider_catalog"` indicates a catalog without established per-key model permissions. Neither proves remaining quota, current inference availability or future pricing. The UI shows this distinction instead of marking catalog entries as successfully tested. `free_only` describes the pricing filter; `truncated` marks an incomplete list.
+`scope: "key_filtered"` indicates provider-side account filtering. `scope: "provider_catalog"` indicates a catalog without established per-key model permissions. Neither is proof of inference access. The app therefore verifies every candidate and never offers catalog-only models, empty responses, credit/permission denials, timeouts or quota failures as successful choices. `free_only` describes the initial pricing filter; `truncated` marks an incomplete catalog.
 
 Discovery requires a signed-in session and shares the existing 20-request/account/minute AI limit. Omitting the key reuses the encrypted saved key only for the same normalized URL and protocol. Changing either requires an explicit new key for discovery and saving.
 
 Redirects are not followed with credentials. Pagination is bounded to five pages, 1,000 model IDs, 4 MB per response and a shared ten-second timeout. Provider error bodies and API keys are never returned. Credential edits, logout and cancellation discard late catalog responses. Saving locks the form until it settles.
+
+`POST /api/ai/models/test` accepts draft `{protocol, base_url, api_key?, model, connection_id?}`. It sends one short prompt to exactly that model without saving the connection or writing chat history. Only a non-empty parsed response returns `{ok: true, model}`. Upstream failures return `{model, provider_status, detail, retry_after_ms?}` without exposing provider bodies or keys. Omitting a key still requires the saved URL/protocol to match. When discovery supplies an opaque `connection_id`, a changed user/key/URL/protocol is rejected before inference.
+
+Requests are paced at least four seconds apart, with adaptive overlap of 1–4. HTTP 429 reduces overlap and pauses unsent candidates for `Retry-After`, or 30 seconds when no valid delay is supplied. The full-scan UI keeps waiting rather than discarding candidates after two minutes; Stop remains available. Failed models are not automatically retried. Quota failures mean temporarily unconfirmed, not proof of permanent denial. Revoked keys, session errors or connection changes stop dispatch and clear affected choices. Stop cannot undo requests or charges already sent.
+
+**Use selected model** saves an already successful result without another inference request. Results apply to that model and connection at the time of checking; future availability, prices and quota can change. Keys, model lists and verification state are not stored in browser persistent storage.

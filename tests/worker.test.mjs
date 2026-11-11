@@ -591,3 +591,133 @@ test('saved credentials remain bound to their endpoint while model aliases can b
     assert.equal(calls, 0);
   } finally { globalThis.fetch = previous; }
 });
+
+test('draft model probes require a session and preserve the saved connection', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  await withApi(env, request);
+  const stored = await env.DB.prepare('SELECT * FROM ai_providers').first();
+  const draft = {protocol: 'openai', base_url: 'https://draft.example.com/v1', api_key: 'draft-probe-key', model: '~vendor/model'};
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({url, options});
+    if (options.headers['x-goog-api-key']) return Response.json({candidates: [{content: {parts: [{text: 'OK'}]}}]});
+    if (options.headers['x-api-key']) return Response.json({content: [{type: 'text', text: 'OK'}]});
+    return Response.json({choices: [{message: {content: 'OK'}}]});
+  };
+  try {
+    const anonymous = new Request('https://vjbot.test/api/ai/models/test', {method: 'POST', body: JSON.stringify(draft)});
+    assert.equal((await worker.fetch(anonymous, env)).status, 401);
+    for (const invalid of [{...draft, api_key: ''}, {...draft, model: '<invalid>'}]) {
+      assert.equal((await worker.fetch(request('/api/ai/models/test', invalid), env)).status, 400);
+    }
+    assert.equal(calls.length, 0);
+    for (const protocol of ['openai', 'anthropic', 'gemini']) {
+      const response = await worker.fetch(request('/api/ai/models/test', {...draft, protocol}), env);
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), {ok: true, model: draft.model});
+      assert.deepEqual(await env.DB.prepare('SELECT * FROM ai_providers').first(), stored);
+    }
+    assert.ok(calls.every(call => call.url.startsWith('https://draft.example.com/') && call.options.redirect === 'manual'));
+    assert.equal(calls[0].options.headers.Authorization, 'Bearer draft-probe-key');
+    assert.equal(calls[1].options.headers['x-api-key'], 'draft-probe-key');
+    assert.equal(calls[2].options.headers['x-goog-api-key'], 'draft-probe-key');
+    const response = await worker.fetch(request('/api/ai/models/test', {
+      protocol: 'openai', base_url: stored.base_url, model: 'different-model'
+    }), env);
+    assert.equal(response.status, 200);
+    assert.equal(calls[3].options.headers.Authorization, 'Bearer sk-test-12345678');
+    assert.deepEqual(await env.DB.prepare('SELECT * FROM ai_providers').first(), stored);
+    await env.DB.prepare('INSERT OR REPLACE INTO ai_usage(user_id,bucket,count) VALUES(?,?,20)')
+      .bind(stored.user_id, Math.floor(Date.now() / 60000)).run();
+    assert.equal((await worker.fetch(request('/api/ai/models/test', draft), env)).status, 429);
+    assert.equal(calls.length, 4);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('draft probes never verify empty responses or retry failures and keep provider errors private', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  const draft = {protocol: 'openai', base_url: 'https://draft.example.com/v1', api_key: 'draft-probe-key', model: 'candidate'};
+  let upstreamStatus = 200, calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    if (upstreamStatus === 504) throw new Error('synthetic network failure');
+    return upstreamStatus === 200 ? Response.json({choices: [{message: {content: ' '}}]})
+      : new Response('private-provider-body draft-probe-key', {status: upstreamStatus});
+  };
+  try {
+    for (const status of [200, 401, 402, 403, 404, 429, 503, 504]) {
+      upstreamStatus = status;
+      const before = calls;
+      const response = await worker.fetch(request('/api/ai/models/test', draft), env);
+      assert.equal(response.status, [429, 504].includes(status) ? status : 502);
+      const data = await response.json();
+      assert.equal(data.ok, undefined);
+      assert.equal(data.model, 'candidate');
+      assert.equal(data.provider_status, status === 200 ? 502 : status);
+      assert.ok(!JSON.stringify(data).includes('draft-probe-key'));
+      assert.ok(!JSON.stringify(data).includes('private-provider-body'));
+      assert.equal(calls, before + 1);
+    }
+    assert.equal((await env.DB.prepare('SELECT count(*) n FROM ai_providers').first()).n, 0);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('model cache identities bind actual credentials and reject a saved-key change before inference', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  await withApi(env, request);
+  let generations = 0;
+  globalThis.fetch = async (url, options) => {
+    if (options.method === 'POST') {
+      generations++;
+      return Response.json({choices: [{message: {content: 'OK'}}]});
+    }
+    return Response.json({data: [{id: 'm1'}]});
+  };
+  const draft = {protocol: 'openai', base_url: 'https://api.example.com/v1', api_key: 'sk-test-12345678'};
+  const catalog = async patch => {
+    const response = await worker.fetch(request('/api/ai/models', {...draft, ...patch}), env);
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  try {
+    const original = (await catalog({})).connection_id;
+    assert.equal(typeof original, 'string');
+    assert.equal((await catalog({base_url: draft.base_url + '/chat/completions', api_key: ''})).connection_id, original);
+    for (const patch of [{api_key: 'new-test-12345678'}, {base_url: 'https://other.example.com/v1'}, {protocol: 'anthropic'}]) {
+      assert.notEqual((await catalog(patch)).connection_id, original);
+    }
+    const probe = {...draft, api_key: '', model: 'm1', connection_id: original};
+    assert.equal((await worker.fetch(request('/api/ai/models/test', probe), env)).status, 200);
+    await worker.fetch(put(request, '/api/ai/settings', {...draft, model: 'm1', api_key: 'replacement-key-1234'}), env);
+    assert.equal((await worker.fetch(request('/api/ai/models/test', probe), env)).status, 409);
+    assert.equal(generations, 1);
+    assert.notEqual((await catalog({api_key: ''})).connection_id, original);
+    await env.DB.prepare("UPDATE sessions SET user_id='google:other'").run();
+    assert.notEqual((await catalog({})).connection_id, original);
+    delete env.AI_KEY_SECRET;
+    assert.equal((await catalog({})).connection_id, undefined);
+    assert.equal((await worker.fetch(request('/api/ai/models/test', {...probe, api_key: draft.api_key}), env)).status, 409);
+    assert.equal(generations, 1);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('draft probes forward bounded Retry-After metadata without leaking provider bodies', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  const draft = {protocol: 'openai', base_url: 'https://api.example.com/v1', api_key: 'retry-test-key', model: 'm'};
+  let retry = '12';
+  globalThis.fetch = async () => new Response('private retry-test-key', {status: 429, headers: {'Retry-After': retry}});
+  try {
+    let response = await worker.fetch(request('/api/ai/models/test', draft), env);
+    assert.equal(response.status, 429);
+    assert.equal((await response.json()).retry_after_ms, 12000);
+    retry = new Date(Date.now() + 60000).toUTCString();
+    response = await worker.fetch(request('/api/ai/models/test', draft), env);
+    const dated = await response.json();
+    assert.ok(dated.retry_after_ms > 50000 && dated.retry_after_ms <= 60000);
+    retry = 'not-a-delay';
+    response = await worker.fetch(request('/api/ai/models/test', draft), env);
+    const invalid = await response.json();
+    assert.equal(invalid.retry_after_ms, undefined);
+    assert.ok(!JSON.stringify(invalid).includes('retry-test-key'));
+  } finally { globalThis.fetch = previous; }
+});
