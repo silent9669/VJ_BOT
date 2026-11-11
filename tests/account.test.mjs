@@ -10,7 +10,7 @@ function browser(fetch){
     return elements.get(id);
   };
   const configs=[],google={accounts:{id:{initialize(config){configs.push(config);},renderButton(){}}}};
-  const context=vm.createContext({fetch,google,crypto,Response,Date,JSON,setTimeout,location:{reload(){reloads++;}},document:{getElementById:element},localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}});
+  const context=vm.createContext({fetch,google,crypto,Response,Headers,Date,JSON,setTimeout,location:{reload(){reloads++;}},document:{getElementById:element},localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}});
   context.window=context;vm.runInContext(readFileSync('static/account.js','utf8'),context);
   return {context,element,configs,storage,reloads:()=>reloads};
 }
@@ -50,4 +50,46 @@ test('signed-out learners cannot write progress through the former guest fallbac
   await b.context.setupAccount();
   assert.equal((await b.context.apiFetch('/api/progress/record',{method:'POST',body:JSON.stringify({item_id:'word',correct:true})})).status,401);
   assert.equal(b.storage.has('vjbot_guest_progress'),false);
+});
+
+test('an unavailable device profile fails closed without sending a chat request to a server fallback', async () => {
+  let calls=0;
+  const b=browser(async()=>{calls++;return Response.json({user:{name:'Learner',user_id:'google:test'}});});
+  await b.context.setupAccount();
+  b.context.VJProfiles={prepareRequest:async()=>{throw new Error('Unavailable device profile');}};
+  const response=await b.context.apiFetch('/api/chat',{method:'POST',body:JSON.stringify({message:'hello'})});
+  assert.equal(response.status,409);
+  assert.equal((await response.json()).code,'api_profile_unavailable');
+  assert.equal(calls,1);
+});
+
+test('changing account while device credentials load prevents the pending request from leaving the browser', async () => {
+  let calls=0,release,started;
+  const ready=new Promise(resolve=>{started=resolve;});
+  const b=browser(async()=>{calls++;return Response.json({user:{name:'Learner',user_id:'google:first'}});});
+  await b.context.setupAccount();
+  b.context.VJProfiles={prepareRequest:async(_path,options)=>{started();return new Promise(resolve=>{release=()=>resolve(options);});}};
+  const pending=b.context.apiFetch('/api/chat',{method:'POST',body:JSON.stringify({message:'hello'})});
+  await ready;
+  vm.runInContext("signedInUser={user_id:'google:second'}",b.context);
+  release();
+  assert.equal((await pending).status,401);
+  assert.equal(calls,1);
+});
+
+test('missing profile support never sends inference through an implicit server connection', async () => {
+  let calls=0;
+  const b=browser(async()=>{calls++;return Response.json({user:{name:'Learner',user_id:'google:test'}});});
+  await b.context.setupAccount();
+  const response=await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
+  assert.equal(response.status,503);
+  assert.equal(calls,1);
+});
+
+test('credential-bearing writes declare the expected account for server-side cookie drift checks', async () => {
+  const requests=[];
+  const b=browser(async(path,options)=>{requests.push({path,options});return Response.json({user:{name:'Learner',user_id:'google:first'}});});
+  await b.context.setupAccount();
+  await b.context.apiFetch('/api/ai/profiles',{method:'POST',body:'{}'});
+  assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Account'),'google:first');
 });

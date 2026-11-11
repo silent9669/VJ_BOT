@@ -1,6 +1,6 @@
 # API Worker
 
-Tất cả route nằm dưới `/api`, trả JSON `{detail}` khi lỗi. Route "riêng tư" cần cookie `vj_session`; Worker lấy `user_id` từ phiên và bỏ qua `user_id`/`api_key` do client gửi. Thiếu phiên: `401`.
+All routes are under `/api` and return JSON `{detail}` on errors. Private routes require the `vj_session` cookie. The Worker derives `user_id` from that session and ignores client `user_id` and top-level `api_key`. Device-only profiles use the explicitly validated transient `api_connection` object described below. A missing session returns `401`.
 
 ## Công khai
 
@@ -52,6 +52,10 @@ Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` kh
 - These are defense-in-depth boundaries, not proof that an LLM cannot be manipulated. Schema validation verifies structure, not grading truth. Model discovery and connection probes are not security evaluations.
 - Local tests use synthetic provider responses, not live attack-success measurements. No deployment or paid inference is implied.
 
+Integration evidence: the security branch combined with PR #22 at `b417dca52f512d49d5feb93a1f36864a70dfc0d8` passed all 173 Node tests and the Cloudflare build dry-run. On Windows, the unchanged pinned lesson assets were restored from their Git blobs with LF bytes for the hash check; no manifest or test assertion was changed.
+
+Chromium exercised lesson-scoped history, the lesson-reference-only chat payload, return to general chat, canonical Kaiwa references, and exclusion of submitted text and generated feedback from screen capture. API responses and the signed-in account were synthetic and isolated. No live model call, existing-database migration, production deployment or merge to main was performed.
+
 
 ## API người dùng và quản trị
 
@@ -61,10 +65,78 @@ Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` kh
 | `PUT /api/ai/settings` | `{protocol: 'openai'\|'anthropic'\|'gemini', base_url (bỏ trống = mặc định), model, api_key?}`; bỏ `api_key` để giữ khóa cũ. `503` nếu thiếu `AI_KEY_SECRET` |
 | `DELETE /api/ai/settings` | Xóa API đã lưu |
 | `POST /api/ai/test` | Gửi một yêu cầu thử qua API đã lưu |
+| `POST /api/ai/models` | Lists models using draft `{protocol, base_url, api_key?}` without saving credentials or generating content. Returns `{models, truncated, scope, free_only}`; see Model discovery below. |
 | `GET /api/admin/overview` | Chỉ admin (`403` nếu không): `{users, active_7d, messages_24h, messages_7d, own_api_users, top[]}` |
 | `GET /api/admin/users?q=&offset=` | Danh sách 25 người dùng mỗi trang, tìm theo tên/email/ID: `{users[], total, offset, guests}`; mỗi người có `kind` (`google`\|`email`\|`guest`), `level`, `messages`, `items`, `completed`, `sessions`, `api`, `last_login`, `admin` |
 | `POST /api/admin/purge-guests` | Xóa các hồ sơ khách cũ (không phải Google hay email) cùng dữ liệu: `{removed}` |
 | `GET /api/admin/user?id=` | Chi tiết một người dùng (cùng trường như trên); `404` nếu không có |
 | `POST /api/admin/user` | `{id, action, level?}` với `action` là `set_level` (cần `level` N5–N1), `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. Không thể `delete` chính tài khoản đang dùng |
 
-Các route `/api/ai/*` và `/api/admin/*` do `src/providers.js` xử lý riêng, tự kiểm tra phiên và giới hạn body 4 KB.
+Routes under `/api/ai/*` and `/api/admin/*` are handled by `src/providers.js` with session checks. Profile creation/update and active-setting writes accept at most 128 KiB of UTF-8 JSON for bounded model history; other JSON bodies retain the 4 KiB limit.
+
+## Model discovery
+
+In Settings, enter an API base URL and key, choose its protocol, then select **Find usable models**. The app fetches candidates and asks for explicit confirmation before sending one real generation request per model. These requests use quota and can incur charges, including paid models. Opening Settings or editing a key does not start tests. The UI shows only progress and, after completion or Stop, successfully responding models.
+
+The confirmation is an in-app native dialog matching the shared surface styles, not a browser `confirm()` popup. It shows the candidate count, per-model test scope, quota/charge warning and partial-catalog notice. Cancel receives initial focus; Escape or cancellation sends no probes. Only the explicit start action permits inference. Credential edits or logout abort a pending confirmation. The dialog reflows on mobile and uses 44-pixel action targets.
+
+- OpenAI-compatible: `GET <base>/models` with Bearer authentication. Custom public HTTPS endpoints use the same protocol; arbitrary authentication formats are not inferred.
+- Claude: `GET <base>/v1/models`, or `/models` when the base already ends in `/v1`, using `x-api-key` and `anthropic-version`.
+- Gemini: `GET <base>/v1beta/models` using `x-goog-api-key`; only models supporting `generateContent` are listed.
+- OpenRouter at `https://openrouter.ai/api/v1`: validates the key with `/key`, then requests `/models/user?output_modalities=text`. Free-tier or exhausted budgets only receive models with explicit zero token prices and no declared request/reasoning fees. Authentication failures never fall back to a public catalog.
+
+`scope: "key_filtered"` indicates provider-side account filtering. `scope: "provider_catalog"` indicates a catalog without established per-key model permissions. Neither is proof of inference access. The app therefore verifies every candidate and never offers catalog-only models, empty responses, credit/permission denials, timeouts or quota failures as successful choices. `free_only` describes the initial pricing filter; `truncated` marks an incomplete catalog.
+
+Discovery requires a signed-in session and shares the existing 20-request/account/minute AI limit. Omitting the key reuses the encrypted saved key only for the same normalized URL and protocol. Changing either requires an explicit new key for discovery and saving.
+
+Redirects are not followed with credentials. Pagination is bounded to five pages, 1,000 model IDs, 4 MB per response and a shared ten-second timeout. Provider error bodies and API keys are never returned. Credential edits, logout and cancellation discard late catalog responses. Saving locks the form until it settles.
+
+`POST /api/ai/models/test` accepts draft `{protocol, base_url, api_key?, model, connection_id?}`. It makes exactly one streaming request for that model and succeeds on the first non-whitespace visible text, then cancels the upstream stream. Role-only events, hidden reasoning, tool-call-only output and empty completion do not verify a model. A provider that returns JSON instead of SSE is parsed within the same request; no second generation is sent. Verification has a 15-second deadline and a 256 KiB response limit. Cancellation cannot undo provider usage or charges already incurred. Errors retain `{model, provider_status, detail, retry_after_ms?}` without exposing provider bodies or keys. Draft checks do not save credentials or chat history; saved-key reuse and connection identity checks still apply.
+
+The settings UI runs up to four overlapping probes without a fixed four-second gap. A rolling page-memory budget allows at most 19 probe starts per 60 seconds, reserving one request for discovery under the unchanged server limit of 20 AI requests/account/minute. The same account's budget survives repeated scans and credential edits; other tabs and chat may still consume server quota. HTTP 429 reduces overlap and pauses pending candidates for `Retry-After`, or a 30-second fallback, without retrying the failed model. Stop remains available during waiting. Quota errors mean temporarily unconfirmed, not permanent denial. Revoked keys, session errors or connection changes stop dispatch and clear affected choices.
+
+Model discovery and verification continue when the learner visits another sidebar section. Returning to Settings preserves the current scan, progress, quota waiting and Stop control rather than reinitializing the form. A delayed older Settings response cannot overwrite a newer scan. Stop, changing credentials/profiles, logout or an account change still cancels the affected scan and discards late responses. Closing or reloading the browser page still ends the page-owned scan; it is not a server background job.
+
+### Resume an unfinished scan
+
+The browser stores a bounded `vjbot_ai_scan_v1` checkpoint per account and opaque connection identity, not the raw API key. It records the catalog, successful/failed/dispatched model IDs and rolling request timestamps/cooldown. Each dispatch is checkpointed before sending the request. Stop or reload preserves this checkpoint; continuing fetches the catalog again to validate the actual key and endpoint, then requests only model IDs never dispatched. Earlier successes remain visibly historical. Completed failures and requests interrupted after dispatch are not retried automatically, because upstream quota or charges may already have been consumed.
+
+**Continue unchecked models** is the default. If all candidates already have a dispatch record, the button shows saved results without another generation. **Recheck all models (uses quota again)** explicitly starts a fresh generation pass after confirmation, while retaining applicable cooldown/rate budget. Invalid checkpoints fail closed until an explicit fresh recheck. When Web Locks is available, a second tab cannot start a simultaneous scan for the same account/connection. Browser storage failures show a warning; progress cannot then be guaranteed across reloads. Checkpoints created before this feature are unavailable and cannot reconstruct unseen requests.
+
+**Save & use selected model** saves a previously responding model without another inference request. An empty key field reuses only the chosen profile's key for the same URL and protocol. Cached choices are historical observations, not a current quota or pricing guarantee.
+
+## Saved API profiles
+
+Settings supports named profiles with two explicit save locations. **This device only** is the default for new profiles. **My account on the server** is opt-in. Save a profile with its name, URL and key before fetching models, or save it after checking models. Saving and switching never start catalog or generation calls.
+
+Device profiles store keys encrypted with AES-GCM in IndexedDB, using a per-account non-extractable WebCrypto key and fresh IVs. Raw keys are not stored in localStorage. The active profile reference and historical model IDs/timestamps are non-secret metadata. This protects against casual plaintext storage inspection, not malicious same-origin scripts, browser compromise or access to an unlocked browser profile. It is not an OS credential vault.
+
+Server profiles retain encrypted keys under `AI_KEY_SECRET`, scoped to the signed-in account. Public responses include `{id, name, protocol, base_url, model, key_last4, connection_id, models, checked_at}` but never raw keys or ciphertext. The opaque connection identity binds the account, protocol, normalized URL and key. Existing single saved connections migrate into an active named profile without replacing their encrypted key.
+
+| Route | Behavior |
+| --- | --- |
+| `GET /api/ai/profiles` | `{profiles, active_id, can_store}` for the current account only |
+| `POST /api/ai/profiles` | Save a new server profile; returns `{profile}`. Does not activate or call a provider. |
+| `PUT /api/ai/profiles/{id}` | Update an owned server profile; blank key retains the existing key only for the same normalized endpoint/protocol |
+| `POST /api/ai/profiles/{id}/activate` | Persist the active server profile without inference |
+| `DELETE /api/ai/profiles/{id}` | Delete only that owned profile; deleting the active profile leaves no active server fallback |
+
+Profile bodies accept `{name, protocol, base_url, model, api_key?, models?, checked_at?, connection_id?}`. A profile may have `model: ""` until the user checks and chooses a model; inference then fails closed. At most 20 profiles are retained per account per location. History is dropped when credentials change unless fresh history binds to the new connection. Cached history is never an authorization grant.
+
+The browser remembers the active device/server choice per signed-in account. Reload restores its selected model and previous check time without scanning again. A device selection overrides only the current browser's requests; it does not overwrite the server's active profile. Deleting the selected profile does not silently switch to another, possibly paid connection. Profile switching discards in-flight discovery and old choices. Quota failures do not delete profiles, trigger paid fallback or cause automatic key rotation.
+
+For `POST /api/chat`, `/api/kaiwa/evaluate`, `/api/tts` and `/api/ai/test`, the browser sends the selected device connection as `api_connection: {protocol, base_url, model, api_key}` inside the authenticated request body. The backend validates it under the same endpoint and model restrictions, uses it only for that request, and never persists its key. The key therefore still passes through the backend during inference even when its save location is device-only. Unsupported endpoints never receive that override. Rate limits remain account-wide across all profiles. Provider quota cannot be inferred universally; later requests may return rate-limit, credit, authentication or timeout errors.
+
+Authenticated browser requests carry `X-VJBot-Account` as the expected account. The backend compares it with the actual cookie session before reading credentials, inference or profile writes; a stale tab after another tab signs into a different account receives `409 {code:"account_changed"}`. This header is a consistency guard, never authentication by itself.
+
+Explicit server choices also send `X-VJBot-Profile`; inference resolves that owned profile rather than silently following another device's changed active default. A deleted, inaccessible or malformed selected profile fails closed. Missing profile JavaScript or corrupt device selection likewise blocks inference instead of using a server fallback. Other clients without an explicit selection continue to use the account's active default.
+
+Apply `migrations/0014_api_profiles.sql` through the existing D1 migration process before deploying the new Worker. The migration preserves legacy ciphertext and the active model. Back up the database before changing its schema. CI dry-run only builds; it does not migrate production data.
+
+### Probe timing sample
+
+A controlled three-model fixture emitted its first visible text after 300 ms and finished after 2,400 ms. The previous paced/full-response scan took 10,404 ms; burst alone took 2,403 ms; streaming alone took 8,305 ms; both together took 303 ms, then 302 ms on repetition. Every variant passed the same three models. Both streaming runs cancelled all three streams before completion.
+
+A separate six-request Cohere Trial comparison used `command-r7b-12-2024`, `tiny-aya-earth` and `tiny-aya-global` through the production LLM helpers. The old scan passed 3/3 in 8,428 ms; the new scan passed 3/3 in 441 ms. This is one paired upstream sample, not browser end-to-end timing, a provider-wide guarantee or a benchmark of long quota-limited catalogs.
+
+The same three models also passed the authenticated local app's draft test endpoint through a real browser: the earlier paced run took 10,295 ms; the updated streaming/burst run took 588 ms. These timings cover those endpoint calls, not a complete scan of the 37-model catalog.

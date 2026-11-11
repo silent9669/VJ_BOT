@@ -76,7 +76,7 @@ function textOf(protocol, data) {
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
 export async function callLLM(provider, {system, turns, schema}, {budgetMs = 28000, attemptMs = 15000} = {}) {
   const deadline = Date.now() + budgetMs, history = normalizeTurns(turns);
-  let status = 503;
+  let status = 503, retryAfterMs;
   for (const model of provider.models) {
     const left = deadline - Date.now();
     if (left < 1000) break;
@@ -96,6 +96,13 @@ export async function callLLM(provider, {system, turns, schema}, {budgetMs = 280
         continue;
       }
       status = response.status >= 300 && response.status < 400 ? 502 : response.status;
+      retryAfterMs = undefined;
+      if (status === 429) {
+        const raw = response.headers.get('Retry-After');
+        const delay = raw && (/^\d+(?:\.\d+)?$/.test(raw.trim())
+          ? Number(raw) * 1000 : Date.parse(raw) - Date.now());
+        if (raw && Number.isFinite(delay)) retryAfterMs = Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(delay)));
+      }
       console.warn('AI', provider.source, model, status);
       if (!RETRYABLE.has(status)) break;
     } catch (error) {
@@ -103,12 +110,247 @@ export async function callLLM(provider, {system, turns, schema}, {budgetMs = 280
       status = 504;
     }
   }
-  return {status};
+  return {status, ...(status === 429 && retryAfterMs !== undefined ? {retryAfterMs} : {})};
+}
+
+// Draft eligibility only: one generation, stopping at the first visible text rather than its final answer.
+// The same deadline covers headers and body; cancelling never waits for the provider to finish.
+export async function probeModel(provider, {signal} = {}) {
+  if (signal?.aborted) return {status: 504};
+  const controller = new AbortController(), abort = () => controller.abort(), deadline = Date.now() + 15000;
+  const timer = setTimeout(abort, 15000);
+  signal?.addEventListener('abort', abort, {once: true});
+  const aborted = new Promise(resolve => {
+    controller.signal.addEventListener('abort', () => resolve(null), {once: true});
+  });
+  let response, reader, status = 504;
+  try {
+    const {protocol, baseUrl, apiKey, models} = provider;
+    const {headers, body} = request(protocol, apiKey, models[0], {
+      turns: [{role: 'user', content: 'Reply with the single word OK.'}]
+    });
+    let url = endpoint(protocol, baseUrl, models[0]);
+    if (protocol === 'gemini') {
+      url = url.replace(/:generateContent$/, ':streamGenerateContent?alt=sse');
+      body.generationConfig = {maxOutputTokens: 128};
+    } else {
+      body.stream = true;
+      if (protocol === 'anthropic') body.max_tokens = 128;
+    }
+    response = await Promise.race([fetch(url, {
+      method: 'POST', redirect: 'manual', signal: controller.signal,
+      headers: {'Content-Type': 'application/json', Accept: 'text/event-stream', ...headers},
+      body: JSON.stringify(body)
+    }), aborted]);
+    if (controller.signal.aborted) return {status: 504};
+    if (!response.ok) {
+      status = response.status >= 300 && response.status < 400 ? 502 : response.status;
+      const raw = status === 429 && response.headers.get('Retry-After');
+      const delay = raw && (/^\d+(?:\.\d+)?$/.test(raw.trim())
+        ? Number(raw) * 1000 : Date.parse(raw) - Date.now());
+      return {status, ...(raw && Number.isFinite(delay)
+        ? {retryAfterMs: Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(delay)))} : {})};
+    }
+    status = 502;
+    if (!response.body) return {status};
+    reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8', {fatal: true});
+    let bytes = 0, buffer = '', scan = 0;
+    let mode = /(?:\/|\+)json\b/i.test(response.headers.get('Content-Type') || '') ? 'json' : '';
+    let event = '', data = [];
+    const line = value => {
+      if (!value) {
+        if (event === 'error') throw new Error('Provider stream error');
+        const result = data.length ? probeEvent(protocol, data.join('\n')) : null;
+        event = ''; data = [];
+        return result;
+      }
+      const colon = value.indexOf(':'), field = colon < 0 ? value : value.slice(0, colon);
+      const content = colon < 0 ? '' : value.slice(colon + 1).replace(/^ /, '');
+      if (field === 'event') event = content;
+      if (field === 'data') data.push(content);
+      return null;
+    };
+    for (;;) {
+      const chunk = await Promise.race([reader.read(), aborted]);
+      if (Date.now() >= deadline) controller.abort();
+      if (controller.signal.aborted) return {status: 504};
+      const {done, value} = chunk;
+      if (value) {
+        bytes += value.byteLength;
+        if (bytes > 256 * 1024) return {status: 502};
+        buffer += decoder.decode(value, {stream: true});
+      }
+      if (done) buffer += decoder.decode();
+      if (!mode && buffer.trimStart()) mode = /^[{\[]/.test(buffer.trimStart()) ? 'json' : 'sse';
+      if (mode === 'sse') {
+        let start = 0, i = scan;
+        for (; i < buffer.length; i++) {
+          if (buffer[i] !== '\r' && buffer[i] !== '\n') continue;
+          if (buffer[i] === '\r' && i === buffer.length - 1 && !done) break;
+          const result = line(buffer.slice(start, i));
+          if (buffer[i] === '\r' && buffer[i + 1] === '\n') i++;
+          start = i + 1;
+          if (result?.text) return result;
+          if (result?.done) return {status: 502};
+        }
+        buffer = buffer.slice(start);
+        scan = i - start;
+      }
+      if (done) {
+        // JSON is accepted only after EOF; a truncated SSE event is never a successful probe.
+        const text = mode === 'json' ? probeText(protocol, JSON.parse(buffer)) : '';
+        return text ? {text} : {status: 502};
+      }
+    }
+  } catch {
+    return {status: controller.signal.aborted ? 504 : status};
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+    controller.abort();
+    // Some providers leave cancellation pending. Do not delay the first-token result on their cleanup.
+    if (reader) void reader.cancel().catch(() => {});
+    else if (response?.body) void response.body.cancel().catch(() => {});
+  }
+}
+
+function probeText(protocol, data, streaming = false) {
+  if (data.error || data.type === 'error') throw new Error('Provider stream error');
+  if (protocol === 'openai') {
+    let content = data.choices?.[0]?.[streaming ? 'delta' : 'message']?.content;
+    if (Array.isArray(content)) content = content.filter(part => part && !part.thought
+      && (!part.type || ['text', 'output_text'].includes(part.type)) && typeof part.text === 'string');
+    if (typeof content !== 'string' && !Array.isArray(content)) return '';
+    return textOf(protocol, {choices: [{message: {content}}]});
+  }
+  if (protocol === 'anthropic' && streaming) {
+    if (data.type === 'content_block_delta' && data.delta?.type === 'text_delta') {
+      return typeof data.delta.text === 'string' ? data.delta.text.trim() : '';
+    }
+    return data.type === 'content_block_start' && data.content_block?.type === 'text'
+      && typeof data.content_block.text === 'string' ? data.content_block.text.trim() : '';
+  }
+  if (protocol === 'anthropic') {
+    return textOf(protocol, {content: Array.isArray(data.content)
+      ? data.content.filter(part => part?.type === 'text' && typeof part.text === 'string') : []});
+  }
+  const parts = data.candidates?.[0]?.content?.parts;
+  return textOf(protocol, {candidates: [{content: {parts: Array.isArray(parts)
+    ? parts.filter(part => typeof part?.text === 'string' && !part.thought) : []}}]});
+}
+
+function probeEvent(protocol, raw) {
+  if (raw.trim() === '[DONE]') return {done: true};
+  const data = JSON.parse(raw), text = probeText(protocol, data, true);
+  if (text) return {text};
+  return data.type === 'message_stop' || data.choices?.[0]?.finish_reason || data.candidates?.[0]?.finishReason
+    ? {done: true} : null;
 }
 
 export function failureMessage(status) {
-  if (status === 429) return 'API của bạn báo hết lượt. Hãy thử lại sau ít phút.';
-  if (status === 401 || status === 403) return 'API key bị từ chối. Kiểm tra lại trong Cài đặt.';
-  if (status === 404 || status === 400) return 'Endpoint hoặc model không đúng. Kiểm tra lại trong Cài đặt.';
-  return 'API của bạn chưa kết nối được. Vui lòng thử lại sau.';
+  if (status === 401) return 'The provider rejected this API key. It may be invalid, expired or revoked.';
+  if (status === 402) return 'The provider requires credits or a higher spending limit for this model.';
+  if (status === 403) return 'The provider denied access to this model or endpoint. Check key permissions and provider policies.';
+  if (status === 429) return 'The provider rate limit or quota was reached. Model access is not verified; try later.';
+  if (status === 404 || status === 400) return 'The endpoint, model or request is not supported. Check your settings.';
+  if (status === 504) return 'The provider timed out. Model access is not verified; try later.';
+  return 'The provider request failed. Model access is not verified.';
+}
+
+// Discovery does not generate content. Never follow a provider redirect with credentials.
+export async function listModels({protocol, baseUrl, apiKey}) {
+  const base = cleanBaseUrl(protocol, baseUrl);
+  if (base.error) return {status: 400};
+  const openRouter = protocol === 'openai' && base.url === 'https://openrouter.ai/api/v1';
+  const siliconFlow = protocol === 'openai' && ['https://api.siliconflow.com/v1', 'https://api.siliconflow.cn/v1'].includes(base.url);
+  const suffix = protocol === 'openai' ? '/models' : protocol === 'anthropic'
+    ? `${base.url.endsWith('/v1') ? '' : '/v1'}/models` : '/v1beta/models';
+  const endpoint = base.url + (openRouter ? '/models/user' : suffix);
+  const headers = protocol === 'openai' ? {Authorization: `Bearer ${apiKey}`}
+    : protocol === 'anthropic' ? {'x-api-key': apiKey, 'anthropic-version': '2023-06-01'}
+    : {'x-goog-api-key': apiKey};
+  const signal = AbortSignal.timeout(10000);
+  const models = new Set(), cursors = new Set();
+  let freeOnly = false;
+  const catalog = truncated => ({models: [...models].sort(), truncated,
+    scope: openRouter ? 'key_filtered' : 'provider_catalog', free_only: freeOnly});
+  let cursor = '';
+  try {
+    if (openRouter) {
+      const response = await fetch(base.url + '/key', {headers, redirect: 'manual', signal});
+      if (!response.ok) {
+        await response.body?.cancel();
+        return {status: response.status >= 300 && response.status < 400 ? 502 : response.status};
+      }
+      const {data: key} = await modelPage(response);
+      if (!key || typeof key.is_free_tier !== 'boolean'
+        || !(key.limit_remaining === null || Number.isFinite(key.limit_remaining))) return {status: 502};
+      if (key.expires_at && (!Number.isFinite(Date.parse(key.expires_at)) || Date.parse(key.expires_at) <= Date.now())) return {status: 401};
+      freeOnly = key.is_free_tier || key.limit === 0
+        || (key.limit_remaining !== null && key.limit_remaining <= 0)
+        || (Number.isFinite(key.effective_budget?.remaining_usd) && key.effective_budget.remaining_usd <= 0);
+    }
+    for (let page = 0; page < 5; page++) {
+      const url = new URL(endpoint);
+      if (openRouter) url.searchParams.set('output_modalities', 'text');
+      if (siliconFlow) url.searchParams.set('sub_type', 'chat');
+      if (protocol === 'gemini') url.searchParams.set('pageSize', '1000');
+      if (protocol === 'anthropic') url.searchParams.set('limit', '1000');
+      if (cursor) url.searchParams.set(protocol === 'gemini' ? 'pageToken' : 'after_id', cursor);
+      const response = await fetch(url.href, {headers, redirect: 'manual', signal});
+      if (!response.ok) {
+        await response.body?.cancel();
+        return {status: response.status >= 300 && response.status < 400 ? 502 : response.status};
+      }
+      const data = await modelPage(response);
+      const rows = protocol === 'gemini' ? data.models : data.data;
+      if (!Array.isArray(rows)) return {status: 502};
+      for (const row of rows) {
+        if (openRouter && Array.isArray(row?.architecture?.output_modalities) && !row.architecture.output_modalities.includes('text')) continue;
+        if (freeOnly && !freeTextPricing(row?.pricing)) continue;
+        if (protocol === 'gemini' && (!Array.isArray(row?.supportedGenerationMethods) || !row.supportedGenerationMethods.includes('generateContent'))) continue;
+        const id = protocol === 'gemini' ? row?.name?.replace(/^models\//, '') : row?.id;
+        if (typeof id === 'string' && id.length <= 100 && /^~?[\w.:\/-]+$/.test(id) && !id.includes(apiKey)) models.add(id);
+        if (models.size === 1000) return catalog(true);
+      }
+      const next = protocol === 'gemini' ? data.nextPageToken : data.has_more ? data.last_id : '';
+      if (!next) {
+        if (data.has_more) return {status: 502};
+        return catalog(false);
+      }
+      if (typeof next !== 'string' || next.length > 2048 || cursors.has(next)) return {status: 502};
+      cursors.add(next);
+      cursor = next;
+    }
+    return catalog(true);
+  } catch {
+    return {status: signal.aborted ? 504 : 502};
+  }
+}
+
+// Unknown pricing is not evidence that a model is free.
+function freeTextPricing(pricing) {
+  const zero = value => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== ''))
+    && Number.isFinite(Number(value)) && Number(value) === 0;
+  return pricing && zero(pricing.prompt) && zero(pricing.completion)
+    && (pricing.request === undefined || zero(pricing.request))
+    && (pricing.internal_reasoning === undefined || zero(pricing.internal_reasoning));
+}
+
+async function modelPage(response) {
+  const reader = response.body.getReader(), decoder = new TextDecoder();
+  let bytes = 0, raw = '';
+  try {
+    for (;;) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > 4000000) throw new Error('Model catalog is too large');
+      raw += decoder.decode(value, {stream: true});
+    }
+    return JSON.parse(raw + decoder.decode());
+  } finally {
+    await reader.cancel();
+  }
 }

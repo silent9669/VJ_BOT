@@ -728,19 +728,60 @@
                 <div class="account-row"><span class="account-initial" id="settings-initial" aria-hidden="true"></span><div class="account-who"><strong id="settings-name"></strong><span id="settings-email"></span></div><span class="status-pill" id="settings-kind"></span></div>
                 <div class="card-actions"><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button><button type="button" class="stage-btn" id="settings-logout">Đăng xuất</button></div>
               </section>
-              <section class="settings-card" id="ai-card">
-                <header class="card-head"><h2 class="card-title">API AI</h2><span class="status-pill" id="ai-pill" data-state="none">Chưa kết nối</span></header>
+              <section class="settings-card ai-settings-card" id="ai-card" lang="en">
+                <header class="card-head"><div><h2 class="card-title">AI connection</h2><p class="ai-intro">Your provider. Your key. Your model.</p></div><span class="status-pill" id="ai-pill" data-state="none">Not connected</span></header>
                 <p id="ai-source" class="ai-source" role="status"></p>
                 <form id="ai-form" class="ai-form" autocomplete="off">
-                  <select id="ai-protocol" hidden><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select>
-                  <div class="segmented" role="group" aria-label="Loại API" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
-                  <label class="field-wide">URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false"></label>
-                  <label>Model<input id="ai-model" required maxlength="100" spellcheck="false"></label>
-                  <div class="model-chips" id="ai-models" aria-label="Gợi ý model"></div>
-                  <label>API key<span class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Hiện API key">Hiện</button></span></label>
-                  <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save">Lưu và kiểm tra</button><button type="button" class="stage-btn" id="ai-chat" hidden>Chat với thầy Lâm</button><button type="button" class="stage-btn" id="ai-remove" hidden>Xóa</button></div>
-                  <p id="ai-status" role="status"></p>
+                  <fieldset class="ai-step ai-profile-step">
+                    <legend>Saved API profiles</legend>
+                    <label for="ai-profile-list">Switch connection</label>
+                    <div class="ai-profile-picker"><select id="ai-profile-list" aria-describedby="ai-profile-hint"><option value="">New connection</option></select><button type="button" class="stage-btn" id="ai-profile-new">New profile</button></div>
+                    <p class="ai-field-hint" id="ai-profile-hint">Saved profiles keep their selected model and past checks. Switching does not scan models.</p>
+                    <div class="ai-profile-fields">
+                      <label>Profile name<input id="ai-profile-name" maxlength="80" autocomplete="off" placeholder="My Gemini"></label>
+                      <label>Save location<select id="ai-profile-storage" aria-describedby="ai-profile-storage-hint"><option value="local">This device only</option><option value="server">My account on the server</option></select></label>
+                    </div>
+                    <p class="ai-field-hint" id="ai-profile-storage-hint">Device keys are encrypted in this browser profile, not synced. The backend receives the key only while making AI requests. A compromised browser can still access it.</p>
+                    <div class="ai-actions"><button type="button" class="stage-btn" id="ai-profile-save">Save profile</button></div>
+                  </fieldset>
+                  <fieldset class="ai-step">
+                    <legend><span class="ai-step-number" aria-hidden="true">01</span> Connect your provider</legend>
+                    <select id="ai-protocol" hidden><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select>
+                    <div class="segmented" role="group" aria-label="API type" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
+                    <label>Base URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false" aria-describedby="ai-url-hint"></label>
+                    <p class="ai-field-hint" id="ai-url-hint">Use your provider's API base URL, not its website or chat page.</p>
+                    <div class="ai-field"><label for="ai-key">API key</label><div class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="ai-key-hint"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Show API key">Show</button></div></div>
+                    <p class="ai-field-hint" id="ai-key-hint">Stored encrypted on the server. Never paste your key into chat.</p>
+                  </fieldset>
+                  <fieldset class="ai-step">
+                    <legend><span class="ai-step-number" aria-hidden="true">02</span> Find usable models</legend>
+                    <p class="ai-step-description">Check each model with your key. Only successful responses are offered. You confirm quota and possible charges before tests begin.</p>
+                    <label class="ai-field-hint ai-recheck"><input type="checkbox" id="ai-recheck-all"> Recheck all models (uses quota again)</label>
+                    <p class="ai-field-hint" id="ai-resume-hint" role="status">Continue only models never sent for this API connection. Interrupted requests are not retried automatically.</p>
+                    <div class="ai-actions"><button type="button" class="stage-btn ai-load-button" id="ai-fetch-models">Find usable models</button><button type="button" class="stage-btn" id="ai-stop-models" hidden>Stop</button></div>
+                    <progress id="ai-load-progress" aria-label="Model verification progress" hidden></progress>
+                    <p id="ai-model-status" role="status" aria-live="polite"></p>
+                  </fieldset>
+                  <fieldset class="ai-step">
+                    <legend><span class="ai-step-number" aria-hidden="true">03</span> Choose &amp; start chatting</legend>
+                    <label id="ai-models" hidden>Successfully checked models<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
+                    <input id="ai-model" type="hidden" maxlength="100">
+                    <p class="ai-field-hint" id="ai-selection-hint">Only models that returned a real response can be selected. Future quota and availability may change.</p>
+                    <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save" disabled>Save &amp; use selected model</button><button type="button" class="stage-btn" id="ai-chat" hidden>Start chatting</button></div>
+                    <p id="ai-status" role="status"></p>
+                  </fieldset>
+                  <div class="ai-connection-footer"><span>Changing the URL, API type or key clears the model list. Saving never starts a model scan.</span><button type="button" class="stage-btn" id="ai-remove" hidden>Delete this profile</button></div>
                 </form>
+                <dialog id="ai-confirm-dialog" class="ai-confirm-dialog" aria-labelledby="ai-confirm-title" aria-describedby="ai-confirm-description ai-confirm-warning">
+                  <form method="dialog">
+                    <header><p class="ai-confirm-eyebrow">API connection</p><h2 id="ai-confirm-title">Find models you can use</h2></header>
+                    <p class="ai-confirm-count"><strong id="ai-confirm-count"></strong><span>models to check</span></p>
+                    <p id="ai-confirm-description">One short test per model. Only models that respond will appear in your list.</p>
+                    <p id="ai-confirm-warning" class="ai-confirm-warning">Tests use your quota and may charge your provider account, including paid models. Stopping cannot reverse requests already sent.</p>
+                    <p id="ai-confirm-partial" hidden>The provider returned a partial catalog. Other models will not be checked.</p>
+                    <footer><button type="submit" class="stage-btn" value="cancel" autofocus>Cancel</button><button type="submit" class="public-cta" id="ai-confirm-start" value="start">Start checks</button></footer>
+                  </form>
+                </dialog>
               </section>
               <section class="settings-card" id="settings-sound-card">
                 <header class="card-head"><h2 class="card-title">Âm thanh</h2></header>
@@ -902,7 +943,9 @@
   <script src="vi-labels.js"></script>
   <script src="learning.js"></script>
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
+  <script src="api-profiles.js"></script>
   <script src="account.js"></script>
+  <script src="model-scan.js"></script>
   <script src="ai-settings.js"></script>
   <script src="admin-users.js"></script>
   <script src="teacher-context.js"></script>
