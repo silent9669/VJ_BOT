@@ -3,17 +3,29 @@
   const el = id => document.getElementById(id);
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
-  let nextProbeAt = 0, timingIdentity = null;
+  let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
   const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
     const response = await apiFetch(path, options);
     const data = await response.json().catch(() => ({}));
+    if (response.status === 401 && !signedInUser) {
+      resetModels();
+      syncProbeBudget(null);
+    }
     if (!response.ok) throw Object.assign(new Error(data.detail || 'Request failed. Please try again.'), {
       status: response.status, providerStatus: data.provider_status, retryAfterMs: data.retry_after_ms
     });
     return data;
   }
   const send = (path, method, body) => call(path, {method, headers: {'Content-Type': 'application/json'}, body: body && JSON.stringify(body)});
+
+  // The server limiter is per signed-in account, not per provider, key or catalog connection.
+  function syncProbeBudget(owner = signedInUser?.user_id ?? null) {
+    if (owner === timingIdentity) return;
+    timingIdentity = owner;
+    nextProbeAt = 0;
+    dispatchedAt = Object.freeze([]);
+  }
 
   // Credential edits discard in-flight catalogs and all choices from the old connection.
   function syncProtocol() {
@@ -76,6 +88,7 @@
     if (testing) return;
     resetModels();
     invalidateSelection();
+    syncProbeBudget();
     const request = modelRequest, status = el('ai-model-status'), owner = signedInUser?.user_id;
     const draft = {protocol: el('ai-protocol').value, base_url: el('ai-base').value, api_key: el('ai-key').value.trim()};
     if (!draft.api_key && !savedConnection) {
@@ -108,15 +121,11 @@
         return;
       }
       if (!current()) return;
-      if (data.connection_id !== timingIdentity) {
-        nextProbeAt = 0;
-        timingIdentity = data.connection_id;
-      }
       const ordered = VJModelScan.plan(data.models, {}, {force: true, selected: el('ai-model').value}).pending;
       progress.max = total;
       progress.value = 0;
       const result = await VJModelScan.run({
-        models: ordered, signal: modelAbort.signal, current, startAt: nextProbeAt,
+        models: ordered, mode: 'burst', signal: modelAbort.signal, current, startAt: nextProbeAt, dispatchedAt,
         maxCooldownMs: Infinity,
         probe: model => call('/api/ai/models/test', {
           method: 'POST', headers: {'Content-Type': 'application/json'}, signal: modelAbort.signal,
@@ -142,7 +151,8 @@
         onState: info => {
           if (!current()) return;
           nextProbeAt = info.nextAt;
-          const wait = Math.max(0, Math.ceil((info.cooldownUntil - Date.now()) / 1000));
+          dispatchedAt = info.dispatchedAt;
+          const wait = Math.max(0, Math.ceil((info.nextAt - Date.now()) / 1000));
           status.textContent = `Checked ${checked}/${total} · ${passed} responded${wait ? ` · waiting ${wait}s for quota` : ''}`;
         }
       });
@@ -177,6 +187,7 @@
 
   async function renderSettings() {
     if (testing) return;
+    syncProbeBudget();
     renderAccountCard();
     el('ai-chat').hidden = true;
     const status = el('ai-status');
@@ -285,10 +296,11 @@
     el('ai-key-toggle').setAttribute('aria-label', show ? 'Hide API key' : 'Show API key');
     el('ai-key-toggle').setAttribute('aria-pressed', String(show));
   });
-  el('settings-logout').addEventListener('click', () => {
+  el('auth-logout').addEventListener('click', () => {
     resetModels();
-    el('auth-logout').click();
+    syncProbeBudget(null);
   });
+  el('settings-logout').addEventListener('click', () => el('auth-logout').click());
   document.querySelectorAll('.settings-nav button').forEach(button => button.addEventListener('click', () => {
     document.querySelectorAll('.settings-nav button').forEach(b => b.removeAttribute('aria-current'));
     button.setAttribute('aria-current', 'true');

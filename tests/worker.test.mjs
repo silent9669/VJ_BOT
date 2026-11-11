@@ -721,3 +721,70 @@ test('draft probes forward bounded Retry-After metadata without leaking provider
     assert.ok(!JSON.stringify(invalid).includes('retry-test-key'));
   } finally { globalThis.fetch = previous; }
 });
+
+test('draft probes finish on first visible SSE text and cancel without waiting for stream completion', {timeout: 2000}, async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  let cancelled = false, upstreamSignal, calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    upstreamSignal = options.signal;
+    assert.equal(url, 'https://draft.example.com/v1/chat/completions');
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, 'candidate');
+    assert.equal(body.stream, true);
+    assert.equal(body.max_tokens, undefined);
+    return new Response(new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"role":"assistant"}}]}\n\n'
+          + 'data: {"choices":[{"delta":{"reasoning_content":"private thought"}}]}\n\n'
+          + 'data: {"choices":[{"delta":{"content":"OK"}}]}\n\n'));
+        // Deliberately never close or send the rest of the generation.
+      },
+      cancel() { cancelled = true; return new Promise(() => {}); }
+    }), {headers: {'Content-Type': 'text/event-stream'}});
+  };
+  try {
+    const response = await worker.fetch(request('/api/ai/models/test', {
+      protocol: 'openai', base_url: 'https://draft.example.com/v1', api_key: 'draft-stream-key', model: 'candidate'
+    }), env);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {ok: true, model: 'candidate'});
+    assert.equal(cancelled, true);
+    assert.equal(upstreamSignal.aborted, true);
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = previous; }
+});
+
+test('draft probe forwards client cancellation to its upstream and discards late visible text', async () => {
+  const {env, request} = await authenticated(), previous = globalThis.fetch;
+  const client = new AbortController();
+  let cancelled = false, upstreamSignal, started;
+  const ready = new Promise(resolve => { started = resolve; });
+  globalThis.fetch = async (url, options) => {
+    upstreamSignal = options.signal;
+    return new Response(new ReadableStream({
+      start(controller) {
+        options.signal.addEventListener('abort', () => {
+          controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"late text"}}]}\n\n'));
+        }, {once: true});
+      },
+      pull() { started(); },
+      cancel() { cancelled = true; }
+    }, {highWaterMark: 0}), {headers: {'Content-Type': 'text/event-stream'}});
+  };
+  try {
+    const pending = worker.fetch(new Request(request('/api/ai/models/test', {
+      protocol: 'openai', base_url: 'https://draft.example.com', api_key: 'private-probe-key', model: 'candidate'
+    }), {signal: client.signal}), env);
+    await ready;
+    client.abort(new Error('private-probe-key'));
+    const response = await pending;
+    assert.equal(response.status, 504);
+    const result = await response.json();
+    assert.equal(result.ok, undefined);
+    assert.equal(result.provider_status, 504);
+    assert.ok(!JSON.stringify(result).includes('private-probe-key'));
+    assert.equal(upstreamSignal.aborted, true);
+    assert.equal(cancelled, true);
+  } finally { globalThis.fetch = previous; }
+});

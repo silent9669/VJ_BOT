@@ -111,6 +111,141 @@ export async function callLLM(provider, {system, turns, json = false}, {budgetMs
   return {status, ...(status === 429 && retryAfterMs !== undefined ? {retryAfterMs} : {})};
 }
 
+// Draft eligibility only: one generation, stopping at the first visible text rather than its final answer.
+// The same deadline covers headers and body; cancelling never waits for the provider to finish.
+export async function probeModel(provider, {signal} = {}) {
+  if (signal?.aborted) return {status: 504};
+  const controller = new AbortController(), abort = () => controller.abort(), deadline = Date.now() + 15000;
+  const timer = setTimeout(abort, 15000);
+  signal?.addEventListener('abort', abort, {once: true});
+  const aborted = new Promise(resolve => {
+    controller.signal.addEventListener('abort', () => resolve(null), {once: true});
+  });
+  let response, reader, status = 504;
+  try {
+    const {protocol, baseUrl, apiKey, models} = provider;
+    const {headers, body} = request(protocol, apiKey, models[0], {
+      turns: [{role: 'user', content: 'Reply with the single word OK.'}]
+    });
+    let url = endpoint(protocol, baseUrl, models[0]);
+    if (protocol === 'gemini') {
+      url = url.replace(/:generateContent$/, ':streamGenerateContent?alt=sse');
+      body.generationConfig = {maxOutputTokens: 128};
+    } else {
+      body.stream = true;
+      if (protocol === 'anthropic') body.max_tokens = 128;
+    }
+    response = await Promise.race([fetch(url, {
+      method: 'POST', redirect: 'manual', signal: controller.signal,
+      headers: {'Content-Type': 'application/json', Accept: 'text/event-stream', ...headers},
+      body: JSON.stringify(body)
+    }), aborted]);
+    if (controller.signal.aborted) return {status: 504};
+    if (!response.ok) {
+      status = response.status >= 300 && response.status < 400 ? 502 : response.status;
+      const raw = status === 429 && response.headers.get('Retry-After');
+      const delay = raw && (/^\d+(?:\.\d+)?$/.test(raw.trim())
+        ? Number(raw) * 1000 : Date.parse(raw) - Date.now());
+      return {status, ...(raw && Number.isFinite(delay)
+        ? {retryAfterMs: Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(delay)))} : {})};
+    }
+    status = 502;
+    if (!response.body) return {status};
+    reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8', {fatal: true});
+    let bytes = 0, buffer = '', scan = 0;
+    let mode = /(?:\/|\+)json\b/i.test(response.headers.get('Content-Type') || '') ? 'json' : '';
+    let event = '', data = [];
+    const line = value => {
+      if (!value) {
+        if (event === 'error') throw new Error('Provider stream error');
+        const result = data.length ? probeEvent(protocol, data.join('\n')) : null;
+        event = ''; data = [];
+        return result;
+      }
+      const colon = value.indexOf(':'), field = colon < 0 ? value : value.slice(0, colon);
+      const content = colon < 0 ? '' : value.slice(colon + 1).replace(/^ /, '');
+      if (field === 'event') event = content;
+      if (field === 'data') data.push(content);
+      return null;
+    };
+    for (;;) {
+      const chunk = await Promise.race([reader.read(), aborted]);
+      if (Date.now() >= deadline) controller.abort();
+      if (controller.signal.aborted) return {status: 504};
+      const {done, value} = chunk;
+      if (value) {
+        bytes += value.byteLength;
+        if (bytes > 256 * 1024) return {status: 502};
+        buffer += decoder.decode(value, {stream: true});
+      }
+      if (done) buffer += decoder.decode();
+      if (!mode && buffer.trimStart()) mode = /^[{\[]/.test(buffer.trimStart()) ? 'json' : 'sse';
+      if (mode === 'sse') {
+        let start = 0, i = scan;
+        for (; i < buffer.length; i++) {
+          if (buffer[i] !== '\r' && buffer[i] !== '\n') continue;
+          if (buffer[i] === '\r' && i === buffer.length - 1 && !done) break;
+          const result = line(buffer.slice(start, i));
+          if (buffer[i] === '\r' && buffer[i + 1] === '\n') i++;
+          start = i + 1;
+          if (result?.text) return result;
+          if (result?.done) return {status: 502};
+        }
+        buffer = buffer.slice(start);
+        scan = i - start;
+      }
+      if (done) {
+        // JSON is accepted only after EOF; a truncated SSE event is never a successful probe.
+        const text = mode === 'json' ? probeText(protocol, JSON.parse(buffer)) : '';
+        return text ? {text} : {status: 502};
+      }
+    }
+  } catch {
+    return {status: controller.signal.aborted ? 504 : status};
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+    controller.abort();
+    // Some providers leave cancellation pending. Do not delay the first-token result on their cleanup.
+    if (reader) void reader.cancel().catch(() => {});
+    else if (response?.body) void response.body.cancel().catch(() => {});
+  }
+}
+
+function probeText(protocol, data, streaming = false) {
+  if (data.error || data.type === 'error') throw new Error('Provider stream error');
+  if (protocol === 'openai') {
+    let content = data.choices?.[0]?.[streaming ? 'delta' : 'message']?.content;
+    if (Array.isArray(content)) content = content.filter(part => part && !part.thought
+      && (!part.type || ['text', 'output_text'].includes(part.type)) && typeof part.text === 'string');
+    if (typeof content !== 'string' && !Array.isArray(content)) return '';
+    return textOf(protocol, {choices: [{message: {content}}]});
+  }
+  if (protocol === 'anthropic' && streaming) {
+    if (data.type === 'content_block_delta' && data.delta?.type === 'text_delta') {
+      return typeof data.delta.text === 'string' ? data.delta.text.trim() : '';
+    }
+    return data.type === 'content_block_start' && data.content_block?.type === 'text'
+      && typeof data.content_block.text === 'string' ? data.content_block.text.trim() : '';
+  }
+  if (protocol === 'anthropic') {
+    return textOf(protocol, {content: Array.isArray(data.content)
+      ? data.content.filter(part => part?.type === 'text' && typeof part.text === 'string') : []});
+  }
+  const parts = data.candidates?.[0]?.content?.parts;
+  return textOf(protocol, {candidates: [{content: {parts: Array.isArray(parts)
+    ? parts.filter(part => typeof part?.text === 'string' && !part.thought) : []}}]});
+}
+
+function probeEvent(protocol, raw) {
+  if (raw.trim() === '[DONE]') return {done: true};
+  const data = JSON.parse(raw), text = probeText(protocol, data, true);
+  if (text) return {text};
+  return data.type === 'message_stop' || data.choices?.[0]?.finish_reason || data.candidates?.[0]?.finishReason
+    ? {done: true} : null;
+}
+
 export function failureMessage(status) {
   if (status === 401) return 'The provider rejected this API key. It may be invalid, expired or revoked.';
   if (status === 402) return 'The provider requires credits or a higher spending limit for this model.';

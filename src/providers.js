@@ -1,6 +1,6 @@
 import { sessionUser } from './auth.js';
 import { isAdmin, listUsers, purgeGuests, userAction, userDetail } from './admin.js';
-import { callLLM, cleanBaseUrl, DEFAULT_BASES, failureMessage, listModels } from './llm.js';
+import { callLLM, cleanBaseUrl, DEFAULT_BASES, failureMessage, listModels, probeModel } from './llm.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'no-store'}});
 const text = new TextEncoder();
@@ -152,7 +152,7 @@ export async function aiRoute(request, env, url) {
     }, 429);
     if (probe) {
       const provider = {protocol: data.protocol, baseUrl: base.url, apiKey, models: [data.model], source: 'draft'};
-      const result = await callLLM(provider, {turns: [{role: 'user', content: 'Reply with the single word OK.'}]});
+      const result = await probeModel(provider, {signal: request.signal});
       return result.text ? json({ok: true, model: data.model})
         : json({model: data.model, provider_status: result.status, detail: failureMessage(result.status),
           ...(result.retryAfterMs !== undefined ? {retry_after_ms: result.retryAfterMs} : {})},

@@ -1,6 +1,7 @@
 // Pure policy plus an injectable scheduler: the browser and offline experiments use the same code.
 (function () {
   const INTERVAL_MS = 4000, MAX_CONCURRENCY = 4, HISTORY_MS = 30 * 60 * 1000;
+  const START_WINDOW_MS = 60000, MAX_STARTS = 19; // Reserve one of the server's 20 requests for the catalog.
   const own = (history, model) => Object.hasOwn(history, model) ? history[model] : null;
   function recent(record, now) {
     return record && now >= record.checkedAt && now - record.checkedAt < HISTORY_MS;
@@ -66,16 +67,24 @@
       invalidate: error.status === 409 || (!error.providerStatus && [401, 403].includes(error.status)) || error.providerStatus === 401};
   }
   async function run({models, probe, history = {}, signal, current = () => true, mode = 'adaptive',
-    now = Date.now, sleep = wait, startAt = 0, maxCooldownMs = 120000,
+    now = Date.now, sleep = wait, startAt = 0, maxCooldownMs = 120000, dispatchedAt = [],
     onDispatch = () => {}, onResult = () => {}, onState = () => {}}) {
-    if (!['sequential', 'fixed', 'adaptive'].includes(mode)) throw new Error('Invalid scan policy');
-    const started = now(), active = new Set();
-    let state = {limit: mode === 'sequential' ? 1 : mode === 'fixed' ? 3 : 2, healthy: 0,
+    if (!['sequential', 'fixed', 'adaptive', 'burst'].includes(mode)) throw new Error('Invalid scan policy');
+    const started = now(), active = new Set(), burst = mode === 'burst';
+    let starts = dispatchedAt.filter(Number.isFinite).sort((a, b) => a - b);
+    let state = {limit: burst ? MAX_CONCURRENCY : mode === 'sequential' ? 1 : mode === 'fixed' ? 3 : 2, healthy: 0,
       cooldownUntil: 0, cooldownBudgetMs: 0, halted: ''};
     let nextAt = startAt, sent = 0, completed = 0, passed = 0, firstSuccessMs = null, peak = 0;
     const durations = [], valid = () => !signal?.aborted && current();
-    const snapshot = () => ({...state, active: active.size, sent, completed, passed, peak,
-      firstSuccessMs, elapsedMs: now() - started, nextAt: Math.max(nextAt, state.cooldownUntil)});
+    const budgetAt = () => {
+      starts = starts.filter(at => at > now() - START_WINDOW_MS);
+      return burst && starts.length >= MAX_STARTS ? starts[starts.length - MAX_STARTS] + START_WINDOW_MS : 0;
+    };
+    const snapshot = () => {
+      const dispatchAt = Math.max(nextAt, state.cooldownUntil, budgetAt());
+      return {...state, active: active.size, sent, completed, passed, peak, firstSuccessMs,
+        elapsedMs: now() - started, nextAt: dispatchAt, dispatchedAt: Object.freeze([...starts])};
+    };
     const execute = async model => {
       const at = now();
       onDispatch(model);
@@ -88,7 +97,7 @@
       if (!valid()) return;
       const duration = Math.max(0, now() - at);
       const previous = recent(own(history, model), now()) ? history[model] : null;
-      state = feedback(state, outcome, previous, duration, now(), mode === 'adaptive', maxCooldownMs);
+      state = feedback(state, outcome, previous, duration, now(), mode === 'adaptive' || burst, maxCooldownMs);
       if (mode === 'sequential') nextAt = now() + INTERVAL_MS;
       completed++; passed += Number(outcome.ok); durations.push(duration);
       if (outcome.ok && firstSuccessMs === null) firstSuccessMs = now() - started;
@@ -99,12 +108,13 @@
       for (const model of models) {
         while (valid() && !state.halted) {
           if (active.size >= state.limit) { await Promise.race(active); continue; }
-          const delay = Math.max(nextAt, state.cooldownUntil) - now();
+          const delay = Math.max(nextAt, state.cooldownUntil, budgetAt()) - now();
           if (delay > 0) { await sleep(Math.min(delay, 1000), signal); continue; }
           break;
         }
         if (!valid() || state.halted) break;
-        nextAt = now() + INTERVAL_MS;
+        nextAt = now() + (burst ? 0 : INTERVAL_MS);
+        starts = [...starts, now()];
         sent++;
         const task = execute(model);
         active.add(task); peak = Math.max(peak, active.size);

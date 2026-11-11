@@ -4,7 +4,7 @@ export const scanner = globalThis.VJModelScan;
 
 export async function simulate({models, history = {}, mode = 'adaptive', scenario = () => ({delay: 6000}),
   startAt = 1000000, selected = '', prioritize = true, cache = false, force = false, fixedTtlMs,
-  maxCooldownMs = 120000, cancelAt} = {}) {
+  maxCooldownMs = 120000, cancelAt, dispatchedAt = []} = {}) {
   let clock = startAt, events = [], active = 0, calls = [], records = {...history}, states = [];
   const controller = new AbortController();
   const sleep = (ms, signal) => new Promise(resolve => {
@@ -18,7 +18,7 @@ export async function simulate({models, history = {}, mode = 'adaptive', scenari
   if (cancelAt !== undefined) events.push({at: clock + cancelAt, resolve: () => controller.abort()});
   let result, failure, done = false;
   const task = scanner.run({models: plan.pending, history: plan.history, mode, signal: controller.signal,
-    now: () => clock, sleep, maxCooldownMs,
+    now: () => clock, sleep, maxCooldownMs, dispatchedAt,
     probe: async model => {
       const response = scenario(model, {at: clock, active, calls});
       calls = [...calls, {model, at: clock, active: ++active, status: response.status || 200}];

@@ -88,3 +88,74 @@ test('credits and permission denials never enter the successful set or cause a f
   assert.deepEqual(Object.keys(result.records).filter(model => result.records[model].ok), ['working']);
   assert.deepEqual(result.calls.map(call => call.model), ['paid', 'denied', 'working']);
 });
+
+test('burst fills four slots immediately and fast responses pay no fixed spacing tax', async () => {
+  const result = await simulate({models: models.slice(0, 8), mode: 'burst', scenario: () => ({delay: 10})});
+  assert.equal(result.peak, 4);
+  assert.equal(result.completed, 8);
+  assert.equal(result.passed, 8);
+  assert.deepEqual(result.calls.map(call => call.at - result.calls[0].at), [0, 0, 0, 0, 10, 10, 10, 10]);
+  assert.equal(result.elapsedMs, 20);
+});
+
+test('burst defers its twentieth start until the exact rolling-minute boundary', async () => {
+  const candidates = Array.from({length: 23}, (_, i) => `candidate-${i}`);
+  const result = await simulate({models: candidates, mode: 'burst', scenario: () => ({delay: 1})});
+  assert.equal(result.completed, candidates.length);
+  assert.equal(result.calls[18].at - result.calls[0].at, 4);
+  assert.equal(result.calls[19].at - result.calls[0].at, 60000);
+  for (const call of result.calls) {
+    assert.ok(result.calls.filter(other => other.at <= call.at && other.at > call.at - 60000).length <= 19);
+  }
+});
+
+test('immutable dispatch history carries the same rolling budget into another run', async () => {
+  const first = await simulate({models: Array.from({length: 19}, (_, i) => `first-${i}`),
+    mode: 'burst', scenario: () => ({delay: 1})});
+  const initialSnapshot = first.states[0].dispatchedAt;
+  assert.equal(initialSnapshot.length, 1);
+  assert.ok(Object.isFrozen(initialSnapshot));
+  assert.throws(() => initialSnapshot.push(0), TypeError);
+  assert.equal(first.dispatchedAt.length, 19);
+  const second = await simulate({models: ['next-1', 'next-2', 'next-3', 'next-4'], mode: 'burst',
+    dispatchedAt: first.dispatchedAt, startAt: 1000000 + first.elapsedMs, scenario: () => ({delay: 1})});
+  assert.deepEqual(second.calls.map(call => call.at), [1060000, 1060000, 1060000, 1060000]);
+  assert.equal(first.dispatchedAt.length, 19);
+  assert.equal(initialSnapshot.length, 1);
+  assert.ok(Object.isFrozen(second.dispatchedAt));
+});
+
+test('burst cancellation discards active results and cancels a pending budget wait', async () => {
+  const cancelled = await simulate({models, mode: 'burst', cancelAt: 1000, scenario: () => ({delay: 8000})});
+  assert.equal(cancelled.sent, 4);
+  assert.equal(cancelled.completed, 0);
+  assert.equal(cancelled.cancelled, true);
+  assert.deepEqual(cancelled.records, {});
+  assert.equal(cancelled.dispatchedAt.length, 4);
+  const waiting = await simulate({models, mode: 'burst', cancelAt: 1000,
+    dispatchedAt: Array(19).fill(1000000)});
+  assert.equal(waiting.sent, 0);
+  assert.equal(waiting.cancelled, true);
+  assert.equal(waiting.dispatchedAt.length, 19);
+});
+
+test('burst excludes credits and permission failures without retrying them', async () => {
+  const result = await simulate({models: ['paid', 'denied', 'working'], mode: 'burst',
+    scenario: model => ({delay: 10, status: model === 'paid' ? 402 : model === 'denied' ? 403 : undefined})});
+  assert.equal(result.completed, 3);
+  assert.equal(result.halted, '');
+  assert.deepEqual(Object.keys(result.records).filter(model => result.records[model].ok), ['working']);
+  assert.deepEqual(result.calls.map(call => call.model), ['paid', 'denied', 'working']);
+});
+
+test('burst honors Retry-After, lowers overlap and never retries the quota failure', async () => {
+  const result = await simulate({models: ['quota', 'one', 'two', 'three', 'four', 'five'], mode: 'burst',
+    scenario: model => model === 'quota' ? {delay: 10, status: 429, retryAfterMs: 20000} : {delay: 100}});
+  assert.deepEqual(result.calls.slice(0, 4).map(call => call.at), Array(4).fill(1000000));
+  assert.equal(result.calls[4].at, 1020010);
+  assert.equal(result.calls[5].at, 1020110);
+  assert.ok(result.states.some(state => state.limit === 1 && state.cooldownUntil === 1020010));
+  assert.equal(result.calls.filter(call => call.model === 'quota').length, 1);
+  assert.equal(result.records.quota.ok, false);
+  assert.equal(result.passed, 5);
+});
