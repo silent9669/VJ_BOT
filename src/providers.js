@@ -96,7 +96,10 @@ export async function aiRoute(request, env, url) {
   const path = url.pathname, method = request.method, admin = await isAdmin(env, user.user_id);
 
   if (path === '/api/ai/settings' && method === 'GET') {
-    const own = await env.DB.prepare('SELECT protocol,base_url,model,key_last4 FROM ai_providers WHERE user_id=?').bind(user.user_id).first();
+    const row = await env.DB.prepare('SELECT protocol,base_url,model,key_last4,key_enc FROM ai_providers WHERE user_id=?').bind(user.user_id).first();
+    const apiKey = row && await unseal(env, user.user_id, row.key_enc);
+    const own = row ? {protocol: row.protocol, base_url: row.base_url, model: row.model, key_last4: row.key_last4,
+      connection_id: apiKey ? await connectionId(env, user.user_id, row.protocol, row.base_url, apiKey) : null} : null;
     return json({source: own ? 'own' : 'none', is_admin: admin, own, bases: DEFAULT_BASES, can_store: Boolean(env.AI_KEY_SECRET)});
   }
   if (path === '/api/ai/settings' && method === 'PUT') {

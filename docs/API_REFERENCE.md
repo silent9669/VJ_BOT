@@ -79,7 +79,11 @@ Redirects are not followed with credentials. Pagination is bounded to five pages
 
 The settings UI runs up to four overlapping probes without a fixed four-second gap. A rolling page-memory budget allows at most 19 probe starts per 60 seconds, reserving one request for discovery under the unchanged server limit of 20 AI requests/account/minute. The same account's budget survives repeated scans and credential edits; other tabs and chat may still consume server quota. HTTP 429 reduces overlap and pauses pending candidates for `Retry-After`, or a 30-second fallback, without retrying the failed model. Stop remains available during waiting. Quota errors mean temporarily unconfirmed, not permanent denial. Revoked keys, session errors or connection changes stop dispatch and clear affected choices.
 
-**Use selected model** saves an already successful result without another inference request. Results apply to that model and connection at the time of checking; future availability, prices and quota can change. Keys, model lists and verification state are not stored in browser persistent storage.
+**Use selected model** saves an already successful result without another inference request. The API key stays encrypted on the server; an empty key field reuses that saved key for the same URL and protocol. The settings response includes an opaque `own.connection_id`, bound to the account, protocol, normalized URL and decrypted key, but never the raw key or ciphertext.
+
+The browser remembers only successful model IDs, their opaque connection identity and the last-check timestamp in account-scoped `vjbot_ai_models_v1` storage. Returning to Settings or reloading restores that list only for the current saved connection, without catalog or generation calls. Restored results are visibly historical; access, quota and prices may have changed. A confirmed refresh replaces the previous results rather than resurrecting models that just failed. A different account, key, URL or protocol cannot reuse the old list.
+
+A checked but unsaved draft survives Settings navigation in page memory only. Its raw key is never persisted in browser storage. Save with **Use selected model** once to retain the connection across page reloads. Blocked browser storage leaves live choices usable and shows that the list cannot be remembered. These browser-local model lists do not sync to another device.
 
 ### Probe timing sample
 

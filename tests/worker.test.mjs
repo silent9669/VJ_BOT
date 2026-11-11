@@ -682,6 +682,10 @@ test('model cache identities bind actual credentials and reject a saved-key chan
   try {
     const original = (await catalog({})).connection_id;
     assert.equal(typeof original, 'string');
+    const restored = await (await worker.fetch(request('/api/ai/settings'), env)).json();
+    assert.equal(restored.own.connection_id, original);
+    assert.ok(!JSON.stringify(restored).includes(draft.api_key));
+    assert.equal(restored.own.key_enc, undefined);
     assert.equal((await catalog({base_url: draft.base_url + '/chat/completions', api_key: ''})).connection_id, original);
     for (const patch of [{api_key: 'new-test-12345678'}, {base_url: 'https://other.example.com/v1'}, {protocol: 'anthropic'}]) {
       assert.notEqual((await catalog(patch)).connection_id, original);
@@ -692,6 +696,7 @@ test('model cache identities bind actual credentials and reject a saved-key chan
     assert.equal((await worker.fetch(request('/api/ai/models/test', probe), env)).status, 409);
     assert.equal(generations, 1);
     assert.notEqual((await catalog({api_key: ''})).connection_id, original);
+    assert.notEqual((await (await worker.fetch(request('/api/ai/settings'), env)).json()).own.connection_id, original);
     await env.DB.prepare("UPDATE sessions SET user_id='google:other'").run();
     assert.notEqual((await catalog({})).connection_id, original);
     delete env.AI_KEY_SECRET;

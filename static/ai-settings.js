@@ -4,6 +4,38 @@
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
   let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
+  let modelSnapshot = null;
+  const cacheName = (owner, identity) => `vjbot_ai_models_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
+  const cacheWarning = () => { el('ai-selection-hint').textContent = 'Browser storage is unavailable. These models will not be remembered after a reload.'; };
+  function rememberModels(identity, draft) {
+    const owner = signedInUser?.user_id;
+    if (!owner || !identity) return;
+    const cache = {identity, checkedAt: Date.now(), models: [...el('ai-model-list').options].map(option => option.value)};
+    modelSnapshot = {...cache, owner, draft: {...draft}};
+    try { localStorage.setItem(cacheName(owner, identity), JSON.stringify(cache)); } catch { cacheWarning(); }
+  }
+  function recalledModels(owner, identity) {
+    if (!owner || !identity) return null;
+    try {
+      const cache = JSON.parse(localStorage.getItem(cacheName(owner, identity)) || 'null');
+      return cache?.identity === identity && Number.isFinite(cache.checkedAt) && cache.checkedAt > 0
+        && cache.checkedAt <= Date.now() + 60000 && Array.isArray(cache.models) && cache.models.length <= 1000
+        && cache.models.every(model => typeof model === 'string' && model.length <= 100 && /^~?[\w.:/-]+$/.test(model))
+        ? cache : null;
+    } catch { cacheWarning(); return null; }
+  }
+  function restoreModels(cache) {
+    if (!cache?.models.length) return;
+    for (const model of cache.models) {
+      const option = document.createElement('option');
+      option.value = model;
+      option.textContent = model;
+      el('ai-model-list').append(option);
+    }
+    publishModels();
+    el('ai-model-status').textContent = `${cache.models.length} previously responding models · last checked ${new Date(cache.checkedAt).toLocaleString()}. Refresh to check again.`;
+    el('ai-selection-hint').textContent = 'Restored from this browser. Quota and access may have changed since the last check.';
+  }
   const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
     const response = await apiFetch(path, options);
@@ -43,6 +75,7 @@
     el('ai-load-progress').hidden = true;
   }
   function resetModels() {
+    modelSnapshot = null;
     stopModels();
     el('ai-model-list').replaceChildren();
     el('ai-models').hidden = true;
@@ -121,6 +154,7 @@
         return;
       }
       if (!current()) return;
+      try { if (data.connection_id) localStorage.removeItem(cacheName(owner, data.connection_id)); } catch { cacheWarning(); }
       const ordered = VJModelScan.plan(data.models, {}, {force: true, selected: el('ai-model').value}).pending;
       progress.max = total;
       progress.value = 0;
@@ -134,6 +168,7 @@
         onResult: (model, outcome) => {
           if (!current()) return;
           if (outcome.invalidate) {
+            try { localStorage.removeItem(cacheName(owner, data.connection_id)); } catch { cacheWarning(); }
             resetModels();
             status.textContent = `Connection changed or key rejected. ${outcome.message}`;
             return;
@@ -146,6 +181,7 @@
             option.value = model;
             option.textContent = model;
             el('ai-model-list').append(option);
+            rememberModels(data.connection_id, draft);
           }
         },
         onState: info => {
@@ -190,22 +226,25 @@
     syncProbeBudget();
     renderAccountCard();
     el('ai-chat').hidden = true;
+    const owner = signedInUser?.user_id;
     const status = el('ai-status');
     status.textContent = '';
     try {
       const data = await call('/api/ai/settings');
-      if (testing) return;
+      if (testing || signedInUser?.user_id !== owner) return;
       const own = data.own;
+      const pending = modelSnapshot?.owner === owner && modelSnapshot.draft?.api_key ? modelSnapshot : null;
+      const cache = pending || recalledModels(owner, own?.connection_id);
       savedConnection = Boolean(own);
       storageEnabled = data.can_store;
       el('ai-source').textContent = data.source === 'none' ? 'Connect your own API to start chatting with the tutor.' : '';
       el('ai-source').hidden = data.source !== 'none';
       pill(own ? 'saved' : 'none', own ? 'Saved · not tested' : 'Not connected');
-      el('ai-protocol').value = own?.protocol || 'openai';
-      el('ai-base').value = own?.base_url || '';
+      el('ai-protocol').value = pending?.draft.protocol || own?.protocol || 'openai';
+      el('ai-base').value = pending?.draft.base_url || own?.base_url || '';
       syncProtocol();
       el('ai-model').value = own?.model || '';
-      el('ai-key').value = '';
+      el('ai-key').value = pending?.draft.api_key || '';
       el('ai-key').placeholder = own ? '••••' + own.key_last4 : 'sk-…';
       el('ai-key').type = 'password';
       el('ai-key-toggle').textContent = 'Show';
@@ -215,6 +254,9 @@
       el('ai-key').required = !own;
       el('ai-remove').hidden = !own;
       el('ai-save').disabled = true;
+      restoreModels(cache);
+      modelSnapshot = pending;
+      if (pending) el('ai-key-hint').textContent = 'This checked connection is not saved yet. Use selected model to store the key encrypted on the server.';
       if (!data.can_store) status.textContent = 'API key storage is not enabled on this server.';
     } catch (error) { status.textContent = error.message; }
   }
@@ -331,7 +373,7 @@
     controls.forEach((control, index) => { control.disabled = disabled[index]; });
     testing = false;
     const kept = status.textContent;
-    if (saved) await renderSettings();
+    if (saved) { modelSnapshot = null; await renderSettings(); }
     status.textContent = kept;
     pill(saved ? 'saved' : 'error', saved ? 'Connection saved' : 'Connection was not saved');
     el('ai-chat').hidden = !saved;

@@ -4,9 +4,11 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {scanner} from './fixtures/model-scan-clock.mjs';
 
-function settings({consent = true, models = ['paid', 'denied', 'working'], savedModel = 'paid', probe} = {}) {
+function settings({consent = true, models = ['paid', 'denied', 'working'], savedModel = 'paid', probe,
+  storage = new Map(), connection = 'bound-connection', draftConnection = connection} = {}) {
   const elements = new Map(), requests = [], scanRuns = [];
   let clock = Date.now();
+  let storedModel = savedModel;
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
       value: '', children: [], events: {}, attributes: {}, dataset: {}, hidden: false, disabled: false,
@@ -29,6 +31,8 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
   };
   const context = vm.createContext({Response, AbortController, Date, console,
     signedInUser: {user_id: 'test:owner'}, switchTab() {},
+    localStorage: {getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value),
+      removeItem: key => storage.delete(key)},
     confirm: () => { throw new Error('Browser confirmation must not be used for model checks'); },
     VJModelScan: {plan: scanner.plan, run: options => {
       scanRuns.push({mode: options.mode, dispatchedAt: options.dispatchedAt});
@@ -38,11 +42,12 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
       createElement: () => ({value: '', textContent: ''})},
     apiFetch: async (path, options = {}) => {
       requests.push({path, body: JSON.parse(options.body || '{}'), at: clock});
-      if (path === '/api/ai/settings') return Response.json(options.method === 'PUT' ? {ok: true} : {
-        source: 'own', can_store: true,
-        own: {protocol: 'openai', base_url: 'https://provider.example/v1', model: savedModel, key_last4: 'test'}
-      });
-      if (path === '/api/ai/models') return Response.json({models, connection_id: `connection-${requests.length}`});
+      if (path === '/api/ai/settings') {
+        if (options.method === 'PUT') { storedModel = JSON.parse(options.body).model; return Response.json({ok: true}); }
+        return Response.json({source: 'own', can_store: true,
+          own: {protocol: 'openai', base_url: 'https://provider.example/v1', model: storedModel, key_last4: 'test', connection_id: connection}});
+      }
+      if (path === '/api/ai/models') return Response.json({models, connection_id: draftConnection});
       if (path === '/api/ai/models/test') {
         const {model} = JSON.parse(options.body);
         if (probe) return probe(model, options);
@@ -54,7 +59,7 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
   });
   context.window = context;
   vm.runInContext(readFileSync('static/ai-settings.js', 'utf8'), context);
-  return {context, element, requests, scanRuns};
+  return {context, element, requests, scanRuns, storage};
 }
 
 test('catalog entries needing credits or denied by the key are never selectable after automatic verification', async () => {
@@ -211,4 +216,80 @@ test('session expiry clears choices even when account handling changes identity 
   await pending;
   assert.equal(ui.element('ai-model-list').options.length, 0);
   assert.equal(ui.element('ai-save').disabled, true);
+});
+
+test('saved verified choices survive Settings navigation and a fresh page without generation requests', async () => {
+  const ui = settings();
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').events.click();
+  await ui.element('ai-form').events.submit({preventDefault() {}});
+  await ui.context.renderAiPanels('settings');
+  assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['working']);
+  assert.equal(ui.element('ai-model-list').value, 'working');
+  assert.equal(ui.element('ai-key').value, '');
+  assert.equal(ui.element('ai-key').required, false);
+  assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 3);
+  const reloaded = settings({storage: ui.storage, savedModel: 'working'});
+  await reloaded.context.renderAiPanels('settings');
+  assert.deepEqual(reloaded.element('ai-model-list').options.map(o => o.value), ['working']);
+  assert.equal(reloaded.element('ai-save').disabled, false);
+  assert.match(reloaded.element('ai-model-status').textContent, /previously responding.*last checked/);
+  assert.equal(reloaded.requests.some(r => r.path !== '/api/ai/settings'), false);
+});
+
+test('a checked draft survives navigation but its raw key never enters browser storage', async () => {
+  const ui = settings({draftConnection: 'draft-identity'});
+  await ui.context.renderAiPanels('settings');
+  ui.element('ai-key').value = 'private-draft-key';
+  ui.element('ai-key').events.input();
+  await ui.element('ai-fetch-models').events.click();
+  await ui.context.renderAiPanels('settings');
+  assert.equal(ui.element('ai-key').value, 'private-draft-key');
+  assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['working']);
+  assert.equal(JSON.stringify([...ui.storage]).includes('private-draft-key'), false);
+  const reloaded = settings({storage: ui.storage});
+  await reloaded.context.renderAiPanels('settings');
+  assert.equal(reloaded.element('ai-key').value, '');
+  assert.deepEqual(reloaded.element('ai-model-list').options, []);
+});
+
+test('another account, rotated connection or malformed cache cannot inherit verified choices', async () => {
+  const ui = settings();
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').events.click();
+  const rotated = settings({storage: ui.storage, connection: 'rotated-identity'});
+  await rotated.context.renderAiPanels('settings');
+  assert.deepEqual(rotated.element('ai-model-list').options, []);
+  const other = settings({storage: ui.storage});
+  other.context.signedInUser = {user_id: 'test:other'};
+  await other.context.renderAiPanels('settings');
+  assert.deepEqual(other.element('ai-model-list').options, []);
+  for (const [key, value] of ui.storage) {
+    ui.storage.set(key, JSON.stringify({...JSON.parse(value), models: ['<script>bad</script>']}));
+  }
+  const corrupted = settings({storage: ui.storage});
+  await corrupted.context.renderAiPanels('settings');
+  assert.deepEqual(corrupted.element('ai-model-list').options, []);
+});
+
+test('a failed refresh cannot resurrect earlier successful models on reload', async () => {
+  let succeeds = true;
+  const ui = settings({models: ['working'], probe: model => succeeds ? Response.json({ok: true, model})
+    : Response.json({provider_status: 402, detail: 'Credits required'}, {status: 502})});
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').events.click();
+  succeeds = false;
+  await ui.element('ai-fetch-models').events.click();
+  const reloaded = settings({storage: ui.storage});
+  await reloaded.context.renderAiPanels('settings');
+  assert.deepEqual(reloaded.element('ai-model-list').options, []);
+});
+
+test('blocked browser storage keeps live results usable and explains that persistence failed', async () => {
+  const ui = settings({storage: {get: () => null, set: () => { throw new Error('Blocked'); }, delete: () => {}}});
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').events.click();
+  assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['working']);
+  assert.equal(ui.element('ai-save').disabled, false);
+  assert.match(ui.element('ai-selection-hint').textContent, /will not be remembered/);
 });
