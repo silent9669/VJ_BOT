@@ -2,27 +2,454 @@
 (function () {
   const el = id => document.getElementById(id);
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
-  const PRESETS = {openai: [], anthropic: ['claude-sonnet-5-5', 'claude-haiku-5-5'], gemini: ['gemini-3.8-flash', 'gemini-3.5-flash-lite']};
+  let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
+  let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
+  let modelSnapshot = null;
+  let activeScan = null, readiness = 0;
+  let profileRows = [], selectedProfile = null, profileKey = '', rendering = 0;
+  let profilesOwner = null, loadedProfile = null;
+  const methodKey = owner => 'vjbot_ai_method:' + owner;
+  function connectionChoice() {
+    const owner = signedInUser?.user_id;
+    try {
+      return window.usesAntigravityOAuth?.(owner)
+        ? 'oauth:' + (window.antigravityConnectionId?.(owner) || '')
+        : profileChoice(window.VJProfiles?.active(owner));
+    } catch { return 'unavailable'; }
+  }
+  function refreshSavedConnections() {
+    const list = el('ai-profile-list'), owner = signedInUser?.user_id;
+    list.replaceChildren();
+    const empty = document.createElement('option');
+    empty.value = ''; empty.textContent = 'Choose a saved account'; list.append(empty);
+    for (const [label, scope] of [['API key · This device', 'local'], ['API key · Server', 'server'], ['Antigravity OAuth', 'oauth']]) {
+      const rows = scope === 'oauth' ? window.savedOAuthConnections?.() || [] : profilesOwner === owner ? profileRows.filter(row => row.scope === scope) : [];
+      if (!rows.length) continue;
+      const group = document.createElement('optgroup'); group.label = label;
+      for (const row of rows) {
+        const option = document.createElement('option');
+        option.value = scope === 'oauth' ? 'oauth:' + row.id : profileChoice(row);
+        option.textContent = row.name;
+        group.append(option);
+      }
+      list.append(group);
+    }
+    const choice = connectionChoice();
+    const available = choice.startsWith('oauth:')
+      ? (window.savedOAuthConnections?.() || []).some(row => 'oauth:' + row.id === choice)
+      : profilesOwner === owner && profileRows.some(row => profileChoice(row) === choice);
+    if (choice && choice !== 'oauth:' && !available) {
+      const missing = document.createElement('option');
+      missing.value = choice; missing.textContent = 'Selected connection unavailable · choose another'; list.append(missing);
+    }
+    list.value = choice === 'oauth:' ? '' : choice;
+    const currentProfile = choice.startsWith('oauth:')
+      ? (window.savedOAuthConnections?.() || []).find(row => 'oauth:' + row.id === choice)
+      : profilesOwner === owner && profileRows.find(row => profileChoice(row) === choice);
+    el('ai-current-model').textContent = currentProfile?.model || 'Choose a model to start chatting';
+    el('ai-current-hint').textContent = currentProfile
+      ? `${currentProfile.name} · Saved setup. Live availability can change.`
+      : 'Choose a saved account below, or add a new one.';
+    el('ai-card').dataset.connected = String(Boolean(currentProfile?.model));
+    el('ai-chat').hidden = !currentProfile?.model;
+    const apiProfile = profilesOwner === owner && profileRows.find(row => profileChoice(row) === profileChoice(VJProfiles.active(owner)));
+    el('ai-oauth-voice-hint').textContent = `Read-aloud API-key profile: ${apiProfile ? apiProfile.name : 'none selected'}. Switching OAuth chat accounts does not change it.`;
+  }
+  window.refreshSavedConnections = refreshSavedConnections;
+  const profileChoice = profile => profile && profile.scope !== 'none' ? `${profile.scope}:${profile.id}` : '';
+  const draftKey = () => el('ai-key').value.trim() || (selectedProfile?.protocol === el('ai-protocol').value
+    && selectedProfile?.base_url === el('ai-base').value.trim() ? profileKey : '');
+  function storageHint() {
+    const local = el('ai-profile-storage').value === 'local';
+    el('ai-profile-storage-hint').textContent = local
+      ? 'Encrypted in this browser profile, not synced. The backend receives the key only during AI requests. A compromised browser can still access it.'
+      : 'Saved encrypted on the server under your account. Other devices signed into your account can use this profile.';
+  }
+  function fillProfile(profile, cache = null, key = '') {
+    selectedProfile = profile;
+    savedConnection = Boolean(profile);
+    el('ai-form').dataset.draft = String(!profile);
+    el('ai-api-editor-title').textContent = profile ? 'Edit API-key connection' : 'Add an API-key account';
+    el('ai-api-back').hidden = Boolean(profile);
+    el('ai-api-manage').open = !profile;
+    el('ai-api-scan').open = Boolean(profile && !profile.model);
+    profileKey = key;
+    el('ai-profile-name').value = profile?.name || '';
+    el('ai-profile-storage').value = profile?.scope || 'local';
+    storageHint();
+    el('ai-protocol').value = profile?.protocol || 'openai';
+    el('ai-base').value = profile?.base_url || '';
+    syncProtocol();
+    el('ai-model').value = profile?.model || '';
+    el('ai-key').value = '';
+    el('ai-key').placeholder = profile ? '••••' + profile.key_last4 : 'sk-…';
+    el('ai-key').type = 'password';
+    el('ai-key-toggle').textContent = 'Show';
+    el('ai-key-toggle').setAttribute('aria-label', 'Show API key');
+    el('ai-key-toggle').setAttribute('aria-pressed', 'false');
+    el('ai-key').required = !profile;
+    el('ai-key-hint').textContent = profile ? 'Leave blank to reuse the key in this profile. A different URL or API type needs a new key.' : 'Choose a save location. Never paste your key into chat.';
+    el('ai-remove').hidden = !profile;
+    restoreModels(cache || (profile?.models?.length ? {models: profile.models, checkedAt: profile.checked_at} : null));
+  }
+  async function saveProfile(useModel) {
+    const owner = signedInUser?.user_id, scope = el('ai-profile-storage').value;
+    if (!owner) throw new Error('Sign in before saving a profile.');
+    const model = el('ai-models').hidden ? '' : el('ai-model-list').value;
+    if (useModel && !model) throw new Error('Check models and choose a responding result first.');
+    const snapshot = modelSnapshot;
+    const draft = {name: el('ai-profile-name').value.trim(), protocol: el('ai-protocol').value,
+      base_url: el('ai-base').value, model, api_key: draftKey(),
+      models: [...el('ai-model-list').options].map(option => option.value),
+      checked_at: snapshot?.checkedAt || selectedProfile?.checked_at || null,
+      connection_id: snapshot?.identity || selectedProfile?.connection_id || null};
+    if (!draft.name) throw new Error('Enter a profile name.');
+    const id = selectedProfile?.scope === scope ? selectedProfile.id : null;
+    let profile;
+    if (scope === 'local') {
+      profile = await VJProfiles.save(owner, {...draft, ...(id ? {id} : {})});
+    } else {
+      const result = await send('/api/ai/profiles' + (id ? '/' + encodeURIComponent(id) : ''), id ? 'PUT' : 'POST', draft);
+      profile = result.profile;
+      await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
+    }
+    if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+    VJProfiles.setActive(owner, {scope, id: profile.id});
+    localStorage.setItem(methodKey(owner), 'key');
+    window.aiConnectionChanged?.();
+    modelSnapshot = null;
+    return `Saved ${profile.name} on ${scope === 'local' ? 'this device' : 'your account'}. ${model ? 'Ready to use; no models were rechecked.' : 'Choose Find usable models when ready.'}`;
+  }
+  async function profileAction(action) {
+    if (testing) return;
+    stopModels();
+    testing = true;
+    el('ai-connection-status').textContent = 'Updating saved connection…';
+    el('ai-profile-list').setAttribute('aria-busy', 'true');
+    const owner = signedInUser?.user_id;
+    const controls = [...el('ai-form').querySelectorAll('input, select, button'), el('ai-profile-list'), el('ai-profile-new'), el('ai-method-oauth'), el('ai-add-connection'), el('ai-chat')];
+    const disabled = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
+    let message, succeeded = false;
+    try { message = await action(owner); succeeded = true; }
+    catch (error) { message = error.message; }
+    finally {
+      controls.forEach((control, index) => { control.disabled = disabled[index]; });
+      testing = false;
+      el('ai-profile-list').setAttribute('aria-busy', 'false');
+    }
+    if (signedInUser?.user_id !== owner) return;
+    if (succeeded) loadedProfile = null;
+    if (succeeded) await renderSettings();
+    el('ai-status').textContent = message || '';
+    el('ai-connection-status').textContent = message || '';
+    window.checkAiReady();
+  }
+  const cacheName = (owner, identity) => `vjbot_ai_models_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
+  const cacheWarning = () => { el('ai-selection-hint').textContent = 'Browser storage is unavailable. These models will not be remembered after a reload.'; };
+  const scanName = (owner, identity) => `vjbot_ai_scan_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
+  const validModel = value => typeof value === 'string' && value.length <= 100 && /^~?[\w.:/-]+$/.test(value);
+  function readScan(owner, identity) {
+    if (!owner || !identity) return null;
+    let raw;
+    try { raw = localStorage.getItem(scanName(owner, identity)); } catch { cacheWarning(); return null; }
+    if (raw === null) return null;
+    try {
+      const scan = JSON.parse(raw);
+      if (scan?.identity !== identity || !Array.isArray(scan.catalog) || scan.catalog.length > 1000
+        || !scan.catalog.every(validModel) || new Set(scan.catalog).size !== scan.catalog.length
+        || !Array.isArray(scan.entries) || scan.entries.length > scan.catalog.length
+        || new Set(scan.entries.map(entry => entry.model)).size !== scan.entries.length
+        || !scan.entries.every(entry => validModel(entry.model) && scan.catalog.includes(entry.model)
+          && ['sent', 'ok', 'failed'].includes(entry.state) && Number.isFinite(entry.at) && entry.at > 0 && entry.at <= Date.now() + 60000)
+        || !Array.isArray(scan.dispatchedAt) || scan.dispatchedAt.length > 1000
+        || !scan.dispatchedAt.every(at => Number.isFinite(at) && at > 0 && at <= Date.now() + 60000)
+        || !Number.isFinite(scan.nextAt) || scan.nextAt < 0) throw new Error();
+      return scan;
+    } catch { throw new Error('Saved scan progress is invalid. Select Recheck all models to start a new scan.'); }
+  }
+  function writeScan(owner, scan) {
+    if (!owner || !scan.identity) return;
+    try { localStorage.setItem(scanName(owner, scan.identity), JSON.stringify(scan)); } catch { cacheWarning(); }
+  }
+  function scanHint() {
+    if (activeScan) return;
+    const identity = modelSnapshot?.identity || selectedProfile?.connection_id;
+    let scan;
+    try { scan = readScan(signedInUser?.user_id, identity); }
+    catch (error) { el('ai-resume-hint').textContent = error.message; return; }
+    const dispatched = new Set(scan?.entries.map(entry => entry.model));
+    const remaining = scan?.catalog.filter(model => !dispatched.has(model)).length || 0;
+    el('ai-fetch-models').textContent = el('ai-recheck-all').checked || !scan ? 'Find usable models'
+      : remaining ? `Continue ${remaining} unchecked models` : 'Show saved check results';
+    el('ai-resume-hint').textContent = scan
+      ? `${scan.entries.filter(entry => entry.state !== 'sent').length}/${scan.catalog.length} checked · ${remaining} never sent. Interrupted requests are not retried automatically.`
+      : 'Progress is saved for this account and exact API connection. Reload or Stop, then continue models not yet sent.';
+  }
+  function rememberModels(identity, draft) {
+    const owner = signedInUser?.user_id;
+    if (!owner || !identity) return;
+    const cache = {identity, checkedAt: Date.now(), models: [...el('ai-model-list').options].map(option => option.value)};
+    modelSnapshot = {...cache, owner, draft: {...draft}};
+    try { localStorage.setItem(cacheName(owner, identity), JSON.stringify(cache)); } catch { cacheWarning(); }
+  }
+  function recalledModels(owner, identity) {
+    if (!owner || !identity) return null;
+    try {
+      const cache = JSON.parse(localStorage.getItem(cacheName(owner, identity)) || 'null');
+      return cache?.identity === identity && Number.isFinite(cache.checkedAt) && cache.checkedAt > 0
+        && cache.checkedAt <= Date.now() + 60000 && Array.isArray(cache.models) && cache.models.length <= 1000
+        && cache.models.every(model => typeof model === 'string' && model.length <= 100 && /^~?[\w.:/-]+$/.test(model))
+        ? cache : null;
+    } catch { cacheWarning(); return null; }
+  }
+  function restoreModels(cache) {
+    if (!cache?.models.length) return;
+    for (const model of cache.models) {
+      const option = document.createElement('option');
+      option.value = model;
+      option.textContent = model;
+      el('ai-model-list').append(option);
+    }
+    publishModels();
+    el('ai-model-status').textContent = `${cache.models.length} previously responding models · last checked ${new Date(cache.checkedAt).toLocaleString()}. Refresh to check again.`;
+    el('ai-selection-hint').textContent = 'Restored from this browser. Quota and access may have changed since the last check.';
+  }
   const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
     const response = await apiFetch(path, options);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || 'Không thực hiện được. Hãy thử lại.');
+    if (response.status === 401 && !signedInUser) {
+      resetModels();
+      syncProbeBudget(null);
+    }
+    if (!response.ok) throw Object.assign(new Error(data.detail || 'Request failed. Please try again.'), {
+      status: response.status, providerStatus: data.provider_status, retryAfterMs: data.retry_after_ms
+    });
     return data;
   }
   const send = (path, method, body) => call(path, {method, headers: {'Content-Type': 'application/json'}, body: body && JSON.stringify(body)});
 
-  // Keeps the segmented control, URL placeholder and model suggestions in step with the hidden select.
+  // The server limiter is per signed-in account, not per provider, key or catalog connection.
+  function syncProbeBudget(owner = signedInUser?.user_id ?? null) {
+    if (owner === timingIdentity) return;
+    if (timingIdentity !== null) el('ai-key').value = '';
+    loadedProfile = null;
+    timingIdentity = owner;
+    selectedProfile = null;
+    profileKey = '';
+    nextProbeAt = 0;
+    dispatchedAt = Object.freeze([]);
+  }
+
+  // Credential edits discard in-flight catalogs and all choices from the old connection.
   function syncProtocol() {
     const protocol = el('ai-protocol').value;
     document.querySelectorAll('#ai-segments button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.protocol === protocol)));
     el('ai-base').placeholder = BASES[protocol];
-    el('ai-models').replaceChildren(...PRESETS[protocol].map(model => {
-      const chip = document.createElement('button');
-      chip.type = 'button'; chip.textContent = model;
-      chip.onclick = () => { el('ai-model').value = model; };
-      return chip;
-    }));
+    resetModels();
+  }
+  function stopModels() {
+    activeScan = null;
+    rendering++;
+    modelRequest++;
+    modelAbort?.abort();
+    el('ai-stop-models').hidden = true;
+    el('ai-fetch-models').disabled = testing;
+    el('ai-fetch-models').setAttribute('aria-busy', 'false');
+    el('ai-load-progress').hidden = true;
+  }
+  function resetModels() {
+    modelSnapshot = null;
+    stopModels();
+    el('ai-model-list').replaceChildren();
+    el('ai-models').hidden = true;
+    el('ai-model-list').disabled = true;
+    el('ai-save').disabled = true;
+    el('ai-model-status').textContent = '';
+    el('ai-fetch-models').textContent = 'Find usable models';
+    el('ai-resume-hint').textContent = '';
+    el('ai-selection-hint').textContent = 'Only models that returned a real response can be selected. Future quota and availability may change.';
+  }
+  function invalidateSelection() {
+    el('ai-status').textContent = 'Changes are not saved yet. Your current chat account stays active.';
+  }
+  function publishModels() {
+    const list = el('ai-model-list'), available = list.options.length > 0;
+    el('ai-models').hidden = !available;
+    list.disabled = !available;
+    if (available) {
+      list.value = [...list.options].some(option => option.value === el('ai-model').value)
+        ? el('ai-model').value : list.options[0].value;
+      el('ai-model').value = list.value;
+    }
+    el('ai-save').disabled = !(el('ai-profile-storage').value === 'local' || storageEnabled) || !list.value;
+    el('ai-save').hidden = Boolean(selectedProfile?.model && list.value === selectedProfile.model);
+  }
+  function confirmModelChecks(total, partial, signal) {
+    if (signal.aborted) return Promise.resolve(false);
+    const dialog = el('ai-confirm-dialog');
+    el('ai-confirm-count').textContent = String(total);
+    el('ai-confirm-start').textContent = `Check ${total} models`;
+    el('ai-confirm-partial').hidden = !partial;
+    dialog.returnValue = '';
+    return new Promise(resolve => {
+      const cancel = () => { if (dialog.open) dialog.close('cancel'); };
+      dialog.addEventListener('close', () => {
+        signal.removeEventListener('abort', cancel);
+        resolve(!signal.aborted && dialog.returnValue === 'start');
+      }, {once: true});
+      signal.addEventListener('abort', cancel, {once: true});
+      dialog.showModal();
+    });
+  }
+  async function loadModels() {
+    if (testing || activeScan) return;
+    resetModels();
+    invalidateSelection();
+    syncProbeBudget();
+    const request = modelRequest, status = el('ai-model-status'), owner = signedInUser?.user_id;
+    const draft = {protocol: el('ai-protocol').value, base_url: el('ai-base').value, api_key: draftKey(),
+      ...(selectedProfile?.scope === 'server' ? {profile_id: selectedProfile.id} : {})};
+    if (!draft.api_key && !savedConnection) {
+      status.textContent = 'Enter your API URL and key to check models.';
+      return;
+    }
+    modelAbort = new AbortController();
+    activeScan = {owner, request};
+    const current = () => request === modelRequest && signedInUser?.user_id === owner;
+    let checked = 0, passed = 0, total = 0, partial = '', releaseScan = null;
+    const progress = el('ai-load-progress');
+    progress.removeAttribute('value');
+    el('ai-fetch-models').disabled = true;
+    el('ai-fetch-models').setAttribute('aria-busy', 'true');
+    el('ai-load-progress').hidden = false;
+    el('ai-stop-models').hidden = false;
+    status.textContent = 'Loading models…';
+    try {
+      const data = await call('/api/ai/models', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        signal: modelAbort.signal, body: JSON.stringify(draft)
+      });
+      if (!current()) return;
+      total = data.models.length;
+      partial = data.truncated ? ' Catalog is partial.' : '';
+      if (!total) { status.textContent = 'No candidate models returned.'; return; }
+      if (data.connection_id && typeof navigator !== 'undefined' && navigator.locks) {
+        const acquired = await new Promise((resolve, reject) => {
+          navigator.locks.request(scanName(owner, data.connection_id), {ifAvailable: true}, lock => {
+            if (!lock) { resolve(false); return; }
+            return new Promise(release => { releaseScan = release; resolve(true); });
+          }).catch(() => reject(new Error('Cannot coordinate this scan across tabs. Try again after closing the other scan.')));
+        });
+        if (!current()) return;
+        if (!acquired) { status.textContent = 'Another scan for this API connection is still active. Continue after it stops.'; return; }
+      }
+      const fresh = el('ai-recheck-all').checked;
+      const catalog = new Set(data.models);
+      let saved;
+      try { saved = readScan(owner, data.connection_id); } catch (error) { if (!fresh) throw error; }
+      let checkpoint = {identity: data.connection_id || null, catalog: [...data.models],
+        entries: !fresh && saved ? saved.entries.filter(entry => catalog.has(entry.model)) : [],
+        dispatchedAt: saved?.dispatchedAt || [], nextAt: saved?.nextAt || 0};
+      const dispatched = new Set(checkpoint.entries.map(entry => entry.model));
+      const unfinished = data.models.filter(model => !dispatched.has(model));
+      checked = checkpoint.entries.filter(entry => entry.state !== 'sent').length;
+      passed = checkpoint.entries.filter(entry => entry.state === 'ok').length;
+      for (const entry of checkpoint.entries.filter(entry => entry.state === 'ok')) {
+        const option = document.createElement('option');
+        option.value = entry.model; option.textContent = entry.model; el('ai-model-list').append(option);
+      }
+      if (saved && !fresh) {
+        publishModels();
+        el('ai-selection-hint').textContent = 'Includes earlier successful checks. They were not checked again; access and quota may have changed.';
+      }
+      if (!unfinished.length) {
+        status.textContent = `Saved: ${checked}/${total} checked · ${passed} responded · ${checkpoint.entries.filter(entry => entry.state === 'sent').length} interrupted, not retried. Select Recheck all models only for a fresh scan.`;
+        return;
+      }
+      const accepted = await confirmModelChecks(unfinished.length, partial, modelAbort.signal);
+      if (!current()) return;
+      if (!accepted) {
+        status.textContent = 'Cancelled. No new model tests were sent; saved results are unchanged.';
+        return;
+      }
+      if (!current()) return;
+      writeScan(owner, checkpoint);
+      try { if (data.connection_id) localStorage.setItem(cacheName(owner, data.connection_id),
+        JSON.stringify({identity: data.connection_id, checkedAt: Date.now(), models: checkpoint.entries.filter(entry => entry.state === 'ok').map(entry => entry.model)})); } catch { cacheWarning(); }
+      const ordered = VJModelScan.plan(unfinished, {}, {force: true, selected: el('ai-model').value}).pending;
+      const previousStarts = checkpoint.dispatchedAt.filter(at => at > Date.now() - 60000);
+      if (previousStarts.length > dispatchedAt.filter(at => at > Date.now() - 60000).length) dispatchedAt = Object.freeze(previousStarts);
+      nextProbeAt = Math.max(nextProbeAt, checkpoint.nextAt);
+      progress.max = total;
+      progress.value = checked;
+      const result = await VJModelScan.run({
+        models: ordered, mode: 'burst', signal: modelAbort.signal, current, startAt: nextProbeAt, dispatchedAt,
+        maxCooldownMs: Infinity,
+        onDispatch: model => {
+          if (!current()) return;
+          checkpoint = {...checkpoint, entries: [...checkpoint.entries, {model, state: 'sent', at: Date.now()}]};
+          writeScan(owner, checkpoint);
+        },
+        probe: model => call('/api/ai/models/test', {
+          method: 'POST', headers: {'Content-Type': 'application/json'}, signal: modelAbort.signal,
+          body: JSON.stringify({...draft, model, ...(data.connection_id ? {connection_id: data.connection_id} : {})})
+        }),
+        onResult: (model, outcome) => {
+          if (!current()) return;
+          if (outcome.invalidate) {
+            try { localStorage.removeItem(cacheName(owner, data.connection_id)); } catch { cacheWarning(); }
+            try { if (data.connection_id) localStorage.removeItem(scanName(owner, data.connection_id)); } catch { cacheWarning(); }
+            resetModels();
+            status.textContent = `Connection changed or key rejected. ${outcome.message}`;
+            return;
+          }
+          checked++;
+          checkpoint = {...checkpoint, entries: checkpoint.entries.map(entry => entry.model === model
+            ? {...entry, state: outcome.ok ? 'ok' : 'failed', at: Date.now()} : entry)};
+          writeScan(owner, checkpoint);
+          progress.value = checked;
+          if (outcome.ok) {
+            passed++;
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            el('ai-model-list').append(option);
+            rememberModels(data.connection_id, draft);
+          }
+        },
+        onState: info => {
+          if (!current()) return;
+          nextProbeAt = info.nextAt;
+          dispatchedAt = info.dispatchedAt;
+          checkpoint = {...checkpoint, dispatchedAt: [...dispatchedAt], nextAt: nextProbeAt};
+          writeScan(owner, checkpoint);
+          const wait = Math.max(0, Math.ceil((info.nextAt - Date.now()) / 1000));
+          status.textContent = `Checked ${checked}/${total} · ${passed} responded${wait ? ` · waiting ${wait}s for quota` : ''}`;
+        }
+      });
+      if (!current()) return;
+      publishModels();
+      pill(passed ? 'ok' : 'saved', passed ? `${passed} models responded` : 'No confirmed models');
+      const interrupted = checkpoint.entries.filter(entry => entry.state === 'sent').length;
+      status.textContent = `${result.halted ? 'Stopped' : 'Complete'}: ${checked}/${total} checked · ${passed} responded.${partial}${interrupted ? ` ${interrupted} interrupted requests were not retried.` : ''}${result.halted ? ' Continue to check models not yet sent.' : ''}`;
+    } catch (error) {
+      if (current()) {
+        publishModels();
+        status.textContent = `Stopped: ${error.message} ${checked}/${total} checked.`;
+      }
+    } finally {
+      releaseScan?.();
+      if (activeScan?.request === request) activeScan = null;
+      if (current()) {
+        el('ai-fetch-models').disabled = testing;
+        el('ai-fetch-models').setAttribute('aria-busy', 'false');
+        el('ai-stop-models').hidden = true;
+        el('ai-load-progress').hidden = true;
+        scanHint();
+      }
+    }
   }
   const pill = (state, text) => { el('ai-pill').dataset.state = state; el('ai-pill').textContent = text; };
 
@@ -36,26 +463,54 @@
   }
 
   async function renderSettings() {
+    if (testing) return;
+    const owner = signedInUser?.user_id;
+    if (activeScan && activeScan.owner !== owner) resetModels();
+    syncProbeBudget();
     renderAccountCard();
-    const status = el('ai-status');
+    const oauthRendering = window.renderAntigravityOAuth?.();
+    if (activeScan?.owner === owner) return;
+    const version = ++rendering;
+    const status = el('ai-status'), pending = modelSnapshot?.owner === owner && modelSnapshot.draft?.api_key ? modelSnapshot : null;
     status.textContent = '';
     try {
-      const data = await call('/api/ai/settings');
-      const own = data.own;
-      el('ai-source').textContent = data.source === 'none' ? 'Thêm API key để chat với thầy Lâm.' : '';
-      el('ai-source').hidden = data.source !== 'none';
-      pill(own ? 'saved' : 'none', own ? 'Đã lưu ••••' + own.key_last4 : 'Chưa kết nối');
-      el('ai-protocol').value = own?.protocol || 'openai';
-      el('ai-base').value = own?.base_url || '';
-      syncProtocol();
-      el('ai-model').value = own?.model || '';
-      el('ai-key').value = '';
-      el('ai-key').placeholder = own ? '••••' + own.key_last4 : 'sk-…';
-      el('ai-key').required = !own;
-      el('ai-remove').hidden = !own;
-      el('ai-save').disabled = !data.can_store;
-      if (!data.can_store) status.textContent = 'Máy chủ chưa bật lưu API key.';
-    } catch (error) { status.textContent = error.message; }
+      const data = await call('/api/ai/profiles');
+      let local = [], deviceError = '';
+      try { local = await VJProfiles.list(owner); } catch { deviceError = 'Device storage is unavailable. Choose server storage or enable browser storage.'; }
+      if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
+      profileRows = [...data.profiles.map(profile => ({...profile, scope: 'server'})), ...local.map(profile => ({...profile, scope: 'local'}))];
+      profilesOwner = owner;
+      storageEnabled = data.can_store;
+      const choice = VJProfiles.active(owner);
+      const profile = choice?.scope === 'none' ? null : choice?.scope === 'local'
+        ? profileRows.find(row => row.scope === 'local' && row.id === choice.id)
+        : profileRows.find(row => row.scope === 'server' && row.id === (choice?.scope === 'server' ? choice.id : data.active_id));
+      let key = '';
+      if (profile?.scope === 'local') key = (await VJProfiles.load(owner, profile.id)).api_key;
+      if (activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
+      if (!choice && profile) VJProfiles.setActive(owner, {scope: profile.scope, id: profile.id});
+      refreshSavedConnections();
+      const cache = pending || recalledModels(owner, profile?.connection_id);
+      const identity = owner + ':' + profileChoice(profile);
+      if (loadedProfile !== identity) { fillProfile(profile, cache, key); loadedProfile = identity; }
+      if (pending) {
+        el('ai-protocol').value = pending.draft.protocol;
+        el('ai-base').value = pending.draft.base_url;
+        el('ai-key').value = pending.draft.api_key;
+        el('ai-key-hint').textContent = 'This checked draft is not saved. Save the profile to keep it after reload.';
+      }
+      modelSnapshot = pending;
+      scanHint();
+      if (!window.usesAntigravityOAuth?.(owner)) {
+        el('ai-source').hidden = Boolean(profile);
+        el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Save a connection once, then switch profiles without entering keys again. Provider usage is unavailable for API-key connections.';
+        pill(profile ? 'saved' : 'none', profile ? `Using ${profile.name}` : 'No profile selected');
+      }
+      if (deviceError) status.textContent = deviceError;
+    } catch (error) {
+      if (version === rendering && signedInUser?.user_id === owner) { resetModels(); status.textContent = error.message; }
+    }
+    await oauthRendering;
   }
 
   async function renderAdmin() {
@@ -79,17 +534,44 @@
   }
 
   window.renderAiPanels = tab => (tab === 'admin' ? renderAdmin() : renderSettings());
+  window.pauseApiModelScan = () => { rendering++; stopModels(); };
 
   // There is no built-in AI: chat stays closed (with one clear next step) until the learner saves an API.
   const openAiSettings = () => {
     switchTab('settings');
-    setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); document.querySelector('#ai-segments button').focus({preventScroll: true}); }, 250);
+    setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); el('ai-profile-list').focus({preventScroll: true}); }, 250);
   };
   async function aiSource() {
-    try { return (await call('/api/ai/settings')).source; } catch { return 'unknown'; }
+    try {
+      if (window.usesAntigravityOAuth?.(signedInUser?.user_id)) {
+        const owner = signedInUser?.user_id, connection = window.antigravityConnectionId?.(owner);
+        if (!connection) return 'none';
+        const data = await call('/api/ai/oauth/antigravity');
+        const row = data.connections?.find(row => row.id === connection);
+        return data.configured && row?.state === 'active' && row.model ? 'antigravity_oauth' : 'none';
+      }
+      if (!window.VJProfiles) return 'none';
+      const owner = signedInUser?.user_id, choice = owner && VJProfiles.active(owner);
+      if (choice?.scope === 'none') return 'none';
+      if (choice?.scope === 'local') {
+        const profile = await VJProfiles.load(owner, choice.id);
+        return signedInUser?.user_id === owner && profile?.model ? 'own' : 'none';
+      }
+      if (choice?.scope === 'server') {
+        const data = await call('/api/ai/profiles');
+        return data.profiles.some(profile => profile.id === choice.id && profile.model) ? 'own' : 'none';
+      }
+      const data = await call('/api/ai/settings');
+      if (data.own?.id && data.own.model) VJProfiles.setActive(owner, {scope: 'server', id: data.own.id});
+      return data.own?.model ? data.source : 'none';
+    } catch { return 'none'; }
   }
   window.checkAiReady = async () => {
-    const source = await aiSource(), room = document.querySelector('.classroom-chat-window'), none = source === 'none';
+    const version = ++readiness, owner = signedInUser?.user_id, choice = connectionChoice();
+    const source = await aiSource();
+    if (version !== readiness || owner !== signedInUser?.user_id || choice !== connectionChoice()) return;
+    const room = document.querySelector('.classroom-chat-window'), none = source === 'none';
+    el('ai-chat').hidden = none;
     room.dataset.ai = source === 'unknown' ? 'unknown' : none ? 'none' : 'ready';
     el('chat-ai-gate').hidden = !none;
     el('chat-input').disabled = none;
@@ -108,13 +590,52 @@
   };
   el('chat-gate-open').addEventListener('click', openAiSettings);
   el('ai-chat').addEventListener('click', () => switchTab('classroom'));
+  el('ai-add-connection').addEventListener('click', () => el('ai-add-dialog').showModal());
+  el('ai-add-close').addEventListener('click', () => el('ai-add-dialog').close());
+  for (const id of ['ai-profile-new', 'ai-method-oauth']) {
+    el(id).addEventListener('click', () => el('ai-add-dialog').close(), {capture:true});
+  }
+  async function returnToSavedConnection() {
+    loadedProfile = null;
+    modelSnapshot = null;
+    window.aiConnectionChanged?.();
+    await renderSettings();
+    el('ai-profile-list').focus();
+  }
+  el('ai-api-back').addEventListener('click', returnToSavedConnection);
+  el('ai-oauth-back').addEventListener('click', returnToSavedConnection);
 
-  document.querySelectorAll('#ai-segments button').forEach(button => button.addEventListener('click', () => { el('ai-protocol').value = button.dataset.protocol; syncProtocol(); }));
+  document.querySelectorAll('#ai-segments button').forEach(button => button.addEventListener('click', () => {
+    el('ai-protocol').value = button.dataset.protocol;
+    invalidateSelection();
+    syncProtocol();
+  }));
+  for (const id of ['ai-base', 'ai-key']) {
+    el(id).addEventListener('input', () => { resetModels(); invalidateSelection(); });
+  }
+  el('ai-fetch-models').addEventListener('click', () => loadModels());
+  el('ai-stop-models').addEventListener('click', () => {
+    stopModels();
+    publishModels();
+    el('ai-model-status').textContent = 'Stopped. Only completed successful responses are shown.';
+    scanHint();
+  });
+  el('ai-recheck-all').addEventListener('change', scanHint);
+  el('ai-model-list').addEventListener('change', () => {
+    if (el('ai-model-list').value) el('ai-model').value = el('ai-model-list').value;
+    invalidateSelection();
+    publishModels();
+  });
   el('ai-key-toggle').addEventListener('click', () => {
     const show = el('ai-key').type === 'password';
     el('ai-key').type = show ? 'text' : 'password';
-    el('ai-key-toggle').textContent = show ? 'Ẩn' : 'Hiện';
+    el('ai-key-toggle').textContent = show ? 'Hide' : 'Show';
+    el('ai-key-toggle').setAttribute('aria-label', show ? 'Hide API key' : 'Show API key');
     el('ai-key-toggle').setAttribute('aria-pressed', String(show));
+  });
+  el('auth-logout').addEventListener('click', () => {
+    resetModels();
+    syncProbeBudget(null);
   });
   el('settings-logout').addEventListener('click', () => el('auth-logout').click());
   document.querySelectorAll('.settings-nav button').forEach(button => button.addEventListener('click', () => {
@@ -122,29 +643,53 @@
     button.setAttribute('aria-current', 'true');
     el(button.dataset.target).scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
   }));
-  el('ai-form').addEventListener('submit', async event => {
-    event.preventDefault();
-    const status = el('ai-status'), save = el('ai-save');
-    let connected = false;
-    save.disabled = true;
-    status.textContent = 'Đang lưu…';
-    try {
-      await send('/api/ai/settings', 'PUT', {protocol: el('ai-protocol').value, base_url: el('ai-base').value, model: el('ai-model').value.trim(), api_key: el('ai-key').value.trim()});
-      status.textContent = 'Đang kiểm tra…';
-      await send('/api/ai/test', 'POST', {});
-      status.textContent = 'Kết nối được.';
-      connected = true;
-    } catch (error) { status.textContent = error.message; }
-    save.disabled = false;
-    const kept = status.textContent;
-    await renderSettings();
-    status.textContent = kept;
-    pill(connected ? 'ok' : 'error', connected ? 'Kết nối được' : 'Lỗi kết nối');
-    el('ai-chat').hidden = !connected;
-    window.checkAiReady();
+  el('ai-profile-storage').addEventListener('change', () => { storageHint(); publishModels(); });
+  el('ai-profile-new').addEventListener('click', () => {
+    if (testing) return;
+    ++rendering;
+    window.showAiConnectionForm?.('key');
+    fillProfile(null);
+    savedConnection = false;
+    refreshSavedConnections();
+    invalidateSelection();
+    el('ai-profile-name').focus();
   });
-  el('ai-remove').addEventListener('click', async () => {
-    if (!confirm('Xóa API key đã lưu?')) return;
-    try { await send('/api/ai/settings', 'DELETE'); await renderSettings(); window.checkAiReady(); } catch (error) { el('ai-status').textContent = error.message; }
+  el('ai-profile-list').addEventListener('change', async () => {
+    const value = el('ai-profile-list').value;
+    if (value.startsWith('oauth:')) {
+      stopModels();
+      await window.selectAntigravityConnection?.(value.slice(6));
+      refreshSavedConnections();
+      return;
+    }
+    const profile = profileRows.find(row => profileChoice(row) === value);
+    if (value && !profile) return;
+    await profileAction(async owner => {
+      if (profile?.scope === 'server') await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
+      else if (profile) await VJProfiles.load(owner, profile.id);
+      if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+      VJProfiles.setActive(owner, profile ? {scope: profile.scope, id: profile.id} : {scope:'none', id:''});
+      localStorage.setItem(methodKey(owner), 'key');
+      window.aiConnectionChanged?.();
+      modelSnapshot = null;
+      return profile ? `Using ${profile.name}. Saved models restored without checking them again.` : 'No chat connection selected.';
+    });
+    refreshSavedConnections();
+  });
+  el('ai-profile-save').addEventListener('click', () => profileAction(() => saveProfile(false)));
+  el('ai-form').addEventListener('submit', event => {
+    event.preventDefault();
+    return profileAction(() => saveProfile(true));
+  });
+  el('ai-remove').addEventListener('click', () => {
+    const profile = selectedProfile;
+    if (!profile || !confirm(`Delete ${profile.name} from ${profile.scope === 'local' ? 'this device' : 'your account'}? Other profiles will remain.`)) return;
+    return profileAction(async owner => {
+      if (profile.scope === 'local') await VJProfiles.remove(owner, profile.id);
+      else await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}`, 'DELETE');
+      VJProfiles.setActive(owner, {scope: 'none', id: ''});
+      modelSnapshot = null;
+      return 'Profile deleted. Choose another connection to continue; no fallback was selected.';
+    });
   });
 })();

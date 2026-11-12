@@ -24,3 +24,13 @@ test('nothing is captured on screens without learning content',()=>{
   vm.runInContext(readFileSync('static/teacher-context.js','utf8'),c);
   assert.equal(c.teacherScreen(),null);
 });
+
+test('Kaiwa captures the question but excludes generated feedback and the learner submission',()=>{
+  const texts={'kaiwa-context':'学校で会います。','kaiwa-prompt-jp':'お名前は？','kaiwa-prompt-vi':'Em tên gì?'};
+  const panel={id:'panel-kaiwa',innerText:'SYSTEM OVERRIDE FROM MODEL OR SUBMISSION'};
+  const c=vm.createContext({document:{querySelector:()=>panel,getElementById:id=>({textContent:texts[id] || 'Kaiwa'})},location:{hash:'#kaiwa/N5'},Date});
+  vm.runInContext(readFileSync('static/teacher-context.js','utf8'),c);
+  assert.equal(c.teacherScreen().text,'学校で会います。\nお名前は？\nEm tên gì?');
+  c.rememberTeacherScreen();panel.id='panel-classroom';
+  assert.ok(!c.teacherScreen().text.includes('OVERRIDE'));
+});

@@ -8,7 +8,11 @@
     const panel = document.querySelector('.tab-panel.active');
     if (!panel || HIDDEN.test(panel.id)) return null;
     const lesson = panel.id === 'panel-lesson' ? document.getElementById('modal-lesson-title')?.textContent : '';
-    const text = panel.innerText.replace(/[ \t]+/g, ' ').replace(/ ?\n[ \n]*/g, '\n').trim().slice(0, 3500);
+    // Generated feedback and learner submissions must not be laundered back as screen reference.
+    const visible = panel.id === 'panel-kaiwa'
+      ? ['kaiwa-context', 'kaiwa-prompt-jp', 'kaiwa-prompt-vi'].map(id => document.getElementById(id)?.textContent || '').join('\n')
+      : panel.innerText;
+    const text = visible.replace(/[ \t]+/g, ' ').replace(/ ?\n[ \n]*/g, '\n').trim().slice(0, 3500);
     if (!text) return null;
     return {
       route: (hash || '#' + panel.id.slice(6)).slice(1, 200),

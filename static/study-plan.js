@@ -15,6 +15,9 @@ async function loadPracticalCourse(){
   })).then(([course,sources,chapters,resources,erin])=>{practicalCourse=course;practicalSources=sources;courseChapters=chapters;jlptResources=resources;erinResources=erin;}).catch(error=>{practicalLoad=null;throw error;});
   return practicalLoad;
 }
+function installCourseKaiwa(){
+  for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:unit.production.prompt,hints:unit.production.criteria}]};}
+}
 function createStudyPlan(level){
   if(studyPlans.has(level))return studyPlans.get(level);
   if(!practicalCourse)throw new Error('Course has not loaded');

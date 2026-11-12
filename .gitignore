@@ -26,3 +26,6 @@ node_modules/
 scripts/update_app.js
 
 .taste-skill/
+
+# Generated from the same lesson builders used by the browser.
+/static/course/teacher-*.json

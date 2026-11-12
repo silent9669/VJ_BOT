@@ -7,6 +7,10 @@
     "test": "tests"
   },
   "scripts": {
+    "teacher:catalog": "node scripts/build_teacher_catalog.mjs",
+    "predev": "npm run teacher:catalog",
+    "prebuild": "npm run teacher:catalog",
+    "predeploy": "npm run teacher:catalog",
     "dev": "cf dev --port 8787",
     "build": "cf deploy --dry-run",
     "test": "node --test tests/*.test.mjs",

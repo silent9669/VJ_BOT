@@ -1,3 +1,5 @@
+import {disconnectAllAntigravity} from './antigravity-gateway.js';
+
 // Admin = a Google account whose VERIFIED email is in the ADMIN_EMAILS secret. Password accounts
 // have unverified emails, so they can never be admin. Both the grant row and the current secret are checked
 // on every request, so removing an email from the secret revokes access immediately.
@@ -15,12 +17,15 @@ export async function isAdmin(env, userId) {
 }
 
 const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const OWNED_TABLES = ['exam_attempts', 'completions', 'progress_attempts', 'progress', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_providers', 'admins', 'profiles'];
+const OWNED_TABLES = ['ai_antigravity_oauth_states', 'ai_active_antigravity', 'ai_antigravity_connections', 'ai_google_oauth_states', 'ai_google_oauth', 'exam_attempts', 'completions', 'progress_attempts', 'progress', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admins', 'profiles'];
 const RESET_TABLES = ['progress', 'progress_attempts', 'completions', 'exam_attempts', 'study_days'];
 const kindOf = id => id.startsWith('google:') ? 'google' : id.startsWith('email:') ? 'email' : 'guest';
 
 // Every table keyed by user_id; used by account deletion and by the admin "delete" action.
-export const deleteUserData = (env, userId) => env.DB.batch(OWNED_TABLES.map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+export async function deleteUserData(env, userId) {
+  await disconnectAllAntigravity(env, userId);
+  return env.DB.batch(OWNED_TABLES.map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(userId)));
+}
 
 const USER_SELECT = `SELECT p.user_id, COALESCE(p.name,(SELECT name FROM password_accounts a WHERE a.user_id=p.user_id),(SELECT name FROM sessions s WHERE s.user_id=p.user_id LIMIT 1)) AS name,
   COALESCE(p.email,(SELECT email FROM password_accounts a WHERE a.user_id=p.user_id)) AS email, p.level, p.created_at, p.last_login,
@@ -29,7 +34,8 @@ const USER_SELECT = `SELECT p.user_id, COALESCE(p.name,(SELECT name FROM passwor
   (SELECT count(*) FROM progress g WHERE g.user_id=p.user_id) AS items,
   (SELECT count(*) FROM completions k WHERE k.user_id=p.user_id) AS completed,
   (SELECT count(*) FROM sessions s WHERE s.user_id=p.user_id AND s.expires_at>?) AS sessions,
-  (SELECT protocol||' · '||model||' · …'||key_last4 FROM ai_providers v WHERE v.user_id=p.user_id) AS api,
+  (SELECT protocol||' · '||model||' · …'||key_last4 FROM ai_providers v JOIN ai_active_profiles a ON a.user_id=v.user_id AND a.profile_id=v.id WHERE v.user_id=p.user_id) AS api,
+  (SELECT count(*) FROM ai_providers v WHERE v.user_id=p.user_id) AS api_profiles,
   EXISTS(SELECT 1 FROM admins m WHERE m.user_id=p.user_id) AS admin
   FROM profiles p`;
 const shape = row => ({...row, kind: kindOf(row.user_id), admin: Boolean(row.admin)});
@@ -51,7 +57,10 @@ export async function userDetail(env, id) {
 
 const ACTIONS = {
   clear_chat: (env, id) => env.DB.prepare('DELETE FROM conversations WHERE user_id=?').bind(id).run(),
-  remove_api: (env, id) => env.DB.prepare('DELETE FROM ai_providers WHERE user_id=?').bind(id).run(),
+  remove_api: async (env, id) => {
+    await disconnectAllAntigravity(env, id);
+    return env.DB.batch(['ai_google_oauth_states','ai_google_oauth','ai_active_profiles','ai_providers'].map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id)));
+  },
   revoke_sessions: (env, id) => env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(id).run(),
   reset_progress: (env, id) => env.DB.batch(RESET_TABLES.map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id))),
   delete: (env, id) => deleteUserData(env, id)
