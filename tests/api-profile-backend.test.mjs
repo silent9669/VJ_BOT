@@ -221,11 +221,17 @@ test('device overrides drive chat, Kaiwa, AI test and Google TTS transiently wit
     }
     assert.equal(url, 'https://device.example.com/v1/chat/completions');
     assert.equal(options.headers.Authorization, 'Bearer ephemeral-test-key-4444');
-    assert.equal(JSON.parse(options.body).model, 'device-model');
-    return Response.json({choices: [{message: {content: JSON.stringify({score: 90, rating: 'Xuất sắc', feedback: 'Ổn', model_answer: 'はい'})}}]});
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, 'device-model');
+    const content = body.response_format?.json_schema?.name === 'tutor_reply'
+      ? {reply: '何時に始まりますか。', action: 'probe', open_probe: '何時に始まりますか。'}
+      : {score: 90, rating: 'Xuất sắc', feedback: 'Ổn', model_answer: 'はい'};
+    return Response.json({choices: [{message: {content: JSON.stringify(content)}}]});
   };
   try {
-    assert.equal((await send('google:alice', '/api/chat', 'POST', {message: 'hello', api_connection})).status, 200);
+    const chat = await send('google:alice', '/api/chat', 'POST', {message: 'hello', api_connection});
+    assert.equal(chat.status, 200);
+    assert.equal((await chat.json()).reply, '何時に始まりますか。');
     const kaiwa = await send('google:alice', '/api/kaiwa/evaluate', 'POST', {...kaiwaReference, user_speech: 'はい', api_connection});
     assert.equal(kaiwa.status, 200); assert.equal((await kaiwa.json()).score, 90);
     assert.equal((await send('google:alice', '/api/ai/test', 'POST', {api_connection})).status, 200);
@@ -323,7 +329,7 @@ test('device use requires neither server key encryption nor saved profiles and s
   globalThis.fetch = async (url, options) => {
     calls++; assert.equal(url, 'https://device.example.com/v1/chat/completions');
     assert.equal(options.headers.Authorization, 'Bearer unsaved-device-key');
-    return Response.json({choices: [{message: {content: 'OK'}}]});
+    return Response.json({choices: [{message: {content: JSON.stringify({reply: '何時に始まりますか。', action: 'probe', open_probe: '何時に始まりますか。'})}}]});
   };
   try {
     assert.equal((await send('google:alice', '/api/chat', 'POST', {message: 'hello', api_connection})).status, 200);
@@ -399,9 +405,12 @@ test('pinned server profiles survive another activation and fail closed after re
     network++;
     assert.equal(options.headers['x-goog-api-key'],'first-server-test-key');
     assert.ok(url.startsWith('https://generativelanguage.googleapis.com/'));
+    const content = JSON.parse(options.body).generationConfig?.responseJsonSchema?.properties?.reply
+      ? {reply: '何時に始まりますか。', action: 'probe', open_probe: '何時に始まりますか。'}
+      : {score: 80, rating: 'Rất tốt', feedback: 'OK', model_answer: 'はい'};
     return Response.json({candidates:[{content:{parts:url.includes('-tts:')
       ?[{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]
-      :[{text:'{"score":80,"rating":"Rất tốt","feedback":"OK","model_answer":"はい"}'}]}}]});
+      :[{text:JSON.stringify(content)}]}}]});
   };
   try {
     for(const path of ['/api/chat','/api/kaiwa/evaluate','/api/tts','/api/ai/test']) {

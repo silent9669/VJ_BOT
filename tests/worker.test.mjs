@@ -7,6 +7,7 @@ const teacherAssets = {fetch: async request => {
   const level = new URL(request.url).pathname.match(/^\/course\/teacher-(N[1-5])\.json$/)?.[1];
   return level ? Response.json(teacherCatalogs[level]) : new Response('Not found', {status: 404});
 }};
+const tutorText = reply => JSON.stringify({reply, action: 'explanation', open_probe: null});
 
 test('shared AI and private progress require a session', async () => {
   for (const path of ['/api/exam-attempts','/api/completions','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/progress?user_id=someone']) {
@@ -29,7 +30,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql','0014_api_profiles.sql','0015_conversation_scope.sql','0016_google_ai_oauth.sql','0017_antigravity_oauth.sql','0018_antigravity_accounts.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql','0014_api_profiles.sql','0015_conversation_scope.sql','0016_google_ai_oauth.sql','0017_antigravity_oauth.sql','0018_antigravity_accounts.sql','0019_tutor_sessions.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,exec:sql=>db.exec(sql),batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -88,7 +89,6 @@ test('TTS keeps reading directions out of the transcript and returns the audio p
   };
   try{const response=await worker.fetch(request('/api/tts',{text:'こんにちは。'}),env);assert.equal(response.status,200);assert.equal((await response.json()).audioBase64,'UklGRg==');}finally{globalThis.fetch=original;}
 });
-
 
 test('generated exercise labels survive requests and stay private to each account',async()=>{
   const {env,request}=await authenticated();
@@ -223,7 +223,7 @@ test('failed chat does not persist a turn and retrying a completed request retur
     globalThis.fetch=async()=>{calls++;return Response.json({error:'upstream unavailable'},{status:503});};
     assert.equal((await worker.fetch(request('/api/chat',body),env)).status,503);
     assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,0);
-    globalThis.fetch=async()=>{calls++;return Response.json({choices:[{message:{content:'こんにちは！'}}]});};
+    globalThis.fetch=async()=>{calls++;return Response.json({choices:[{message:{content:tutorText('こんにちは！')}}]});};
     const first=await worker.fetch(request('/api/chat',body),env);assert.equal(first.status,200);
     const retry=await worker.fetch(request('/api/chat',body),env);assert.equal(retry.status,200);assert.equal((await retry.json()).reply,'こんにちは！');
     assert.equal(calls,2);assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,2);
@@ -248,7 +248,7 @@ test('there is no built-in AI: even an admin needs an own API, and speech needs 
 const put=(request,path,body,method='PUT')=>new Request('https://vjbot.test'+path,{method,headers:request('/api/ai/settings').headers,body:body&&JSON.stringify(body)});
 test('learners without an admin grant need their own API; their key and URL are the only ones ever used',async()=>{
   const {env,request}=await authenticated(),previous=globalThis.fetch;env.GEMINI_API_KEY='platform-key';env.AI_KEY_SECRET='local-secret';env.ADMIN_EMAILS='owner@example.test';
-  const calls=[];globalThis.fetch=async(url,options)=>{calls.push([url,options]);return Response.json({choices:[{message:{content:'ok'}}]});};
+  const calls=[];globalThis.fetch=async(url,options)=>{calls.push([url,options]);return Response.json({choices:[{message:{content:tutorText('ok')}}]});};
   try{
     let r=await worker.fetch(request('/api/chat',{message:'xin chào'}),env);assert.equal(r.status,403);assert.equal((await r.json()).code,'no_ai');assert.equal(calls.length,0);
     assert.equal((await (await worker.fetch(request('/api/ai/settings'),env)).json()).source,'none');
@@ -270,7 +270,7 @@ test('learners without an admin grant need their own API; their key and URL are 
 test('Anthropic and Gemini native requests use their own headers and history rules',async()=>{
   const {env,request}=await authenticated(),previous=globalThis.fetch;env.AI_KEY_SECRET='local-secret';
   await env.DB.prepare("INSERT INTO conversations(user_id,role,content,timestamp) VALUES('google:qa','bot','Chào em',?)").bind(new Date().toISOString()).run();
-  let seen;globalThis.fetch=async(url,options)=>{seen={url,options,body:JSON.parse(options.body)};return Response.json(seen.url.includes('anthropic')?{content:[{type:'text',text:'Claude ok'}]}:{candidates:[{content:{parts:[{text:'Gemini ok'}]}}]});};
+  let seen;globalThis.fetch=async(url,options)=>{seen={url,options,body:JSON.parse(options.body)};return Response.json(seen.url.includes('anthropic')?{content:[{type:'text',text:tutorText('Claude ok')}]}:{candidates:[{content:{parts:[{text:tutorText('Gemini ok')}]}}]});};
   try{
     await worker.fetch(put(request,'/api/ai/settings',{protocol:'anthropic',base_url:'https://api.anthropic.com',model:'claude-sonnet-5-5',api_key:'sk-ant-12345678'}),env);
     let r=await worker.fetch(request('/api/chat',{message:'Bắt đầu'}),env);assert.equal((await r.json()).reply,'Claude ok');

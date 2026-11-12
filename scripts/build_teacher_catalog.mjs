@@ -5,16 +5,67 @@ import vm from 'node:vm';
 const root = new URL('../static/', import.meta.url);
 const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
-function lessonData(context, item, level, skill) {
-  return {
+function exampleData(example, source) {
+  const tatoeba = /^https?:\/\/(?:www\.)?tatoeba\.org\/sentences\/show\/\d+(?:[/?#]|$)/i.test(example.source || '');
+  const ungraded = source.includes('OpenJLPT') || tatoeba;
+  return {...example, provenance: {
+    source: tatoeba ? 'OpenJLPT / Tatoeba' : source,
+    ...(example.source ? {url: example.source} : {}),
+    ...(ungraded ? {sentence_level_certified: false,
+      level_basis: tatoeba ? 'target vocabulary, not sentence-level certification'
+        : 'lesson target, not sentence-level certification'} : {})
+  }};
+}
+
+function compactWord(word) {
+  return {jp: word.jp, reading: word.reading || word.ro || '', vi: word.vi || word.meaning_vi || ''};
+}
+
+function catalogQuestions(context, item, level, skill) {
+  const checks = Array.from(context.lessonQuestions(item, level, skill));
+  return Number.isInteger(item.examIndex) ? [...checks, ...(item.drills || []).slice(5)] : checks;
+}
+
+function lessonData(context, item, level, skill, course, sourceCatalog) {
+  const unit = item.roleplay || course.units.find(unit => unit.id === item.lessonKey
+    || item.id === `quiz-lesson:${level}:${unit.id}:review`);
+  const source = item.source || item.sourceLabel || 'VJBot';
+  const words = Array.from(item.items || item.roleplay?.words || item.targetWords || [], word => ({
+    ...word, ...(word.examples ? {examples: Array.from(word.examples, example => exampleData(example, source))} : {})
+  }));
+  const examples = Array.from(item.examples || item.roleplay?.dialogue || [], example => exampleData(example, source));
+  const questions = catalogQuestions(context, item, level, skill).map(question => {
+    const example_indexes = examples.flatMap((example, index) =>
+      (example.jp && question.q.includes(example.jp)) || question.ans === example.jp || question.ans === example.vi ? [index] : []);
+    return {...question, explanation: question.explanation ?? null,
+      example_indexes: example_indexes.length ? example_indexes : unit ? examples.map((_, index) => index) : []};
+  });
+  const sources = [];
+  if (unit || source.includes('VJBot')) sources.push({id: 'vjbot', title: 'VJBot',
+    authorship: course.authorship, level_note: course.level_note});
+  if (source.includes('OpenJLPT')) sources.push({id: 'openjlpt', title: 'OpenJLPT',
+    usage: 'Vocabulary-level study track; corpus example sentences are not sentence-level JLPT certified.'});
+  if (!sources.length) sources.push({id: source, title: source});
+  const sourceIds = new Set(unit?.source_ids || []);
+  for (const resource of item.resources || []) sourceIds.add(resource.id);
+  sources.push(...sourceCatalog.lessons.filter(resource => sourceIds.has(resource.id)));
+  const overview = {
+    formula: item.formula || unit?.formula, explanation: item.explanation || unit?.note, meaning_vi: item.meaning_vi,
+    passage: item.passage, translation: item.translation, script_jp: item.script_jp, script_vi: item.script_vi,
+    words: words.map(compactWord),
+    // Beginner tracks classify vocabulary, not the difficulty of attached corpus sentences.
+    examples: examples.filter(example => !['N5', 'N4'].includes(level)
+      || example.provenance.sentence_level_certified !== false).slice(0, 3),
+    task: item.production || unit?.production, external_resources: item.externalResources
+  };
+  // Normalize VM objects to JSON data without ever slicing serialized JSON or dropping addressable items.
+  return JSON.parse(JSON.stringify({
     id: context.activityId(item, level, skill), level,
     title: item.roleplay ? `${item.roleplay.title} · ${item.title}` : item.title || item.jp || 'Bài học',
     goal: item.roleplay?.goal || item.summary || item.meaning_vi || '',
-    content: JSON.stringify({formula: item.formula, explanation: item.explanation, passage: item.passage,
-      translation: item.translation, script_jp: item.script_jp, script_vi: item.script_vi,
-      examples: item.examples?.slice(0, 3), words: item.items?.slice(0, 5), task: item.production,
-      external_resources: item.externalResources}).slice(0, 3500)
-  };
+    overview, words, examples, questions, sources,
+    reference_url: item.reference_url || unit?.reference_url
+  }));
 }
 
 // Execute only repository-owned lesson builders at build time, never client or provider code.
@@ -36,6 +87,7 @@ export async function buildTeacherCatalog() {
   await context.loadPracticalCourse();
   context.installCourseKaiwa();
   const catalogs = {};
+  const {practicalCourse, practicalSources} = vm.runInContext('({practicalCourse, practicalSources})', context);
   for (const level of levels) {
     await context.ensureLessons(level);
     const units = context.createStudyPlan(level);
@@ -46,11 +98,11 @@ export async function buildTeacherCatalog() {
       entries.push(...context.featureLessons(feature, level).map(item => ({item, skill: feature === 'flashcards' ? 'vocabulary' : 'listening'})));
     }
     const lessons = Object.fromEntries(entries.map(({item, skill}) => {
-      const data = lessonData(context, item, level, skill);
+      const data = lessonData(context, item, level, skill, practicalCourse, practicalSources);
       return [data.id, data];
     }));
     const items = Object.fromEntries(entries.flatMap(({item, skill}) => [
-      ...context.lessonQuestions(item, level, skill).map(question => [question.item_id, question.q]),
+      ...catalogQuestions(context, item, level, skill).map(question => [question.item_id, question.q]),
       ...(item.production ? [[item.id, item.production.prompt]] : []),
       ...(item.dictation ? (item.examples || []).map((example, index) => [`${item.id}:${index}`, example.jp]) : [])
     ]));

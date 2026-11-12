@@ -9,6 +9,8 @@ const SUFFIX = {openai: /\/chat\/completions$/, anthropic: /\/v1\/messages$/, ge
 // Hosts a learner-supplied URL must never reach: local names, our own Worker, IP literals.
 const BLOCKED_HOST = /(^|\.)(localhost|local|internal|localdomain|home|lan|workers\.dev|dangphuc\.me)$/i;
 const RETRYABLE = new Set([404, 429, 500, 502, 503, 504]);
+const GEMINI_INCOMPLETE = new Set(['MAX_TOKENS', 'SAFETY', 'RECITATION', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII',
+  'IMAGE_SAFETY', 'IMAGE_PROHIBITED_CONTENT', 'IMAGE_RECITATION']);
 
 export function cleanBaseUrl(protocol, raw) {
   if (!DEFAULT_BASES[protocol]) return {error: 'Loại API không hợp lệ.'};
@@ -43,11 +45,11 @@ export function normalizeTurns(turns) {
   return out;
 }
 
-function request(protocol, key, model, {system, turns, schema}) {
+function request(protocol, key, model, {system, turns, schema, schemaName}) {
   if (protocol === 'openai') {
     // No max_tokens or temperature: newer OpenAI models reject both. Reply length is bounded by the prompt.
     return {headers: {Authorization: `Bearer ${key}`}, body: {model, messages: [...(system ? [{role: 'system', content: system}] : []), ...turns],
-      ...(schema ? {response_format: {type: 'json_schema', json_schema: {name: 'kaiwa_evaluation', strict: true, schema}}} : {})}};
+      ...(schema ? {response_format: {type: 'json_schema', json_schema: {name: schemaName === 'tutor_reply' ? 'tutor_reply' : 'kaiwa_evaluation', strict: true, schema}}} : {})}};
   }
   if (protocol === 'anthropic') {
     return {headers: {'x-api-key': key, 'anthropic-version': '2023-06-01'}, body: {model, max_tokens: 1024, ...(system ? {system} : {}), messages: turns,
@@ -72,16 +74,27 @@ function textOf(protocol, data) {
   return (data.candidates?.[0]?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('').trim();
 }
 
+// Missing stop metadata is common in compatible proxies; only explicit incomplete/blocked states reject text.
+function incomplete(protocol, data) {
+  if (protocol === 'openai') return ['length', 'content_filter'].includes(data.choices?.[0]?.finish_reason);
+  if (protocol === 'anthropic') return ['max_tokens', 'refusal'].includes(data.stop_reason);
+  const candidate = data.candidates?.[0], feedback = data.promptFeedback;
+  return GEMINI_INCOMPLETE.has(candidate?.finishReason)
+    || Boolean(feedback?.blockReason && feedback.blockReason !== 'BLOCK_REASON_UNSPECIFIED')
+    || Boolean(feedback?.safetyRatings?.some(rating => rating.blocked)
+      || candidate?.safetyRatings?.some(rating => rating.blocked));
+}
+
 // Tries provider.models in order (fallback on 404/429/5xx) inside one budget below the browser's 35s timeout.
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
-export async function callLLM(provider, {system, turns, schema}, {budgetMs = 28000, attemptMs = 15000} = {}) {
+export async function callLLM(provider, {system, turns, schema, schemaName}, {budgetMs = 28000, attemptMs = 15000} = {}) {
   const deadline = Date.now() + budgetMs, history = normalizeTurns(turns);
   let status = 503, retryAfterMs;
   for (const model of provider.models) {
     const left = deadline - Date.now();
     if (left < 1000) break;
     try {
-      const {headers, body} = request(provider.protocol, provider.apiKey, model, {system, turns: history, schema});
+      const {headers, body} = request(provider.protocol, provider.apiKey, model, {system, turns: history, schema, schemaName});
       const response = await fetch(endpoint(provider.protocol, provider.baseUrl, model), {
         method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(Math.min(left, attemptMs)),
         headers: {'Content-Type': 'application/json', ...headers}, body: JSON.stringify(body)
@@ -89,7 +102,7 @@ export async function callLLM(provider, {system, turns, schema}, {budgetMs = 280
       if (response.ok) {
         const raw = await response.text();
         if (raw.length <= 400000) {
-          const text = textOf(provider.protocol, JSON.parse(raw));
+          const data = JSON.parse(raw), text = incomplete(provider.protocol, data) ? '' : textOf(provider.protocol, data);
           if (text) { console.log('AI ok', provider.source, model); return {text}; }
         }
         status = 502;
