@@ -25,7 +25,7 @@ All routes are under `/api` and return JSON `{detail}` on errors. Private routes
 | `POST /api/progress/record` | `{item_id, correct, quality 0–5, attempt_id?, display?, item_type?, response_text?}`; `attempt_id` giúp thử lại không đếm hai lần |
 | `GET/POST /api/completions` | Đánh dấu hoàn thành: `{activity_id, kind, level, title, completed}` |
 | `GET/POST /api/exam-attempts` | Trạng thái bài thi thử theo đề `N5:2018` |
-| `GET/DELETE /api/history` | General chat history, or one lesson selected by `lesson_id` and `level`. DELETE clears only that scope. `GET ?archive=legacy` reads preserved pre-migration history; the archive is read-only. |
+| `GET/DELETE /api/history` | General chat history, or one lesson selected by `lesson_id` and `level`. DELETE clears conversations, teaching state and request claims only for that scope, invalidating any running generation. `GET ?archive=legacy` reads preserved pre-migration history; the archive is read-only. |
 | `POST /api/account/delete` | Xóa mọi dữ liệu của tài khoản |
 
 ## AI (riêng tư, cần API của người dùng)
@@ -34,14 +34,37 @@ Chat and speaking feedback use the learner's selected API-key or Antigravity OAu
 
 | Route | Mô tả |
 | --- | --- |
-| `POST /api/chat` | `{message ≤ 6000 characters, lesson?: {id,level}, screen?: {route,title,level?,text ≤ 3500}, channel?: 'chat'\|'quick', request_id?}`. Lesson IDs resolve against the server-owned catalog; unknown IDs and client-supplied lesson content return 400. Returns `{reply, updated_topic}`. A request UUID cannot be reused in another conversation scope (409). |
-| `POST /api/chat/greeting` | Fixed greeting stored only in general chat. |
+| `POST /api/chat` | `{message ≤ 6000 characters, lesson?: {id,level}, focus?: {kind:'word'\|'example'\|'question',index:integer ≥ 0}, intent?: 'message'\|'start'\|'hint'\|'explain'\|'situation'\|'check'\|'summary'\|'restart', screen?: {route,title,level?,text ≤ 3500}, channel?: 'chat'\|'quick', request_id?}`. Canonical lesson/item membership is server-validated. Returns plain `{reply,response,updated_topic}`; internal teaching fields are not exposed. A completed retry returns its saved reply. Concurrent or changed-payload UUID reuse returns 409. |
 | `POST /api/kaiwa/evaluate` | `{scenario_id, prompt_index?: 0, user_speech, level}`. The server resolves the question and scenario; client-supplied `scenario_title`, `context` and `prompt_jp` are rejected. Returns `{score, rating, feedback, model_answer, user_text, scenario}` after strict validation. |
 | `POST /api/tts` | `{text, speech_model?}` returns `{audioBase64, mimeType, voice, model}`. `{action:"models"}` lists compatible speech candidates without audio generation. Returns `403 {code:"no_tts"}` without a selected Google Gemini API-key profile; no browser-voice fallback. |
 
 TTS sends `text` as the verbatim transcript. Reading directions stay in `speech_metadata`, never prepended to spoken text, preserving the transcript fix merged in PR #24.
 
 Common AI failures: `403 {code:"no_ai"}` for a missing selected API, `409 {code:"rekey"}` for an undecryptable key, `409 {code:"profile_changed"}` for a removed pinned profile, `403 {code:"oauth_model"}` for an unselected OAuth model, `409/503 {code:"oauth_reconnect"}` for unavailable OAuth, `429` for quota/rate limits and `503` for provider failures. Provider response bodies and secrets are not exposed.
+
+### Grounded tutor sessions
+
+- Both classroom chat and the quick popover send the selected canonical lesson and optional focus. Focus is a zero-based position within that lesson's complete word/example/question collection, not an option index. Extra keys, unsupported kinds, negative/noninteger indexes, missing lesson references and out-of-range selections return 400 before inference.
+- The model receives a compact lesson overview plus the exact selected record. Question focus includes authored answers/options and relevant examples; source IDs and URLs remain attached. These fields support diagnosis, not permission to reveal answers. Ungraded corpus sentences are not treated as certified N5/N4 grammar.
+- `intent` defaults to `message`; natural learner requests still reach the model. Buttons supply explicit actions. A `hint` response cannot declare itself a solution. Repeated hints preserve the unresolved probe and saturate at scaffold stage two, never an automatic answer stage. Schema checks do not prove that the visible prose obeys these semantic constraints.
+- Existing lesson entry restores history without sending a new start. `restart` keeps stored UI history but establishes a fresh model-history boundary and teaching state only after successful generation. Failed restarts leave the previous boundary intact.
+- Apply `0019_tutor_sessions.sql` after the existing migrations through `0018_antigravity_accounts.sql` before serving this code. It adds account/scope teaching state and expiring database request/scope leases without changing API profiles or OAuth bindings. Identical in-flight UUIDs and another running message in the same scope return 409 without a second provider generation. Expired owners cannot commit after takeover or cleanup. A pre-migration request UUID without a bound fingerprint cannot be replayed; send a new UUID. Back up the database before migration; local build checks do not migrate production.
+- Retry identity includes an explicit `X-VJBot-Profile` selection and transient device connection fields, persisted only as a digest. Reusing the UUID with a different explicit selection returns 409. Clients without a pinned selection retain active-default behavior; editing a saved profile under the same ID does not change its retry identity.
+- Tutor providers must support native structured output `{reply,action,open_probe}`. Invalid JSON, incompatible explicit actions and known truncated/blocked finish metadata return 503 without persisting a completed turn or replacing previous teaching state. No unconstrained retry or automatic provider switch is added. `request_id` remains optional for external callers; browser entry points always generate one.
+- The unused Worker `POST /api/chat/greeting` endpoint has been removed. Start a tutor session through `POST /api/chat` with `intent: 'start'`; it shares normal generation ownership, validation, rate limits and teaching state. The separate Python application's GET route is unchanged.
+
+### Tutor evaluation
+
+`node scripts/evaluate_tutor.mjs` inspects the 12 authored cases offline and never sends inference. `node scripts/evaluate_tutor.mjs --report <recording.json>` validates retained case/step bindings. Both report `HUMAN_REVIEW_REQUIRED`; transport or structural success does not certify Japanese, grading or teaching quality.
+
+Only after explicit authorization for the saved provider's usage, set `TUTOR_EVAL_COOKIE` in the local environment and run:
+
+```sh
+node scripts/evaluate_tutor.mjs --live --base-url http://127.0.0.1:8787 --output <new-recording.json>
+```
+
+Live mode accepts loopback origins only, refuses an existing output file, isolates cases in new quick-chat routes, records actual replies without credentials, stops on transport failure and never retries inference. Request starts are spaced by at least 3.1 seconds to respect the account's 20-request/minute limit; each step times out after 35 seconds. It does not delete learner history or change provider settings. Supply human review decisions separately; no approval is fabricated.
+
 
 ### Prompt-injection boundaries
 
@@ -50,7 +73,7 @@ Common AI failures: `403 {code:"no_ai"}` for a missing selected API, `409 {code:
 - Learner notes use canonical curriculum/catalog labels. Arbitrary `progress.display` values and unknown item IDs never enter the model's notes. Existing progress records and UI labels are preserved.
 - History is scoped to general chat, a canonical lesson, or a quick-chat screen route. Previous assistant responses are quoted data, never replayed as authoritative assistant messages. Migration `0015_conversation_scope.sql` archives existing rows without deleting them. Use `GET /api/history?archive=legacy` to read them. Number 0014 is reserved by the separate API-profile change; this migration does not depend on that change.
 - Kaiwa requests schema-constrained output using OpenAI `response_format.json_schema`, Anthropic `output_config.format`, or Gemini `responseJsonSchema`. Unsupported providers fail visibly; no unconstrained retry is performed. Server validation requires exactly four fields, integer score 0–100, a consistent rating and bounded nonempty feedback/model-answer strings. Invalid output returns 503, not a successful grade.
-- Kaiwa screen capture excludes generated feedback and learner submissions. It captures only the scenario and current question.
+- Visible Kaiwa sessions contribute only scenario/question text; hidden sessions contribute nothing. Feature hubs/lists use their visible content instead. Route-derived levels override stale curriculum selections. Learner inputs, generated feedback and grading results are excluded from screen reference.
 - These are defense-in-depth boundaries, not proof that an LLM cannot be manipulated. Schema validation verifies structure, not grading truth. Model discovery and connection probes are not security evaluations.
 - Local tests use synthetic provider responses, not live attack-success measurements. No deployment or paid inference is implied.
 
