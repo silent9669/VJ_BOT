@@ -276,7 +276,9 @@ function initLoadingScreen() {
 // ==========================================
 function switchTab(tabId, route={}) {
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
+  stopSpeech();
   globalThis.rememberTeacherScreen?.();
+  globalThis.invalidateTeacherQuery?.();
   featureVersion++;
   quizRequest++;fcRequest++;kaiwaRenderRequest++;
   clearInterval(simulationInterval);
@@ -346,6 +348,7 @@ function switchTab(tabId, route={}) {
     renderDailyKanji(activeCurriculumLevel);
   } else if (tabId === "settings" || tabId === "admin") {
     window.renderAiPanels?.(tabId);
+    if (tabId === 'settings') window.refreshSpeechModels?.();
   }
   return true;
 }
@@ -393,9 +396,10 @@ function renderBubble(role, content) {
   return row;
 }
 
-let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null;
+let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null,chatHistoryScope=null;
 function chatHistoryPath() {
-  return chatLessonContext ? `/api/history?lesson_id=${encodeURIComponent(chatLessonContext.id)}&level=${encodeURIComponent(chatLessonContext.level)}` : '/api/history';
+  const lesson=chatLessonContext || globalThis.teacherContext?.()?.lesson;
+  return lesson ? `/api/history?lesson_id=${encodeURIComponent(lesson.id)}&level=${encodeURIComponent(lesson.level)}` : '/api/history';
 }
 function chatError(message,retry) {
   const host=document.getElementById('chat-error');host.hidden=!message;
@@ -409,30 +413,44 @@ async function loadChatHistory() {
   chatHistoryLoading=true;chatHistoryReady=false;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Đang tải hội thoại…';
   try {
-    const response=await apiFetch(chatHistoryPath());
+    const path=chatHistoryPath();
+    const response=await apiFetch(path);
     if(!response.ok)throw new Error('history');
     const messages=await response.json();
     for(const row of document.querySelectorAll('#chat-messages .chat-bubble-row'))row.remove();
     document.getElementById('chat-welcome').style.display=messages.length?'none':'';
     for(const message of messages)renderBubble(message.role,message.content);
     chatHistoryReady=true;chatError('',null);
+    chatHistoryScope=path;
     globalThis.checkAiReady?.();
     document.getElementById('chat-connection-status').textContent='';
+    return messages.length;
   }catch{
     document.getElementById('chat-connection-status').textContent='';
     chatError('Chưa tải được hội thoại.',loadChatHistory);
   }finally{chatHistoryLoading=false;}
 }
-async function sendMessage(text,retry=false) {
+async function sendMessage(text,retry=false,options={}) {
   text=typeof text==='string'?text.trim():'';
   if(sendingMessage || clearingChat || !text)return;
   if(failedChatMessage && !retry){chatError('Tin trước chưa gửi xong. Thử lại hoặc bỏ qua.',()=>sendMessage(failedChatMessage.text,true));return;}
   if(!signedInUser){openAccount();return;}
   if(!chatHistoryReady){chatError('Đợi hội thoại tải xong trước khi gửi.',chatHistoryLoading?null:loadChatHistory);return;}
   if(text.length>6000){chatError('Tin nhắn tối đa 6.000 ký tự.',null);return;}
+  if(retry && !failedChatMessage)return;
+  if(retry)text=failedChatMessage.text;
+  if(!retry && chatHistoryScope!==chatHistoryPath()){
+    await loadChatHistory();
+    if(!chatHistoryReady || chatHistoryScope!==chatHistoryPath())return;
+  }
+  const context=globalThis.teacherContext?.();
   const requestId=retry?failedChatMessage.id:crypto.randomUUID();
-  const lesson=retry?failedChatMessage.lesson:chatLessonContext;
-  const screen=retry?failedChatMessage.screen:globalThis.teacherScreen?.();
+  const lesson=retry?failedChatMessage.lesson:chatLessonContext || context?.lesson || null;
+  const sameLesson=!lesson || (context?.lesson?.id===lesson.id && context?.lesson?.level===lesson.level);
+  const screen=retry?failedChatMessage.screen:context?.screen || null;
+  const focus=retry?failedChatMessage.focus:lesson && sameLesson?(Object.hasOwn(options,'focus')?options.focus:context?.focus || null):null;
+  const intent=retry?failedChatMessage.intent:options.intent || 'message';
+  const body=retry?failedChatMessage.body:JSON.stringify({message:text,lesson,screen,focus,intent,request_id:requestId});
   const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
   send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
@@ -440,7 +458,7 @@ async function sendMessage(text,retry=false) {
   if(!retry || input.value.trim()===text)input.value='';
   soundEngine.playSend();mascotMgr.setState('thinking');
   try {
-    const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,lesson,screen,request_id:requestId})});
+    const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body});
     const data=await response.json();
     if(!response.ok)throw new Error(data.detail || 'Chưa gửi được tin nhắn.');
     const reply=data.reply || data.response;
@@ -449,13 +467,16 @@ async function sendMessage(text,retry=false) {
     soundEngine.playReceive();mascotMgr.setState('speaking');
     setTimeout(()=>mascotMgr.setState('idle'),2000);
   }catch(error){
-    failedChatMessage={text,id:requestId,lesson,screen};
+    failedChatMessage={text,id:requestId,lesson,screen,focus,intent,body};
     chatError(error.name==='TimeoutError'?'Kết nối quá lâu. Hãy thử lại.':error.message==='Failed to fetch'?'Mất kết nối. Hãy thử lại.':error.message,()=>sendMessage(failedChatMessage.text,true));
     mascotMgr.setState('idle');
   }finally{
     sendingMessage=false;send.disabled=false;clear.disabled=false;
     document.getElementById('chat-connection-status').textContent='';
   }
+}
+function restartTutorConversation(){
+  return sendMessage('Thầy bắt đầu lại buổi học này nhé.',false,{intent:'restart'});
 }
 
 async function loadGreeting() {
@@ -610,14 +631,14 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
       <section class="lesson-section">
         <h3 class="lesson-section-title">Ví dụ</h3>
         <ol class="example-list">${item.examples.map((ex, index) => `
-          <li class="example-card">
+          <li class="example-card" data-teacher-example="${index}">
             <span class="example-index" aria-hidden="true">${index + 1}</span>
             <div class="example-text">
               <p class="example-jp" lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p>
               ${ex.ro ? `<p class="example-ro">${escapeHtml(ex.ro)}</p>` : ""}
               <p class="example-vi">${escapeHtml(ex.vi)}</p>${ex.source ? `<a class="example-source" href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>` : ""}
             </div>
-            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}">Nghe</button>
+            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.furigana || ex.jp)}">Nghe</button>
           </li>`).join("")}
         </ol>
       </section>
@@ -625,11 +646,11 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   }
 
   const vocabularyHtml = item.items?.length ? `
-    <div class="lesson-vocabulary-list">${item.items.map(word=>`
-      <details class="word-detail"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span>${escapeHtml(word.reading || word.ro || "")}</span><span>${escapeHtml(word.vi)}</span></summary>
-        <div class="word-detail-body"><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(word.jp)}">Nghe cách đọc</button>
+    <div class="lesson-vocabulary-list">${item.items.map((word,index)=>`
+      <details class="word-detail" data-teacher-word="${index}"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span>${escapeHtml(word.reading || word.ro || "")}</span><span>${escapeHtml(word.vi)}</span></summary>
+        <div class="word-detail-body"><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(speechReading(word.jp, word.reading))}">Nghe cách đọc</button>
         ${word.strokes ? `<dl class="kanji-facts"><div><dt>Số nét</dt><dd>${word.strokes}</dd></div><div><dt>Bộ thủ</dt><dd>${escapeHtml(word.radical)}</dd></div><div><dt>Âm On</dt><dd>${escapeHtml(word.onyomi.join(' · '))}</dd></div><div><dt>Âm Kun</dt><dd>${escapeHtml(word.kunyomi.join(' · '))}</dd></div></dl><p>${escapeHtml((word.words||[]).join(' · '))}</p>` : ''}
-        ${(word.examples||[]).map(ex=>`<div class="word-example"><p lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p><p>${escapeHtml(ex.vi)}</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}">Nghe câu</button>${ex.source?`<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}</div>`).join('')}
+        ${(word.examples||[]).map(ex=>`<div class="word-example"><p lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p><p>${escapeHtml(ex.vi)}</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.furigana || ex.jp)}">Nghe câu</button>${ex.source?`<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}</div>`).join('')}
         </div></details>`).join('')}</div>` : "";
   const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${escapeHtml(item.passage)}</p><p>${escapeHtml(item.translation || "")}</p></div>` : "";
   const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${item.script_jp}</p><p>${item.script_vi || ""}</p></div>` : "";
@@ -668,6 +689,8 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     body.querySelector('#lesson-exercises').hidden=mode!=='practice';
     body.querySelector('#lesson-completion').hidden=mode==='practice' && !body.querySelector('.practice-result') && !item.production && !item.dictation;
     modes.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lessonMode===mode)));
+    const question=body.querySelector('.practice-session')?.dataset.teacherQuestion;
+    globalThis.setTeacherFocus?.(mode==='practice' && question!==undefined?{kind:'question',index:Number(question)}:null);
     body.scrollTop=0;
   };
   modes.querySelectorAll('button').forEach(b=>b.onclick=()=>selectMode(b.dataset.lessonMode));
@@ -677,9 +700,15 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     body.querySelector('#lesson-reference').append(start);
   }
   selectMode('read');
+  body.querySelectorAll('.word-detail').forEach(word=>word.addEventListener('toggle',()=>{
+    if(word.open && word.isConnected)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
+  }));
   mountCompletion(document.getElementById('lesson-completion'),{activity_id:activityId(item,level,skill),kind:owner==='quiz'?'test':owner==='kaiwa'?'kaiwa':'lesson',level,title:item.title || item.jp || 'Bài học'});
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
+      const word=btn.closest('[data-teacher-word]'),example=btn.closest('[data-teacher-example]');
+      if(word)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
+      else if(example)globalThis.setTeacherFocus?.({kind:'example',index:Number(example.dataset.teacherExample)});
       const text = decodeURIComponent(btn.dataset.text);
       playGeminiTTS(text);
     });
@@ -748,16 +777,17 @@ async function renderFlashcards(level = "N5",lessonId=null) {
   const reviewed=new Map((progress.items||[]).map(i=>[i.item_id,i]));
   fcDeck=deck.filter(i=>!reviewed.get(i.id)?.next_review || new Date(reviewed.get(i.id).next_review)<=new Date()).sort((a,b)=>Number(!reviewed.has(a.id))-Number(!reviewed.has(b.id))).slice(0,20);
   fcIdx = 0;
-  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.querySelector('.fc-controls-bar').hidden=true;return;}
+  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.querySelector('.fc-controls-bar').hidden=true;globalThis.setTeacherFocus?.(null);globalThis.invalidateTeacherQuery?.();return;}
   document.getElementById('flashcard-card').hidden=false;document.querySelector('.fc-controls-bar').hidden=false;
   displayFlashcard();
 }
 
 function displayFlashcard() {
   if (!fcDeck || fcDeck.length === 0) return;
+  const previousContext=globalThis.teacherContext?.();
   const item = fcDeck[fcIdx];
   const card = document.getElementById("flashcard-card");
-  if (card) card.classList.remove("flipped");
+  if (card) {card.classList.remove("flipped");card.dataset.teacherWordId=item.id || '';}
 
   const frontText = document.getElementById("fc-front-text");
   const readingText = document.getElementById("fc-reading-text");
@@ -776,6 +806,8 @@ function displayFlashcard() {
   if (exampleVi) exampleVi.textContent = item.exampleVi;
   if (badgeLvl) badgeLvl.textContent = `${item.level} Từ vựng`;
   if (counterEl) counterEl.textContent = `Thẻ ${fcIdx + 1} / ${fcDeck.length}`;
+  const context=globalThis.teacherContext?.();
+  if(JSON.stringify({lesson:previousContext?.lesson || null,focus:previousContext?.focus || null})!==JSON.stringify({lesson:context?.lesson || null,focus:context?.focus || null}))globalThis.invalidateTeacherQuery?.();
 }
 
 // ==========================================
@@ -796,7 +828,7 @@ async function renderKaiwaScenarios(){
   container.replaceChildren();
   for(const [key,scenario] of scenarios){
     const button=document.createElement('button');button.type='button';button.className='kaiwa-scenario-card';button.classList.toggle('active',key===activeKaiwaKey);button.textContent=scenario.title;
-    button.onclick=()=>{activeKaiwaKey=key;activeKaiwaPromptIdx=0;container.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===button));loadKaiwaPrompt();};container.append(button);
+    button.onclick=()=>switchTab('kaiwa',{level:activeKaiwaLevel,view:'session',id:key});container.append(button);
   }
   loadKaiwaPrompt();
 }
@@ -906,6 +938,7 @@ function displayQuizQuestion() {
     finishExam();
     return;
   }
+  globalThis.setTeacherFocus?.({kind:'question',index:examQuestionIdx});
 
   const qNum = document.getElementById("quiz-q-num");
   const qType = document.getElementById("quiz-q-type");
@@ -1000,6 +1033,8 @@ function finishExam() {
 
   if (quizCard) quizCard.hidden = true;
   if (resultCard) resultCard.hidden = false;
+  globalThis.setTeacherFocus?.(null);
+  globalThis.invalidateTeacherQuery?.();
 
   const total = currentExamQuestions.length || 1;
   const pct = Math.round((examScore / total) * 100);
@@ -1061,96 +1096,88 @@ async function loadProgress() {
 // 14. FLOATING SENSEI DOCK (ANYWHERE SPAWNING)
 // ==========================================
 function setupFloatingSensei() {
-  const popover = document.getElementById("sensei-floating-popover");
-  const closeBtn = document.getElementById("btn-close-popover");
-  const sendBtn = document.getElementById("btn-popover-send");
-  const inputEl = document.getElementById("popover-query-input");
-  const speechEl = document.getElementById("popover-speech-text");
-  const ttsBtn = document.getElementById("btn-popover-tts");
-  const summonBtn = document.getElementById("btn-topbar-summon");
-
-  function togglePopover() {
+  const popover=document.getElementById('sensei-floating-popover'),closeBtn=document.getElementById('btn-close-popover');
+  const sendBtn=document.getElementById('btn-popover-send'),inputEl=document.getElementById('popover-query-input');
+  const speechEl=document.getElementById('popover-speech-text'),ttsBtn=document.getElementById('btn-popover-tts');
+  const chips=Array.from(document.querySelectorAll('.quick-chip-btn'));
+  if(!popover || !sendBtn || !inputEl || !speechEl)return;
+  const retryBtn=document.createElement('button');retryBtn.type='button';retryBtn.className='stage-btn';retryBtn.textContent='Thử lại';retryBtn.hidden=true;
+  retryBtn.id='btn-popover-retry';speechEl.parentElement.append(retryBtn);speechEl.setAttribute('role','status');
+  if(ttsBtn)ttsBtn.disabled=true;
+  let generation=0,inFlight=null,failed=null;
+  const scope=()=>{
+    const context=globalThis.teacherContext?.() || null;
+    // Selected canonical items have stable identity even while a timer or progress label changes.
+    const identity=context?.focus?{lesson:context.lesson,focus:context.focus}:context;
+    return JSON.stringify({route:location.hash,context:identity});
+  };
+  const controls=busy=>{sendBtn.disabled=busy;retryBtn.disabled=busy;chips.forEach(chip=>chip.disabled=busy);};
+  function invalidate(){
+    generation++;inFlight?.controller.abort();inFlight=null;failed=null;retryBtn.hidden=true;controls(false);
+    mascotMgr.setState('idle');
+    speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';
+    if(ttsBtn)ttsBtn.disabled=true;
+  }
+  globalThis.invalidateTeacherQuery=invalidate;
+  globalThis.closeTeacherQuery=()=>{invalidate();popover.hidden=true;};
+  function togglePopover(){
     soundEngine.playBlip();
-    if (!popover) return;
-    popover.hidden = !popover.hidden;
-    if (!popover.hidden && inputEl) {
-      inputEl.focus();
-    }
+    const opening=popover.hidden;invalidate();popover.hidden=!opening;
+    if(opening){speechEl.textContent='Thầy đây. Em muốn hỏi gì?';inputEl.focus();}
   }
-
-  if (summonBtn) summonBtn.addEventListener("click", togglePopover);
-  if (closeBtn) closeBtn.addEventListener("click", () => { popover.hidden = true; });
-
-  // Keyboard Shortcut: Cmd+K / Ctrl+K
-  window.addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-      e.preventDefault();
-      togglePopover();
-    }
+  document.getElementById('btn-topbar-summon')?.addEventListener('click',togglePopover);
+  closeBtn?.addEventListener('click',globalThis.closeTeacherQuery);
+  window.addEventListener('hashchange',invalidate);
+  window.addEventListener('keydown',event=>{
+    if((event.metaKey || event.ctrlKey) && event.key.toLowerCase()==='k'){event.preventDefault();togglePopover();}
+    else if(event.key==='Escape' && !popover.hidden)globalThis.closeTeacherQuery();
   });
-
-  async function handlePopoverQuery(query) {
-    if (!query || !query.trim()) return;
-    if (speechEl) speechEl.textContent = "Sensei đang suy nghĩ...";
-    mascotMgr.setState("thinking");
-
-    try {
-      const resp = await apiFetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          message: query,
-          channel: 'quick',
-          screen: globalThis.teacherScreen?.()
-        })
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        const reply = data.reply || data.response || "Sensei đã ghi nhận câu hỏi của bạn!";
-        if (speechEl) speechEl.textContent = reply;
-        mascotMgr.setState("speaking");
-        soundEngine.playReceive();
-      } else {
-        const data = await resp.json().catch(() => ({}));
-        if (speechEl) speechEl.textContent = data.detail || "Sensei chưa trả lời được. Bạn thử lại nhé!";
-        mascotMgr.setState("idle");
+  async function handlePopoverQuery(query,retry=false){
+    query=typeof query==='string'?query.trim():'';
+    if(inFlight || popover.hidden || (!query && !retry))return;
+    if(failed && !retry){speechEl.textContent='Câu trước chưa gửi xong. Bấm Thử lại hoặc đóng để bỏ qua.';return;}
+    if(retry && !failed)return;
+    if(query.length>6000){speechEl.textContent='Tin nhắn tối đa 6.000 ký tự.';return;}
+    if(!signedInUser){openAccount();return;}
+    const context=globalThis.teacherContext?.();
+    const request=retry?failed:{body:{message:query,channel:'quick',screen:context?.screen || null,lesson:context?.lesson || null,focus:context?.focus || null,intent:'message',request_id:crypto.randomUUID()},scope:scope()};
+    if(request.scope!==scope()){invalidate();speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';return;}
+    if(!retry)request.serializedBody=JSON.stringify(request.body);
+    const owner={generation,controller:new AbortController()};inFlight=owner;controls(true);retryBtn.hidden=true;
+    const current=()=>inFlight===owner && owner.generation===generation && !popover.hidden && scope()===request.scope;
+    speechEl.textContent='Thầy đang suy nghĩ…';mascotMgr.setState('thinking');
+    if(ttsBtn)ttsBtn.disabled=true;
+    if(!retry)inputEl.value='';
+    const timeout=setTimeout(()=>owner.controller.abort(),35000);
+    try{
+      const response=await apiFetch('/api/chat',{method:'POST',signal:owner.controller.signal,headers:{'Content-Type':'application/json'},body:request.serializedBody});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.detail || 'Chưa gửi được câu hỏi.');
+      const reply=data.reply || data.response;
+      if(typeof reply!=='string' || !reply.trim())throw new Error('Thầy chưa trả lời. Hãy thử lại.');
+      if(!current())return;
+      speechEl.textContent=reply;failed=null;mascotMgr.setState('speaking');soundEngine.playReceive();
+      if(ttsBtn)ttsBtn.disabled=false;
+    }catch(error){
+      if(!current())return;
+      failed=request;retryBtn.hidden=false;
+      speechEl.textContent=error.name==='AbortError' || error.name==='TimeoutError'?'Kết nối quá lâu. Bấm Thử lại.':error.message==='Failed to fetch'?'Mất kết nối. Bấm Thử lại.':error.message;
+      mascotMgr.setState('idle');
+    }finally{
+      clearTimeout(timeout);
+      if(inFlight===owner){
+        const stale=!current();inFlight=null;controls(false);
+        if(stale){failed=null;retryBtn.hidden=true;speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';mascotMgr.setState('idle');}
       }
-    } catch {
-      if (speechEl) speechEl.textContent = "Lỗi kết nối. Bạn thử lại nhé!";
-      mascotMgr.setState("idle");
     }
   }
-
-  if (sendBtn && inputEl) {
-    sendBtn.addEventListener("click", () => {
-      const q = inputEl.value;
-      inputEl.value = "";
-      handlePopoverQuery(q);
-    });
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const q = inputEl.value;
-        inputEl.value = "";
-        handlePopoverQuery(q);
-      }
-    });
-  }
-
-  if (ttsBtn && speechEl) {
-    ttsBtn.addEventListener("click", () => {
-      playGeminiTTS(speechEl.textContent);
-    });
-  }
-
-  document.querySelectorAll(".quick-chip-btn").forEach(chip => {
-    chip.addEventListener("click", () => {
-      if (chip.dataset.ask) {
-        handlePopoverQuery(chip.dataset.ask);
-      }
-    });
+  sendBtn.addEventListener('click',()=>handlePopoverQuery(inputEl.value));
+  inputEl.addEventListener('keydown',event=>{
+    if(event.key==='Enter' && !event.isComposing){event.preventDefault();handlePopoverQuery(inputEl.value);}
   });
+  retryBtn.onclick=()=>handlePopoverQuery(failed?.body.message,true);
+  ttsBtn?.addEventListener('click',()=>{if(!inFlight && !failed)playGeminiTTS(speechEl.textContent);});
+  chips.forEach(chip=>chip.addEventListener('click',()=>handlePopoverQuery(chip.dataset.ask)));
 }
 
 // ==========================================
@@ -1246,7 +1273,7 @@ function setupEventListeners() {
   if (btnDailyKanjiTts) {
     btnDailyKanjiTts.addEventListener("click", () => {
       const data = DAILY_KANJI_DATA[activeCurriculumLevel] || DAILY_KANJI_DATA.N5;
-      playGeminiTTS(data.char + "。" + data.sample);
+      playGeminiTTS(data.sample, {japaneseOnly:true});
     });
   }
 
@@ -1303,16 +1330,18 @@ function setupEventListeners() {
 
   // Classroom prompt chips
   const btnAskHint = document.getElementById("btn-ask-hint");
-  if (btnAskHint) btnAskHint.addEventListener("click", () => sendMessage("Thầy gợi ý cho em từng bước nhỏ, chưa đưa đáp án vội nhé."));
+  if (btnAskHint) btnAskHint.addEventListener("click", () => sendMessage("Thầy gợi ý cho em từng bước nhỏ, chưa đưa đáp án vội nhé.",false,{intent:'hint'}));
 
   const btnAskExplain = document.getElementById("btn-ask-explain");
-  if (btnAskExplain) btnAskExplain.addEventListener("click", () => sendMessage("Em muốn tự giải thích mẫu câu này bằng lời của em. Thầy hỏi em rồi nhận xét nhé."));
+  if (btnAskExplain) btnAskExplain.addEventListener("click", () => sendMessage("Em muốn tự giải thích mẫu câu này bằng lời của em. Thầy hỏi em rồi nhận xét nhé.",false,{intent:'explain'}));
 
   const btnAskExample = document.getElementById("btn-ask-example");
-  if (btnAskExample) btnAskExample.addEventListener("click", () => sendMessage("Thầy cho em một tình huống mới để em tự vận dụng nhé."));
+  if (btnAskExample) btnAskExample.addEventListener("click", () => sendMessage("Thầy cho em một tình huống mới để em tự vận dụng nhé.",false,{intent:'situation'}));
 
   const btnAskCheck = document.getElementById("btn-ask-check");
-  if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Thầy kiểm tra câu em vừa viết: đúng ngữ pháp và tự nhiên chưa, sửa giúp em nhé."));
+  if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Thầy kiểm tra câu em vừa viết: đúng ngữ pháp và tự nhiên chưa, sửa giúp em nhé.",false,{intent:'check'}));
+  const restartChat=document.createElement('button');restartChat.type='button';restartChat.className='prompt-chip';restartChat.textContent='Bắt đầu lại buổi học';restartChat.id='btn-restart-chat';
+  restartChat.addEventListener('click',restartTutorConversation);document.getElementById('chat-prompt-chips')?.append(restartChat);
 
   // Classroom form submit
   const chatForm = document.getElementById("chat-form");
@@ -1399,7 +1428,7 @@ function setupEventListeners() {
   // Flashcards Level Picker
   document.querySelectorAll("#fc-level-picker .fc-lvl-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      renderFlashcards(btn.dataset.lvl);
+      switchTab('flashcards',{level:btn.dataset.lvl});
     });
   });
 
@@ -1419,7 +1448,7 @@ function setupEventListeners() {
     btnFcAudioFront.addEventListener("click", (e) => {
       e.stopPropagation();
       const txt = document.getElementById("fc-front-text")?.textContent;
-      if (txt) playGeminiTTS(txt);
+      if (txt) playGeminiTTS(txt, {reading:fcDeck[fcIdx]?.reading || ''});
     });
   }
 
@@ -1658,7 +1687,7 @@ function setupEventListeners() {
   // Quiz Level Picker buttons
   document.querySelectorAll("#quiz-level-picker .quiz-lvl-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      renderQuiz(btn.dataset.lvl, 0);
+      switchTab('quiz',{level:btn.dataset.lvl});
     });
   });
 
@@ -1743,8 +1772,9 @@ async function startReversedLesson(item,level,skill,owner=null){
   const title=document.createElement('strong');title.textContent=`${level} · ${item.title || item.jp}`;
   const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill,false,owner);
   const general=document.createElement('button');general.className='stage-btn';general.textContent='Chat chung';
-  general.onclick=async()=>{if(sendingMessage || clearingChat || chatHistoryLoading || failedChatMessage)return;chatLessonContext=null;host.hidden=true;await loadChatHistory();};
-  const control=document.createElement('div');host.append(title,back,general,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${item.title || item.jp}`});
-  await loadChatHistory();
-  if(chatHistoryReady)await sendMessage('Thầy hỏi em về bài này nhé.');
+  general.onclick=async()=>{if(sendingMessage || clearingChat || chatHistoryLoading || failedChatMessage)return;chatLessonContext=null;globalThis.clearTeacherContext?.();host.hidden=true;await loadChatHistory();};
+  const restart=document.createElement('button');restart.type='button';restart.className='stage-btn';restart.textContent='Bắt đầu lại buổi học';restart.onclick=restartTutorConversation;
+  const control=document.createElement('div');host.append(title,back,general,restart,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${item.title || item.jp}`});
+  const count=await loadChatHistory();
+  if(chatHistoryReady && count===0)await sendMessage('Thầy hỏi em về bài này nhé.',false,{intent:'start'});
 }

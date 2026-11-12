@@ -31,7 +31,7 @@
     state.speechTimer = setTimeout(() => { speech.hidden = true; }, ms);
   }
   function greeting() {
-    const screen = globalThis.teacherScreen?.();
+    const screen = globalThis.teacherContext?.()?.screen;
     if (screen?.title) return `Em đang xem “${screen.title.slice(0, 40)}”? Hỏi thầy nhé!`;
     return ['Thầy đây! Hỏi gì nào?', 'Cần thầy giúp không?', 'Cứ hỏi đi, thầy chờ em.'][Math.floor(Math.random() * 3)];
   }

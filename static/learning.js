@@ -86,8 +86,10 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
   if(item.dictation) {
     for(const [index,example] of (item.examples||[]).entries()) {
       const section=document.createElement('section');section.className='lesson-exercise';
-      const play=document.createElement('button');play.textContent=`Nghe câu ${index+1}`;play.onclick=()=>playGeminiTTS(example.jp);
+      const select=()=>globalThis.setTeacherFocus?.({kind:'example',index});
+      const play=document.createElement('button');play.textContent=`Nghe câu ${index+1}`;play.onclick=()=>{select();playGeminiTTS(example.furigana || example.jp);};
       const input=document.createElement('textarea');input.setAttribute('aria-label',`Chép câu ${index+1} bằng tiếng Nhật`);input.rows=2;
+      input.addEventListener('focus',select);
       const reveal=document.createElement('button');reveal.textContent='Đối chiếu bản chép';
       const answer=document.createElement('div');answer.hidden=true;
       answer.innerHTML=`<p lang="ja">${furiganaHtml(example.furigana || example.jp)}</p><p>${escapeHtml(example.vi)}</p><a href="${escapeHtml(example.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`;
@@ -97,7 +99,7 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
         const grade=document.createElement('button');grade.textContent=label;
         grade.onclick=async()=>{answer.querySelectorAll('button').forEach(b=>b.disabled=true);try{await record(`${item.id}:${index}`,correct,example.jp,attemptId);status.textContent='Đã lưu.';}catch{status.textContent='Chưa lưu được. Thử lại.';answer.querySelectorAll('button').forEach(b=>b.disabled=false);}};answer.append(grade);
       }
-      reveal.onclick=()=>{answer.hidden=false;};section.append(play,input,reveal,answer,status);container.append(section);
+      reveal.onclick=()=>{select();answer.hidden=false;};section.append(play,input,reveal,answer,status);container.append(section);
     }
   }
   if(item.script_jp){const listen=document.createElement('button');listen.className='stage-btn';listen.textContent='Nghe bài đọc';listen.onclick=()=>playGeminiTTS(item.script_jp);container.append(listen);}
@@ -105,15 +107,6 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
   renderPracticeSession(container,item,level,skill,record);
 }
 
-function audioDataUrl(data) {
-  if(!data.mimeType?.startsWith('audio/L16')) return `data:${data.mimeType || 'audio/wav'};base64,${data.audioBase64}`;
-  const pcm=Uint8Array.from(atob(data.audioBase64),c=>c.charCodeAt(0));
-  const wav=new Uint8Array(44+pcm.length),view=new DataView(wav.buffer);
-  const write=(offset,text)=>[...text].forEach((c,i)=>wav[offset+i]=c.charCodeAt(0));
-  write(0,'RIFF');view.setUint32(4,36+pcm.length,true);write(8,'WAVE');write(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,24000,true);view.setUint32(28,48000,true);view.setUint16(32,2,true);view.setUint16(34,16,true);write(36,'data');view.setUint32(40,pcm.length,true);wav.set(pcm,44);
-  let binary='';for(let i=0;i<wav.length;i+=8192) binary+=String.fromCharCode(...wav.subarray(i,i+8192));
-  return 'data:audio/wav;base64,'+btoa(binary);
-}
 
 function buildLessonContext(item,level,skill){
   return {id:activityId(item,level,skill),level};
