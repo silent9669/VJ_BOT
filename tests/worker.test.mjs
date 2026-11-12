@@ -74,13 +74,15 @@ test('AI rate limit stops before the provider and account deletion is isolated',
   assert.ok(await env.DB.prepare("SELECT * FROM profiles WHERE user_id='victim'").first());
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM sessions').first()).n,0);
 });
-test('TTS sends an explicit reading request and returns the audio part',async()=>{
+test('TTS keeps reading directions out of the transcript and returns the audio part',async()=>{
   const {env,request}=await authenticated(),original=globalThis.fetch;
   env.AI_KEY_SECRET='local-secret';
   await worker.fetch(new Request('https://vjbot.test/api/ai/settings',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'gemini',base_url:'',model:'gemini-3.8-flash',api_key:'test-only-key'})}),env);
   globalThis.fetch=async(url,options)=>{
     assert.equal(options.headers['x-goog-api-key'],'test-only-key');assert.match(url,/gemini-3\.8-flash-tts/);
-    const payload=JSON.parse(options.body);assert.match(payload.contents[0].parts[0].text,/Read aloud.*こんにちは/);
+    const payload=JSON.parse(options.body),part=payload.contents[0].parts[0];
+    assert.equal(part.text,'こんにちは。');
+    assert.equal(typeof part.speech_metadata?.style,'string');
     assert.equal(payload.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,'Charon');
     return Response.json({candidates:[{content:{parts:[{text:'metadata'},{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]}}]});
   };

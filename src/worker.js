@@ -449,7 +449,7 @@ export default {
               "x-goog-api-key": apiKey
             },
             body: JSON.stringify({
-              contents: [{ role:"user", parts: [{ text: "Read aloud clearly in Japanese. Read only the following text: " + text }] }],
+              contents: [{ role:"user", parts: [{ text, speech_metadata: { style: "Read aloud clearly in Japanese." } }] }],
               generationConfig: {
                 responseModalities: ["AUDIO"],
                 speechConfig: {

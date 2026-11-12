@@ -39,6 +39,8 @@ Chat, Kaiwa và giọng đọc dùng API người dùng đã lưu; hạn mức 2
 | `POST /api/kaiwa/evaluate` | `{scenario_id, prompt_index?: 0, user_speech, level}`. The server resolves the question and scenario; client-supplied `scenario_title`, `context` and `prompt_jp` are rejected. Returns `{score, rating, feedback, model_answer, user_text, scenario}` after strict validation. |
 | `POST /api/tts` | `{text}` → `{audioBase64, ...}`; `403 {code:'no_tts'}` nếu API đã lưu không phải Gemini-Google (client dùng giọng trình duyệt) |
 
+TTS sends `text` as the verbatim transcript. Reading directions are passed separately in `speech_metadata`, never prepended to the spoken text. The model, Charon voice, and existing browser fallback are unchanged.
+
 Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` không giải mã được khóa; `429` hết lượt; `503` nhà cung cấp lỗi (thông báo tiếng Việt, không lộ nội dung lỗi gốc).
 
 ### Prompt-injection boundaries
