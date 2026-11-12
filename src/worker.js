@@ -2,9 +2,12 @@ import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
 import { deleteUserData } from './admin.js';
 import { cleanScreen, learnerSnapshot, reversedPrompt } from './prompt.js';
-import { aiRoute, askAI, googleSpeechKey, rateLimited, resolveProvider } from './providers.js';
+import { aiRoute, askAI, googleSpeechKey, resolveProvider } from './providers.js';
+import {rateLimited} from './ai-usage.js';
 import { catalogLesson, chatEnvelope, conversationScope, teacherCatalog, validLessonReference } from './tutor-context.js';
 import { KAIWA_SCHEMA, KAIWA_SYSTEM, parseKaiwaEvaluation } from './kaiwa.js';
+import {speechResponse} from './speech.js';
+import {antigravityOAuthRoute} from './antigravity-oauth.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
  * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
@@ -119,6 +122,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, {status:204});
     try {
       if (url.pathname.startsWith('/api/auth/')) return await authRoute(request,env);
+      if (url.pathname.startsWith('/api/ai/oauth/antigravity')) return await antigravityOAuthRoute(request, env);
       if (url.pathname.startsWith('/api/ai/') || url.pathname.startsWith('/api/admin/')) return await aiRoute(request,env,url);
       const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/chat/greeting','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
@@ -430,56 +434,9 @@ export default {
       // 8. TTS API (Gemini Flash TTS)
       if (url.pathname === "/api/tts" && request.method === "POST") {
         const body = await request.json();
-        const text = (body.text || "").trim();
-        const voice = "Charon";
-        if (!text) return jsonResponse({ detail: "text required" }, 400);
-
         const speech = await googleSpeechKey(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
         if (speech.response) return speech.response;
-        const apiKey = speech.apiKey;
-        if (!apiKey) return jsonResponse({ detail: "Thêm API Gemini trong Cài đặt để nghe giọng thầy Lâm.", code: "no_tts" }, 403);
-        const ttsUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent";
-
-        try {
-          const ttsResp = await fetch(ttsUrl, {
-            signal: AbortSignal.timeout(45000),
-            method: "POST", redirect: "manual",
-            headers: { 
-              "Content-Type": "application/json",
-              "x-goog-api-key": apiKey
-            },
-            body: JSON.stringify({
-              contents: [{ role:"user", parts: [{ text, speech_metadata: { style: "Read aloud clearly in Japanese." } }] }],
-              generationConfig: {
-                responseModalities: ["AUDIO"],
-                speechConfig: {
-                  voiceConfig: {
-                    prebuiltVoiceConfig: {
-                      voiceName: voice
-                    }
-                  }
-                }
-              }
-            })
-          });
-
-          if (!ttsResp.ok) {
-            console.warn("TTS provider status",ttsResp.status);
-          }
-          if (ttsResp.ok) {
-            const ttsData = await ttsResp.json();
-            const part = ttsData.candidates?.[0]?.content?.parts?.find(p=>p.inlineData?.data);
-            const audioBase64 = part?.inlineData?.data;
-            const mimeType = part?.inlineData?.mimeType || "audio/wav";
-            if (audioBase64) {
-              return jsonResponse({ mimeType, audioBase64, voice });
-            }
-          }
-          return jsonResponse({ fallback: true, voice, text }, 200);
-        } catch (error) {
-          console.warn("TTS provider error",error.name);
-          return jsonResponse({ fallback: true, voice, text }, 200);
-        }
+        return await speechResponse(body, speech.apiKey);
       }
 
       // 9. Kaiwa Speaking Lab Evaluation API

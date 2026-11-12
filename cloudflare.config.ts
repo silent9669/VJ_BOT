@@ -14,6 +14,9 @@ export default defineConfig({
       GEMINI_API_KEY: bindings.secret(),
       GOOGLE_CLIENT_ID: bindings.secret(),
       GOOGLE_CLIENT_SECRET: bindings.secret(),
+      ANTIGRAVITY_GATEWAY_URL: bindings.secret(),
+      ANTIGRAVITY_MANAGEMENT_KEY: bindings.secret(),
+      ANTIGRAVITY_API_KEY: bindings.secret(),
       ADMIN_EMAILS: bindings.secret(),
       AI_KEY_SECRET: bindings.secret(),
       DB: bindings.d1({

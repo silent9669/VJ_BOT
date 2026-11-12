@@ -30,18 +30,18 @@ All routes are under `/api` and return JSON `{detail}` on errors. Private routes
 
 ## AI (riêng tư, cần API của người dùng)
 
-Chat, Kaiwa và giọng đọc dùng API người dùng đã lưu; hạn mức 20 yêu cầu/phút mỗi tài khoản (`429` khi vượt).
+Chat and speaking feedback use the learner's selected API-key or Antigravity OAuth connection. Read-aloud uses a separate selected Google Gemini API-key profile. AI requests share a limit of 20 requests per minute per VJBot account (`429` when exceeded).
 
 | Route | Mô tả |
 | --- | --- |
 | `POST /api/chat` | `{message ≤ 6000 characters, lesson?: {id,level}, screen?: {route,title,level?,text ≤ 3500}, channel?: 'chat'\|'quick', request_id?}`. Lesson IDs resolve against the server-owned catalog; unknown IDs and client-supplied lesson content return 400. Returns `{reply, updated_topic}`. A request UUID cannot be reused in another conversation scope (409). |
 | `POST /api/chat/greeting` | Fixed greeting stored only in general chat. |
 | `POST /api/kaiwa/evaluate` | `{scenario_id, prompt_index?: 0, user_speech, level}`. The server resolves the question and scenario; client-supplied `scenario_title`, `context` and `prompt_jp` are rejected. Returns `{score, rating, feedback, model_answer, user_text, scenario}` after strict validation. |
-| `POST /api/tts` | `{text}` → `{audioBase64, ...}`; `403 {code:'no_tts'}` nếu API đã lưu không phải Gemini-Google (client dùng giọng trình duyệt) |
+| `POST /api/tts` | `{text, speech_model?}` returns `{audioBase64, mimeType, voice, model}`. `{action:"models"}` lists compatible speech candidates without audio generation. Returns `403 {code:"no_tts"}` without a selected Google Gemini API-key profile; no browser-voice fallback. |
 
-TTS sends `text` as the verbatim transcript. Reading directions are passed separately in `speech_metadata`, never prepended to the spoken text. The model, Charon voice, and existing browser fallback are unchanged.
+TTS sends `text` as the verbatim transcript. Reading directions stay in `speech_metadata`, never prepended to spoken text, preserving the transcript fix merged in PR #24.
 
-Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` không giải mã được khóa; `429` hết lượt; `503` nhà cung cấp lỗi (thông báo tiếng Việt, không lộ nội dung lỗi gốc).
+Common AI failures: `403 {code:"no_ai"}` for a missing selected API, `409 {code:"rekey"}` for an undecryptable key, `409 {code:"profile_changed"}` for a removed pinned profile, `403 {code:"oauth_model"}` for an unselected OAuth model, `409/503 {code:"oauth_reconnect"}` for unavailable OAuth, `429` for quota/rate limits and `503` for provider failures. Provider response bodies and secrets are not exposed.
 
 ### Prompt-injection boundaries
 
@@ -74,7 +74,7 @@ Chromium exercised lesson-scoped history, the lesson-reference-only chat payload
 | `GET /api/admin/user?id=` | Chi tiết một người dùng (cùng trường như trên); `404` nếu không có |
 | `POST /api/admin/user` | `{id, action, level?}` với `action` là `set_level` (cần `level` N5–N1), `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. Không thể `delete` chính tài khoản đang dùng |
 
-Routes under `/api/ai/*` and `/api/admin/*` are handled by `src/providers.js` with session checks. Profile creation/update and active-setting writes accept at most 128 KiB of UTF-8 JSON for bounded model history; other JSON bodies retain the 4 KiB limit.
+API-key and admin routes are handled by `src/providers.js`; Antigravity account routes are handled separately by `src/antigravity-oauth.js`. Both authenticate the VJBot session. Profile creation/update and active-setting writes accept at most 128 KiB of UTF-8 JSON for bounded model history; other API-key JSON bodies retain the 4 KiB limit.
 
 ## Model discovery
 
@@ -135,6 +135,31 @@ Explicit server choices also send `X-VJBot-Profile`; inference resolves that own
 
 Apply `migrations/0014_api_profiles.sql` through the existing D1 migration process before deploying the new Worker. The migration preserves legacy ciphertext and the active model. Back up the database before changing its schema. CI dry-run only builds; it does not migrate production data.
 
+### Connection-manager storage boundaries
+
+The connection manager combines saved API-key profiles and Antigravity accounts under the signed-in **VJBot account**, not under a browser session or a displayed email alone. VJBot login and provider OAuth login are separate identities.
+
+| Connection | Secret storage | Saved choices and lifetime |
+| --- | --- | --- |
+| API key: this device | Per-owner AES-GCM IndexedDB profile | Restores in this browser/origin for the same VJBot account; does not sync to another device |
+| API key: server | D1 ciphertext under `AI_KEY_SECRET` and owner-bound AAD | Owned named profiles, selected model and matching historical checks survive app logout/login |
+| Antigravity OAuth | Dedicated gateway's private credential store | D1 stores an opaque connection ID, gateway binding, unique routing prefix and per-connection model; gateway refreshes its own provider token |
+
+Changing the app session does not erase completed connections. Expired pending authorization must restart; revoked provider grants or invalid refresh credentials require reconnection. Deleting one connection must not select another implicitly. Account deletion removes every owned gateway connection before deleting local ownership records. Provider permission revocation remains a separate Google action.
+
+The **Accounts & models** panel starts with the current saved model and **Chat with Thay Lam**. The **My account** chooser switches saved API-key profiles and OAuth accounts without regenerating content. **Add account** opens an explicit choice between API key and Google/Antigravity sign-in; canceling an API draft restores the saved setup and clears the unsaved key. An OAuth model test/save action appears only for a changed selection, with a quota/cost warning; the old model stays active until success. Connection details, API model discovery/resume, OAuth account management, per-model limits and read-aloud settings open on demand. The overview displays only the currently reported lowest model percentage, not a percentage range or shared account balance. Storage/security explanations remain available under **Storage & privacy**. Each OAuth account retains its own model. API scan checkpoints remain tied to the exact account, protocol, URL and key.
+
+Remaining usage includes a native meter for each model with a known finite fraction. Missing data has no meter; exhausted quota has an empty meter and an explicit 0% label. The overview meter represents the lowest reported model limit, not a sum, average or shared account balance.
+
+### Antigravity remaining quota
+
+`GET /api/ai/oauth/antigravity/usage?connection_id=<opaque-id>` reads only the current user's requested saved OAuth account. It returns `{connection_id, available, checked_at, models:[{model, remaining_fraction, reset_at}], detail?}`. Zero is exhausted quota; missing data is unavailable, never zero or unlimited.
+
+The backend chooses the owned gateway credential and uses the fixed daily Antigravity `fetchAvailableModels` metadata endpoint through the gateway's authenticated API-call transport. The browser cannot choose the upstream URL, project, auth index, token or headers. Only quota fields and bounded model IDs cross the application boundary; upstream error bodies do not.
+
+Fractions and reset timestamps are provider observations at `checked_at`, not guaranteed future access, billable credit balances or remaining request counts. Native quota model IDs are displayed as supplied; the app does not assume they equal a gateway's chat alias. Opening or refreshing quota never tests models, generates content, resets quota or buys credits. API-key providers without an implemented usage endpoint display unavailable rather than an estimated OAuth-style balance.
+
+
 ### Probe timing sample
 
 A controlled three-model fixture emitted its first visible text after 300 ms and finished after 2,400 ms. The previous paced/full-response scan took 10,404 ms; burst alone took 2,403 ms; streaming alone took 8,305 ms; both together took 303 ms, then 302 ms on repetition. Every variant passed the same three models. Both streaming runs cancelled all three streams before completion.
@@ -142,3 +167,58 @@ A controlled three-model fixture emitted its first visible text after 300 ms and
 A separate six-request Cohere Trial comparison used `command-r7b-12-2024`, `tiny-aya-earth` and `tiny-aya-global` through the production LLM helpers. The old scan passed 3/3 in 8,428 ms; the new scan passed 3/3 in 441 ms. This is one paired upstream sample, not browser end-to-end timing, a provider-wide guarantee or a benchmark of long quota-limited catalogs.
 
 The same three models also passed the authenticated local app's draft test endpoint through a real browser: the earlier paced run took 10,295 ms; the updated streaming/burst run took 588 ms. These timings cover those endpoint calls, not a complete scan of the 37-model catalog.
+
+## Antigravity account OAuth
+
+Settings offers **API key** and **Antigravity**. The earlier Google Cloud OAuth experiment is retired; users do not need to create a Google Cloud project to connect an Antigravity account here. VJBot Google sign-in remains a separate feature.
+
+Antigravity uses a dedicated [CLIProxyAPI v8 gateway](https://github.com/router-for-me/CLIProxyAPI/releases/tag/v8.0.67). This is a third-party gateway integration, not a claim that Antigravity subscriptions expose the public Gemini API or a TTS API. The user must personally review Google's permissions and complete consent. Do not bypass provider warnings, eligibility checks or account restrictions.
+
+**Gateway compatibility:** the unmodified 8.0.67 release completes normal Antigravity login with only `status: ok`; it does not retain the `auth_id`/saved/adopted outcome needed for safe per-user binding. Apply `scripts/antigravity-oauth-outcome.patch` to the pinned 8.0.67 source and build that gateway, or use a future gateway version only after confirming the same completion contract. Do not remove VJBot's identity checks or guess the account from catalog changes. The patch changes only the existing Antigravity completion call's `alwaysTrackOutcome` argument to `true`, preserving the existing save/adoption path.
+
+For a source checkout at tag `v8.0.67` with Go 1.26.10 or newer:
+
+```sh
+git apply /path/to/VJ_BOT/scripts/antigravity-oauth-outcome.patch
+CGO_ENABLED=0 go build -p=1 -trimpath -buildvcs=false -o cli-proxy-api ./cmd/server
+```
+
+Use an `.exe` output name on Windows. A patched build is not the unmodified official release binary. Keep its private configuration and credentials outside the application repository.
+
+### Operator setup
+
+1. Run a dedicated gateway with its own private credential directory. Do not import credentials from OMP, another application or an existing shared account pool.
+2. Bind the gateway to loopback for a local preview. Set `routing.force-model-prefix: true`, disable automatic generation retries and disable Antigravity credits fallback. Use separate management and inference client keys; disable the control panel, automatic panel downloads, discovery, plugins and request-body logging unless independently required.
+3. Configure server-only `ANTIGRAVITY_GATEWAY_URL`, `ANTIGRAVITY_MANAGEMENT_KEY`, `ANTIGRAVITY_API_KEY` and the existing `AI_KEY_SECRET`. Never put these in browser storage, Git or screenshots. Local HTTP loopback additionally requires `ANTIGRAVITY_ALLOW_LOOPBACK=true`; that flag is intentionally absent from production bindings.
+4. Cloudflare Workers cannot run the gateway executable or reach this laptop's loopback. Production needs an operator-protected, reachable **HTTPS** gateway with authenticated management access. Do not publish the raw local management port. No gateway hosting or production deployment is provisioned by this feature.
+5. Back up existing data, then apply migrations through `0018_antigravity_accounts.sql` using the approved migration process. Migration 0018 copies existing OAuth identities, prefixes and per-account models into multiple-account storage and preserves the selected account. Migration 0016 remains historical and unused for new inference. Build dry-run does not migrate production.
+6. Choose **Add account → Sign in with Google**, optionally label the account, then continue Google sign-in. The gateway owns authorization-code exchange, refresh and its private token files. VJBot stores only account bindings and encrypted, session-bound pending metadata, never provider access/refresh tokens.
+7. Complete Google sign-in personally. A local callback opens automatically when browser and gateway run on this machine. For a remote gateway, the expandable callback control accepts only the exact callback origin, port, path and state from that session; VJBot never fetches the pasted URL.
+8. Choose a different model and press **Test & save this model**. This sends one generation and may consume quota or incur charges. Only visible text commits the model; a catalog entry or successful login is not inference verification.
+
+### Routes and isolation
+
+All routes require a VJBot session. Mutations require matching `Origin`; `X-VJBot-Account` rejects stale-tab account drift. Pending OAuth is bound to the exact session, expires after five minutes and can resume after reload. Only one pending authorization can own the gateway's fixed callback listener at a time; established saved accounts and chat connections are not serialized.
+
+| Route | Behavior |
+| --- | --- |
+| `GET /api/ai/oauth/antigravity` | Returns owned `connections:[{id,name,model,state}]`, `active_id`, the active connection's status and only this session's pending sign-in; never exposes gateway keys, credential files or another account. |
+| `POST /api/ai/oauth/antigravity/start` | Reserves the callback slot and returns an allow-listed Google authorization URL. Adds another account without deleting existing connections. |
+| `POST /api/ai/oauth/antigravity/status` | Accepts `{handle}`. Requires the exact gateway completion identity, reserves unique ownership and sets a unique credential prefix before storing/activating the new connection. |
+| `POST /api/ai/oauth/antigravity/callback` | Accepts `{handle, redirect_url}` for manual callback forwarding to the fixed gateway endpoint; rejects mismatched state and arbitrary destinations. |
+| `POST /api/ai/oauth/antigravity/cancel` | Cancels the owned sign-in. A completed result belonging to another VJBot account is never deleted. |
+| `POST /api/ai/oauth/antigravity/connections/{id}/activate` | Selects only that owned completed account. Does not generate content or replace other accounts. |
+| `GET /api/ai/oauth/antigravity/models?connection_id={id}` | Reads exactly that owned credential's catalog, requires correctly prefixed IDs, excludes known non-chat IDs and reports `verified:false`; no generation. |
+| `PUT /api/ai/oauth/antigravity/model` | Accepts `{connection_id,model}`. Requires catalog membership, uses the shared limiter and changes only that connection's model after one successful visible-text probe. |
+| `GET /api/ai/oauth/antigravity/usage?connection_id={id}` | Returns sanitized remaining fractions, native model IDs and reset/check timestamps for that account, or an explicit unavailable result. No generation or quota reset. |
+| `DELETE /api/ai/oauth/antigravity` | Accepts `{connection_id}`. Removes only the requested owned gateway credential before its local binding. Failure keeps closed ownership for retry. Active deletion leaves no implicit fallback. |
+
+Chat and speaking feedback pin `X-VJBot-Profile: antigravity_oauth:<connection-id>`. The backend routes only that owned connection's `<unique-account-prefix>/<selected-model>`. Strict-prefix routing is checked before use; a missing, disabled, mismatched, unqualified or disconnected selection fails closed. No unprefixed request, account-pool fallback or API-key fallback is used. A provider account cannot be linked to two VJBot users.
+
+Account deletion and administrative API removal remove all owned gateway connections first. A gateway failure remains an error and preserves remaining local ownership for retry rather than claiming every credential was erased. Disconnecting one account does not remove the others. Google permissions can be revoked separately by the user.
+
+### Voice remains separate
+
+Read-aloud uses the API-key profile selected under **API key**, even when chat uses Antigravity. It retains `gemini-3.8-flash-tts`, Charon and the existing explicit compatible-model selector. Requests use the Google Gemini API key, never the gateway management key or Antigravity OAuth credentials. An explicit Antigravity profile on the TTS endpoint is rejected. Quota errors remain errors; there is no browser-voice fallback or silent voice/model substitution.
+
+Sources: [gateway configuration](https://help.router-for.me/configuration/options), [v8 management API](https://help.router-for.me/management/apiv8), [Antigravity Voice Mode](https://antigravity.google/docs/voice-mode.md), [Gemini TTS](https://ai.google.dev/gemini-api/docs/speech-generation).

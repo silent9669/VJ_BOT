@@ -1,0 +1,157 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+
+const source = readFileSync('static/speech.js', 'utf8');
+const deferred = () => {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => {resolve = yes; reject = no;});
+  return {promise, resolve, reject};
+};
+function speech(apiFetch = async () => Response.json({audioBase64:'UklGRg==', mimeType:'audio/wav'})) {
+  const elements = new Map(['speech-notice', 'speech-status', 'speech-stop'].map(id => [id, {hidden:true, textContent:'', addEventListener(){}}]));
+  const audios = [], states = [];
+  const context = vm.createContext({
+    AbortController, Response, atob, btoa, Uint8Array, DataView,
+    document:{getElementById:id => elements.get(id)},
+    window:{addEventListener(){}, speechSynthesis:{cancel(){}, speak(){throw new Error('Native voice fallback is forbidden');}}},
+    mascotMgr:{setState:state => states.push(state)}, apiFetch,
+    Audio:class {
+      constructor(url) {this.src = url; this.paused = true; audios.push(this);}
+      async play() {this.paused = false;}
+      pause() {this.paused = true;}
+      removeAttribute(name) {if (name === 'src') this.src = '';}
+      load() {}
+    }
+  });
+  vm.runInContext(source, context);
+  return {context, audios, states, status:() => elements.get('speech-status').textContent, visible:() => !elements.get('speech-notice').hidden};
+}
+
+test('Japanese-only chat speech omits explanations and duplicate kana/romaji readings', () => {
+  const {context:c} = speech();
+  assert.equal(c.speechText('Đúng rồi. 学生(がくせい)です。(gakusei desu)\nVì: Đây là học sinh.', {japaneseOnly:true}), 'がくせいです。');
+  assert.equal(c.speechText('Nói: 3時にAIを使います。 Nghĩa: dùng AI lúc 3 giờ.', {japaneseOnly:true}), '3時にAIを使います。');
+  assert.equal(c.speechText('<b>{私|わたし}</b>は{学生|がくせい}です。'), 'わたし はがくせいです。');
+  assert.equal(c.speechText('JohnさんはUSBを使います。'), 'JohnさんはUSBを使います。');
+});
+
+test('bilingual speech retains Vietnamese explanations and Japanese readings without duplicated romaji', async () => {
+  let body;
+  const s = speech(async (_path, options) => {
+    body = JSON.parse(options.body);
+    return Response.json({audioBase64:'UklGRg==', mimeType:'audio/wav'});
+  });
+  await s.context.playGeminiTTS('Đúng rồi. 学生(がくせい)です。(gakusei desu) Nghĩa là học sinh (ví dụ).');
+  assert.equal(body.text, 'Đúng rồi. がくせいです。 Nghĩa là học sinh (ví dụ).');
+  assert.equal(s.audios[0].paused, false);
+  await s.context.playGeminiTTS('Đây là giải thích tiếng Việt.');
+  assert.equal(body.text, 'Đây là giải thích tiếng Việt.');
+});
+
+test('unambiguous word readings override homographs but alternative Kanji readings are not guessed', () => {
+  const {context:c} = speech();
+  assert.equal(c.speechText('生', {reading:'なま'}), 'なま');
+  assert.equal(c.speechText('私', {reading:'わたし (watashi)'}), 'わたし');
+  assert.equal(c.speechText('学', {reading:'ガク · まな.ぶ'}), '学');
+});
+
+test('a Japanese-only button with no Japanese does not send an empty or foreign transcript', async () => {
+  let calls = 0;
+  const s = speech(async () => {calls++;});
+  await s.context.playGeminiTTS('Đây là giải thích tiếng Việt.', {japaneseOnly:true});
+  assert.equal(calls, 0);
+  assert.equal(s.visible(), true);
+});
+
+test('provider errors remain visible and do not silently switch the learner to another voice', async () => {
+  const s = speech(async () => Response.json({detail:'Add a Google Gemini API key in Settings.'}, {status:403}));
+  await s.context.playGeminiTTS('こんにちは。');
+  assert.equal(s.audios.length, 0);
+  assert.equal(s.visible(), true);
+  assert.equal(s.status(), 'Add a Google Gemini API key in Settings.');
+  s.context.stopSpeech();
+  assert.equal(s.visible(), false);
+});
+
+test('missing audio is an error rather than a successful browser-voice fallback', async () => {
+  const s = speech(async () => Response.json({fallback:true}));
+  await s.context.playGeminiTTS('こんにちは。');
+  assert.equal(s.audios.length, 0);
+  assert.equal(s.status(), 'No speech audio was returned.');
+});
+
+test('the latest click aborts old work and ignores a late response even if cancellation is ignored', async () => {
+  const requests = [];
+  const s = speech((path, options) => {
+    const response = deferred();
+    requests.push({...response, options});
+    return response.promise;
+  });
+  const old = s.context.playGeminiTTS('古い文。');
+  const latest = s.context.playGeminiTTS('新しい文。');
+  assert.equal(requests[0].options.signal.aborted, true);
+  requests[1].resolve(Response.json({audioBase64:'new', mimeType:'audio/wav'}));
+  await latest;
+  requests[0].resolve(Response.json({audioBase64:'old', mimeType:'audio/wav'}));
+  await old;
+  assert.deepEqual(s.audios.map(a => a.src), ['data:audio/wav;base64,new']);
+  assert.equal(s.audios[0].paused, false);
+  s.context.stopSpeech();
+  assert.equal(s.audios[0].paused, true);
+  assert.equal(requests[1].options.signal.aborted, true);
+  assert.equal(s.visible(), false);
+});
+
+test('replacing playing audio stops it and stale end/error events cannot stop its replacement', async () => {
+  const s = speech();
+  await s.context.playGeminiTTS('一つ目。');
+  const first = s.audios[0];
+  await s.context.playGeminiTTS('二つ目。');
+  assert.equal(first.paused, true);
+  first.onended(); first.onerror();
+  assert.equal(s.audios[1].paused, false);
+  s.audios[1].onended();
+  assert.equal(s.visible(), false);
+  assert.equal(s.states.at(-1), 'idle');
+});
+
+test('an old play promise settling cannot overwrite a newer request or resume stopped audio', async () => {
+  const s = speech();
+  const play = deferred();
+  s.context.Audio.prototype.play = function () {this.paused = false; return play.promise;};
+  const first = s.context.playGeminiTTS('一つ目。');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(s.audios[0].paused, false);
+  s.context.stopSpeech();
+  play.resolve(); await first;
+  assert.equal(s.audios[0].paused, true);
+  assert.equal(s.visible(), false);
+});
+
+test('audio decode failures stop the player and leave an actionable error', async () => {
+  const s = speech();
+  await s.context.playGeminiTTS('こんにちは。');
+  s.audios[0].onerror();
+  assert.equal(s.audios[0].paused, true);
+  assert.equal(s.status(), 'Unable to play speech audio. Please try again.');
+  assert.equal(s.states.at(-1), 'idle');
+});
+
+test('PCM media-type case, sample rate and channels preserve sample timing and signed samples', () => {
+  const {context:c} = speech();
+  const samples = Buffer.from([0, 0, 255, 127, 0, 128, 0, 0]);
+  for (const mimeType of ['audio/l16;rate=16000;channels=2', 'audio/L16;rate=16000;channels=2']) {
+    const url = c.audioDataUrl({mimeType, audioBase64:samples.toString('base64')});
+    const wav = Buffer.from(url.split(',')[1], 'base64');
+    assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
+    assert.equal(wav.readUInt16LE(22), 2);
+    assert.equal(wav.readUInt32LE(24), 16000);
+    assert.equal(wav.readUInt32LE(28), 64000);
+    assert.equal(wav.readUInt16LE(32), 4);
+    assert.equal(wav.readUInt32LE(40) / wav.readUInt32LE(28), 2 / 16000);
+    assert.deepEqual([...wav.subarray(44)].map((_, i) => i % 2 ? null : wav.readInt16LE(44 + i)).filter(n => n !== null), [0, 32767, -32768, 0]);
+  }
+  assert.throws(() => c.audioDataUrl({mimeType:'audio/l16;rate=16000;channels=2', audioBase64:'AA=='}), /Invalid speech PCM format/);
+});

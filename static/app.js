@@ -270,51 +270,6 @@ function initLoadingScreen() {
   }, 600);
 }
 
-// ==========================================
-// 5. 1984 MACINTOSH CRT TYPEWRITER (ANATOMY FIGURES)
-// ==========================================
-// ==========================================
-// 6. GEMINI TTS (VOICE SYNTHESIS)
-// ==========================================
-async function playGeminiTTS(text, voice = "Charon") {
-  if (!text || !text.trim()) return;
-  const clean = text.replace(/<[^>]*>/g, "").replace(/[#*`_]/g, "").trim();
-
-  window.speechSynthesis?.cancel();
-  soundEngine.playBlip();
-  mascotMgr.setState("speaking");
-
-  try {
-    const resp = await apiFetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: clean, voice })
-    });
-
-    if (resp.ok) {
-      const data = await resp.json();
-      if (data.audioBase64) {
-        const audio = new Audio(audioDataUrl(data));
-        audio.onended = () => mascotMgr.setState("idle");
-        await audio.play();
-        return;
-      }
-    }
-  } catch (err) {
-    console.warn("Gemini TTS fallback to Web Speech:", err);
-  }
-
-  // Fallback to Browser Native Japanese SpeechSynthesis
-  if ("speechSynthesis" in window) {
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = "ja-JP";
-    u.rate = 0.95;
-    u.onend = () => mascotMgr.setState("idle");
-    window.speechSynthesis.speak(u);
-  } else {
-    mascotMgr.setState("idle");
-  }
-}
 
 // ==========================================
 // 7. TAB SWITCHER & NAVIGATION

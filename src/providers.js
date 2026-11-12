@@ -1,35 +1,15 @@
 import { sessionUser } from './auth.js';
 import { isAdmin, listUsers, purgeGuests, userAction, userDetail } from './admin.js';
 import { callLLM, cleanBaseUrl, DEFAULT_BASES, failureMessage, listModels, probeModel } from './llm.js';
+import {seal, unseal} from './ai-secrets.js';
+import {antigravityProvider, ANTIGRAVITY_PROFILE, connectionIdOk} from './antigravity-gateway.js';
+import {rateLimited} from './ai-usage.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'no-store'}});
 const text = new TextEncoder();
 const b64 = bytes => btoa(String.fromCharCode(...bytes));
-const unb64 = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 
-export async function rateLimited(env, userId) {
-  const bucket = Math.floor(Date.now() / 60000);
-  const usage = await env.DB.prepare('INSERT INTO ai_usage(user_id,bucket,count) VALUES(?,?,1) ON CONFLICT(user_id,bucket) DO UPDATE SET count=count+1 RETURNING count').bind(userId, bucket).first();
-  await env.DB.prepare('DELETE FROM ai_usage WHERE bucket < ?').bind(bucket - 60).run();
-  return usage.count > 20;
-}
 
-// AES-GCM with a key derived from the AI_KEY_SECRET secret; the user id is authenticated so rows cannot be swapped.
-async function aesKey(env) {
-  if (!env.AI_KEY_SECRET) return null;
-  return crypto.subtle.importKey('raw', await crypto.subtle.digest('SHA-256', text.encode(env.AI_KEY_SECRET)), 'AES-GCM', false, ['encrypt', 'decrypt']);
-}
-async function seal(env, userId, apiKey) {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const sealed = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv, additionalData: text.encode(userId)}, await aesKey(env), text.encode(apiKey)));
-  return b64(new Uint8Array([...iv, ...sealed]));
-}
-async function unseal(env, userId, blob) {
-  try {
-    const bytes = unb64(blob), key = await aesKey(env);
-    return new TextDecoder().decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: bytes.slice(0, 12), additionalData: text.encode(userId)}, key, bytes.slice(12)));
-  } catch { return null; }
-}
 
 const activeProfile = (env, userId) => env.DB.prepare(`SELECT p.* FROM ai_providers p
   JOIN ai_active_profiles a ON a.user_id=p.user_id AND a.profile_id=p.id WHERE p.user_id=?`).bind(userId).first();
@@ -39,6 +19,11 @@ const ownedProfile = (env, userId, id) => env.DB.prepare('SELECT * FROM ai_provi
 
 // An explicitly supplied device connection is transient and never borrows a server key.
 export async function resolveProvider(env, userId, override, profileId) {
+  if (typeof profileId === 'string' && (profileId === ANTIGRAVITY_PROFILE || profileId.startsWith(ANTIGRAVITY_PROFILE + ':'))) {
+    const id = profileId.slice(ANTIGRAVITY_PROFILE.length + 1);
+    if (override !== undefined || !connectionIdOk(id)) return {error:'invalid_connection'};
+    return antigravityProvider(env, userId, id);
+  }
   if (profileId !== undefined && (typeof profileId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(profileId)
     || override !== undefined)) return {error: 'invalid_connection'};
   if (override !== undefined) {
@@ -65,6 +50,8 @@ const providerFailure = provider => !provider || provider.error === 'no_model'
   ? json({detail: NO_AI, code: 'no_ai'}, 403)
   : provider.error === 'rekey' ? json({detail: REKEY, code: 'rekey'}, 409)
   : provider.error === 'profile_changed' ? json({detail: 'The selected API profile no longer exists. Choose a connection in Settings.', code: 'profile_changed'}, 409)
+  : provider.error === 'oauth_model' ? json({detail:'Choose and test an Antigravity chat model in Settings.',code:'oauth_model'},403)
+  : provider.error === 'oauth_reconnect' ? json({detail:'Reconnect Antigravity in Settings. No API-key connection was used instead.',code:'oauth_reconnect'},provider.status || 409)
   : provider.error ? json({detail: 'Kết nối API không hợp lệ.', code: 'invalid_connection'}, 400) : null;
 
 // Chat and Kaiwa share this: {text} on success, otherwise {response} ready to return.
@@ -77,14 +64,16 @@ export async function askAI(env, userId, request, override, profileId) {
   return {response: json({detail: failureMessage(result.status)}, result.status === 429 ? 429 : 503)};
 }
 
-// Speech must resolve the same selection, but only Google's native Gemini host qualifies.
+// Read-aloud stays on the selected API-key profile; Antigravity is a separate chat connection.
 export async function googleSpeechKey(env, userId, override, profileId) {
+  if (typeof profileId === 'string' && (profileId === ANTIGRAVITY_PROFILE || profileId.startsWith(ANTIGRAVITY_PROFILE + ':'))) return {response:json({detail:'Antigravity chat does not provide this TTS API. Select a Google Gemini API-key profile for read-aloud.',code:'no_tts'},403)};
   const provider = await resolveProvider(env, userId, override, profileId);
   if (override !== undefined || provider?.error) {
     const response = providerFailure(provider);
     if (response) return {response};
   }
-  return {apiKey: provider?.protocol === 'gemini' && new URL(provider.baseUrl).hostname === 'generativelanguage.googleapis.com' ? provider.apiKey : null};
+  const google = provider?.protocol === 'gemini' && new URL(provider.baseUrl).hostname === 'generativelanguage.googleapis.com';
+  return {apiKey:google ? provider.apiKey : null};
 }
 
 async function body(request, limit = 4096) {

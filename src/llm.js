@@ -311,7 +311,8 @@ export async function listModels({protocol, baseUrl, apiKey}) {
         if (freeOnly && !freeTextPricing(row?.pricing)) continue;
         if (protocol === 'gemini' && (!Array.isArray(row?.supportedGenerationMethods) || !row.supportedGenerationMethods.includes('generateContent'))) continue;
         const id = protocol === 'gemini' ? row?.name?.replace(/^models\//, '') : row?.id;
-        if (typeof id === 'string' && id.length <= 100 && /^~?[\w.:\/-]+$/.test(id) && !id.includes(apiKey)) models.add(id);
+        if (typeof id === 'string' && id.length <= 100 && /^~?[\w.:\/-]+$/.test(id)
+          && !(apiKey && id.includes(apiKey))) models.add(id);
         if (models.size === 1000) return catalog(true);
       }
       const next = protocol === 'gemini' ? data.nextPageToken : data.has_more ? data.last_id : '';

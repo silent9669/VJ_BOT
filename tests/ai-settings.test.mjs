@@ -54,7 +54,7 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
       return scanner.run({...options, now: () => clock, sleep: async ms => { clock += ms; }});
     }},
     document: {getElementById: element, querySelectorAll: () => [], querySelector: selector => element(selector),
-      createElement: () => ({value: '', textContent: ''})},
+      createElement: () => ({value: '', textContent: '', children: [], append(child) { this.children.push(child); }})},
     apiFetch: async (path, options = {}) => {
       requests.push({path, body: JSON.parse(options.body || '{}'), at: clock});
       if (path === '/api/ai/settings') return Response.json({source: 'own', can_store: true, own: savedProfile});
@@ -534,4 +534,100 @@ test('another active scan lock prevents duplicate probes or resetting its checkp
   assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 1);
   assert.equal(JSON.stringify([...ui.storage]), before);
   assert.match(ui.element('ai-model-status').textContent, /Another scan/);
+});
+
+test('late OAuth readiness cannot reopen chat after switching method or account', async () => {
+  for (const changeAccount of [false, true]) {
+    const ui = settings({activeChoice: {value: {scope: 'none', id: ''}}});
+    let oauth = true, release;
+    ui.context.usesAntigravityOAuth = () => oauth;
+    ui.context.antigravityConnectionId = () => 'first';
+    const api = ui.context.apiFetch;
+    ui.context.apiFetch = (path, options) => path === '/api/ai/oauth/antigravity'
+      ? new Promise(resolve => { release = resolve; }) : api(path, options);
+    const earlier = ui.context.checkAiReady();
+    await new Promise(resolve => setImmediate(resolve));
+    oauth = false;
+    if (changeAccount) ui.context.signedInUser = {user_id: 'test:other'};
+    await ui.context.checkAiReady();
+    release(Response.json({configured: true, connections:[{id:'first', state:'active', model:'gemini-chat'}]}));
+    await earlier;
+    assert.equal(ui.element('chat-input').disabled, true);
+    assert.equal(ui.element('btn-send-message').disabled, true);
+    assert.equal(ui.element('chat-ai-gate').hidden, false);
+  }
+});
+
+test('unified chooser groups API and OAuth accounts without duplicating profile controls', async () => {
+  const ui = settings();
+  ui.context.savedOAuthConnections = () => [{id:'oauth-first', name:'Personal Google', model:'native-chat'}];
+  await ui.context.renderAiPanels('settings');
+  const groups = ui.element('ai-profile-list').children.filter(child => child.label);
+  assert.deepEqual(groups.map(group => group.label), ['API key · Server', 'Antigravity OAuth']);
+  assert.equal(groups[1].children[0].value, 'oauth:oauth-first');
+  assert.match(groups[1].children[0].textContent, /Personal Google/);
+  assert.equal(ui.requests.some(request => request.path.includes('/models')), false);
+});
+
+test('adding an API draft preserves the selected saved connection and unsaved fields on reopen', async () => {
+  const ui = settings();
+  await ui.context.renderAiPanels('settings');
+  ui.element('ai-profile-new').click();
+  ui.element('ai-profile-name').value = 'Unsaved draft';
+  ui.element('ai-key').value = 'unsaved-secret';
+  await ui.context.renderAiPanels('settings');
+  assert.equal(ui.element('ai-profile-list').value, 'server:saved-profile');
+  assert.equal(ui.element('ai-profile-name').value, 'Unsaved draft');
+  assert.equal(ui.element('ai-key').value, 'unsaved-secret');
+  assert.equal(JSON.stringify([...ui.storage]).includes('unsaved-secret'), false);
+  await ui.element('ai-api-back').click();
+  assert.equal(ui.element('ai-profile-list').value, 'server:saved-profile');
+  assert.equal(ui.element('ai-profile-name').value, 'Saved provider');
+  assert.equal(ui.element('ai-key').value, '');
+  assert.equal(ui.element('ai-current-model').textContent, 'paid');
+  assert.equal(ui.requests.some(request => request.path.includes('/models')), false);
+});
+
+test('selecting OAuth delegates explicit activation and leaves the API voice profile unchanged', async () => {
+  const ui = settings();
+  await ui.context.renderAiPanels('settings');
+  const previous = JSON.stringify(ui.activeChoice.value);
+  let connection;
+  ui.context.selectAntigravityConnection = async id => { connection = id; };
+  ui.element('ai-profile-list').value = 'oauth:second';
+  await ui.element('ai-profile-list').events.change();
+  assert.equal(connection, 'second');
+  assert.equal(JSON.stringify(ui.activeChoice.value), previous);
+});
+
+test('OAuth readiness is pinned to the selected row, not the server active connection', async () => {
+  const ui = settings();
+  ui.context.usesAntigravityOAuth = () => true;
+  let connection = 'first';
+  ui.context.antigravityConnectionId = () => connection;
+  const api = ui.context.apiFetch;
+  ui.context.apiFetch = (path, options) => path === '/api/ai/oauth/antigravity'
+    ? Promise.resolve(Response.json({configured:true, connected:true, state:'active', model:'other-model',
+      connections:[{id:'first', state:'reconnect_required', model:'old'}, {id:'second', state:'active', model:'ready'}]}))
+    : api(path, options);
+  await ui.context.checkAiReady();
+  assert.equal(ui.element('chat-input').disabled, true);
+  connection = 'second';
+  await ui.context.checkAiReady();
+  assert.equal(ui.element('chat-input').disabled, false);
+});
+
+test('late OAuth readiness cannot reopen chat after changing only the OAuth connection ID', async () => {
+  const ui = settings();
+  let connection = 'first', release;
+  ui.context.usesAntigravityOAuth = () => true;
+  ui.context.antigravityConnectionId = () => connection;
+  ui.context.apiFetch = () => new Promise(resolve => { release = resolve; });
+  ui.element('chat-input').disabled = true;
+  const pending = ui.context.checkAiReady();
+  await new Promise(resolve => setImmediate(resolve));
+  connection = 'second';
+  release(Response.json({configured:true, connections:[{id:'first', state:'active', model:'ready'}]}));
+  await pending;
+  assert.equal(ui.element('chat-input').disabled, true);
 });

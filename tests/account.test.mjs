@@ -93,3 +93,61 @@ test('credential-bearing writes declare the expected account for server-side coo
   await b.context.apiFetch('/api/ai/profiles',{method:'POST',body:'{}'});
   assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Account'),'google:first');
 });
+
+test('OAuth inference pins the chosen opaque connection while read-aloud keeps its API profile', async () => {
+  const requests=[];
+  const b=browser(async(path,options)=>{requests.push({path,options});return Response.json({user:{name:'Learner',user_id:'google:first'}});});
+  await b.context.setupAccount();
+  b.storage.set('vjbot_ai_method:google:first','antigravity');
+  b.storage.set('vjbot_ai_oauth:google:first','opaque-first');
+  b.context.VJProfiles={prepareRequest:async(_path,options)=>({...options,headers:{'X-VJBot-Profile':'server:voice-profile'}})};
+  await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
+  await b.context.apiFetch('/api/kaiwa/evaluate',{method:'POST',body:'{}'});
+  await b.context.apiFetch('/api/tts',{method:'POST',body:'{}'});
+  assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
+  assert.equal(new Headers(requests[2].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
+  assert.equal(new Headers(requests[3].options.headers).get('X-VJBot-Profile'),'server:voice-profile');
+});
+
+test('missing, cleared and malformed OAuth choices fail closed instead of borrowing server active', async () => {
+  for(const value of [undefined,'','../gateway/auth.json','antigravity_oauth:other']){
+    let calls=0;
+    const b=browser(async()=>{calls++;return Response.json({user:{name:'Learner',user_id:'google:first'}});});
+    await b.context.setupAccount();
+    b.storage.set('vjbot_ai_method:google:first','antigravity');
+    if(value!==undefined)b.storage.set('vjbot_ai_oauth:google:first',value);
+    const response=await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
+    assert.equal(response.status,409);
+    assert.equal(calls,1);
+  }
+});
+
+test('OAuth connection preferences never leak between VJBot owners', async () => {
+  const requests=[];
+  const b=browser(async(path,options)=>{requests.push({path,options});return Response.json({user:{name:'Learner',user_id:'google:first'}});});
+  await b.context.setupAccount();
+  b.storage.set('vjbot_ai_method:google:first','antigravity');
+  b.storage.set('vjbot_ai_oauth:google:first','first-only');
+  b.context.VJProfiles={prepareRequest:async(_path,options)=>({...options,headers:{'X-VJBot-Profile':'server:second-profile'}})};
+  vm.runInContext("signedInUser={user_id:'google:second'}",b.context);
+  await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
+  assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Profile'),'server:second-profile');
+  b.storage.set('vjbot_ai_method:google:second','antigravity');
+  assert.equal((await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'})).status,409);
+  assert.equal(requests.length,2);
+});
+
+test('switching method while an API profile loads blocks the stale inference request', async () => {
+  let calls=0,release,started;
+  const ready=new Promise(resolve=>{started=resolve;});
+  const b=browser(async()=>{calls++;return Response.json({user:{name:'Learner',user_id:'google:first'}});});
+  await b.context.setupAccount();
+  b.context.VJProfiles={prepareRequest:async(_path,options)=>{started();return new Promise(resolve=>{release=()=>resolve(options);});}};
+  const pending=b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
+  await ready;
+  b.storage.set('vjbot_ai_method:google:first','antigravity');
+  b.storage.set('vjbot_ai_oauth:google:first','new-choice');
+  release();
+  assert.equal((await pending).status,409);
+  assert.equal(calls,1);
+});

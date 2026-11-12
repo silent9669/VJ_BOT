@@ -5,9 +5,58 @@
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
   let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
   let modelSnapshot = null;
-  let activeScan = null;
+  let activeScan = null, readiness = 0;
   let profileRows = [], selectedProfile = null, profileKey = '', rendering = 0;
-  const profileChoice = profile => profile ? `${profile.scope}:${profile.id}` : '';
+  let profilesOwner = null, loadedProfile = null;
+  const methodKey = owner => 'vjbot_ai_method:' + owner;
+  function connectionChoice() {
+    const owner = signedInUser?.user_id;
+    try {
+      return window.usesAntigravityOAuth?.(owner)
+        ? 'oauth:' + (window.antigravityConnectionId?.(owner) || '')
+        : profileChoice(window.VJProfiles?.active(owner));
+    } catch { return 'unavailable'; }
+  }
+  function refreshSavedConnections() {
+    const list = el('ai-profile-list'), owner = signedInUser?.user_id;
+    list.replaceChildren();
+    const empty = document.createElement('option');
+    empty.value = ''; empty.textContent = 'Choose a saved account'; list.append(empty);
+    for (const [label, scope] of [['API key · This device', 'local'], ['API key · Server', 'server'], ['Antigravity OAuth', 'oauth']]) {
+      const rows = scope === 'oauth' ? window.savedOAuthConnections?.() || [] : profilesOwner === owner ? profileRows.filter(row => row.scope === scope) : [];
+      if (!rows.length) continue;
+      const group = document.createElement('optgroup'); group.label = label;
+      for (const row of rows) {
+        const option = document.createElement('option');
+        option.value = scope === 'oauth' ? 'oauth:' + row.id : profileChoice(row);
+        option.textContent = row.name;
+        group.append(option);
+      }
+      list.append(group);
+    }
+    const choice = connectionChoice();
+    const available = choice.startsWith('oauth:')
+      ? (window.savedOAuthConnections?.() || []).some(row => 'oauth:' + row.id === choice)
+      : profilesOwner === owner && profileRows.some(row => profileChoice(row) === choice);
+    if (choice && choice !== 'oauth:' && !available) {
+      const missing = document.createElement('option');
+      missing.value = choice; missing.textContent = 'Selected connection unavailable · choose another'; list.append(missing);
+    }
+    list.value = choice === 'oauth:' ? '' : choice;
+    const currentProfile = choice.startsWith('oauth:')
+      ? (window.savedOAuthConnections?.() || []).find(row => 'oauth:' + row.id === choice)
+      : profilesOwner === owner && profileRows.find(row => profileChoice(row) === choice);
+    el('ai-current-model').textContent = currentProfile?.model || 'Choose a model to start chatting';
+    el('ai-current-hint').textContent = currentProfile
+      ? `${currentProfile.name} · Saved setup. Live availability can change.`
+      : 'Choose a saved account below, or add a new one.';
+    el('ai-card').dataset.connected = String(Boolean(currentProfile?.model));
+    el('ai-chat').hidden = !currentProfile?.model;
+    const apiProfile = profilesOwner === owner && profileRows.find(row => profileChoice(row) === profileChoice(VJProfiles.active(owner)));
+    el('ai-oauth-voice-hint').textContent = `Read-aloud API-key profile: ${apiProfile ? apiProfile.name : 'none selected'}. Switching OAuth chat accounts does not change it.`;
+  }
+  window.refreshSavedConnections = refreshSavedConnections;
+  const profileChoice = profile => profile && profile.scope !== 'none' ? `${profile.scope}:${profile.id}` : '';
   const draftKey = () => el('ai-key').value.trim() || (selectedProfile?.protocol === el('ai-protocol').value
     && selectedProfile?.base_url === el('ai-base').value.trim() ? profileKey : '');
   function storageHint() {
@@ -18,10 +67,15 @@
   }
   function fillProfile(profile, cache = null, key = '') {
     selectedProfile = profile;
+    savedConnection = Boolean(profile);
+    el('ai-form').dataset.draft = String(!profile);
+    el('ai-api-editor-title').textContent = profile ? 'Edit API-key connection' : 'Add an API-key account';
+    el('ai-api-back').hidden = Boolean(profile);
+    el('ai-api-manage').open = !profile;
+    el('ai-api-scan').open = Boolean(profile && !profile.model);
     profileKey = key;
     el('ai-profile-name').value = profile?.name || '';
     el('ai-profile-storage').value = profile?.scope || 'local';
-    el('ai-profile-list').value = profileChoice(profile);
     storageHint();
     el('ai-protocol').value = profile?.protocol || 'openai';
     el('ai-base').value = profile?.base_url || '';
@@ -37,7 +91,6 @@
     el('ai-key-hint').textContent = profile ? 'Leave blank to reuse the key in this profile. A different URL or API type needs a new key.' : 'Choose a save location. Never paste your key into chat.';
     el('ai-remove').hidden = !profile;
     restoreModels(cache || (profile?.models?.length ? {models: profile.models, checkedAt: profile.checked_at} : null));
-    el('ai-chat').hidden = !profile?.model;
   }
   async function saveProfile(useModel) {
     const owner = signedInUser?.user_id, scope = el('ai-profile-storage').value;
@@ -62,6 +115,8 @@
     }
     if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
     VJProfiles.setActive(owner, {scope, id: profile.id});
+    localStorage.setItem(methodKey(owner), 'key');
+    window.aiConnectionChanged?.();
     modelSnapshot = null;
     return `Saved ${profile.name} on ${scope === 'local' ? 'this device' : 'your account'}. ${model ? 'Ready to use; no models were rechecked.' : 'Choose Find usable models when ready.'}`;
   }
@@ -69,8 +124,10 @@
     if (testing) return;
     stopModels();
     testing = true;
+    el('ai-connection-status').textContent = 'Updating saved connection…';
+    el('ai-profile-list').setAttribute('aria-busy', 'true');
     const owner = signedInUser?.user_id;
-    const controls = [...el('ai-form').querySelectorAll('input, select, button')];
+    const controls = [...el('ai-form').querySelectorAll('input, select, button'), el('ai-profile-list'), el('ai-profile-new'), el('ai-method-oauth'), el('ai-add-connection'), el('ai-chat')];
     const disabled = controls.map(control => control.disabled);
     controls.forEach(control => { control.disabled = true; });
     let message, succeeded = false;
@@ -79,10 +136,13 @@
     finally {
       controls.forEach((control, index) => { control.disabled = disabled[index]; });
       testing = false;
+      el('ai-profile-list').setAttribute('aria-busy', 'false');
     }
     if (signedInUser?.user_id !== owner) return;
+    if (succeeded) loadedProfile = null;
     if (succeeded) await renderSettings();
     el('ai-status').textContent = message || '';
+    el('ai-connection-status').textContent = message || '';
     window.checkAiReady();
   }
   const cacheName = (owner, identity) => `vjbot_ai_models_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
@@ -118,7 +178,8 @@
     let scan;
     try { scan = readScan(signedInUser?.user_id, identity); }
     catch (error) { el('ai-resume-hint').textContent = error.message; return; }
-    const remaining = scan?.catalog.filter(model => !scan.entries.some(entry => entry.model === model)).length || 0;
+    const dispatched = new Set(scan?.entries.map(entry => entry.model));
+    const remaining = scan?.catalog.filter(model => !dispatched.has(model)).length || 0;
     el('ai-fetch-models').textContent = el('ai-recheck-all').checked || !scan ? 'Find usable models'
       : remaining ? `Continue ${remaining} unchecked models` : 'Show saved check results';
     el('ai-resume-hint').textContent = scan
@@ -172,6 +233,8 @@
   // The server limiter is per signed-in account, not per provider, key or catalog connection.
   function syncProbeBudget(owner = signedInUser?.user_id ?? null) {
     if (owner === timingIdentity) return;
+    if (timingIdentity !== null) el('ai-key').value = '';
+    loadedProfile = null;
     timingIdentity = owner;
     selectedProfile = null;
     profileKey = '';
@@ -209,9 +272,7 @@
     el('ai-selection-hint').textContent = 'Only models that returned a real response can be selected. Future quota and availability may change.';
   }
   function invalidateSelection() {
-    pill('saved', 'Connection not saved');
-    el('ai-status').textContent = '';
-    el('ai-chat').hidden = true;
+    el('ai-status').textContent = 'Changes are not saved yet. Your current chat account stays active.';
   }
   function publishModels() {
     const list = el('ai-model-list'), available = list.options.length > 0;
@@ -223,6 +284,7 @@
       el('ai-model').value = list.value;
     }
     el('ai-save').disabled = !(el('ai-profile-storage').value === 'local' || storageEnabled) || !list.value;
+    el('ai-save').hidden = Boolean(selectedProfile?.model && list.value === selectedProfile.model);
   }
   function confirmModelChecks(total, partial, signal) {
     if (signal.aborted) return Promise.resolve(false);
@@ -284,12 +346,14 @@
         if (!acquired) { status.textContent = 'Another scan for this API connection is still active. Continue after it stops.'; return; }
       }
       const fresh = el('ai-recheck-all').checked;
+      const catalog = new Set(data.models);
       let saved;
       try { saved = readScan(owner, data.connection_id); } catch (error) { if (!fresh) throw error; }
       let checkpoint = {identity: data.connection_id || null, catalog: [...data.models],
-        entries: !fresh && saved ? saved.entries.filter(entry => data.models.includes(entry.model)) : [],
+        entries: !fresh && saved ? saved.entries.filter(entry => catalog.has(entry.model)) : [],
         dispatchedAt: saved?.dispatchedAt || [], nextAt: saved?.nextAt || 0};
-      const unfinished = data.models.filter(model => !checkpoint.entries.some(entry => entry.model === model));
+      const dispatched = new Set(checkpoint.entries.map(entry => entry.model));
+      const unfinished = data.models.filter(model => !dispatched.has(model));
       checked = checkpoint.entries.filter(entry => entry.state !== 'sent').length;
       passed = checkpoint.entries.filter(entry => entry.state === 'ok').length;
       for (const entry of checkpoint.entries.filter(entry => entry.state === 'ok')) {
@@ -404,6 +468,7 @@
     if (activeScan && activeScan.owner !== owner) resetModels();
     syncProbeBudget();
     renderAccountCard();
+    const oauthRendering = window.renderAntigravityOAuth?.();
     if (activeScan?.owner === owner) return;
     const version = ++rendering;
     const status = el('ai-status'), pending = modelSnapshot?.owner === owner && modelSnapshot.draft?.api_key ? modelSnapshot : null;
@@ -414,6 +479,7 @@
       try { local = await VJProfiles.list(owner); } catch { deviceError = 'Device storage is unavailable. Choose server storage or enable browser storage.'; }
       if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
       profileRows = [...data.profiles.map(profile => ({...profile, scope: 'server'})), ...local.map(profile => ({...profile, scope: 'local'}))];
+      profilesOwner = owner;
       storageEnabled = data.can_store;
       const choice = VJProfiles.active(owner);
       const profile = choice?.scope === 'none' ? null : choice?.scope === 'local'
@@ -423,19 +489,10 @@
       if (profile?.scope === 'local') key = (await VJProfiles.load(owner, profile.id)).api_key;
       if (activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
       if (!choice && profile) VJProfiles.setActive(owner, {scope: profile.scope, id: profile.id});
-      savedConnection = Boolean(profile);
-      const list = el('ai-profile-list');
-      list.replaceChildren();
-      const empty = document.createElement('option');
-      empty.value = ''; empty.textContent = 'New connection'; list.append(empty);
-      for (const row of profileRows) {
-        const option = document.createElement('option');
-        option.value = profileChoice(row);
-        option.textContent = `${row.name} · ${row.scope === 'local' ? 'This device' : 'Server'} · …${row.key_last4}`;
-        list.append(option);
-      }
+      refreshSavedConnections();
       const cache = pending || recalledModels(owner, profile?.connection_id);
-      fillProfile(profile, cache, key);
+      const identity = owner + ':' + profileChoice(profile);
+      if (loadedProfile !== identity) { fillProfile(profile, cache, key); loadedProfile = identity; }
       if (pending) {
         el('ai-protocol').value = pending.draft.protocol;
         el('ai-base').value = pending.draft.base_url;
@@ -444,13 +501,16 @@
       }
       modelSnapshot = pending;
       scanHint();
-      el('ai-source').hidden = Boolean(profile);
-      el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Save a connection once, then switch profiles without entering keys again.';
-      pill(profile ? 'saved' : 'none', profile ? `Using ${profile.name}` : 'No profile selected');
+      if (!window.usesAntigravityOAuth?.(owner)) {
+        el('ai-source').hidden = Boolean(profile);
+        el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Save a connection once, then switch profiles without entering keys again. Provider usage is unavailable for API-key connections.';
+        pill(profile ? 'saved' : 'none', profile ? `Using ${profile.name}` : 'No profile selected');
+      }
       if (deviceError) status.textContent = deviceError;
     } catch (error) {
       if (version === rendering && signedInUser?.user_id === owner) { resetModels(); status.textContent = error.message; }
     }
+    await oauthRendering;
   }
 
   async function renderAdmin() {
@@ -474,14 +534,22 @@
   }
 
   window.renderAiPanels = tab => (tab === 'admin' ? renderAdmin() : renderSettings());
+  window.pauseApiModelScan = () => { rendering++; stopModels(); };
 
   // There is no built-in AI: chat stays closed (with one clear next step) until the learner saves an API.
   const openAiSettings = () => {
     switchTab('settings');
-    setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); document.querySelector('#ai-segments button').focus({preventScroll: true}); }, 250);
+    setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); el('ai-profile-list').focus({preventScroll: true}); }, 250);
   };
   async function aiSource() {
     try {
+      if (window.usesAntigravityOAuth?.(signedInUser?.user_id)) {
+        const owner = signedInUser?.user_id, connection = window.antigravityConnectionId?.(owner);
+        if (!connection) return 'none';
+        const data = await call('/api/ai/oauth/antigravity');
+        const row = data.connections?.find(row => row.id === connection);
+        return data.configured && row?.state === 'active' && row.model ? 'antigravity_oauth' : 'none';
+      }
       if (!window.VJProfiles) return 'none';
       const owner = signedInUser?.user_id, choice = owner && VJProfiles.active(owner);
       if (choice?.scope === 'none') return 'none';
@@ -499,7 +567,11 @@
     } catch { return 'none'; }
   }
   window.checkAiReady = async () => {
-    const source = await aiSource(), room = document.querySelector('.classroom-chat-window'), none = source === 'none';
+    const version = ++readiness, owner = signedInUser?.user_id, choice = connectionChoice();
+    const source = await aiSource();
+    if (version !== readiness || owner !== signedInUser?.user_id || choice !== connectionChoice()) return;
+    const room = document.querySelector('.classroom-chat-window'), none = source === 'none';
+    el('ai-chat').hidden = none;
     room.dataset.ai = source === 'unknown' ? 'unknown' : none ? 'none' : 'ready';
     el('chat-ai-gate').hidden = !none;
     el('chat-input').disabled = none;
@@ -518,6 +590,20 @@
   };
   el('chat-gate-open').addEventListener('click', openAiSettings);
   el('ai-chat').addEventListener('click', () => switchTab('classroom'));
+  el('ai-add-connection').addEventListener('click', () => el('ai-add-dialog').showModal());
+  el('ai-add-close').addEventListener('click', () => el('ai-add-dialog').close());
+  for (const id of ['ai-profile-new', 'ai-method-oauth']) {
+    el(id).addEventListener('click', () => el('ai-add-dialog').close(), {capture:true});
+  }
+  async function returnToSavedConnection() {
+    loadedProfile = null;
+    modelSnapshot = null;
+    window.aiConnectionChanged?.();
+    await renderSettings();
+    el('ai-profile-list').focus();
+  }
+  el('ai-api-back').addEventListener('click', returnToSavedConnection);
+  el('ai-oauth-back').addEventListener('click', returnToSavedConnection);
 
   document.querySelectorAll('#ai-segments button').forEach(button => button.addEventListener('click', () => {
     el('ai-protocol').value = button.dataset.protocol;
@@ -561,24 +647,34 @@
   el('ai-profile-new').addEventListener('click', () => {
     if (testing) return;
     ++rendering;
+    window.showAiConnectionForm?.('key');
     fillProfile(null);
     savedConnection = false;
+    refreshSavedConnections();
     invalidateSelection();
     el('ai-profile-name').focus();
   });
-  el('ai-profile-list').addEventListener('change', () => {
+  el('ai-profile-list').addEventListener('change', async () => {
     const value = el('ai-profile-list').value;
-    if (!value) { el('ai-profile-new').click(); return; }
+    if (value.startsWith('oauth:')) {
+      stopModels();
+      await window.selectAntigravityConnection?.(value.slice(6));
+      refreshSavedConnections();
+      return;
+    }
     const profile = profileRows.find(row => profileChoice(row) === value);
-    if (!profile) return;
-    profileAction(async owner => {
-      if (profile.scope === 'server') await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
-      else await VJProfiles.load(owner, profile.id);
+    if (value && !profile) return;
+    await profileAction(async owner => {
+      if (profile?.scope === 'server') await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
+      else if (profile) await VJProfiles.load(owner, profile.id);
       if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
-      VJProfiles.setActive(owner, {scope: profile.scope, id: profile.id});
+      VJProfiles.setActive(owner, profile ? {scope: profile.scope, id: profile.id} : {scope:'none', id:''});
+      localStorage.setItem(methodKey(owner), 'key');
+      window.aiConnectionChanged?.();
       modelSnapshot = null;
-      return `Using ${profile.name}. Saved models restored without checking them again.`;
+      return profile ? `Using ${profile.name}. Saved models restored without checking them again.` : 'No chat connection selected.';
     });
+    refreshSavedConnections();
   });
   el('ai-profile-save').addEventListener('click', () => profileAction(() => saveProfile(false)));
   el('ai-form').addEventListener('submit', event => {
