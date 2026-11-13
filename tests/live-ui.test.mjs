@@ -7,7 +7,10 @@ function liveUI({microphone,reply}={}) {
   const elements=new Map(),windowEvents={},tracks=[{enabled:true,stopped:false,stop(){this.stopped=true;}}],requests=[];
   const stream={getTracks:()=>tracks,getAudioTracks:()=>tracks};
   const element=id=>{
-    if(!elements.has(id))elements.set(id,{disabled:false,hidden:false,textContent:'',dataset:{},attributes:{},events:{},
+    if(!elements.has(id))elements.set(id,{disabled:false,hidden:false,textContent:'',dataset:{},attributes:{},events:{},children:[],
+      append(...nodes){for(const node of nodes){this.children.push(node);node.parentNode=this;}},
+      insertBefore(node,next){const at=this.children.indexOf(next);if(at<0)this.children.push(node);else this.children.splice(at,0,node);node.parentNode=this;},
+      replaceChildren(){this.children=[];},remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);},
       addEventListener(name,handler){this.events[name]=handler;},setAttribute(name,value){this.attributes[name]=value;},getAttribute(name){return this.attributes[name];},
       play:async()=>{}});
     return elements.get(id);
@@ -27,10 +30,11 @@ function liveUI({microphone,reply}={}) {
     RTCPeerConnection:Peer,MediaStream:class{},signedInUser:{user_id:'email:admin',is_admin:true},activeCurriculumLevel:'N5',
     location:{hash:'#classroom'},navigator:{mediaDevices:{getUserMedia:microphone || (async()=>stream)}},
     apiFetch:async(path,options)=>{requests.push({path,body:JSON.parse(options.body),signal:options.signal});return reply?reply():Response.json({model:'gpt-live-1',voice:'shida',id:'live_test',sdp:'answer',greeting:'こんにちは'});},
-    document:{getElementById:element,querySelector:element,querySelectorAll:()=>[]},addEventListener:(name,fn)=>{windowEvents[name]=fn;}});
-  context.window=context;vm.runInContext(readFileSync('static/live.js','utf8'),context);
+    document:{getElementById:element,createElement:()=>element('node_'+elements.size),querySelector:element,querySelectorAll:()=>[]},addEventListener:(name,fn)=>{windowEvents[name]=fn;}});
+  context.window=context;vm.runInContext(readFileSync('static/live-transcript.js','utf8'),context);vm.runInContext(readFileSync('static/live.js','utf8'),context);
   return {context,element,channel,tracks,requests,stream,peer:()=>peer,windowEvents};
 }
+const captions=(ui,role)=>ui.element('live-transcript').children.filter(row=>row.className==='live-turn '+role).map(row=>row.children[1].textContent).join('');
 
 test('live voice relays only SDP and lesson references, appends exact timed captions and ends cleanly',async()=>{
   const ui=liveUI();
@@ -42,7 +46,7 @@ test('live voice relays only SDP and lesson references, appends exact timed capt
     ui.channel.emit({type:'session.output_transcript.delta',delta:'こんにちは',start_ms:0,end_ms:100});
     ui.channel.emit({type:'session.input_transcript.delta',delta:'はい',start_ms:70,end_ms:150});
     ui.channel.emit({type:'session.output_transcript.delta',delta:'！',start_ms:100,end_ms:200});
-    assert.equal(ui.element('live-teacher-caption').textContent,'こんにちは！');assert.equal(ui.element('live-user-caption').textContent,'はい');
+    assert.equal(captions(ui,'assistant'),'こんにちは！');assert.equal(captions(ui,'user'),'はい');
     ui.element('live-mute').events.click();assert.equal(ui.tracks[0].enabled,false);
     ui.element('live-mute').events.click();assert.equal(ui.tracks[0].enabled,true);
     ui.element('live-end').events.click();assert.equal(ui.channel.sent.at(-1).type,'session.close');assert.equal(ui.tracks[0].enabled,false);
@@ -80,13 +84,21 @@ test('one Voice action starts continuous audio and captions; returning to text c
   try{
     assert.equal(ui.element('classroom-voice').hidden,false);assert.equal(ui.element('classroom-text').hidden,true);assert.equal(ui.requests.length,1);
     for(const [type,delta] of [['session.input_transcript.delta','こんにちは'],['session.output_transcript.delta','こんにちは。'],['session.input_transcript.delta','学生です'],['session.output_transcript.delta','何年生ですか？']])ui.channel.emit({type,delta,start_ms:100,end_ms:200});
-    assert.equal(ui.element('live-teacher-caption').textContent,'こんにちは。何年生ですか？');assert.equal(ui.element('live-user-caption').textContent,'こんにちは学生です');
+    assert.equal(captions(ui,'assistant'),'こんにちは。何年生ですか？');assert.equal(captions(ui,'user'),'こんにちは学生です');
     ui.context.stopLiveConversation();assert.equal(ui.tracks[0].enabled,false);ui.channel.emit({type:'session.closed'});assert.equal(ui.peer().closed,true);
   }finally{ui.windowEvents.pagehide();}
 });
 
 test('free accounts cannot start a live conversation through the Voice action',async()=>{
   const ui=liveUI();ui.context.signedInUser.is_admin=false;await ui.context.openLiveConversation();assert.equal(ui.requests.length,0);assert.equal(ui.peer(),undefined);
+});
+
+test('switching accounts during an active call disables the mic and clears the previous transcript',async()=>{
+  const ui=liveUI();await ui.context.openLiveConversation();
+  ui.channel.emit({type:'session.input_transcript.delta',delta:'私の話',start_ms:0,end_ms:400});
+  ui.context.signedInUser={user_id:'email:other-admin',is_admin:true};ui.context.checkLiveAccount();
+  assert.equal(ui.tracks[0].enabled,false);assert.equal(ui.element('live-transcript').children.length,0);
+  assert.equal(ui.element('classroom-voice').hidden,true);ui.channel.emit({type:'session.closed'});ui.windowEvents.pagehide();
 });
 
 test('waveform measures microphone and teacher media and releases its audio graph on close',async()=>{

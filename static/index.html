@@ -227,8 +227,9 @@
               </div>
 
               <section id="classroom-voice" class="classroom-voice" hidden aria-label="Trò chuyện trực tiếp với thầy Lâm">
-                <header class="live-heading"><button type="button" class="stage-btn" data-chat-mode="text">← Về nhắn tin</button><span>Hội thoại trực tiếp</span></header><div id="live-stage" class="live-stage" data-active="false"><img src="assets/lam/pixel/display/south.png" width="88" height="156" alt="Thầy Lâm"><div><h2>Trò chuyện cùng thầy</h2><p id="live-model-name">GPT-Live · Tiếng Nhật</p><span id="live-duration">00:00</span></div></div>
-                <canvas id="live-wave" width="640" height="96" role="img" aria-label="Mức âm thanh micro và giọng thầy"></canvas><div class="live-captions"><section><h3>Thầy Lâm</h3><p id="live-teacher-caption" lang="ja"></p></section><section><h3>Em</h3><p id="live-user-caption" lang="ja"></p></section></div>
+                <header class="live-heading"><button type="button" class="stage-btn" data-chat-mode="text">← Nhắn tin</button><span id="live-duration">00:00</span></header>
+                <div id="live-stage" class="live-stage" data-active="false"><img src="assets/lam/pixel/display/south.png" width="88" height="156" alt="Thầy Lâm"><div><h2>Hội thoại trực tiếp</h2><p id="live-model-name">GPT-Live · Tiếng Nhật</p></div><canvas id="live-wave" width="640" height="96" role="img" aria-label="Mức âm thanh micro và giọng thầy"></canvas></div>
+                <div id="live-transcript" class="live-transcript" data-empty="true" role="log" aria-live="off" aria-label="Hội thoại và bản dịch tiếng Việt theo mốc thời gian xấp xỉ"></div>
                 <audio id="live-audio" autoplay playsinline aria-label="Giọng nói AI của thầy Lâm"></audio>
                 <p id="live-status" role="status">Giọng nói AI · Micro chỉ bật khi em bắt đầu.</p>
                 <div class="live-controls"><button type="button" class="public-cta" id="live-start">Bắt đầu nói</button><button type="button" class="stage-btn" id="live-play-audio" hidden>Bật âm thanh</button><button type="button" class="stage-btn" id="live-mute" aria-pressed="false" hidden disabled>Tắt micro</button><button type="button" class="stage-btn" id="live-end" hidden disabled>Kết thúc</button></div>
@@ -962,6 +963,7 @@
   <script src="mascot.js"></script>
   <script src="refinements.js"></script>
   <script src="admin-ai.js"></script>
+  <script src="live-transcript.js"></script>
   <script src="live.js"></script>
 
 </body>

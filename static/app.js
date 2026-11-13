@@ -391,7 +391,7 @@ function renderBubble(role, content) {
     </div>
     <div class="bubble-speech-card ${role}">
       <div class="bubble-header-meta">
-        <span class="bubble-name">${role === "user" ? "Bạn" : currentMascot.name}</span>
+        <span class="bubble-name">${role === "user" ? "Em" : currentMascot.name}</span>
         ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe Sensei đọc tiếng Nhật">Nghe</button>` : ""}
       </div>
       <div class="bubble-body-text">${formattedContent}</div>
@@ -1346,7 +1346,7 @@ function setupEventListeners() {
 
   const btnAskCheck = document.getElementById("btn-ask-check");
   if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Thầy kiểm tra câu em vừa viết: đúng ngữ pháp và tự nhiên chưa, sửa giúp em nhé.",false,{intent:'check'}));
-  const restartChat=document.createElement('button');restartChat.type='button';restartChat.className='prompt-chip';restartChat.textContent='Bắt đầu lại buổi học';restartChat.id='btn-restart-chat';
+  const restartChat=document.createElement('button');restartChat.type='button';restartChat.className='prompt-chip';restartChat.textContent='Học lại';restartChat.title='Bắt đầu lại buổi học';restartChat.id='btn-restart-chat';
   restartChat.addEventListener('click',restartTutorConversation);document.getElementById('chat-prompt-chips')?.append(restartChat);
 
   // Classroom form submit
