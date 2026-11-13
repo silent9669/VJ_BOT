@@ -49,17 +49,20 @@ npm run deploy    # chỉ deploy, KHÔNG chạy migration
 | Secret | Vai trò |
 | --- | --- |
 | `GOOGLE_CLIENT_ID` | Xác minh Google ID token (`GOOGLE_CLIENT_SECRET` đã lưu nhưng luồng hiện tại không dùng) |
-| `ADMIN_EMAILS` | Danh sách email Google (cách nhau dấu phẩy) có quyền admin sau khi đăng nhập Google |
+| `ADMIN_EMAILS` | Danh sách email Google (cách nhau dấu phẩy) trở thành chủ sở hữu sau khi đăng nhập Google; có thể cấp quyền admin trong ứng dụng |
 | `AI_KEY_SECRET` | Chuỗi ngẫu nhiên dài để mã hóa API key người dùng. Đổi giá trị làm mọi khóa đã lưu không đọc được |
-| `GEMINI_API_KEY` | Không còn được đọc. Có thể xóa |
+| `OPENAI_API_KEY` | API key OpenAI phía máy chủ, tự dùng cho quản trị viên chưa có API riêng |
+| `OPENAI_MODEL` | Tùy chọn, mặc định `gpt-4.1-mini` |
 
-Đặt secret bằng dashboard (Worker `vjbot` > Settings > Variables and Secrets) hoặc `cf workers secrets update <TÊN> --worker vjbot --type secret_text --text ...`. Không ghi giá trị vào mã, tài liệu, log hay lịch sử shell chia sẻ. Cục bộ: sao chép `.dev.vars.example` thành `.dev.vars` (đã bị ignore).
+Đặt secret bằng dashboard (Worker `vjbot` > Settings > Variables and Secrets) hoặc `cf workers secrets update <TÊN> --worker vjbot --type secret_text --text ...`. Không ghi giá trị vào mã, tài liệu, log hay lịch sử shell chia sẻ. Cục bộ: sao chép `.dev.vars.example` thành `.dev.vars` (đã bị ignore), điền các giá trị rồi chạy `npm run migrate -- --local`. Không đổi `AI_KEY_SECRET` của một môi trường đã có API người dùng.
+
+Trước khi triển khai phiên bản này, đặt `OPENAI_API_KEY` và `ADMIN_EMAILS` trên Worker, giữ nguyên `AI_KEY_SECRET`, rồi chạy `npm run release` để áp dụng migration `0020_admin_grants.sql` trước khi triển khai mã. Cấu hình `.dev.vars` chỉ có hiệu lực cục bộ.
 
 Google OAuth cần origin `https://vjbot.dangphuc.me` (và `http://localhost:8787` cho cục bộ). Nút Google hiển thị chưa chứng minh luồng đăng nhập hoạt động.
 
 ## Migration và dữ liệu
 
-- Thêm migration mới `migrations/00NN_*.sql`; không sửa file đã chạy. Thêm tên file vào danh sách trong `tests/worker.test.mjs` để test DB có bảng mới.
+- Thêm migration mới `migrations/00NN_*.sql`; không sửa file đã chạy. Cập nhật các fixture cơ sở dữ liệu trong test để có bảng mới.
 - `npm run release` chạy migration trước khi deploy. Migration lỗi chặn deploy nhưng không tự hoàn tác; rollback Worker không hoàn tác migration, nên viết migration tương thích ngược.
 - Làm mới dữ liệu OpenJLPT: `npm run data:import`, `npm test`, `python3 scripts/upload_lessons.py` (ghi thẳng vào D1 production, theo lô 250 câu lệnh, chạy lại được), rồi deploy. Khóa nội dung tình huống: `python3 scripts/upload_practical_course.py`.
 - Bản dịch: `scripts/translate_corpus.py` (xem [ROADMAP](ROADMAP.md)). Cần `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` của bạn.
@@ -77,3 +80,5 @@ Google OAuth cần origin `https://vjbot.dangphuc.me` (và `http://localhost:878
 ## Rollback
 
 Dùng version Worker trong dashboard hoặc `cf workers deployments`. Ghi lại version hiện tại trước khi deploy. Dữ liệu D1 không quay lại theo Worker; lên kế hoạch khôi phục riêng (xem [ROADMAP](ROADMAP.md)).
+
+Các secret `ANTIGRAVITY_GATEWAY_URL`, `ANTIGRAVITY_MANAGEMENT_KEY`, `ANTIGRAVITY_API_KEY` chỉ cấu hình trên Worker khi đã có gateway riêng. Chúng không bắt buộc để dùng OpenAI hoặc API riêng. Không đưa giá trị secret vào repo public.

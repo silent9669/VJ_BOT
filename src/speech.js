@@ -56,3 +56,24 @@ export async function speechResponse(body, apiKey) {
     return reply({detail:'Unable to generate speech. The selected voice has not changed.', code:'tts_unavailable'}, 503);
   }
 }
+
+// Official OpenAI speech uses the resolved profile; custom endpoints never receive speech credentials.
+export async function openAISpeechResponse(body, provider) {
+  if (body.action === 'models') return reply({models:['gpt-4o-mini-tts'],default_model:'gpt-4o-mini-tts',voice:'alloy',verified:false});
+  if (body.action !== undefined) return reply({detail:'Invalid speech action.'},400);
+  const text = typeof body.text === 'string' ? body.text.trim() : '';
+  if (!text || text.length > 6000) return reply({detail:'Speech text must contain 1–6000 characters.'},400);
+  try {
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method:'POST',redirect:'manual',signal:AbortSignal.timeout(30000),
+      headers:{'Content-Type':'application/json',Authorization:`Bearer ${provider.apiKey}`},
+      body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'alloy',input:text.slice(0,4000),response_format:'mp3'})
+    });
+    if (!response.ok) { await response.body?.cancel(); return reply({detail:'OpenAI speech is unavailable. Please try again.',code:'tts_unavailable'},response.status===429?429:503); }
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (!bytes.length) return reply({detail:'No speech audio was returned.',code:'tts_unavailable'},503);
+    let binary='';
+    for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+    return reply({mimeType:'audio/mpeg',audioBase64:btoa(binary),voice:'alloy',model:'gpt-4o-mini-tts'});
+  } catch { return reply({detail:'OpenAI speech is unavailable. Please try again.',code:'tts_unavailable'},503); }
+}

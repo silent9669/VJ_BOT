@@ -1,6 +1,6 @@
 # Kiến trúc hiện tại
 
-VJBot là một Cloudflare Worker duy nhất, vừa phục vụ file tĩnh vừa chạy API, lưu dữ liệu trong D1. Giao diện là HTML/CSS/JavaScript thuần (không framework, không bundler). Không có AI dùng chung: mỗi người dùng tự gắn API của mình.
+VJBot là một Cloudflare Worker duy nhất, vừa phục vụ file tĩnh vừa chạy API, lưu dữ liệu trong D1. Giao diện là HTML/CSS/JavaScript thuần (không framework, không bundler). Tài khoản miễn phí tự gắn API; admin chưa có API riêng dùng OpenAI phía máy chủ.
 
 ```mermaid
 flowchart LR
@@ -22,8 +22,8 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 | --- | --- |
 | `src/worker.js` | Điểm vào. Kiểm tra Origin, định tuyến, xác thực phiên, giới hạn tốc độ, các route dữ liệu (hồ sơ, tiến độ SM-2, hoàn thành, lịch sử, chat, Kaiwa, TTS, xóa tài khoản) và trả file tĩnh |
 | `src/auth.js` | Đăng ký/đăng nhập mật khẩu (scrypt), xác minh Google ID token, phiên 7 ngày (chỉ lưu băm SHA-256), `is_admin` trong `/api/auth/session` |
-| `src/admin.js` | Quyền admin (tài khoản Google có email đã xác minh nằm trong secret `ADMIN_EMAILS`), danh sách/chi tiết/thao tác người dùng, `deleteUserData` dùng chung cho xóa tài khoản |
-| `src/providers.js` | API riêng của từng người dùng: mã hóa AES-GCM, `/api/ai/*`, `/api/admin/overview`, `askAI`, giọng đọc Gemini |
+| `src/admin.js` | Chủ sở hữu qua Google xác minh + `ADMIN_EMAILS`, vai trò admin ủy quyền qua `admin_grants`, danh sách/chi tiết/thao tác người dùng, `deleteUserData` dùng chung cho xóa tài khoản |
+| `src/providers.js` | Phân giải API riêng và OpenAI phía máy chủ cho admin; mã hóa AES-GCM, `/api/ai/*`, `/api/admin/overview`, `askAI`, giọng đọc Gemini |
 | `src/llm.js` | Gọi ba loại API (OpenAI-compatible, Anthropic, Gemini), kiểm tra URL, chuẩn hóa lượt hội thoại |
 | `src/prompt.js` | Trusted tutor policy, native structured reply schema and validation |
 | `src/tutor-chat.js`, `tutor-session.js`, `tutor-context.js` | Canonical item selection, quoted request envelopes, durable teaching state and database-fenced generation ownership |
@@ -76,13 +76,13 @@ Xóa tài khoản (`/api/account/delete`) xóa mọi bảng trên theo `user_id`
 ## Xác thực và quyền
 
 - **Google**: Worker xác minh chữ ký (JWKS), issuer, audience, hạn, `email_verified` và nonce gắn cookie HttpOnly. Đăng nhập Google ghi `admins` nếu email nằm trong `ADMIN_EMAILS`.
-- **Mật khẩu**: scrypt N=16384, r=8, p=5, giới hạn 10 lần/cặp IP+email và 100 lần/IP mỗi 15 phút. Không có xác minh email hay khôi phục mật khẩu, nên tài khoản này không bao giờ là admin.
+- **Mật khẩu**: scrypt N=16384, r=8, p=5, giới hạn 10 lần/cặp IP+email và 100 lần/IP mỗi 15 phút. Không có xác minh email hay khôi phục mật khẩu; quyền admin chỉ được cấp rõ ràng qua bảng quản trị.
 - **Danh tính bắt buộc**: tài khoản Google phải có tên và email đã xác minh trong `profiles`. Phiên Google cũ chưa có email bị hủy ở lần gọi `/api/auth/session` kế tiếp, người dùng đăng nhập lại một lần để ghi lại.
-- **Admin**: `isAdmin` kiểm tra cả dòng trong `admins` lẫn secret hiện tại, nên xóa email khỏi `ADMIN_EMAILS` là thu hồi ngay. Admin chỉ xem thống kê, không có đặc quyền AI.
+- **Admin**: `isOwner` kiểm tra cả dòng Google đã xác minh trong `admins` lẫn secret hiện tại. `isAdmin` chấp nhận chủ sở hữu hoặc quyền rõ ràng trong `admin_grants` cho Google/email. Thu hồi quyền có hiệu lực ngay, không cần đổi phiên. Chủ sở hữu được bảo vệ khỏi đổi quyền/xóa qua bảng quản trị.
 
 ## Lớp AI
 
-- No shared system key or implicit provider fallback. Chat retains the selected saved API-key profile, transient device connection or owned Antigravity OAuth account. `X-VJBot-Account` guards stale-tab account changes; `X-VJBot-Profile` pins an explicit selection. See [API reference](API_REFERENCE.md#saved-api-profiles) for storage and connection boundaries.
+- Admins without a selected personal connection use `OPENAI_API_KEY` from Cloudflare Worker secrets (default model `gpt-4.1-mini`). Free accounts must configure their own connection. The shared key never reaches static assets or API responses. Explicit saved API-key profiles, transient device connections and owned Antigravity OAuth accounts retain their selection and never borrow the shared key after a failure. `X-VJBot-Account` guards stale-tab account changes; `X-VJBot-Profile` pins an explicit selection. See [API reference](API_REFERENCE.md#saved-api-profiles) for storage and connection boundaries.
 - `src/llm.js` supports OpenAI-compatible, Anthropic and Gemini protocols, including native schema constraints. Antigravity uses the existing strict-prefix gateway transport and keeps its account isolation; this tutor change does not provision a gateway, authorize sign-in or change provider billing.
 - User-supplied API endpoints must be public HTTPS. Local/private addresses, self-hosted site domains, credentials, query strings and fragments are rejected. Requests use manual redirects; provider error bodies and secrets are not returned.
 - Each generation has a 28-second provider budget; both browser chat entry points time out after 35 seconds. Up to 12 prior messages enter a quoted history array. General chat, individual lessons and quick-chat routes have separate scopes. A selected canonical focus has stable response ownership even when an exam timer changes.

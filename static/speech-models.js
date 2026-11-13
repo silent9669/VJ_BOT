@@ -42,6 +42,10 @@
       if (controller.signal.aborted || request !== version || key !== identity()) return;
       if (!response.ok) throw new Error(data.detail || 'Unable to refresh speech models.');
       if (!Array.isArray(data.models) || !data.models.every(model => typeof model === 'string' && model.length <= 100)) throw new Error('Invalid speech model catalog.');
+      if(data.voice === 'alloy'){
+        const model=data.default_model || 'gpt-4o-mini-tts';pageChoices.set(key,model);draw(data.models,model);
+        status.textContent='OpenAI speech · alloy · '+model;return;
+      }
       draw(data.models, choice(key));
       status.textContent = `${data.models.length} compatible catalog candidates${data.truncated ? ' (partial list)' : ''}. Charon stays selected. New models are not voice-tested; quota and charges may differ. Choose explicitly to change model.`;
     } catch (error) {

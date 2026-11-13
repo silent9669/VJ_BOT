@@ -36,7 +36,7 @@ Chat and speaking feedback use the learner's selected API-key or Antigravity OAu
 | --- | --- |
 | `POST /api/chat` | `{message ≤ 6000 characters, lesson?: {id,level}, focus?: {kind:'word'\|'example'\|'question',index:integer ≥ 0}, intent?: 'message'\|'start'\|'hint'\|'explain'\|'situation'\|'check'\|'summary'\|'restart', screen?: {route,title,level?,text ≤ 3500}, channel?: 'chat'\|'quick', request_id?}`. Canonical lesson/item membership is server-validated. Returns plain `{reply,response,updated_topic}`; internal teaching fields are not exposed. A completed retry returns its saved reply. Concurrent or changed-payload UUID reuse returns 409. |
 | `POST /api/kaiwa/evaluate` | `{scenario_id, prompt_index?: 0, user_speech, level}`. The server resolves the question and scenario; client-supplied `scenario_title`, `context` and `prompt_jp` are rejected. Returns `{score, rating, feedback, model_answer, user_text, scenario}` after strict validation. |
-| `POST /api/tts` | `{text, speech_model?}` returns `{audioBase64, mimeType, voice, model}`. `{action:"models"}` lists compatible speech candidates without audio generation. Returns `403 {code:"no_tts"}` without a selected Google Gemini API-key profile; no browser-voice fallback. |
+| `POST /api/tts` | `{text, speech_model?}` returns `{audioBase64, mimeType, voice, model}`. `{action:"models"}` lists compatible speech candidates without audio generation. Official OpenAI connections (including admin shared access) use `gpt-4o-mini-tts` and `alloy`; selected Google Gemini profiles retain their speech models. Unsupported providers return `403 {code:"no_tts"}`; no browser-voice fallback. |
 
 TTS sends `text` as the verbatim transcript. Reading directions stay in `speech_metadata`, never prepended to spoken text, preserving the transcript fix merged in PR #24.
 
@@ -86,7 +86,7 @@ Chromium exercised lesson-scoped history, the lesson-reference-only chat payload
 
 | Route | Mô tả |
 | --- | --- |
-| `GET /api/ai/settings` | `{source: 'own'\|'none', is_admin, own: {protocol, base_url, model, key_last4}, bases, can_store}`; không bao giờ trả khóa |
+| `GET /api/ai/settings` | `{source: 'own'\|'platform'\|'none', is_admin, platform: {configured, model} hoặc null, own: {protocol, base_url, model, key_last4}, bases, can_store}`; không bao giờ trả khóa |
 | `PUT /api/ai/settings` | `{protocol: 'openai'\|'anthropic'\|'gemini', base_url (bỏ trống = mặc định), model, api_key?}`; bỏ `api_key` để giữ khóa cũ. `503` nếu thiếu `AI_KEY_SECRET` |
 | `DELETE /api/ai/settings` | Xóa API đã lưu |
 | `POST /api/ai/test` | Gửi một yêu cầu thử qua API đã lưu |
@@ -95,7 +95,7 @@ Chromium exercised lesson-scoped history, the lesson-reference-only chat payload
 | `GET /api/admin/users?q=&offset=` | Danh sách 25 người dùng mỗi trang, tìm theo tên/email/ID: `{users[], total, offset, guests}`; mỗi người có `kind` (`google`\|`email`\|`guest`), `level`, `messages`, `items`, `completed`, `sessions`, `api`, `last_login`, `admin` |
 | `POST /api/admin/purge-guests` | Xóa các hồ sơ khách cũ (không phải Google hay email) cùng dữ liệu: `{removed}` |
 | `GET /api/admin/user?id=` | Chi tiết một người dùng (cùng trường như trên); `404` nếu không có |
-| `POST /api/admin/user` | `{id, action, level?}` với `action` là `set_level` (cần `level` N5–N1), `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. Không thể `delete` chính tài khoản đang dùng |
+| `POST /api/admin/user` | `{id, action, level?, role?}` với `action` là `set_level` (cần `level` N5–N1), `set_role`, `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. `set_role` nhận `role: admin` hoặc `free`, chỉ áp dụng cho Google/email đã đăng ký. Không thể sửa quyền bản thân hay chủ sở hữu; không thể xóa chủ sở hữu hay chính tài khoản đang dùng |
 
 API-key and admin routes are handled by `src/providers.js`; Antigravity account routes are handled separately by `src/antigravity-oauth.js`. Both authenticate the VJBot session. Profile creation/update and active-setting writes accept at most 128 KiB of UTF-8 JSON for bounded model history; other API-key JSON bodies retain the 4 KiB limit.
 
@@ -242,6 +242,6 @@ Account deletion and administrative API removal remove all owned gateway connect
 
 ### Voice remains separate
 
-Read-aloud uses the API-key profile selected under **API key**, even when chat uses Antigravity. It retains `gemini-3.8-flash-tts`, Charon and the existing explicit compatible-model selector. Requests use the Google Gemini API key, never the gateway management key or Antigravity OAuth credentials. An explicit Antigravity profile on the TTS endpoint is rejected. Quota errors remain errors; there is no browser-voice fallback or silent voice/model substitution.
+Read-aloud uses the API-key profile selected under **API key**, even when chat uses Antigravity. Google profiles retain `gemini-3.8-flash-tts`, Charon and the existing explicit compatible-model selector. Official OpenAI profiles and admin shared access use `gpt-4o-mini-tts` with alloy. Requests use the resolved provider key, never the gateway management key or Antigravity OAuth credentials. An explicit Antigravity profile on the TTS endpoint is rejected. Quota errors remain errors; there is no browser-voice fallback or silent voice/model substitution.
 
 Sources: [gateway configuration](https://help.router-for.me/configuration/options), [v8 management API](https://help.router-for.me/management/apiv8), [Antigravity Voice Mode](https://antigravity.google/docs/voice-mode.md), [Gemini TTS](https://ai.google.dev/gemini-api/docs/speech-generation).

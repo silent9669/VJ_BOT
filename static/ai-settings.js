@@ -2,6 +2,7 @@
 (function () {
   const el = id => document.getElementById(id);
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
+  let sharedProvider = null;
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
   let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
   let modelSnapshot = null;
@@ -46,12 +47,13 @@
     const currentProfile = choice.startsWith('oauth:')
       ? (window.savedOAuthConnections?.() || []).find(row => 'oauth:' + row.id === choice)
       : profilesOwner === owner && profileRows.find(row => profileChoice(row) === choice);
-    el('ai-current-model').textContent = currentProfile?.model || 'Choose a model to start chatting';
+    const shared = sharedProvider && !choice && !window.usesAntigravityOAuth?.(owner);
+    el('ai-current-model').textContent = currentProfile?.model || (shared ? sharedProvider.model : 'Choose a model to start chatting');
     el('ai-current-hint').textContent = currentProfile
       ? `${currentProfile.name} · Saved setup. Live availability can change.`
-      : 'Choose a saved account below, or add a new one.';
-    el('ai-card').dataset.connected = String(Boolean(currentProfile?.model));
-    el('ai-chat').hidden = !currentProfile?.model;
+      : shared ? 'OpenAI của máy chủ · Quản trị viên' : 'Choose a saved account below, or add a new one.';
+    el('ai-card').dataset.connected = String(Boolean(currentProfile?.model || shared));
+    el('ai-chat').hidden = !currentProfile?.model && !shared;
     const apiProfile = profilesOwner === owner && profileRows.find(row => profileChoice(row) === profileChoice(VJProfiles.active(owner)));
     el('ai-oauth-voice-hint').textContent = `Read-aloud API-key profile: ${apiProfile ? apiProfile.name : 'none selected'}. Switching OAuth chat accounts does not change it.`;
   }
@@ -66,6 +68,7 @@
       : 'Saved encrypted on the server under your account. Other devices signed into your account can use this profile.';
   }
   function fillProfile(profile, cache = null, key = '') {
+    el('ai-form').hidden = false;
     selectedProfile = profile;
     savedConnection = Boolean(profile);
     el('ai-form').dataset.draft = String(!profile);
@@ -478,6 +481,8 @@
       let local = [], deviceError = '';
       try { local = await VJProfiles.list(owner); } catch { deviceError = 'Device storage is unavailable. Choose server storage or enable browser storage.'; }
       if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
+      sharedProvider = data.platform?.configured ? data.platform : null;
+      if (typeof data.is_admin === 'boolean' && signedInUser) { signedInUser.is_admin=data.is_admin; if(typeof renderAccount==='function')renderAccount(); }
       profileRows = [...data.profiles.map(profile => ({...profile, scope: 'server'})), ...local.map(profile => ({...profile, scope: 'local'}))];
       profilesOwner = owner;
       storageEnabled = data.can_store;
@@ -506,6 +511,13 @@
         el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Save a connection once, then switch profiles without entering keys again. Provider usage is unavailable for API-key connections.';
         pill(profile ? 'saved' : 'none', profile ? `Using ${profile.name}` : 'No profile selected');
       }
+      const shared = sharedProvider && !choice && !profile && !window.usesAntigravityOAuth?.(owner);
+      if (el('ai-platform')) { el('ai-platform').hidden=!shared; el('ai-platform-model').textContent=sharedProvider?.model || ''; }
+      if (shared) {
+        el('ai-form').hidden=true;
+        el('ai-source').hidden=false;el('ai-source').textContent='API dùng chung đã sẵn sàng cho tài khoản quản trị.';
+        pill('saved','OpenAI đã sẵn sàng');
+      }
       if (deviceError) status.textContent = deviceError;
     } catch (error) {
       if (version === rendering && signedInUser?.user_id === owner) { resetModels(); status.textContent = error.message; }
@@ -517,6 +529,7 @@
     const stats = el('admin-stats');
     try {
       const data = await call('/api/admin/overview');
+      if(el('admin-ai-status'))el('admin-ai-status').textContent=data.shared_ai?.configured ? `OpenAI · ${data.shared_ai.model} · Tự động cho quản trị viên` : 'Chưa cấu hình OPENAI_API_KEY trên máy chủ.';
       const tiles = [['Người dùng', data.users], ['Hoạt động 7 ngày', data.active_7d], ['Tin nhắn 24 giờ', data.messages_24h], ['API riêng', data.own_api_users]];
       stats.replaceChildren(...tiles.map(([label, value]) => {
         const tile = document.createElement('div'), number = document.createElement('strong'), name = document.createElement('span');
@@ -532,6 +545,13 @@
     } catch (error) { stats.textContent = error.message; }
     window.renderAdminUsers?.();
   }
+
+  el('ai-platform-test')?.addEventListener('click', async () => {
+    const button=el('ai-platform-test');button.disabled=true;
+    try { await send('/api/ai/test','POST',{});el('ai-source').textContent='Kết nối OpenAI thành công.'; }
+    catch(error){el('ai-source').textContent=error.message;}
+    finally {button.disabled=false;}
+  });
 
   window.renderAiPanels = tab => (tab === 'admin' ? renderAdmin() : renderSettings());
   window.pauseApiModelScan = () => { rendering++; stopModels(); };
@@ -563,7 +583,7 @@
       }
       const data = await call('/api/ai/settings');
       if (data.own?.id && data.own.model) VJProfiles.setActive(owner, {scope: 'server', id: data.own.id});
-      return data.own?.model ? data.source : 'none';
+      return data.source === 'platform' ? 'platform' : data.own?.model ? data.source : 'none';
     } catch { return 'none'; }
   }
   window.checkAiReady = async () => {

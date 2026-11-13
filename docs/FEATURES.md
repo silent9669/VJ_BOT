@@ -1,6 +1,6 @@
 # Tính năng hiện có
 
-Giao diện chỉ dùng tiếng Việt và tiếng Nhật. Mọi tính năng học tập cần đăng nhập. Chat, chấm Kaiwa và giọng đọc Gemini cần người dùng tự gắn API (không có AI dùng chung).
+Giao diện chỉ dùng tiếng Việt và tiếng Nhật. Mọi tính năng học tập cần đăng nhập. Tài khoản miễn phí tự gắn API để chat và nhận xét Kaiwa. Admin tự dùng OpenAI của máy chủ khi chưa có API riêng.
 
 ## Luồng người dùng
 
@@ -39,7 +39,7 @@ Cài đặt > API AI: chọn OpenAI-compatible, Claude (Anthropic) hoặc Gemini
 
 ## Quản trị
 
-Chỉ tài khoản Google có email đã xác minh trong `ADMIN_EMAILS` thấy mục "Quản trị": số người dùng, người hoạt động 7 ngày, tin nhắn 24 giờ, số người dùng API riêng, danh sách hoạt động nhiều nhất, và **quản lý người dùng**: tìm theo tên/email/ID, xem chi tiết (loại tài khoản, cấp độ, số tin, tiến độ, phiên đang mở, API đã lưu), đổi cấp độ, xóa lịch sử chat, đặt lại tiến độ, xóa API đã lưu, đăng xuất mọi thiết bị, xóa tài khoản. Nút "Dọn tài khoản khách cũ" xóa các hồ sơ ẩn danh từ trước khi có đăng nhập. Tên và email của mọi tài khoản được lưu để quản lý; tài khoản Google cũ chưa có email phải đăng nhập lại một lần. Mỗi thao tác phá hủy đều hỏi xác nhận. Admin không đọc được nội dung chat và không có quyền AI đặc biệt.
+Chủ sở hữu (Google có email đã xác minh trong `ADMIN_EMAILS`) và tài khoản được cấp quyền admin thấy mục "Quản trị": số người dùng, người hoạt động 7 ngày, tin nhắn 24 giờ, số người dùng API riêng, danh sách hoạt động nhiều nhất, và **quản lý người dùng**: tìm theo tên/email/ID, xem chi tiết (loại tài khoản, cấp độ, số tin, tiến độ, phiên đang mở, API đã lưu), đổi cấp độ, xóa lịch sử chat, đặt lại tiến độ, xóa API đã lưu, đăng xuất mọi thiết bị, xóa tài khoản. Nút "Dọn tài khoản khách cũ" xóa các hồ sơ ẩn danh từ trước khi có đăng nhập. Tên và email của mọi tài khoản được lưu để quản lý; tài khoản Google cũ chưa có email phải đăng nhập lại một lần. Mỗi thao tác phá hủy đều hỏi xác nhận. Admin có thể cấp/thu hồi quyền admin cho tài khoản Google hoặc email đã đăng ký. Quyền dùng OpenAI chung thay đổi ngay ở yêu cầu tiếp theo. Không thể tự đổi quyền hay đổi quyền/xóa chủ sở hữu. Admin không đọc được nội dung chat.
 
 ## Tài khoản và dữ liệu
 
@@ -47,7 +47,7 @@ Google và email/mật khẩu (không có xác minh email hay khôi phục mật
 
 ## Giao diện
 
-Cài đặt chia hai cột (menu bên trái, thẻ bên phải): thẻ tài khoản (tên, email, loại đăng nhập, đăng xuất), thẻ API AI có chọn loại API dạng nút, gợi ý model, hiện/ẩn khóa và nhãn trạng thái (Chưa kết nối, Đã lưu, Kết nối được, Lỗi), thẻ âm thanh, thẻ xóa dữ liệu viền đỏ. Trang bài học có cột "Trong chương" bên phải (vị trí hiện tại, bài đã xong, bấm để chuyển bài), khối cấu trúc, giải thích và thẻ ví dụ đánh số. Hộp đăng nhập, ô hỏi ⌘K, bảng chọn cấp độ và hộp quản trị dùng chung một khung. Hộp đăng ký có thanh độ dài mật khẩu, trường sai được viền đỏ, nút gửi có vòng chờ.
+Cài đặt chia hai cột (menu bên trái, thẻ bên phải): thẻ tài khoản (tên, email, loại đăng nhập, đăng xuất), thẻ API AI có chọn loại API dạng nút, gợi ý model, hiện/ẩn khóa và nhãn trạng thái (Chưa kết nối, Đã lưu, Kết nối được, Lỗi), thẻ âm thanh, thẻ xóa dữ liệu có nút đỏ. Trang bài học có cột "Trong chương" bên phải (vị trí hiện tại, bài đã xong, bấm để chuyển bài), khối cấu trúc, giải thích và thẻ ví dụ đánh số. Hộp đăng nhập, ô hỏi ⌘K, bảng chọn cấp độ và hộp quản trị dùng chung một khung. Hộp đăng ký có thanh độ dài mật khẩu, trường sai được viền đỏ, nút gửi có vòng chờ.
 
 Thầy Lâm pixel đi dạo quanh trang: rê chuột thì dừng và chào (nhắc đúng màn hình em đang xem), bấm để hỏi, kéo thả đến bất kỳ chỗ nào, nhấp đúp để về chỗ cũ.
 
@@ -56,3 +56,9 @@ Giấy ấm, sidebar thu gọn (rail 76 px, mở rộng được), landing có k
 ## Nguồn và giấy phép
 
 OpenJLPT, bản `0d1d3410bec90bd4098a7c72de820543cb4f707c` (`evanclan/OpenJLPT`), CC BY-SA 4.0: xem [NOTICE](../static/openjlpt/NOTICE.md), [LICENSE](../static/openjlpt/LICENSE), [manifest](../static/openjlpt/manifest.json) và trang [Nguồn](https://vjbot.dangphuc.me/sources.html). Tài liệu Irodori và JLPT/Japan Foundation chỉ được liên kết, không sao chép. Mức độ N5–N1 của OpenJLPT là ước lượng của cộng đồng, không phải danh sách chính thức.
+
+## Hội thoại, giọng nói và mascot
+
+Ô hỏi nhanh ⌘K dùng cùng lịch sử hội thoại, chặn gửi trùng và giữ nguyên mã yêu cầu khi thử lại. Ghi âm tiếng Nhật có nút dừng, giữ lỗi micro để sửa và giải phóng thiết bị khi chuyển màn hình. Có thể nhập câu trả lời trên trình duyệt không hỗ trợ nhận diện; Kaiwa chỉ nhận xét nội dung bản chép lời. Giọng AI dùng OpenAI chính thức hoặc Gemini-Google và có giọng trình duyệt dự phòng; nút Dừng đọc hủy cả yêu cầu đang tải.
+
+Mascot lớn ở góc màn hình máy tính; kéo hoặc dùng phím mũi tên để di chuyển, Home để trở về góc. Trên điện thoại, mascot nằm trong nút Hỏi thầy Lâm trên thanh đầu để không che nội dung. Favicon là khuôn mặt từ cùng sprite. Chuyển màn hình, hộp thoại và phản hồi bấm dùng cùng nhịp chuyển động; tắt chuyển động khi người dùng chọn giảm chuyển động.

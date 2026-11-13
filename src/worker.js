@@ -5,7 +5,7 @@ import { aiRoute, askAI, googleSpeechKey, resolveProvider } from './providers.js
 import {rateLimited} from './ai-usage.js';
 import { conversationScope, teacherCatalog, validLessonReference } from './tutor-context.js';
 import { KAIWA_SCHEMA, KAIWA_SYSTEM, parseKaiwaEvaluation } from './kaiwa.js';
-import {speechResponse} from './speech.js';
+import {speechResponse, openAISpeechResponse} from './speech.js';
 import {antigravityOAuthRoute} from './antigravity-oauth.js';
 import { tutorChat } from './tutor-chat.js';
 import { clearTutorConversation } from './tutor-session.js';
@@ -54,65 +54,6 @@ function jsonResponse(data, status = 200) {
   });
 }
 
-// 8-bit Pixel VJ Logo SVG Favicon
-const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges" width="64" height="64">
-  <!-- 8-Bit Pixel Art "VJ" Arcade Logo -->
-  <!-- Dark Bezel / Base Shadow -->
-  <rect x="1" y="2" width="30" height="29" fill="#09090b" rx="2"/>
-  <rect x="1" y="1" width="30" height="28" fill="#18181b" rx="2"/>
-  <rect x="2" y="2" width="28" height="26" fill="#27272a"/>
-
-  <!-- Golden 8-Bit Corner Accents (Arcade aesthetic) -->
-  <rect x="3" y="3" width="2" height="2" fill="#f59e0b"/>
-  <rect x="27" y="3" width="2" height="2" fill="#f59e0b"/>
-  <rect x="3" y="23" width="2" height="2" fill="#d97706"/>
-  <rect x="27" y="23" width="2" height="2" fill="#d97706"/>
-
-  <!-- LETTER 'V' (Red Arcade Pixel Grid) -->
-  <!-- Left arm -->
-  <rect x="5" y="7" width="3" height="4" fill="#ef4444"/>
-  <rect x="5" y="7" width="1" height="4" fill="#fca5a5"/>
-  <rect x="6" y="11" width="3" height="4" fill="#ef4444"/>
-  <rect x="6" y="11" width="1" height="4" fill="#fca5a5"/>
-  <rect x="7" y="15" width="3" height="3" fill="#dc2626"/>
-  <rect x="8" y="18" width="3" height="3" fill="#b91c1c"/>
-  
-  <!-- Center bottom tip -->
-  <rect x="9" y="20" width="3" height="2" fill="#991b1b"/>
-  
-  <!-- Right arm -->
-  <rect x="10" y="18" width="3" height="3" fill="#b91c1c"/>
-  <rect x="11" y="15" width="3" height="3" fill="#dc2626"/>
-  <rect x="12" y="11" width="3" height="4" fill="#ef4444"/>
-  <rect x="13" y="7" width="3" height="4" fill="#ef4444"/>
-  <rect x="15" y="7" width="1" height="4" fill="#f87171"/>
-
-  <!-- LETTER 'J' (Cyan/Aqua Arcade Pixel Grid) -->
-  <!-- Top bar -->
-  <rect x="18" y="7" width="9" height="3" fill="#06b6d4"/>
-  <rect x="18" y="7" width="9" height="1" fill="#a5f3fc"/>
-  <rect x="18" y="9" width="9" height="1" fill="#0891b2"/>
-  
-  <!-- Vertical stem -->
-  <rect x="22" y="10" width="3" height="8" fill="#06b6d4"/>
-  <rect x="24" y="10" width="1" height="8" fill="#22d3ee"/>
-  <rect x="22" y="10" width="1" height="8" fill="#0891b2"/>
-  
-  <!-- Curve hook -->
-  <rect x="21" y="17" width="3" height="3" fill="#0891b2"/>
-  <rect x="18" y="19" width="4" height="3" fill="#0891b2"/>
-  <rect x="16" y="18" width="3" height="3" fill="#06b6d4"/>
-  <rect x="16" y="15" width="3" height="4" fill="#06b6d4"/>
-  <rect x="16" y="15" width="1" height="4" fill="#67e8f9"/>
-
-  <!-- Sub-pixel CRT scanlines -->
-  <rect x="3" y="5" width="26" height="1" fill="#ffffff" opacity="0.08"/>
-  <rect x="3" y="9" width="26" height="1" fill="#000000" opacity="0.15"/>
-  <rect x="3" y="13" width="26" height="1" fill="#ffffff" opacity="0.08"/>
-  <rect x="3" y="17" width="26" height="1" fill="#000000" opacity="0.15"/>
-  <rect x="3" y="21" width="26" height="1" fill="#ffffff" opacity="0.08"/>
-</svg>`;
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -155,15 +96,6 @@ export default {
         }
       }
       if(url.pathname==='/api/exam-attempts')return await examRoute(request,url,env,url.searchParams.get('user_id'));
-      // Favicon handler (prevent 500/404)
-      if (url.pathname === "/favicon.ico") {
-        return new Response(FAVICON_SVG, {
-          headers: {
-            "Content-Type": "image/svg+xml",
-            "Cache-Control": "public, max-age=86400"
-          }
-        });
-      }
 
       // 1. Health check
       if (url.pathname === "/api/health") {
@@ -435,6 +367,8 @@ export default {
       // 8. TTS API (Gemini Flash TTS)
       if (url.pathname === "/api/tts" && request.method === "POST") {
         const body = await request.json();
+        const provider = await resolveProvider(env,url.searchParams.get('user_id'),body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
+        if (provider?.protocol === 'openai' && provider.baseUrl === 'https://api.openai.com/v1') return await openAISpeechResponse(body,provider);
         const speech = await googleSpeechKey(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
         if (speech.response) return speech.response;
         return await speechResponse(body, speech.apiKey);

@@ -47,6 +47,8 @@ async function apiFetch(path,options={}) {
 
 function renderAccount(){
   document.querySelectorAll?.('[data-enter=dashboard]').forEach(b=>b.textContent=signedInUser?'Vào học ↗':'Đăng nhập');
+  const initial = document.getElementById('topbar-user-initial');
+  if (initial) initial.textContent = (signedInUser?.name || '?').trim().charAt(0).toUpperCase();
   document.getElementById('topbar-user-name').textContent=signedInUser?.name||'Đăng nhập';
   document.getElementById('auth-user').textContent=signedInUser?signedInUser.name:'Đăng nhập';
   document.getElementById('auth-methods').hidden=!!signedInUser;

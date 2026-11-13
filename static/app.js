@@ -270,13 +270,13 @@ function initLoadingScreen() {
   }, 600);
 }
 
-
 // ==========================================
 // 7. TAB SWITCHER & NAVIGATION
 // ==========================================
 function switchTab(tabId, route={}) {
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
   stopSpeech();
+  globalThis.stopJapaneseInputs?.();
   globalThis.rememberTeacherScreen?.();
   globalThis.invalidateTeacherQuery?.();
   featureVersion++;
@@ -309,6 +309,10 @@ function switchTab(tabId, route={}) {
     panel.hidden = !isTarget;
     panel.classList.toggle("active", isTarget);
   });
+
+  // Keep the active view first in the document's reading order.
+  const activePanel = document.getElementById(`panel-${tabId}`);
+  activePanel?.parentElement?.prepend?.(activePanel);
 
   // Update topbar title
   const topbarTitle = document.getElementById("topbar-view-title");
@@ -345,6 +349,8 @@ function switchTab(tabId, route={}) {
     loadProgress();
     renderBookmarks();
   } else if (tabId === "classroom") {
+    if (!chatHistoryReady) globalThis.loadChatHistory?.();
+    globalThis.checkAiReady?.();
     renderDailyKanji(activeCurriculumLevel);
   } else if (tabId === "settings" || tabId === "admin") {
     window.renderAiPanels?.(tabId);
@@ -432,7 +438,7 @@ async function loadChatHistory() {
 }
 async function sendMessage(text,retry=false,options={}) {
   text=typeof text==='string'?text.trim():'';
-  if(sendingMessage || clearingChat || !text)return;
+  if(sendingMessage || clearingChat || globalThis.popoverBusy || !text)return;
   if(failedChatMessage && !retry){chatError('Tin trước chưa gửi xong. Thử lại hoặc bỏ qua.',()=>sendMessage(failedChatMessage.text,true));return;}
   if(!signedInUser){openAccount();return;}
   if(!chatHistoryReady){chatError('Đợi hội thoại tải xong trước khi gửi.',chatHistoryLoading?null:loadChatHistory);return;}
@@ -454,6 +460,7 @@ async function sendMessage(text,retry=false,options={}) {
   const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
   send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
+  document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','true');
   if(!retry)renderBubble('user',text);
   if(!retry || input.value.trim()===text)input.value='';
   soundEngine.playSend();mascotMgr.setState('thinking');
@@ -472,6 +479,7 @@ async function sendMessage(text,retry=false,options={}) {
     mascotMgr.setState('idle');
   }finally{
     sendingMessage=false;send.disabled=false;clear.disabled=false;
+    document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','false');
     document.getElementById('chat-connection-status').textContent='';
   }
 }
@@ -834,6 +842,9 @@ async function renderKaiwaScenarios(){
 }
 
 function loadKaiwaPrompt() {
+  globalThis.stopJapaneseInputs?.();
+  globalThis.stopSpeech?.();
+  document.getElementById('kaiwa-error').hidden = true;
   const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
   if (!s) return;
 
@@ -1240,9 +1251,7 @@ function setupEventListeners() {
   document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
   const voiceButton=document.getElementById('btn-voice-input');
-  const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(SpeechRecognition){const recognition=new SpeechRecognition();recognition.lang='ja-JP';recognition.onresult=e=>{document.getElementById('chat-input').value=e.results[0][0].transcript;};recognition.onend=()=>{voiceButton.textContent='Nói';voiceButton.setAttribute('aria-pressed','false');};recognition.onerror=()=>chatError('Chưa nhận được giọng nói. Kiểm tra quyền micro hoặc nhập tin nhắn.',null);voiceButton.onclick=()=>{try{recognition.start();voiceButton.textContent='Dừng';voiceButton.setAttribute('aria-pressed','true');}catch{recognition.stop();}};}
-  else {voiceButton.disabled=true;voiceButton.title='Trình duyệt không hỗ trợ nhập giọng nói';}
+  createJapaneseInput({button:voiceButton,input:document.getElementById('chat-input'),onError:message=>chatError(message,null)});
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
   document.getElementById('kaiwa-level').onchange=e=>switchTab('kaiwa',{level:e.target.value});
@@ -1522,93 +1531,12 @@ function setupEventListeners() {
     });
   }
 
-  // Kaiwa User Audio Recording & Web Speech Recognition
-  let mediaRecorder = null;
-  let audioChunks = [];
-  let userAudioBlobUrl = null;
-
-  const btnKaiwaPlayUser = document.getElementById("btn-kaiwa-play-user");
-  if (btnKaiwaPlayUser) {
-    btnKaiwaPlayUser.addEventListener("click", () => {
-      if (userAudioBlobUrl) {
-        const audio = new Audio(userAudioBlobUrl);
-        audio.play().catch(() => {});
-      }
-    });
-  }
-
-  async function startAudioRecording() {
-    if (!navigator.mediaDevices?.getUserMedia) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) audioChunks.push(e.data);
-      };
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: "audio/webm" });
-        if (userAudioBlobUrl) URL.revokeObjectURL(userAudioBlobUrl);
-        userAudioBlobUrl = URL.createObjectURL(blob);
-        if (btnKaiwaPlayUser) btnKaiwaPlayUser.style.display = "inline-flex";
-        stream.getTracks().forEach(t => t.stop());
-      };
-      mediaRecorder.start();
-    } catch {
-      // Audio capture fallback silently
-    }
-  }
-
-  function stopAudioRecording() {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      try { mediaRecorder.stop(); } catch {}
-    }
-  }
-
-  const btnKaiwaMic = document.getElementById("btn-kaiwa-mic");
-  const kaiwaInput = document.getElementById("kaiwa-manual-input");
-  const micStatus = document.getElementById("kaiwa-mic-status");
-
-  if (btnKaiwaMic && kaiwaInput) {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRec) {
-      const rec = new SpeechRec();
-      rec.lang = "ja-JP";
-      rec.interimResults = false;
-
-      rec.onstart = () => {
-        if (micStatus) micStatus.textContent = "Đang ghi âm…";
-        btnKaiwaMic.style.background = "#fee2e2";
-        startAudioRecording();
-      };
-
-      rec.onresult = (evt) => {
-        const transcript = evt.results[0][0].transcript;
-        kaiwaInput.value = transcript;
-        soundEngine.playSend();
-      };
-
-      rec.onerror = () => {
-        if (micStatus) micStatus.textContent = "Micro: Chưa nhận diện được";
-        btnKaiwaMic.style.background = "";
-        stopAudioRecording();
-      };
-
-      rec.onend = () => {
-        if (micStatus) micStatus.textContent = "Micro: Sẵn sàng";
-        btnKaiwaMic.style.background = "";
-        stopAudioRecording();
-      };
-
-      btnKaiwaMic.addEventListener("click", () => {
-        try { rec.start(); } catch { rec.stop(); stopAudioRecording(); }
-      });
-    } else {
-      btnKaiwaMic.addEventListener("click", () => {
-        alert("Trình duyệt chưa hỗ trợ Web Speech API. Bạn có thể nhập câu trả lời trực tiếp bằng bàn phím!");
-      });
-    }
-  }
+  const kaiwaInput = document.getElementById('kaiwa-manual-input');
+  createJapaneseInput({
+    button: document.getElementById('btn-kaiwa-mic'), input: kaiwaInput,
+    status: document.getElementById('kaiwa-mic-status'),
+    playbackButton: document.getElementById('btn-kaiwa-play-user')
+  });
 
   // Kaiwa Evaluation submit
   const btnEvalKaiwa = document.getElementById("btn-eval-kaiwa");
@@ -1616,19 +1544,23 @@ function setupEventListeners() {
     btnEvalKaiwa.addEventListener("click", async () => {
       const speech = kaiwaInput.value.trim();
       if (!speech) {
-        alert("Vui lòng nói hoặc nhập câu trả lời tiếng Nhật trước khi chấm điểm!");
+        const error = document.getElementById('kaiwa-error');
+        error.textContent = 'Nói hoặc nhập câu trả lời trước khi nhận xét.'; error.hidden = false;
+        kaiwaInput.focus();
         return;
       }
 
       if(btnEvalKaiwa.disabled)return;
       btnEvalKaiwa.disabled=true;
-      const evaluationKey=activeKaiwaKey,evaluationIndex=activeKaiwaPromptIdx;
+      document.getElementById('kaiwa-error').hidden = true;
+      document.getElementById('kaiwa-result-card').hidden = true;
+      const evaluationKey=activeKaiwaKey,evaluationIndex=activeKaiwaPromptIdx,evaluationNavigation=navigationVersion;
       btnEvalKaiwa.textContent = "Đang nhận xét…";
       const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
 
       try {
         const resp = await apiFetch("/api/kaiwa/evaluate", {
-          method: "POST",
+          method: "POST", signal: AbortSignal.timeout(35000),
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             scenario_id: activeKaiwaKey,
@@ -1638,7 +1570,7 @@ function setupEventListeners() {
           })
         });
 
-        if(evaluationKey!==activeKaiwaKey || evaluationIndex!==activeKaiwaPromptIdx)return;
+        if(evaluationKey!==activeKaiwaKey || evaluationIndex!==activeKaiwaPromptIdx || evaluationNavigation!==navigationVersion)return;
         const resultCard = document.getElementById("kaiwa-result-card");
         const scoreVal = document.getElementById("kaiwa-score-val");
         const feedbackText = document.getElementById("kaiwa-feedback-text");
@@ -1653,13 +1585,13 @@ function setupEventListeners() {
           soundEngine.playCheer();
         } else {
           const failure=await resp.json();
-          if (scoreVal) scoreVal.textContent = "—";
-          if (feedbackText) feedbackText.textContent = failure.detail || "Chưa thể chấm điểm. Vui lòng thử lại.";
-          if (modelText) modelText.textContent = "";
-          if (resultCard) resultCard.hidden = false;
+          const error = document.getElementById('kaiwa-error');
+          error.textContent = failure.detail || 'Chưa nhận xét được. Hãy thử lại.'; error.hidden = false;
         }
       } catch {
-        alert("Lỗi khi kết nối hệ thống chấm điểm.");
+        if (evaluationKey !== activeKaiwaKey || evaluationIndex !== activeKaiwaPromptIdx || evaluationNavigation !== navigationVersion) return;
+        const error = document.getElementById('kaiwa-error');
+        error.textContent = 'Chưa kết nối được. Câu trả lời vẫn ở đây, em thử lại nhé.'; error.hidden = false;
       } finally {
         btnEvalKaiwa.disabled=false;
         btnEvalKaiwa.textContent = "Nhờ thầy nhận xét";
