@@ -1,6 +1,6 @@
 # Tính năng hiện có
 
-Giao diện chỉ dùng tiếng Việt và tiếng Nhật. Mọi tính năng học tập cần đăng nhập. Tài khoản miễn phí tự gắn API để chat và nhận xét Kaiwa. Admin tự dùng OpenAI của máy chủ khi chưa có API riêng.
+Learning features require sign-in. Regular learners bring their own API-key or OAuth connection. Administrators automatically use server OpenAI for chat, coaching, read-aloud and GPT-Live; they configure text models, reasoning and live voice without entering a personal key. Existing personal connections remain saved and are not erased by role changes.
 
 ## Luồng người dùng
 
@@ -20,7 +20,7 @@ flowchart TD
 ## Học
 
 - **Lộ trình N5–N1**: 40 chương ngữ pháp (8 mỗi cấp, 163 mẫu câu, giải thích tiếng Việt) và 20 tình huống thực tế viết riêng bằng tiếng Việt (N5: 6, N4: 5, N3: 4, N2: 3, N1: 2). Mỗi tình huống gồm từ cần dùng, hiểu tình huống, tự trả lời bằng văn bản, Kaiwa và bài kiểm tra riêng. Chương kana là tùy chọn.
-- **Thư viện**: từ vựng, ngữ pháp, Hán tự, đọc, nghe, viết theo cấp độ (10.720 mục OpenJLPT: 7.811 từ, 526 ngữ pháp, 2.383 Hán tự; 20 bài kana). Phần từ vựng/Hán tự/câu ví dụ trong thư viện còn tiếng Anh cho đến khi chạy `scripts/translate_corpus.py`.
+- **Library**: vocabulary, grammar, kanji, reading, listening and writing by level (10,720 OpenJLPT entries: 7,811 words, 526 grammar points, 2,383 kanji; 20 kana lessons). Original English glosses remain attributed source data. **Nhờ thầy giảng bài** uses the selected chat API to translate the current presentation and teach from canonical lesson evidence on demand, rather than requiring a bulk corpus translation.
 - **Mỗi bài**: tham khảo, 5 câu kiểm tra dựng từ chính ví dụ và bài tập của bài, xem lại câu sai, nút "Luyện với thầy Lâm" (cố định ở đáy màn hình), đánh dấu hoàn thành có thể hoàn tác (độc lập với điểm).
 - **Thẻ nhớ**: buổi 20 thẻ ưu tiên thẻ đến hạn, lịch SM-2 (đặt lại sau khi sai).
 - **Luyện nói (Kaiwa)**: gõ hoặc ghi âm để chép lời (OpenAI chính thức, nhận diện trình duyệt cho kết nối khác); AI chấm bản chép lời, không chấm phát âm.
@@ -49,7 +49,15 @@ Google và email/mật khẩu (không có xác minh email hay khôi phục mật
 
 Cài đặt chia hai cột (menu bên trái, thẻ bên phải): thẻ tài khoản (tên, email, loại đăng nhập, đăng xuất), thẻ API AI có chọn loại API dạng nút, gợi ý model, hiện/ẩn khóa và nhãn trạng thái (Chưa kết nối, Đã lưu, Kết nối được, Lỗi), thẻ âm thanh, thẻ xóa dữ liệu có nút đỏ. Trang bài học có cột "Trong chương" bên phải (vị trí hiện tại, bài đã xong, bấm để chuyển bài), khối cấu trúc, giải thích và thẻ ví dụ đánh số. Hộp đăng nhập, ô hỏi ⌘K, bảng chọn cấp độ và hộp quản trị dùng chung một khung. Hộp đăng ký có thanh độ dài mật khẩu, trường sai được viền đỏ, nút gửi có vòng chờ.
 
-Thầy Lâm nằm trong sidebar, có hoạt ảnh đứng nghỉ và bấm để hỏi về bài đang xem. Nút Hỏi thầy Lâm ở thanh đầu vẫn dùng được khi sidebar thu gọn hoặc đóng. Tôn trọng giảm chuyển động, điều hướng bàn phím và không che bài học.
+Lesson reference cards conceal readings and meanings until opened independently with native keyboard-accessible disclosures. Vocabulary and kanji rows reveal their answers only when opened; nested examples retain separate reading/meaning controls. Reading translations and listening transcripts also start collapsed. Japanese-only Listen buttons retain the independent saved voice account/model, canonical reading metadata and existing cancellation/error handling. Revealing a learning aid does not request speech or refresh the model catalog.
+
+Runtime teaching is available on lesson references, opened words/kanji, five-question checks, writing and dictation references, flashcard backs, Kaiwa prompts and topic quizzes. It explains one idea and asks a short self-check. **Em vẫn chưa hiểu** opens an inline conversation with Thầy Lâm below the explanation instead of regenerating it. The learner explicitly sends a question through the existing tutor endpoint, with canonical lesson/focus references and a private quick-chat scope for that panel. Coaching hints and feedback offer the same follow-up. Closing the box restores focus; item, route, account or chat-connection changes cancel pending replies and clear its private draft and transcript.
+
+Translated labels retain original option indices, selected answers and canonical grading/progress. The original-source toggle and technical quota/validation footnotes are omitted from the study panels. Full topic quizzes use their complete original inventory, including repeated numbered arrangement segments; official external exam PDFs are unchanged.
+
+No teaching request runs on page entry, revealing content, opening the follow-up box or choosing an answer. Only explicit teaching or message submission uses the selected chat connection and quota, not the separate voice connection. Failed messages retain the question and offer an explicit same-request retry or a new question. Errors do not fabricate a translation or block ordinary practice. Structural validation and synthetic tests do not certify Japanese pedagogy.
+
+Thầy Lâm stays in the sidebar with idle animation and contextual quick questions. The topbar action remains available when navigation is collapsed or closed; keyboard and reduced-motion controls remain usable without covering lessons.
 
 ## Không gian học và Voice
 
@@ -59,9 +67,12 @@ Thầy Lâm nằm trong sidebar, có hoạt ảnh đứng nghỉ và bấm để
 - Chat: một cột hội thoại, ô soạn luôn ở cuối, công cụ ngắn thành hai hàng trên điện thoại. Admin nhấn **Voice** để tự mở micro và bắt đầu GPT-Live; không cần gửi từng bản ghi.
 - Voice: âm thanh hai chiều qua WebRTC, sóng âm đo từ micro và giọng thầy, dòng hội thoại theo thời gian với tên học viên/thầy, lời gốc và bản dịch Việt bên dưới, tắt/bật micro, kết thúc và về nhắn tin. Phiên tối đa 10 phút phía client. Mốc thời gian xấp xỉ lấy từ phiên nói, ghép đoạn cùng người nói cách nhau không quá 1,2 giây, tách ở cuối câu hoặc sau 8 giây; không phải ranh giới lượt nói do model xác nhận. Bản dịch được gom nhóm và chạy riêng, không chặn âm thanh; lỗi dịch có nút thử lại. Phụ đề và bản dịch không lưu vào lịch sử chat; chuyển từ chat sang Voice không tự chuyển lịch sử chat sang phiên nói.
 - Kaiwa: ghi một câu rồi dừng để chép lời bằng `gpt-transcribe` khi dùng OpenAI chính thức (API riêng hoặc mặc định admin). Ghi tối đa 60 giây/2 MiB, nghe lại và sửa bản chép trước khi chấm. Nhà cung cấp khác dùng nhận diện trình duyệt nếu hỗ trợ; luôn có thể nhập tay. Chỉ đánh giá nội dung bản chép, không chấm phát âm.
-- Admin: 13 model văn bản, gồm GPT-6.1 Sol/Terra, GPT-6 Luna/Sol/Astra, GPT-5.5, GPT-5.4/mini, GPT-5 mini, GPT-4.1/mini, GPT-4o và o3. Mức suy luận theo model; lựa chọn riêng từng admin, API cá nhân vẫn ưu tiên. Thiết lập áp dụng với yêu cầu và phiên mới.
-- Tài khoản miễn phí tự gắn API cho AI, kể cả OpenAI bằng khóa riêng. Chỉ admin được dùng khóa chung của Worker khi chưa chọn API riêng. GPT-Live chỉ dành cho admin. Khóa quản trị không xuất hiện trong bundle hoặc phản hồi API.
+- Administrator AI: 13 text models with model-specific reasoning and per-admin choices. Settings apply to new text requests and new live sessions. Administrators use server OpenAI automatically; saved personal credentials are retained but not selected.
+- Regular learners bring their own API/OAuth connections, including an official OpenAI key. Only administrators can use the Worker's shared key and continuous GPT-Live. The server key never appears in browser bundles or API responses.
 - Favicon SVG/ICO và biểu tượng cảm ứng dùng cùng chân dung với sidebar. Lần tải dashboard không tự quét model hay danh mục giọng nói.
+- Settings: learners see saved API/OAuth connections and an independent voice account. Administrators see managed OpenAI model/reasoning/live-voice preferences and read-aloud, without personal-key forms. Opening settings never scans models or generates content automatically.
+
+Quick chat keeps scoped conversation history, prevents duplicate submissions and reuses request IDs only for explicit retries. Recordings and browser recognition keep manual entry available; Kaiwa grades only the submitted transcript. Learner read-aloud uses the independent native Gemini/official OpenAI selection; administrator read-aloud uses managed OpenAI. Stop cancels owned loading/playback, without silently switching accounts or using browser speech as a fallback.
 
 ## Nguồn và giấy phép
 

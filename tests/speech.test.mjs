@@ -11,11 +11,12 @@ const deferred = () => {
 };
 function speech(apiFetch = async () => Response.json({audioBase64:'UklGRg==', mimeType:'audio/wav'})) {
   const elements = new Map(['speech-notice', 'speech-status', 'speech-stop'].map(id => [id, {hidden:true, textContent:'', addEventListener(){}}]));
-  const audios = [], states = [];
+  const audios = [], states = [], events = new Map();
   const context = vm.createContext({
     AbortController, Response, atob, btoa, Uint8Array, DataView,
     document:{getElementById:id => elements.get(id)},
-    window:{addEventListener(){}, speechSynthesis:{cancel(){}, speak(){throw new Error('Native voice fallback is forbidden');}}},
+    window:{addEventListener(name, handler){events.set(name, handler);}, voiceIdentity:()=>'owner:voice',
+      selectedSpeechModel:()=>'gemini-3.8-flash-tts', speechSynthesis:{cancel(){}, speak(){throw new Error('Native voice fallback is forbidden');}}},
     mascotMgr:{setState:state => states.push(state)}, apiFetch,
     Audio:class {
       constructor(url) {this.src = url; this.paused = true; audios.push(this);}
@@ -26,7 +27,8 @@ function speech(apiFetch = async () => Response.json({audioBase64:'UklGRg==', mi
     }
   });
   vm.runInContext(source, context);
-  return {context, audios, states, status:() => elements.get('speech-status').textContent, visible:() => !elements.get('speech-notice').hidden};
+  vm.runInContext(readFileSync('static/learning.js', 'utf8'), context);
+  return {context, audios, states, events, status:() => elements.get('speech-status').textContent, visible:() => !elements.get('speech-notice').hidden};
 }
 
 test('Japanese-only chat speech omits explanations and duplicate kana/romaji readings', () => {
@@ -154,4 +156,75 @@ test('PCM media-type case, sample rate and channels preserve sample timing and s
     assert.deepEqual([...wav.subarray(44)].map((_, i) => i % 2 ? null : wav.readInt16LE(44 + i)).filter(n => n !== null), [0, 32767, -32768, 0]);
   }
   assert.throws(() => c.audioDataUrl({mimeType:'audio/l16;rate=16000;channels=2', audioBase64:'AA=='}), /Invalid speech PCM format/);
+});
+
+test('Listen uses the saved model without a catalog request or automatic refresh', async () => {
+  const requests = [];
+  const s = speech(async (path, options) => {
+    requests.push({path, body:JSON.parse(options.body)});
+    return Response.json({audioBase64:'UklGRg==', mimeType:'audio/wav'});
+  });
+  s.context.window.selectedSpeechModel = () => 'gemini-3.8-flash-lite-tts';
+  s.context.window.refreshSpeechModels = () => {throw new Error('Unexpected catalog refresh');};
+  await s.context.playGeminiTTS('こんにちは。', {japaneseOnly:true});
+  assert.deepEqual(requests.map(request => request.path), ['/api/tts']);
+  assert.equal(requests[0].body.speech_model, 'gemini-3.8-flash-lite-tts');
+  assert.equal(s.audios[0].paused, false);
+});
+
+test('a changed voice profile or model discards pending audio even without a change event', async () => {
+  for (const change of ['profile', 'model']) {
+    const pending = deferred();
+    let profile = 'owner-a:voice-a', model = 'gemini-3.8-flash-tts', signal;
+    const s = speech((_path, options) => {signal = options.signal; return pending.promise;});
+    s.context.window.voiceIdentity = () => profile;
+    s.context.window.selectedSpeechModel = () => model;
+    const play = s.context.playGeminiTTS('こんにちは。');
+    if (change === 'profile') profile = 'owner-b:voice-b';
+    else model = 'gemini-3.8-flash-lite-tts';
+    pending.resolve(Response.json({audioBase64:'old-audio', mimeType:'audio/wav'}));
+    await play;
+    assert.equal(s.audios.length, 0);
+    assert.equal(signal.aborted, true);
+    assert.equal(s.visible(), false);
+  }
+});
+
+test('voice and account changes immediately stop current playback', async () => {
+  for (const event of ['vjbot-voice-changed', 'vjbot-account-ready']) {
+    const s = speech();
+    await s.context.playGeminiTTS('こんにちは。');
+    const audio = s.audios[0];
+    s.events.get(event)();
+    assert.equal(audio.paused, true);
+    assert.equal(audio.src, '');
+    assert.equal(s.visible(), false);
+  }
+});
+
+test('an unavailable saved speech model never falls back to the default model', async () => {
+  let requests = 0;
+  const s = speech(async () => {requests++; return Response.json({audioBase64:'UklGRg==', mimeType:'audio/wav'});});
+  s.context.window.selectedSpeechModel = () => '';
+  await s.context.playGeminiTTS('こんにちは。');
+  assert.equal(requests, 0);
+  assert.equal(s.audios.length, 0);
+  assert.equal(s.visible(), true);
+});
+
+test('playback labels use the returned provider voice instead of claiming Charon for OpenAI',async()=>{
+  for(const [voice,model] of [['alloy','gpt-4o-mini-tts'],['Charon','gemini-3.8-flash-tts']]){
+    const s=speech(async()=>Response.json({audioBase64:'UklGRg==',mimeType:'audio/wav',voice,model}));
+    await s.context.playGeminiTTS('こんにちは。',{japaneseOnly:true});
+    assert.equal(s.status(),`Reading Japanese · ${voice} · ${model}`);
+  }
+});
+
+test('missing voice settings helpers never generate speech through an implicit Gemini default',async()=>{
+  let calls=0;
+  const s=speech(async()=>{calls++;return Response.json({});});
+  delete s.context.window.selectedSpeechModel;
+  await s.context.playGeminiTTS('こんにちは。');
+  assert.equal(calls,0);
+  assert.match(s.status(),/Voice settings are unavailable/);
 });

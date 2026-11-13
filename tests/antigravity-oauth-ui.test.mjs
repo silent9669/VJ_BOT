@@ -191,3 +191,33 @@ test('switching accounts during quota loading keeps refresh enabled after the ne
   await first;
   assert.equal(ui.element('ai-oauth-usage-refresh').disabled, false);
 });
+
+test('managed administrators neither restore OAuth accounts nor read private browser preferences',async()=>{
+  const ui=controller();
+  const saved=[...ui.storage];
+  ui.context.signedInUser.is_admin=true;
+  ui.context.localStorage.getItem=()=>{throw new Error('Managed account must not read OAuth preferences');};
+  await ui.context.renderAntigravityOAuth();
+  assert.equal(ui.requests.length,0);
+  assert.equal(ui.element('ai-oauth-panel').hidden,true);
+  assert.equal(ui.element('ai-form').hidden,true);
+  assert.equal(ui.context.savedOAuthConnections().length,0);
+  assert.deepEqual([...ui.storage],saved);
+});
+
+test('promotion discards a late OAuth restore without replacing saved preferences and demotion restores them',async()=>{
+  let release;
+  const ui=controller({choice:null,respond:request=>request.path===root?new Promise(resolve=>{release=resolve;}):null});
+  const restore=ui.context.renderAntigravityOAuth();
+  ui.context.signedInUser.is_admin=true;
+  release(Response.json({configured:true,connections:[{id:'late',name:'Late',model:'late',state:'active'}],active_id:'late'}));
+  await restore;
+  assert.equal(ui.storage.has('vjbot_ai_oauth:test:owner'),false);
+  assert.equal(ui.context.savedOAuthConnections().length,0);
+  ui.context.signedInUser.is_admin=false;
+  const resumed=ui.context.renderAntigravityOAuth();
+  release(Response.json({configured:true,connections:[{id:'original',name:'Original',model:'original',state:'active'}],active_id:'original'}));
+  await resumed;
+  assert.equal(ui.storage.get('vjbot_ai_oauth:test:owner'),'original');
+  assert.equal(ui.context.savedOAuthConnections()[0].id,'original');
+});

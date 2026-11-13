@@ -6,7 +6,7 @@ import worker from '../src/worker.js';
 import {hashToken} from '../src/auth.js';
 import {unseal} from '../src/ai-secrets.js';
 import {activateConnection, antigravityProvider, connectionFor, stateOwner} from '../src/antigravity-gateway.js';
-import {askAI, googleSpeechKey} from '../src/providers.js';
+import {askAI, resolveSpeechProvider} from '../src/providers.js';
 import {speechResponse} from '../src/speech.js';
 import {deleteUserData} from '../src/admin.js';
 import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
@@ -260,7 +260,7 @@ test('Antigravity cannot be used as a TTS credential; Gemini read-aloud keeps it
     return Response.json({candidates:[{content:{parts:[{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]}}]});
   };
   await upstream(g, async () => {
-    assert.equal((await googleSpeechKey(f.env, 'alice', undefined, 'antigravity_oauth:alice-login')).response.status, 403);
+    assert.equal((await resolveSpeechProvider(f.env, 'alice', undefined, 'antigravity_oauth:alice-login')).response.status, 403);
     const response = await speechResponse({text:'こんにちは。Xin chào.'}, 'synthetic-voice-key'); assert.equal(response.status, 200);
     assert.equal((await response.json()).model, 'gemini-3.8-flash-tts'); assert.equal(voiceCalls, 1); assert.equal(g.requests.length, 0);
   });

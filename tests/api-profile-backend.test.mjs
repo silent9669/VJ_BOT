@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {readFileSync, readdirSync} from 'node:fs';
 import worker from '../src/worker.js';
 import {hashToken} from '../src/auth.js';
-import {resolveProvider} from '../src/providers.js';
+import {resolveProvider, resolveSpeechProvider} from '../src/providers.js';
 import {deleteUserData, recordAdminLogin} from '../src/admin.js';
 import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
 
@@ -249,7 +249,7 @@ test('device overrides drive chat, Kaiwa, AI test and Google TTS transiently wit
   } finally { globalThis.fetch = original; }
 });
 
-test('invalid overrides fail closed on every endpoint before network or history, even with a working server profile', async () => {
+test('invalid or speech-incompatible overrides fail closed before network or history, even with a working server profile', async () => {
   const {env, send, create} = await fixture();
   const saved = await create('google:alice'); await activate(send, 'google:alice', saved);
   const original = globalThis.fetch; let calls = 0; globalThis.fetch = async () => { calls++; throw new Error('Invalid override must not fall back'); };
@@ -258,9 +258,11 @@ test('invalid overrides fail closed on every endpoint before network or history,
   try {
     for (const api_connection of [null, [], {}, {...good, api_key: ''}, {...good, model: ''}, {...good, base_url: 'https://localhost/v1'}, {...good, base_url: 'https://127.0.0.1/v1'}, {...good, base_url: 'https://user:pw@device.example.com'}, {...good, protocol: 'unknown'}]) {
       for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/tts', '/api/ai/test']) {
-        // Empty chat/Kaiwa inputs may normally take local shortcuts; invalid selected connections still cannot pass.
+        // Voice-only profiles may omit a chat model, but this custom endpoint still cannot receive speech requests.
+        const speechOnly = path === '/api/tts' && api_connection?.model === '';
         const response = await send('google:alice', path, 'POST', {message: '', user_speech: '', text: 'hi', api_connection});
-        assert.equal(response.status, 400, path); assert.equal((await response.json()).code, 'invalid_connection');
+        assert.equal(response.status, speechOnly ? 403 : 400, path);
+        assert.equal((await response.json()).code, speechOnly ? 'no_tts' : 'invalid_connection');
       }
       await env.DB.prepare('DELETE FROM ai_usage').run();
     }
@@ -430,4 +432,215 @@ test('pinned server profiles survive another activation and fail closed after re
     assert.equal(network,4);
     assert.equal((await f.view('google:alice')).active_id,second.id);
   } finally {globalThis.fetch=previous;}
+});
+
+test('TTS pins a saved Gemini credential without a chat model and never borrows server activation', async () => {
+  const f = await fixture(), previous = globalThis.fetch;
+  const voice = await f.create('google:alice', {name:'Voice only',protocol:'gemini',base_url:'',model:'',api_key:'saved-voice-only-key'});
+  const chat = await f.create('google:alice', {name:'Chat',api_key:'saved-chat-only-key'});
+  await activate(f.send,'google:alice',chat);
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.ok(url.startsWith('https://generativelanguage.googleapis.com/'));
+    assert.equal(options.headers['x-goog-api-key'],'saved-voice-only-key');
+    if ((options.method || 'GET') === 'GET') return Response.json({models:[{name:'models/gemini-3.8-flash-tts',supportedGenerationMethods:['generateContent']}]});
+    return Response.json({candidates:[{content:{parts:[{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]}}]});
+  };
+  const pinned = (owner, data, id = voice.id) => {
+    const request = f.request(owner,'/api/tts','POST',data);
+    request.headers.set('X-VJBot-Profile',id);
+    return worker.fetch(request,f.env);
+  };
+  try {
+    assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは'})).status,403);
+    assert.equal(calls,0);
+    assert.equal((await pinned('google:alice',{action:'models'})).status,200);
+    assert.equal((await pinned('google:alice',{text:'こんにちは'})).status,200);
+    assert.equal((await f.view('google:alice')).active_id,chat.id);
+    await activate(f.send,'google:alice',voice);
+    assert.equal((await resolveProvider(f.env,'google:alice')).error,'no_model');
+    assert.equal((await f.send('google:alice','/api/chat','POST',{message:'hello'})).status,403);
+    assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは'})).status,403);
+    assert.equal((await pinned('google:bob',{text:'こんにちは'})).status,409);
+    await f.send('google:alice','/api/ai/profiles/'+voice.id,'DELETE');
+    assert.equal((await pinned('google:alice',{text:'こんにちは'})).status,409);
+    assert.equal(calls,2);
+  } finally {globalThis.fetch=previous;}
+});
+
+test('device Gemini TTS accepts an empty chat model but retains connection/key validation and no server fallback', async () => {
+  const f = await fixture(), previous = globalThis.fetch;
+  const active = await f.create('google:alice',{protocol:'gemini',base_url:'',api_key:'active-server-key'});
+  await activate(f.send,'google:alice',active);
+  const connection = {protocol:'gemini',base_url:'',model:'',api_key:'device-voice-only-key'};
+  let calls = 0;
+  globalThis.fetch = async (_url, options) => {
+    calls++;
+    assert.equal(options.headers['x-goog-api-key'],connection.api_key);
+    return Response.json({candidates:[{content:{parts:[{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]}}]});
+  };
+  try {
+    assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは',api_connection:connection})).status,200);
+    assert.equal((await f.send('google:alice','/api/chat','POST',{message:'hello',api_connection:connection})).status,400);
+    for (const patch of [
+      {api_key:''},{model:null},{protocol:'unknown'},{base_url:'https://localhost'},
+      {base_url:'https://generativelanguage.googleapis.com?key=secret'}
+    ]) {
+      assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは',api_connection:{...connection,...patch}})).status,400);
+    }
+    for (const base_url of ['https://proxy.example.com','https://generativelanguage.googleapis.com/custom','https://generativelanguage.googleapis.com:8443']) {
+      assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは',api_connection:{...connection,base_url}})).status,403);
+    }
+    const combined = f.request('google:alice','/api/tts','POST',{text:'こんにちは',api_connection:connection});
+    combined.headers.set('X-VJBot-Profile',active.id);
+    assert.equal((await worker.fetch(combined,f.env)).status,400);
+    assert.equal(calls,1);
+    assert.equal((await f.view('google:alice')).active_id,active.id);
+  } finally {globalThis.fetch=previous;}
+});
+
+test('managed admin chat and voice ignore personal profiles, recheck grants and fail closed without the server key', async () => {
+  const f = await fixture(), previous = globalThis.fetch;
+  f.env.OPENAI_API_KEY = 'platform-voice-key-only';
+  f.env.ADMIN_EMAILS = 'owner@example.test';
+  await recordAdminLogin(f.env,'google:alice','owner@example.test');
+  const chat = await f.create('google:alice');
+  await activate(f.send,'google:alice',chat);
+  const stored = await f.env.DB.prepare('SELECT * FROM ai_providers WHERE id=?').bind(chat.id).first();
+  await f.env.DB.prepare('INSERT INTO ai_antigravity_connections(user_id,auth_id,gateway_url,prefix,login_id,model,state,updated_at,name) VALUES(?,?,?,?,?,?,?,?,?)')
+    .bind('google:alice','stored-credential','https://gateway.test','stored-prefix','stored-login','oauth-chat','active',Date.now(),'Saved OAuth').run();
+  await f.env.DB.prepare('INSERT INTO ai_active_antigravity(user_id,connection_id) VALUES(?,?)').bind('google:alice','stored-login').run();
+  const oauth = await f.env.DB.prepare('SELECT * FROM ai_antigravity_connections WHERE user_id=?').bind('google:alice').first();
+  assert.equal((await f.send('google:alice','/api/admin/ai','PUT',
+    {model:'gpt-5-mini',reasoning_effort:'high',live_voice:'marin'})).status,200);
+  const selected = (owner, data = {text:'こんにちは'}, profile = 'platform_openai') => {
+    const request = f.request(owner,'/api/tts','POST',data);
+    request.headers.set('X-VJBot-Profile',profile);
+    return worker.fetch(request,f.env);
+  };
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.equal(url,'https://api.openai.com/v1/audio/speech');
+    assert.equal(options.redirect,'manual');
+    assert.equal(options.headers.Authorization,'Bearer '+f.env.OPENAI_API_KEY);
+    assert.equal(JSON.parse(options.body).model,'gpt-4o-mini-tts');
+    assert.equal(JSON.parse(options.body).voice,'alloy');
+    assert.equal(JSON.parse(options.body).reasoning_effort,undefined);
+    return new Response(new Uint8Array([73,68,51]));
+  };
+  try {
+    const managed = await resolveProvider(f.env,'google:alice');
+    assert.equal(managed.source,'platform'); assert.equal(managed.apiKey,f.env.OPENAI_API_KEY);
+    assert.deepEqual(managed.models,['gpt-5-mini']); assert.equal(managed.reasoningEffort,'high');
+    assert.equal((await resolveProvider(f.env,'google:alice',undefined,'platform_openai')).apiKey,f.env.OPENAI_API_KEY);
+    assert.equal((await resolveSpeechProvider(f.env,'google:alice')).provider.source,'platform');
+    const settings = await (await f.send('google:alice','/api/ai/settings')).json();
+    assert.equal(settings.source,'platform'); assert.equal(settings.own.id,chat.id);
+    assert.equal(settings.platform.configured,true);
+    assert.ok(!JSON.stringify(settings).includes(f.env.OPENAI_API_KEY));
+    assert.ok(!JSON.stringify(settings).includes('profile-test-key'));
+    assert.equal((await f.send('google:alice','/api/tts','POST',{action:'models'})).status,200);
+    assert.equal((await selected('google:alice',{action:'models'})).status,200);
+    assert.equal(calls,0);
+    for (const response of [
+      await f.send('google:alice','/api/tts','POST',{text:'こんにちは'}),
+      await selected('google:alice')
+    ]) {
+      assert.equal(response.status,200); assert.equal((await response.json()).voice,'alloy');
+    }
+    const device = {protocol:'openai',base_url:'',model:'m1',api_key:'device-private-key'};
+    for (const profile of [chat.id,'antigravity_oauth:stored-login']) {
+      assert.equal((await resolveProvider(f.env,'google:alice',undefined,profile)).error,'invalid_connection');
+    }
+    assert.equal((await resolveProvider(f.env,'google:alice',device)).error,'invalid_connection');
+    for (const path of ['/api/chat','/api/ai/test','/api/tts']) {
+      const response = await f.send('google:alice',path,'POST',{message:'hello',text:'こんにちは',api_connection:device});
+      assert.equal(response.status,400,path); assert.equal((await response.json()).code,'invalid_connection');
+    }
+    assert.equal((await selected('google:alice',{text:'こんにちは'},chat.id)).status,400);
+    assert.equal((await selected('google:alice',{text:'こんにちは'},'antigravity_oauth:stored-login')).status,400);
+    assert.equal((await selected('google:alice',{text:'こんにちは',api_connection:device})).status,400);
+    assert.equal((await selected('google:bob')).status,403);
+    assert.equal((await f.send('google:bob','/api/tts','POST',{text:'こんにちは'})).status,403);
+    const fake = f.request('google:bob','/api/chat','POST',{message:'hello',is_admin:true});
+    fake.headers.set('X-VJBot-Profile','platform_openai'); fake.headers.set('X-VJBot-Admin','true');
+    const forged = await worker.fetch(fake,f.env);
+    assert.equal(forged.status,400); assert.ok(!(await forged.text()).includes(f.env.OPENAI_API_KEY));
+    const stale = f.request('google:bob','/api/tts','POST',{text:'こんにちは'});
+    stale.headers.set('X-VJBot-Account','google:alice');
+    stale.headers.set('X-VJBot-Profile','platform_openai');
+    assert.equal((await worker.fetch(stale,f.env)).status,409);
+    await f.env.DB.prepare('INSERT INTO admin_grants VALUES(?,?,?)').bind('google:bob','google:alice','now').run();
+    assert.deepEqual((await resolveProvider(f.env,'google:bob')).models,['gpt-4.1-mini']);
+    assert.equal((await f.send('google:bob','/api/tts','POST',{text:'こんにちは'})).status,200);
+    assert.equal((await selected('google:bob')).status,200);
+    await f.env.DB.prepare('DELETE FROM admin_grants WHERE user_id=?').bind('google:bob').run();
+    assert.equal(await resolveProvider(f.env,'google:bob'),null);
+    assert.equal((await selected('google:bob')).status,403);
+    assert.equal((await f.send('google:bob','/api/tts','POST',{text:'こんにちは'})).status,403);
+    delete f.env.OPENAI_API_KEY;
+    assert.equal(await resolveProvider(f.env,'google:alice'),null);
+    const unavailable = await (await f.send('google:alice','/api/ai/settings')).json();
+    assert.equal(unavailable.source,'platform'); assert.equal(unavailable.platform.configured,false);
+    assert.equal(unavailable.own.id,chat.id);
+    const noAI = await f.send('google:alice','/api/chat','POST',{message:'hello'});
+    assert.equal(noAI.status,403); assert.equal((await noAI.json()).code,'no_ai');
+    const noVoice = await f.send('google:alice','/api/tts','POST',{text:'こんにちは'});
+    assert.equal(noVoice.status,403); assert.equal((await noVoice.json()).code,'no_tts');
+    assert.equal((await selected('google:alice',{action:'models'})).status,403);
+    f.env.OPENAI_API_KEY = 'platform-voice-key-only'; f.env.ADMIN_EMAILS = '';
+    assert.equal((await selected('google:alice')).status,403);
+    assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは'})).status,403);
+    assert.equal((await resolveProvider(f.env,'google:alice')).apiKey,'profile-test-key-1111');
+    assert.equal((await resolveProvider(f.env,'google:alice',undefined,'platform_openai')).error,'invalid_connection');
+    const revoked=f.request('google:alice','/api/chat','POST',{message:'stale administrator tab'});
+    revoked.headers.set('X-VJBot-Profile','platform_openai');
+    assert.equal((await worker.fetch(revoked,f.env)).status,400);
+    assert.equal((await resolveProvider(f.env,'google:alice',device)).apiKey,device.api_key);
+    assert.equal((await resolveProvider(f.env,'google:alice',undefined,chat.id)).apiKey,'profile-test-key-1111');
+    assert.equal((await (await f.send('google:alice','/api/ai/settings')).json()).source,'own');
+    assert.deepEqual(await f.env.DB.prepare('SELECT * FROM ai_providers WHERE id=?').bind(chat.id).first(),stored);
+    assert.equal((await f.view('google:alice')).active_id,chat.id);
+    assert.deepEqual(await f.env.DB.prepare('SELECT * FROM ai_antigravity_connections WHERE user_id=?').bind('google:alice').first(),oauth);
+    assert.equal((await f.env.DB.prepare('SELECT connection_id FROM ai_active_antigravity WHERE user_id=?').bind('google:alice').first()).connection_id,'stored-login');
+    assert.equal(calls,4);
+  } finally {globalThis.fetch = previous;}
+});
+
+test('official OpenAI voice-only profiles and device credentials stay pinned and cannot become chat or proxy fallback', async () => {
+  const f = await fixture(), previous = globalThis.fetch;
+  const voice = await f.create('google:alice',{protocol:'openai',base_url:'',model:'',api_key:'owned-openai-voice-key'});
+  const chat = await f.create('google:alice',{protocol:'gemini',base_url:'',api_key:'chat-gemini-key'});
+  await activate(f.send,'google:alice',chat);
+  f.env.OPENAI_API_KEY = 'must-not-borrow-platform-key';
+  const pinned = (owner, id = voice.id) => {
+    const request = f.request(owner,'/api/tts','POST',{text:'こんにちは'});
+    request.headers.set('X-VJBot-Profile',id);
+    return worker.fetch(request,f.env);
+  };
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.equal(url,'https://api.openai.com/v1/audio/speech');
+    assert.equal(options.headers.Authorization,calls === 1 ? 'Bearer owned-openai-voice-key' : 'Bearer device-openai-voice-key');
+    return new Response(new Uint8Array([73,68,51]));
+  };
+  try {
+    assert.equal((await pinned('google:alice')).status,200);
+    assert.equal((await pinned('google:bob')).status,409);
+    const device = {protocol:'openai',base_url:'',model:'',api_key:'device-openai-voice-key'};
+    assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは',api_connection:device})).status,200);
+    assert.equal((await f.send('google:alice','/api/chat','POST',{message:'hello',api_connection:device})).status,400);
+    for (const base_url of ['https://proxy.example.com/v1','https://api.openai.com/v1/custom','https://api.openai.com:8443/v1']) {
+      assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは',api_connection:{...device,base_url}})).status,403);
+    }
+    await activate(f.send,'google:alice',voice);
+    assert.equal((await resolveProvider(f.env,'google:alice')).error,'no_model');
+    assert.equal((await f.send('google:alice','/api/tts','POST',{text:'こんにちは'})).status,403);
+    await f.send('google:alice','/api/ai/profiles/'+voice.id,'DELETE');
+    assert.equal((await pinned('google:alice')).status,409);
+    assert.equal(calls,2);
+  } finally {globalThis.fetch = previous;}
 });

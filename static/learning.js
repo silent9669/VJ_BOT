@@ -75,6 +75,8 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
     const task=item.production,section=document.createElement('section');section.className='production-task';
     section.innerHTML=`<h3>${escapeHtml(task.prompt)}</h3><label for="production-answer">Câu trả lời của em</label><textarea id="production-answer" rows="5" maxlength="4000" placeholder="Viết bằng tiếng Nhật…"></textarea><details><summary>Đối chiếu câu mẫu</summary><p lang="ja">${escapeHtml(task.model)}</p></details><fieldset><legend>Tự kiểm tra câu trả lời</legend>${task.criteria.map((c,i)=>`<label><input type="checkbox" value="${i}"> ${escapeHtml(c)}</label>`).join('')}</fieldset><button type="button">Lưu tự đánh giá</button><output aria-live="polite"></output>`;
     container.append(section);
+    globalThis.mountStudyTeacher?.(section,{lesson:buildLessonContext(item,level,skill),
+      isCurrent:()=>section.isConnected && !container.hidden});
     const input=section.querySelector('textarea'),save=section.querySelector('button'),status=section.querySelector('output');
     let pending=null;
     apiFetch('/api/progress').then(r=>r.ok?r.json():null).then(data=>{const saved=data?.items?.find(r=>r.item_id===item.id);if(saved?.response_text && !input.value){input.value=saved.response_text;status.textContent='Đã khôi phục bài viết đã lưu.';}}).catch(()=>{status.textContent='Chưa tải được bài viết cũ.';});
@@ -91,7 +93,7 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
     for(const [index,example] of (item.examples||[]).entries()) {
       const section=document.createElement('section');section.className='lesson-exercise';
       const select=()=>globalThis.setTeacherFocus?.({kind:'example',index});
-      const play=document.createElement('button');play.textContent=`Nghe câu ${index+1}`;play.onclick=()=>{select();playGeminiTTS(example.furigana || example.jp);};
+      const play=document.createElement('button');play.textContent=`Nghe câu ${index+1}`;play.onclick=()=>{select();playGeminiTTS(example.furigana || example.jp,{language:'ja-JP'});};
       const input=document.createElement('textarea');input.setAttribute('aria-label',`Chép câu ${index+1} bằng tiếng Nhật`);input.rows=2;
       input.addEventListener('focus',select);
       const reveal=document.createElement('button');reveal.textContent='Đối chiếu bản chép';
@@ -104,9 +106,12 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
         grade.onclick=async()=>{answer.querySelectorAll('button').forEach(b=>b.disabled=true);try{await record(`${item.id}:${index}`,correct,example.jp,attemptId);status.textContent='Đã lưu.';}catch{status.textContent='Chưa lưu được. Thử lại.';answer.querySelectorAll('button').forEach(b=>b.disabled=false);}};answer.append(grade);
       }
       reveal.onclick=()=>{select();answer.hidden=false;};section.append(play,input,reveal,answer,status);container.append(section);
+      globalThis.mountStudyTeacher?.(answer,{lesson:buildLessonContext(item,level,skill),focus:{kind:'example',index},
+        targets:[globalThis.studyTarget('example:vi',answer.querySelectorAll('p')[1],example.vi)],
+        isCurrent:()=>!container.hidden && !answer.hidden});
     }
   }
-  if(item.script_jp){const listen=document.createElement('button');listen.className='stage-btn';listen.textContent='Nghe bài đọc';listen.onclick=()=>playGeminiTTS(item.script_jp);container.append(listen);}
+  if(item.script_jp){const listen=document.createElement('button');listen.className='stage-btn';listen.textContent='Nghe bài đọc';listen.onclick=()=>playGeminiTTS(item.script_jp,{language:'ja-JP'});container.append(listen);}
   if(!questions.length)return;
   renderPracticeSession(container,item,level,skill,record);
 }

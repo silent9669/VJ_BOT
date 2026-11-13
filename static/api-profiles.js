@@ -2,15 +2,15 @@
 // A script running in this origin/browser profile can use its non-extractable key.
 // This is not an OS credential vault or a guarantee against a compromised browser.
 (function () {
-  const DB_NAME = 'vjbot_ai_profiles_v1', ACTIVE = 'vjbot_ai_active_v1:';
+  const DB_NAME = 'vjbot_ai_profiles_v1', ACTIVE = 'vjbot_ai_active_v1:', VOICE = 'vjbot_voice_profile_v1:';
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
   const SUFFIX = {openai: /\/chat\/completions$/, anthropic: /\/v1\/messages$/, gemini: /\/v1(beta)?$/};
   const BLOCKED = /(^|\.)(localhost|local|internal|localdomain|home|lan|workers\.dev|dangphuc\.me)$/i;
-  const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/tts', '/api/stt', '/api/ai/test'];
+  const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/tts', '/api/stt', '/api/ai/test'];
   const encoder = new TextEncoder(), decoder = new TextDecoder('utf-8', {fatal: true});
   const unavailable = () => problem('Device API profile unavailable. Open API settings and re-save or select a profile.', 'unavailable');
   const storageError = () => problem('Browser storage unavailable. Allow site storage and use a supported browser with IndexedDB and Web Crypto; the profile was not saved.', 'storage');
-  let opening = null;
+  let opening = null, voiceVersion = 0;
 
   function problem(message, code = 'invalid') { return Object.assign(new Error(message), {code}); }
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -199,32 +199,52 @@
       if (!previous && rows.length >= 20) throw problem('A maximum of 20 device profiles can be saved for this account.');
       await requestResult(store.put(row));
     });
+    let selectedVoice;
+    try { selectedVoice = voice(owner); } catch { /* Saving credentials does not repair a corrupt voice reference. */ }
+    if (!sameConnection && selectedVoice?.scope === 'local' && selectedVoice.id === id) voiceChanged(owner);
     return publicProfile(row);
   }
-  function active(owner) {
+  const validSelection = (choice, prefix) => object(choice) && (choice.scope === 'none' ? choice.id === ''
+    : ['local', 'server'].includes(choice.scope) ? idOk(choice.id)
+    : prefix === VOICE && choice.scope === 'platform' && choice.id === 'openai');
+  function selection(owner, prefix) {
     account(owner);
     let raw;
-    try { raw = localStorage.getItem(ACTIVE + owner); } catch { throw storageError(); }
+    try { raw = localStorage.getItem(prefix + owner); } catch { throw storageError(); }
     if (raw === null) return null;
     try {
       const choice = JSON.parse(raw);
-      if (!object(choice) || !(choice.scope === 'none' ? choice.id === '' : ['local', 'server'].includes(choice.scope) && idOk(choice.id))) throw unavailable();
+      if (!validSelection(choice, prefix)) throw unavailable();
       return {scope: choice.scope, id: choice.id};
     } catch { throw unavailable(); }
   }
-  function setActive(owner, choice) {
+  const active = owner => selection(owner, ACTIVE);
+  const voice = owner => selection(owner, VOICE);
+  function voiceChanged(owner) {
+    if (typeof signedInUser !== 'undefined' && signedInUser?.user_id !== owner) return;
+    voiceVersion++;
+    globalThis.dispatchEvent?.(new Event('vjbot-voice-changed'));
+  }
+  function setSelection(owner, choice, prefix) {
     account(owner);
-    if (choice !== null && (!object(choice) || !(choice.scope === 'none' ? choice.id === '' : ['local', 'server'].includes(choice.scope) && idOk(choice.id)))) throw problem('Invalid active profile choice.');
+    if (choice !== null && !validSelection(choice, prefix)) throw problem('Invalid active profile choice.');
     try {
       if (choice === null) {
-        localStorage.removeItem(ACTIVE + owner);
-        if (localStorage.getItem(ACTIVE + owner) !== null) throw storageError();
+        localStorage.removeItem(prefix + owner);
+        if (localStorage.getItem(prefix + owner) !== null) throw storageError();
       } else {
         const value = JSON.stringify({scope: choice.scope, id: choice.id});
-        localStorage.setItem(ACTIVE + owner, value);
-        if (localStorage.getItem(ACTIVE + owner) !== value) throw storageError();
+        localStorage.setItem(prefix + owner, value);
+        if (localStorage.getItem(prefix + owner) !== value) throw storageError();
       }
     } catch { throw storageError(); }
+  }
+  const setActive = (owner, choice) => setSelection(owner, choice, ACTIVE);
+  function setVoice(owner, choice) {
+    let previous;
+    try { previous = voice(owner); } catch { previous = undefined; }
+    setSelection(owner, choice, VOICE);
+    if (JSON.stringify(previous) !== JSON.stringify(voice(owner))) voiceChanged(owner);
   }
   async function remove(owner, id) {
     account(owner); identifier(id);
@@ -232,12 +252,16 @@
     // Clear selection before deleting: a storage error must not report a successful deletion.
     const selected = active(owner);
     if (selected?.scope === 'local' && selected.id === id) setActive(owner, {scope: 'none', id: ''});
+    let selectedVoice;
+    try { selectedVoice = voice(owner); } catch { /* A corrupt voice reference must not block deleting independent credentials. */ }
+    if (selectedVoice?.scope === 'local' && selectedVoice.id === id) setVoice(owner, {scope: 'none', id: ''});
     await transaction(['profiles'], 'readwrite', tx => requestResult(tx.objectStore('profiles').delete([owner, id])));
   }
   async function clear(owner) {
     account(owner);
     let selectionError;
     try { setActive(owner, {scope: 'none', id: ''}); } catch (error) { selectionError = error; }
+    try { setVoice(owner, {scope: 'none', id: ''}); } catch (error) { selectionError ||= error; }
     // Even when preference storage fails, attempt to erase this account's secrets.
     await transaction(['profiles', 'keys'], 'readwrite', async tx => {
       const store = tx.objectStore('profiles'), rows = await requestResult(store.index('owner').getAll(owner));
@@ -254,8 +278,17 @@
     const origin = globalThis.location?.origin;
     if (typeof path !== 'string' || !PATHS.some(allowed => path === allowed || (origin && path === origin + allowed))
       || typeof options.method !== 'string' || options.method.toUpperCase() !== 'POST') return result;
-    const selected = active(owner);
+    const speech = path === '/api/tts' || path === origin + '/api/tts';
+    const revision = voiceVersion;
+    const selected = speech ? voice(owner) : active(owner);
+    if (speech && (!selected || selected.scope === 'none')) throw problem('No voice profile selected. Choose a voice account in Settings.');
     if (selected?.scope === 'none') throw problem('No API profile selected. Choose a profile in API settings before continuing.');
+    if (speech && selected?.scope === 'platform' && selected.id === 'openai') {
+      const headers = new Headers(options.headers);
+      headers.set('X-VJBot-Profile', 'platform_openai');
+      result.headers = Object.fromEntries(headers);
+      return result;
+    }
     if (selected?.scope === 'server') {
       const headers = new Headers(options.headers);
       headers.set('X-VJBot-Profile', selected.id);
@@ -271,14 +304,21 @@
     } catch { throw problem('Invalid JSON request. Reopen this page before using the device profile.'); }
     let profile;
     try { profile = await load(owner, selected.id); } catch { throw unavailable(); }
-    const current = active(owner);
+    const current = speech ? voice(owner) : active(owner);
+    if (speech && revision !== voiceVersion) throw unavailable();
     if (current?.scope !== 'local' || current.id !== selected.id) throw unavailable();
-    if (!profile.model) throw problem('Choose and check a model in API settings before using this device profile.');
+    if (speech && !((profile.protocol === 'gemini' && profile.base_url === BASES.gemini)
+      || (profile.protocol === 'openai' && profile.base_url === BASES.openai))) throw problem('Voice requires native Gemini or official OpenAI.');
+    if (!speech && !profile.model) throw problem('Choose and check a model in API settings before using this device profile.');
     const headers = new Headers(options.headers);
     headers.delete('X-VJBot-Profile');
     result.headers = Object.fromEntries(headers);
     result.body = JSON.stringify({...body, api_connection: {protocol: profile.protocol, base_url: profile.base_url, model: profile.model, api_key: profile.api_key}});
     return result;
   }
-  globalThis.VJProfiles = Object.freeze({list, load, save, remove, clear, active, setActive, prepareRequest});
+  globalThis.addEventListener?.('storage', event => {
+    const owner = typeof signedInUser === 'undefined' ? null : signedInUser?.user_id;
+    if (event.key === null || (owner && event.key === VOICE + owner)) voiceChanged(owner);
+  });
+  globalThis.VJProfiles = Object.freeze({list, load, save, remove, clear, active, setActive, voice, setVoice, prepareRequest});
 })();

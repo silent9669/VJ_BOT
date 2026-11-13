@@ -25,8 +25,11 @@ export async function transcriptionRoute(request,env) {
   if(new TextEncoder().encode(raw).length>3*1024*1024)return json({detail:'Bản ghi quá lớn. Ghi tối đa 60 giây.'},413);
   let data;try{data=JSON.parse(raw);}catch{return json({detail:'Dữ liệu không hợp lệ.'},400);}
   if(!data || typeof data!=='object' || Array.isArray(data))return json({detail:'Dữ liệu không hợp lệ.'},400);
-  const provider=await resolveProvider(env,user.user_id,data.api_connection,request.headers.get('X-VJBot-Profile')??undefined);
-  const supported=provider?.protocol==='openai' && provider.baseUrl==='https://api.openai.com/v1' && !provider.error;
+  const profileId=request.headers.get('X-VJBot-Profile')??undefined;
+  const provider=await resolveProvider(env,user.user_id,data.api_connection,profileId);
+  // STT follows the explicit chat connection, never the independent Sound selection.
+  const selected=provider?.source==='platform' || profileId!==undefined || data.api_connection!==undefined;
+  const supported=selected && provider?.protocol==='openai' && provider.baseUrl==='https://api.openai.com/v1' && !provider.error;
   if(data.action==='capabilities')return json({supported,model:supported?'gpt-transcribe':null});
   if(!supported)return json({detail:'Kết nối OpenAI chính thức để chép lời, hoặc nhập câu trả lời.',code:'no_transcription'},403);
   const mime=typeof data.mime_type==='string'?data.mime_type.split(';')[0].toLowerCase():'';

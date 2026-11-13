@@ -1,8 +1,7 @@
-// Settings: the learner's own API (OpenAI-compatible, Claude or Gemini). Admin: activity.
+// Learners use saved API/OAuth connections; administrators use managed server OpenAI.
 (function () {
   const el = id => document.getElementById(id);
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
-  let sharedProvider = null;
   let savedConnection = false, storageEnabled = false, modelRequest = 0, modelAbort = null, testing = false;
   let nextProbeAt = 0, timingIdentity = null, dispatchedAt = Object.freeze([]);
   let modelSnapshot = null;
@@ -10,8 +9,12 @@
   let profileRows = [], selectedProfile = null, profileKey = '', rendering = 0;
   let profilesOwner = null, loadedProfile = null;
   const methodKey = owner => 'vjbot_ai_method:' + owner;
+  const managed = () => signedInUser?.is_admin === true;
+  const accountIdentity = () => JSON.stringify([signedInUser?.user_id || null, managed()]);
+  let renderedIdentity = accountIdentity();
   function connectionChoice() {
     const owner = signedInUser?.user_id;
+    if (managed()) return 'platform';
     try {
       return window.usesAntigravityOAuth?.(owner)
         ? 'oauth:' + (window.antigravityConnectionId?.(owner) || '')
@@ -19,6 +22,7 @@
     } catch { return 'unavailable'; }
   }
   function refreshSavedConnections() {
+    if (managed()) return;
     const list = el('ai-profile-list'), owner = signedInUser?.user_id;
     list.replaceChildren();
     const empty = document.createElement('option');
@@ -47,15 +51,11 @@
     const currentProfile = choice.startsWith('oauth:')
       ? (window.savedOAuthConnections?.() || []).find(row => 'oauth:' + row.id === choice)
       : profilesOwner === owner && profileRows.find(row => profileChoice(row) === choice);
-    const shared = sharedProvider && !choice && !window.usesAntigravityOAuth?.(owner);
-    el('ai-current-model').textContent = currentProfile?.model || (shared ? sharedProvider.model : 'Chưa chọn kết nối');
-    el('ai-current-hint').textContent = currentProfile
-      ? `${currentProfile.name} · Saved setup. Live availability can change.`
-      : shared ? 'OpenAI của máy chủ · Quản trị viên' : 'Chọn API đã lưu hoặc thêm kết nối.';
-    el('ai-card').dataset.connected = String(Boolean(currentProfile?.model || shared));
-    el('ai-chat').hidden = !currentProfile?.model && !shared;
-    const apiProfile = profilesOwner === owner && profileRows.find(row => profileChoice(row) === profileChoice(VJProfiles.active(owner)));
-    el('ai-oauth-voice-hint').textContent = `Read-aloud API-key profile: ${apiProfile ? apiProfile.name : 'none selected'}. Switching OAuth chat accounts does not change it.`;
+    el('ai-current-model').textContent = currentProfile?.model || 'Chưa chọn kết nối';
+    el('ai-current-hint').textContent = currentProfile ? '' : 'Chọn API đã lưu hoặc thêm kết nối.';
+    el('ai-card').dataset.connected = String(Boolean(currentProfile?.model));
+    el('ai-chat').hidden = !currentProfile?.model;
+    window.renderVoiceProfiles?.(owner, profilesOwner === owner ? profileRows : [], profilesOwner === owner && storageEnabled);
   }
   window.refreshSavedConnections = refreshSavedConnections;
   const profileChoice = profile => profile && profile.scope !== 'none' ? `${profile.scope}:${profile.id}` : '';
@@ -97,7 +97,7 @@
   }
   async function saveProfile(useModel) {
     const owner = signedInUser?.user_id, scope = el('ai-profile-storage').value;
-    if (!owner) throw new Error('Sign in before saving a profile.');
+    if (!owner || managed()) throw new Error('API cá nhân chỉ dành cho tài khoản học viên.');
     const model = el('ai-models').hidden ? '' : el('ai-model-list').value;
     if (useModel && !model) throw new Error('Check models and choose a responding result first.');
     const snapshot = modelSnapshot;
@@ -116,15 +116,33 @@
       profile = result.profile;
       await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
     }
-    if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+    if (signedInUser?.user_id !== owner || managed()) throw new Error('The signed-in account or role changed.');
     VJProfiles.setActive(owner, {scope, id: profile.id});
     localStorage.setItem(methodKey(owner), 'key');
     window.aiConnectionChanged?.();
     modelSnapshot = null;
     return `Saved ${profile.name} on ${scope === 'local' ? 'this device' : 'your account'}. ${model ? 'Ready to use; no models were rechecked.' : 'Choose Find usable models when ready.'}`;
   }
+  window.saveVoiceProfile = async (owner, input, scope) => {
+    if (!owner || signedInUser?.user_id !== owner || managed()) throw new Error('API cá nhân chỉ dành cho tài khoản học viên.');
+    if (!['local', 'server'].includes(scope)) throw new Error('Choose a valid save location.');
+    if (scope === 'server' && !storageEnabled) throw new Error('Server key storage is unavailable. Choose this device instead.');
+    const protocol = input.protocol || 'gemini';
+    if (!['gemini', 'openai'].includes(protocol)) throw new Error('Choose native Gemini or official OpenAI.');
+    const draft = {name:input.name, api_key:input.api_key, protocol, base_url:BASES[protocol], model:''};
+    const profile = scope === 'local' ? await VJProfiles.save(owner, draft)
+      : (await send('/api/ai/profiles', 'POST', draft)).profile;
+    if (signedInUser?.user_id !== owner || managed()) throw new Error('The signed-in account or role changed.');
+    rendering++;
+    const previous = profilesOwner === owner ? profileRows : [];
+    profileRows = [...previous, {...profile, scope}];
+    profilesOwner = owner;
+    refreshSavedConnections();
+    return {scope, id:profile.id, name:profile.name};
+  };
+
   async function profileAction(action) {
-    if (testing) return;
+    if (testing || managed()) return;
     stopModels();
     testing = true;
     el('ai-connection-status').textContent = 'Updating saved connection…';
@@ -141,7 +159,7 @@
       testing = false;
       el('ai-profile-list').setAttribute('aria-busy', 'false');
     }
-    if (signedInUser?.user_id !== owner) return;
+    if (signedInUser?.user_id !== owner || managed()) return;
     if (succeeded) loadedProfile = null;
     if (succeeded) await renderSettings();
     el('ai-status').textContent = message || '';
@@ -307,7 +325,7 @@
     });
   }
   async function loadModels() {
-    if (testing || activeScan) return;
+    if (managed() || testing || activeScan) return;
     resetModels();
     invalidateSelection();
     syncProbeBudget();
@@ -320,7 +338,7 @@
     }
     modelAbort = new AbortController();
     activeScan = {owner, request};
-    const current = () => request === modelRequest && signedInUser?.user_id === owner;
+    const current = () => request === modelRequest && signedInUser?.user_id === owner && !managed();
     let checked = 0, passed = 0, total = 0, partial = '', releaseScan = null;
     const progress = el('ai-load-progress');
     progress.removeAttribute('value');
@@ -466,7 +484,32 @@
   }
   window.renderAccountSettings = renderAccountCard;
 
+  // Restore voice metadata at sign-in without opening editors or discovering/generating models.
+  window.loadVoiceProfiles = async () => {
+    const owner = signedInUser?.user_id, version = rendering;
+    if (!owner || managed()) return;
+    let local = [];
+    try { local = await VJProfiles.list(owner); } catch { /* Server references may still be usable. */ }
+    if (signedInUser?.user_id !== owner || managed() || version !== rendering) return;
+    try {
+      const data = await call('/api/ai/profiles');
+      if (signedInUser?.user_id !== owner || managed() || version !== rendering) return;
+      profileRows = [...data.profiles.map(profile => ({...profile,scope:'server'})), ...local.map(profile => ({...profile,scope:'local'}))];
+      profilesOwner = owner; storageEnabled = data.can_store;
+      window.renderVoiceProfiles?.(owner, profileRows, storageEnabled);
+    } catch {
+      if (signedInUser?.user_id !== owner || managed() || version !== rendering) return;
+      profileRows = local.map(profile => ({...profile,scope:'local'}));
+      profilesOwner = owner; storageEnabled = false;
+      window.renderVoiceProfiles?.(owner, profileRows);
+    }
+  };
   async function renderSettings() {
+    if (managed()) {
+      resetModels();
+      renderAccountCard();
+      return window.renderAdminAISettings?.();
+    }
     if (testing) return;
     const owner = signedInUser?.user_id;
     if (activeScan && activeScan.owner !== owner) resetModels();
@@ -477,23 +520,25 @@
     const version = ++rendering;
     const status = el('ai-status'), pending = modelSnapshot?.owner === owner && modelSnapshot.draft?.api_key ? modelSnapshot : null;
     status.textContent = '';
+    let metadataLoaded = false;
     try {
       const data = await call('/api/ai/profiles');
+      if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner || managed()) return;
       let local = [], deviceError = '';
       try { local = await VJProfiles.list(owner); } catch { deviceError = 'Device storage is unavailable. Choose server storage or enable browser storage.'; }
-      if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
-      sharedProvider = data.platform?.configured ? data.platform : null;
-      if (typeof data.is_admin === 'boolean' && signedInUser) { signedInUser.is_admin=data.is_admin; if(typeof renderAccount==='function')renderAccount(); }
+      if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner || managed()) return;
       profileRows = [...data.profiles.map(profile => ({...profile, scope: 'server'})), ...local.map(profile => ({...profile, scope: 'local'}))];
       profilesOwner = owner;
       storageEnabled = data.can_store;
+      window.renderVoiceProfiles?.(owner, profileRows, storageEnabled);
+      metadataLoaded = true;
       const choice = VJProfiles.active(owner);
       const profile = choice?.scope === 'none' ? null : choice?.scope === 'local'
         ? profileRows.find(row => row.scope === 'local' && row.id === choice.id)
         : profileRows.find(row => row.scope === 'server' && row.id === (choice?.scope === 'server' ? choice.id : data.active_id));
       let key = '';
       if (profile?.scope === 'local') key = (await VJProfiles.load(owner, profile.id)).api_key;
-      if (activeScan || version !== rendering || signedInUser?.user_id !== owner) return;
+      if (activeScan || version !== rendering || signedInUser?.user_id !== owner || managed()) return;
       if (!choice && profile) VJProfiles.setActive(owner, {scope: profile.scope, id: profile.id});
       refreshSavedConnections();
       const cache = pending || recalledModels(owner, profile?.connection_id);
@@ -512,17 +557,19 @@
         el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Thêm API của em để sử dụng thầy Lâm.';
         pill(profile ? 'saved' : 'none', profile ? `Đang dùng ${profile.name}` : 'Chưa chọn API');
       }
-      const shared = sharedProvider && !choice && !profile && !window.usesAntigravityOAuth?.(owner);
-      if (el('ai-platform')) { el('ai-platform').hidden=!shared; el('ai-platform-model').textContent=sharedProvider?.model || ''; }
-      if (shared) {
-        el('ai-form').hidden=true;
-        el('ai-source').hidden=true;el('ai-source').textContent='';
-        pill('saved','OpenAI đã sẵn sàng');
-      }
       if (!profile && !pending) el('ai-form').hidden=true;
       if (deviceError) status.textContent = deviceError;
     } catch (error) {
-      if (version === rendering && signedInUser?.user_id === owner) { resetModels(); status.textContent = error.message; }
+      if (version === rendering && signedInUser?.user_id === owner && !managed()) {
+        if (!metadataLoaded) {
+          profilesOwner = null; profileRows = []; storageEnabled = false;
+          let local = [];
+          try { local = await VJProfiles.list(owner); } catch { /* Keep an inaccessible voice reference explicit. */ }
+          if (version !== rendering || signedInUser?.user_id !== owner || managed()) return;
+          window.renderVoiceProfiles?.(owner, local.map(profile => ({...profile, scope:'local'})));
+        }
+        resetModels(); status.textContent = error.message;
+      }
     }
     await oauthRendering;
   }
@@ -548,23 +595,23 @@
     window.renderAdminUsers?.();
   }
 
-  el('ai-platform-test')?.addEventListener('click', async () => {
-    const button=el('ai-platform-test');button.disabled=true;el('ai-source').hidden=false;
-    try { await send('/api/ai/test','POST',{});el('ai-source').textContent='Kết nối OpenAI thành công.'; }
-    catch(error){el('ai-source').textContent=error.message;}
-    finally {button.disabled=false;}
-  });
-
   window.renderAiPanels = tab => (tab === 'admin' ? renderAdmin() : renderSettings());
   window.pauseApiModelScan = () => { rendering++; stopModels(); };
 
-  // There is no built-in AI: chat stays closed (with one clear next step) until the learner saves an API.
+  // The readiness gate routes administrators to managed settings, never a personal API editor.
   const openAiSettings = () => {
-    switchTab('settings',{view:'api'});
-    setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); el('ai-profile-list').focus({preventScroll: true}); }, 250);
+    switchTab('settings',{view:managed() ? 'admin' : 'api'});
   };
   async function aiSource() {
     try {
+      const identity = accountIdentity();
+      if (managed()) {
+        const owner = signedInUser?.user_id;
+        const data = await call('/api/ai/settings');
+        if (owner !== signedInUser?.user_id || !managed()) return 'none';
+        window.renderVoiceProfiles?.(owner, [], false, data.platform);
+        return data.source === 'platform' && data.platform?.configured ? 'platform' : 'none';
+      }
       if (window.usesAntigravityOAuth?.(signedInUser?.user_id)) {
         const owner = signedInUser?.user_id, connection = window.antigravityConnectionId?.(owner);
         if (!connection) return 'none';
@@ -584,8 +631,9 @@
         return data.profiles.some(profile => profile.id === choice.id && profile.model) ? 'own' : 'none';
       }
       const data = await call('/api/ai/settings');
+      if (identity !== accountIdentity()) return 'none';
       if (data.own?.id && data.own.model) VJProfiles.setActive(owner, {scope: 'server', id: data.own.id});
-      return data.source === 'platform' ? 'platform' : data.own?.model ? data.source : 'none';
+      return data.own?.model ? data.source : 'none';
     } catch { return 'none'; }
   }
   window.checkAiReady = async () => {
@@ -596,6 +644,10 @@
     el('ai-chat').hidden = none;
     room.dataset.ai = source === 'unknown' ? 'unknown' : none ? 'none' : 'ready';
     el('chat-ai-gate').hidden = !none;
+    el('chat-gate-title').textContent = managed()
+      ? 'OpenAI quản trị chưa sẵn sàng. Kiểm tra OPENAI_API_KEY trên máy chủ và quyền quản trị.'
+      : 'Kết nối API để chat với thầy Lâm';
+    el('chat-gate-open').textContent = managed() ? 'Model quản trị' : 'Thêm API';
     el('chat-input').disabled = none;
     el('btn-send-message').disabled = none;
     if (!none && /Cài đặt/.test(el('chat-error-text').textContent)) chatError('', null);
@@ -604,15 +656,15 @@
     if (await aiSource() !== 'none') return;
     const banner = document.createElement('div'), text = document.createElement('p'), open = document.createElement('button');
     banner.className = 'ai-banner';
-    text.textContent = 'Kết nối API để chat với thầy Lâm.';
-    open.type = 'button'; open.className = 'public-cta'; open.textContent = 'Thêm API';
+    text.textContent = managed() ? 'OpenAI quản trị chưa sẵn sàng. Kiểm tra cấu hình máy chủ.' : 'Kết nối API để chat với thầy Lâm.';
+    open.type = 'button'; open.className = 'public-cta'; open.textContent = managed() ? 'Model quản trị' : 'Thêm API';
     open.onclick = openAiSettings;
     banner.append(text, open);
     host.prepend(banner);
   };
   el('chat-gate-open').addEventListener('click', openAiSettings);
   el('ai-chat').addEventListener('click', () => switchTab('classroom'));
-  el('ai-add-connection').addEventListener('click', () => el('ai-add-dialog').showModal());
+  el('ai-add-connection').addEventListener('click', () => { if (!managed()) el('ai-add-dialog').showModal(); });
   el('ai-add-close').addEventListener('click', () => el('ai-add-dialog').close());
   for (const id of ['ai-profile-new', 'ai-method-oauth']) {
     el(id).addEventListener('click', () => el('ai-add-dialog').close(), {capture:true});
@@ -665,7 +717,7 @@
   }));
   el('ai-profile-storage').addEventListener('change', () => { storageHint(); publishModels(); });
   el('ai-profile-new').addEventListener('click', () => {
-    if (testing) return;
+    if (testing || managed()) return;
     ++rendering;
     window.showAiConnectionForm?.('key');
     fillProfile(null);
@@ -675,6 +727,7 @@
     el('ai-profile-name').focus();
   });
   el('ai-profile-list').addEventListener('change', async () => {
+    if (managed()) return;
     const value = el('ai-profile-list').value;
     if (value.startsWith('oauth:')) {
       stopModels();
@@ -687,7 +740,7 @@
     await profileAction(async owner => {
       if (profile?.scope === 'server') await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
       else if (profile) await VJProfiles.load(owner, profile.id);
-      if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+      if (signedInUser?.user_id !== owner || managed()) throw new Error('The signed-in account or role changed.');
       VJProfiles.setActive(owner, profile ? {scope: profile.scope, id: profile.id} : {scope:'none', id:''});
       localStorage.setItem(methodKey(owner), 'key');
       window.aiConnectionChanged?.();
@@ -707,9 +760,30 @@
     return profileAction(async owner => {
       if (profile.scope === 'local') await VJProfiles.remove(owner, profile.id);
       else await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}`, 'DELETE');
+      if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+      let voice;
+      try { voice = VJProfiles.voice(owner); } catch { /* Independent corrupt voice storage does not block credential deletion. */ }
+      if (voice?.scope === profile.scope && voice.id === profile.id) VJProfiles.setVoice(owner, {scope:'none', id:''});
       VJProfiles.setActive(owner, {scope: 'none', id: ''});
       modelSnapshot = null;
       return 'Profile deleted. Choose another connection to continue; no fallback was selected.';
     });
+  });
+  window.addEventListener('vjbot-voice-changed', () => {
+    const identity = accountIdentity();
+    if (identity === renderedIdentity) return;
+    renderedIdentity = identity;
+    readiness++;
+    resetModels();
+    syncProbeBudget();
+    selectedProfile = null; profileKey = ''; loadedProfile = null;
+    profilesOwner = null; profileRows = []; storageEnabled = false;
+    el('ai-key').value = '';
+    el('ai-profile-list').replaceChildren();
+    el('ai-current-model').textContent = 'Chưa chọn kết nối';
+    el('ai-current-hint').textContent = '';
+    el('ai-card').dataset.connected = 'false';
+    el('ai-form').hidden = el('ai-oauth-panel').hidden = true;
+    if (el('ai-add-dialog').open) el('ai-add-dialog').close();
   });
 })();

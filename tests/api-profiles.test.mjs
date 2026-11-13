@@ -57,7 +57,9 @@ function database() {
   }};
 }
 function browser({idb = database(), storage = new Map(), brokenStorage = false} = {}) {
+  const events = new EventTarget();
   const context = vm.createContext({crypto: webcrypto, URL, Headers, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer,
+    Event, addEventListener:events.addEventListener.bind(events), dispatchEvent:events.dispatchEvent.bind(events),
     indexedDB: idb, location: {href: 'https://tutor.example/settings', origin: 'https://tutor.example'},
     localStorage: {
       getItem(key) {if (brokenStorage) throw new Error('private details'); return storage.get(key) ?? null;},
@@ -66,7 +68,7 @@ function browser({idb = database(), storage = new Map(), brokenStorage = false} 
     }});
   context.window = context;
   vm.runInContext(source, context);
-  return {api: context.VJProfiles, idb, storage};
+  return {api: context.VJProfiles, context, idb, storage};
 }
 
 test('saves encrypted credentials, public metadata, and reloads the same account key', async () => {
@@ -209,7 +211,7 @@ test('only exact intended same-origin inference POST paths receive an immutable 
   const b = browser(), profile = await b.api.save(owner, draft());
   b.api.setActive(owner, {scope: 'local', id: profile.id});
   const options = Object.freeze({method: 'POST', headers: Object.freeze({'X-CSRF-Token': 'synthetic-csrf'}), body: JSON.stringify({message: 'Hello'})});
-  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/tts', '/api/stt', '/api/ai/test', 'https://tutor.example/api/chat']) {
+  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/stt', '/api/ai/test', 'https://tutor.example/api/chat']) {
     const prepared = await b.api.prepareRequest(path, options, owner), body = JSON.parse(prepared.body);
     assert.notEqual(prepared, options);
     assert.equal(body.api_connection.api_key, draft().api_key);
@@ -292,4 +294,159 @@ test('clear still attempts credential deletion when localStorage is blocked and 
   await assert.rejects(blocked.api.clear(owner), /storage|browser/i);
   assert.deepEqual(plain(await b.api.list(owner)), []);
   assert.equal(b.idb.stores.get('keys').has(JSON.stringify(owner)), false);
+});
+
+test('voice references persist per owner independently of chat and inject only a saved Gemini key', async () => {
+  const b = browser(), chat = await b.api.save(owner, draft());
+  const voice = await b.api.save(owner, {...draft(), name: 'Voice', protocol: 'gemini', model: '', api_key: 'synthetic-voice-key'});
+  b.api.setActive(owner, {scope: 'local', id: chat.id});
+  b.api.setVoice(owner, {scope: 'local', id: voice.id});
+  const reloaded = browser({idb: b.idb, storage: b.storage});
+  assert.deepEqual(plain(reloaded.api.voice(owner)), {scope: 'local', id: voice.id});
+  assert.equal(reloaded.api.voice(other), null);
+  const options = {method: 'POST', body: '{"text":"こんにちは"}', headers: {'X-VJBot-Profile': 'stale-chat'}};
+  for (const path of ['/api/tts', 'https://tutor.example/api/tts']) {
+    const result = await reloaded.api.prepareRequest(path, options, owner);
+    assert.equal(JSON.parse(result.body).api_connection.api_key, 'synthetic-voice-key');
+    assert.equal(JSON.parse(result.body).api_connection.model, '');
+    assert.equal(new Headers(result.headers).get('X-VJBot-Profile'), null);
+  }
+  b.api.setActive(owner, {scope: 'none', id: ''});
+  assert.equal(JSON.parse((await b.api.prepareRequest('/api/tts', options, owner)).body).api_connection.api_key, 'synthetic-voice-key');
+  assert.equal(JSON.stringify([...b.storage]).includes('synthetic-voice-key'), false);
+  await assert.rejects(b.api.prepareRequest('/api/chat', {method:'POST',body:'{}'}, owner), /No API profile/i);
+});
+
+test('recorded transcription keeps the active OpenAI key while read-aloud uses its independent Gemini key', async () => {
+  const b = browser(), options = {method:'POST',body:'{}'};
+  const chat = await b.api.save(owner, {...draft(),base_url:'https://api.openai.com/v1',api_key:'synthetic-openai-transcription-key'});
+  const voice = await b.api.save(owner, {...draft(),protocol:'gemini',base_url:'https://generativelanguage.googleapis.com',model:'',api_key:'synthetic-gemini-read-aloud-key'});
+  b.api.setActive(owner, {scope:'local',id:chat.id});
+  b.api.setVoice(owner, {scope:'local',id:voice.id});
+  const transcription = JSON.parse((await b.api.prepareRequest('/api/stt', options, owner)).body).api_connection;
+  const speech = JSON.parse((await b.api.prepareRequest('/api/tts', options, owner)).body).api_connection;
+  assert.equal(transcription.api_key,'synthetic-openai-transcription-key');
+  assert.equal(transcription.base_url,'https://api.openai.com/v1');
+  assert.equal(speech.api_key,'synthetic-gemini-read-aloud-key');
+  assert.equal(speech.protocol,'gemini');
+});
+
+test('missing, corrupt, deleted, unsupported and inaccessible voice choices never borrow chat', async () => {
+  const b = browser(), chat = await b.api.save(owner, {...draft(),base_url:'https://chat-proxy.example/v1'}), options = {method:'POST',body:'{}'};
+  b.api.setActive(owner, {scope:'local',id:chat.id});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
+  b.api.setVoice(owner, {scope:'local',id:chat.id});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /native Gemini|official OpenAI/i);
+  const proxy = await b.api.save(owner, {...draft(),protocol:'gemini',base_url:'https://proxy.example.com'});
+  b.api.setVoice(owner, {scope:'local',id:proxy.id});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /native Gemini|official OpenAI/i);
+  const voice = await b.api.save(owner, {...draft(),protocol:'gemini',model:''});
+  b.api.setVoice(owner, {scope:'local',id:voice.id});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, other), /voice/i);
+  await b.api.remove(owner, voice.id);
+  assert.deepEqual(plain(b.api.voice(owner)), {scope:'none',id:''});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
+  b.storage.set('vjbot_voice_profile_v1:' + owner, '{corrupt');
+  assert.throws(() => b.api.voice(owner), /unavailable/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /unavailable/i);
+  b.api.setVoice(owner, {scope:'local',id:'missing'});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /unavailable/i);
+  const blocked = browser({storage:b.storage,brokenStorage:true});
+  assert.throws(() => blocked.api.setVoice(owner, {scope:'server',id:'voice'}), /storage/i);
+  await assert.rejects(blocked.api.prepareRequest('/api/tts', options, owner), /storage/i);
+});
+
+test('server voice is explicitly pinned and clear does not borrow another owner or chat selection', async () => {
+  const b = browser(), options = {method:'POST',body:'{}'};
+  b.api.setVoice(owner, {scope:'server',id:'server-voice'});
+  b.api.setVoice(other, {scope:'server',id:'other-voice'});
+  b.api.setActive(owner, {scope:'server',id:'chat'});
+  assert.equal(new Headers((await b.api.prepareRequest('/api/tts', options, owner)).headers).get('X-VJBot-Profile'), 'server-voice');
+  await b.api.clear(owner);
+  assert.deepEqual(plain(b.api.voice(owner)), {scope:'none',id:''});
+  assert.deepEqual(plain(b.api.voice(other)), {scope:'server',id:'other-voice'});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
+});
+
+test('voice changes invalidate in-flight encrypted loads, including changing away and back', async () => {
+  const b = browser(), a = await b.api.save(owner, {...draft(),protocol:'gemini',model:''});
+  const next = await b.api.save(owner, {...draft(),protocol:'gemini',model:'',api_key:'second-voice-key'});
+  b.api.setVoice(owner, {scope:'local',id:a.id});
+  const pending = b.api.prepareRequest('/api/tts', {method:'POST',body:'{}'}, owner);
+  b.api.setVoice(owner, {scope:'local',id:next.id});
+  b.api.setVoice(owner, {scope:'local',id:a.id});
+  await assert.rejects(pending, /unavailable/i);
+  assert.equal(JSON.parse((await b.api.prepareRequest('/api/tts', {method:'POST',body:'{}'}, owner)).body).api_connection.api_key,draft().api_key);
+});
+
+test('voice notifications follow actual owned selection and cross-tab reference changes, not chat switches', () => {
+  const b = browser();
+  b.context.signedInUser = {user_id:owner};
+  let changes = 0;
+  b.context.addEventListener('vjbot-voice-changed', () => {changes++;});
+  b.api.setVoice(owner, {scope:'server',id:'voice-a'});
+  b.api.setVoice(owner, {scope:'server',id:'voice-a'});
+  b.api.setActive(owner, {scope:'server',id:'chat-b'});
+  b.api.setVoice(other, {scope:'server',id:'other-voice'});
+  assert.equal(changes,1);
+  const storageEvent = key => {
+    const event = new Event('storage');Object.defineProperty(event,'key',{value:key});
+    b.context.dispatchEvent(event);
+  };
+  storageEvent('vjbot_ai_active_v1:' + owner);
+  storageEvent('vjbot_voice_profile_v1:' + other);
+  assert.equal(changes,1);
+  b.storage.set('vjbot_voice_profile_v1:' + owner, JSON.stringify({scope:'server',id:'voice-b'}));
+  storageEvent('vjbot_voice_profile_v1:' + owner);
+  assert.equal(changes,2);
+  assert.deepEqual(plain(b.api.voice(owner)),{scope:'server',id:'voice-b'});
+});
+
+test('official OpenAI voice-only profiles remain independent and cannot act as unconfigured chat', async () => {
+  const b = browser(), voice = await b.api.save(owner, {...draft(),model:'',api_key:'synthetic-openai-voice'});
+  b.api.setVoice(owner,{scope:'local',id:voice.id});
+  b.api.setActive(owner,{scope:'local',id:voice.id});
+  const prepared = await b.api.prepareRequest('/api/tts',{method:'POST',body:'{"speech_model":"gpt-4o-mini-tts"}'},owner);
+  assert.equal(JSON.parse(prepared.body).api_connection.protocol,'openai');
+  assert.equal(JSON.parse(prepared.body).api_connection.model,'');
+  assert.equal(JSON.parse(prepared.body).api_connection.api_key,'synthetic-openai-voice');
+  await assert.rejects(b.api.prepareRequest('/api/chat',{method:'POST',body:'{}'},owner),/choose|model/i);
+});
+
+test('only exact platform OpenAI voice refs persist and only exact speech POSTs receive the platform header', async () => {
+  const b = browser(), options = {method:'POST',body:'{}'};
+  b.api.setActive(owner,{scope:'server',id:'chat-profile'});
+  b.api.setVoice(owner,{scope:'platform',id:'openai'});
+  assert.deepEqual(plain(browser({storage:b.storage}).api.voice(owner)),{scope:'platform',id:'openai'});
+  assert.equal(b.api.voice(other),null);
+  for (const choice of [{scope:'platform',id:'other'}, {scope:'platform',id:'https://evil.example'}]) {
+    assert.throws(()=>b.api.setVoice(owner,choice),/Invalid/i);
+  }
+  assert.throws(()=>b.api.setActive(owner,{scope:'platform',id:'openai'}),/Invalid/i);
+  b.storage.set('vjbot_ai_active_v1:' + other,JSON.stringify({scope:'platform',id:'openai'}));
+  assert.throws(()=>b.api.active(other),/unavailable/i);
+  for (const path of ['/api/tts','https://tutor.example/api/tts']) {
+    const prepared=await b.api.prepareRequest(path,options,owner);
+    assert.equal(new Headers(prepared.headers).get('X-VJBot-Profile'),'platform_openai');
+    assert.equal(prepared.body,'{}');
+  }
+  for (const path of ['/api/tts?x=1','/api/tts/','/other/../api/tts','https://evil.example/api/tts']) {
+    assert.deepEqual(plain(await b.api.prepareRequest(path,options,owner)),options);
+  }
+  assert.equal(new Headers((await b.api.prepareRequest('/api/chat',options,owner)).headers).get('X-VJBot-Profile'),'chat-profile');
+  assert.deepEqual(plain(await b.api.prepareRequest('/api/tts',{method:'GET'},owner)),{method:'GET'});
+});
+
+
+test('corrupt independent voice storage cannot block deleting selected chat credentials', async () => {
+  const b = browser(), chat = await b.api.save(owner, draft());
+  const retained = await b.api.save(owner, {...draft(), name:'Retained voice', protocol:'gemini', model:''});
+  b.api.setActive(owner, {scope:'local', id:chat.id});
+  b.storage.set('vjbot_voice_profile_v1:' + owner, '{corrupt');
+  await b.api.remove(owner, chat.id);
+  assert.deepEqual(plain(b.api.active(owner)), {scope:'none', id:''});
+  assert.deepEqual(plain(await b.api.list(owner)).map(row => row.id), [retained.id]);
+  await assert.rejects(b.api.load(owner, chat.id), /unavailable/i);
+  assert.equal(b.storage.get('vjbot_voice_profile_v1:' + owner), '{corrupt');
+  assert.throws(() => b.api.voice(owner), /unavailable/i);
 });

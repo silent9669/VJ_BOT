@@ -56,7 +56,7 @@ test('speaking completion and lesson completion share identity for built-in and 
   const app=fs.readFileSync('static/app.js','utf8');
   vm.runInContext(app.slice(app.indexOf('function loadKaiwaPrompt()'),app.indexOf('// 12. JLPT MOCK EXAM CONTROLLER')),c);
   let captured;
-  c.document={getElementById:()=>({})};c.mountCompletion=(_host,activity)=>{captured=activity;};
+  c.document={getElementById:()=>({}),querySelectorAll:()=>[]};c.mountCompletion=(_host,activity)=>{captured=activity;};
   c.activeKaiwaLevel='N5';c.activeKaiwaPromptIdx=1;
   const lessons=c.featureLessons('kaiwa','N5');
   for(const lesson of lessons){

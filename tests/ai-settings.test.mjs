@@ -7,6 +7,7 @@ import {scanner} from './fixtures/model-scan-clock.mjs';
 function settings({consent = true, models = ['paid', 'denied', 'working'], savedModel = 'paid', probe,
   storage = new Map(), connection = 'bound-connection', draftConnection = connection, deviceProfiles = new Map(), activeChoice = {value: null}} = {}) {
   const elements = new Map(), requests = [], scanRuns = [];
+  const events = new EventTarget();
   let clock = Date.now();
   let storedModel = savedModel;
   let savedProfile = {id: 'saved-profile', name: 'Saved provider', protocol: 'openai', base_url: 'https://provider.example/v1',
@@ -32,7 +33,8 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
     });
     return elements.get(id);
   };
-  const context = vm.createContext({Response, AbortController, Date, console,
+  const context = vm.createContext({Response, AbortController, Date, console, Event,
+    addEventListener: events.addEventListener.bind(events), dispatchEvent: events.dispatchEvent.bind(events),
     signedInUser: {user_id: 'test:owner'}, switchTab() {},
     localStorage: {getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value),
       removeItem: key => storage.delete(key)},
@@ -53,7 +55,7 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
       scanRuns.push({mode: options.mode, dispatchedAt: options.dispatchedAt});
       return scanner.run({...options, now: () => clock, sleep: async ms => { clock += ms; }});
     }},
-    document: {getElementById: element, querySelectorAll: () => [], querySelector: selector => element(selector),
+    document: {body:{dataset:{page:'settings'}}, getElementById: element, querySelectorAll: () => [], querySelector: selector => element(selector),
       createElement: () => ({value: '', textContent: '', children: [], append(child) { this.children.push(child); }})},
     apiFetch: async (path, options = {}) => {
       requests.push({path, body: JSON.parse(options.body || '{}'), at: clock});
@@ -630,4 +632,206 @@ test('late OAuth readiness cannot reopen chat after changing only the OAuth conn
   release(Response.json({configured:true, connections:[{id:'first', state:'active', model:'ready'}]}));
   await pending;
   assert.equal(ui.element('chat-input').disabled, true);
+});
+
+test('saving a dedicated voice key leaves chat selection and its unsaved API editor unchanged', async () => {
+  const ui=settings();
+  await ui.context.renderAiPanels('settings');
+  ui.element('ai-profile-new').click();
+  ui.element('ai-profile-name').value='Unsaved chat draft';
+  ui.element('ai-key').value='unsaved-chat-key';
+  const before=JSON.stringify(ui.activeChoice.value);
+  const voice=await ui.context.saveVoiceProfile('test:owner',{name:'Voice only',api_key:'synthetic-voice-key'},'local');
+  const stored=ui.deviceProfiles.get(voice.id);
+  assert.equal(stored.protocol,'gemini');
+  assert.equal(stored.base_url,'https://generativelanguage.googleapis.com');
+  assert.equal(stored.model,'');
+  assert.equal(JSON.stringify(ui.activeChoice.value),before);
+  assert.equal(ui.element('ai-profile-name').value,'Unsaved chat draft');
+  assert.equal(ui.element('ai-key').value,'unsaved-chat-key');
+  assert.equal(ui.requests.some(request=>request.path.includes('/models')),false);
+});
+
+test('official OpenAI voice saving fixes its endpoint and empty chat model without changing chat',async()=>{
+  const ui=settings();
+  await ui.context.renderAiPanels('settings');
+  const before=JSON.stringify(ui.activeChoice.value);
+  const voice=await ui.context.saveVoiceProfile('test:owner',{name:'OpenAI voice',api_key:'synthetic-openai-key',
+    protocol:'openai',base_url:'https://ignored.example'},'local');
+  const stored=ui.deviceProfiles.get(voice.id);
+  assert.equal(stored.protocol,'openai');
+  assert.equal(stored.base_url,'https://api.openai.com/v1');
+  assert.equal(stored.model,'');
+  assert.equal(JSON.stringify(ui.activeChoice.value),before);
+  assert.equal(ui.requests.some(request=>request.path==='/api/tts'||request.path.includes('/models')),false);
+  await assert.rejects(ui.context.saveVoiceProfile('test:owner',{name:'Unsupported',api_key:'synthetic-key',protocol:'anthropic'},'local'),/Gemini|OpenAI/);
+});
+
+test('regular startup restores only personal voice metadata without selecting chat or discovering models',async()=>{
+  const ui=settings();
+  const rendered=[];
+  ui.context.renderVoiceProfiles=(...args)=>rendered.push(args);
+  await ui.context.loadVoiceProfiles();
+  assert.equal(rendered.length,1);
+  assert.equal(rendered[0][0],'test:owner');
+  assert.equal(rendered[0][1][0].scope,'server');
+  assert.equal(rendered[0][2],true);
+  assert.equal(rendered[0][3],undefined);
+  assert.equal(ui.activeChoice.value,null);
+  assert.deepEqual(ui.requests.map(request=>request.path),['/api/ai/profiles']);
+});
+
+
+for (const loader of ['loadVoiceProfiles', 'renderAiPanels']) {
+  for (const failed of [false, true]) test(`late ${loader} metadata ${failed ? 'failure' : 'success'} cannot discard a newly saved voice`, async () => {
+    const ui = settings();
+    await ui.context.renderAiPanels('settings');
+    ui.element('ai-profile-new').click();
+    ui.element('ai-profile-name').value = 'Unchanged chat draft';
+    const before = JSON.stringify(ui.activeChoice.value), rendered = [];
+    ui.context.renderVoiceProfiles = (_owner, rows) => rendered.push(rows);
+    let release, started;
+    const ready = new Promise(resolve => { started = resolve; });
+    const original = ui.context.apiFetch;
+    ui.context.apiFetch = (path, options) => path === '/api/ai/profiles'
+      ? new Promise(resolve => { release = resolve; started(); }) : original(path, options);
+    const pending = loader === 'renderAiPanels' ? ui.context.renderAiPanels('settings') : ui.context.loadVoiceProfiles();
+    await ready;
+    const saved = await ui.context.saveVoiceProfile('test:owner', {name:'New voice', api_key:'new-synthetic-voice'}, 'local');
+    assert.ok(rendered.at(-1).some(row => row.scope === saved.scope && row.id === saved.id));
+    const count = rendered.length;
+    release(Response.json(failed ? {detail:'Late metadata failure'} : {profiles:[], can_store:false}, {status:failed ? 503 : 200}));
+    await pending;
+    assert.equal(rendered.length, count);
+    assert.ok(rendered.at(-1).some(row => row.scope === saved.scope && row.id === saved.id));
+    assert.equal(JSON.stringify(ui.activeChoice.value), before);
+    assert.equal(ui.element('ai-profile-name').value, 'Unchanged chat draft');
+  });
+}
+
+test('admin settings and readiness ignore stale API/OAuth selections and blocked personal storage', async () => {
+  const storage=new Map([['vjbot_ai_method:test:owner','antigravity'],['vjbot_ai_oauth:test:owner','old-oauth']]);
+  const activeChoice={value:{scope:'local',id:'old-api'}},ui=settings({storage,activeChoice});
+  ui.context.signedInUser.is_admin=true;
+  ui.context.dispatchEvent(new Event('vjbot-voice-changed'));
+  const blocked=()=>{throw new Error('Personal storage must not be touched');};
+  ui.context.VJProfiles=new Proxy({}, {get:blocked});
+  ui.context.localStorage=new Proxy({}, {get:blocked});
+  ui.context.usesAntigravityOAuth=ui.context.renderAntigravityOAuth=ui.context.savedOAuthConnections=blocked;
+  let rendered=0;
+  ui.context.renderAdminAISettings=()=>{rendered++;};
+  ui.context.apiFetch=async path=>{
+    ui.requests.push({path});
+    assert.equal(path,'/api/ai/settings');
+    return Response.json({source:'platform',is_admin:true,platform:{configured:true},own:{model:'stale-private-model'}});
+  };
+  await ui.context.renderAiPanels('settings');
+  await ui.context.loadVoiceProfiles();
+  ui.context.refreshSavedConnections();
+  await ui.context.checkAiReady();
+  assert.equal(rendered,1);
+  assert.equal(ui.element('.classroom-chat-window').dataset.ai,'ready');
+  assert.equal(ui.element('chat-input').disabled,false);
+  assert.deepEqual(ui.requests.map(request=>request.path),['/api/ai/settings']);
+  assert.deepEqual(activeChoice.value,{scope:'local',id:'old-api'});
+  assert.equal(storage.get('vjbot_ai_method:test:owner'),'antigravity');
+  assert.equal(storage.get('vjbot_ai_oauth:test:owner'),'old-oauth');
+});
+
+test('unconfigured managed OpenAI fails readiness without using a saved personal model', async () => {
+  const ui=settings({activeChoice:{value:{scope:'server',id:'saved-profile'}}});
+  ui.context.signedInUser.is_admin=true;
+  ui.context.apiFetch=async path=>{
+    ui.requests.push({path});
+    return Response.json({source:'platform',is_admin:true,platform:{configured:false},own:{model:'saved-private-model'}});
+  };
+  await ui.context.checkAiReady();
+  assert.equal(ui.element('chat-input').disabled,true);
+  assert.match(ui.element('chat-gate-title').textContent,/OPENAI_API_KEY/);
+  assert.equal(ui.element('chat-gate-open').textContent,'Model quản trị');
+  assert.deepEqual(ui.requests.map(request=>request.path),['/api/ai/settings']);
+});
+
+test('late personal metadata after promotion never reads storage or overwrites managed state', async () => {
+  const ui=settings();
+  let finish;
+  ui.context.apiFetch=()=>new Promise(resolve=>{finish=resolve;});
+  const pending=ui.context.renderAiPanels('settings');
+  ui.context.signedInUser.is_admin=true;
+  ui.context.dispatchEvent(new Event('vjbot-voice-changed'));
+  let reads=0;
+  ui.context.VJProfiles.list=async()=>{reads++;return [];};
+  finish(Response.json({profiles:[],can_store:true}));
+  await pending;
+  assert.equal(reads,0);
+  assert.equal(ui.element('ai-form').hidden,true);
+});
+
+test('admin settings alias hides personal controls and demotion restores them without mutating choices', async () => {
+  const storage=new Map([['vjbot_ai_method:test:owner','antigravity']]),ui=settings({storage});
+  const before=JSON.stringify([...storage]);
+  ui.element('settings-admin-ai').hidden=true;
+  vm.runInContext(readFileSync('static/admin-ai.js','utf8'),ui.context);
+  ui.context.signedInUser.is_admin=true;
+  ui.context.dispatchEvent(new Event('vjbot-voice-changed'));
+  assert.equal(ui.context.showSettingsArea('api'),'admin');
+  assert.equal(ui.element('ai-card').hidden,true);
+  assert.equal(ui.element('settings-api-nav').hidden,true);
+  assert.equal(ui.element('settings-admin-ai').hidden,false);
+  assert.equal(ui.element('settings-admin-nav').hidden,false);
+  ui.context.signedInUser.is_admin=false;
+  ui.context.dispatchEvent(new Event('vjbot-voice-changed'));
+  assert.equal(ui.context.showSettingsArea('api'),'api');
+  assert.equal(ui.element('ai-card').hidden,false);
+  assert.equal(ui.element('settings-api-nav').hidden,false);
+  assert.equal(ui.element('settings-admin-ai').hidden,true);
+  assert.equal(ui.element('settings-admin-nav').hidden,true);
+  assert.equal(JSON.stringify([...storage]),before);
+  assert.equal(ui.requests.length,0);
+});
+
+test('managed model settings keep reasoning and Live preferences with explicit configuration errors', async () => {
+  const ui=settings(),rendered=[];
+  ui.context.signedInUser.is_admin=true;
+  ui.context.renderVoiceProfiles=(...args)=>rendered.push(args);
+  const requests=[];
+  ui.context.apiFetch=async(path,options={})=>{
+    requests.push({path,options});
+    assert.equal(path,'/api/admin/ai');
+    return Response.json(options.method==='PUT'?{ok:true}:{
+      configured:false,models:[{id:'managed-model',efforts:['low','high']}],voices:['shida','harema'],
+      settings:{model:'managed-model',reasoning_effort:'high',live_voice:'harema'}
+    });
+  };
+  vm.runInContext(readFileSync('static/admin-ai.js','utf8'),ui.context);
+  await ui.context.renderAdminAISettings();
+  assert.equal(ui.element('admin-text-model').value,'managed-model');
+  assert.equal(ui.element('admin-reasoning').value,'high');
+  assert.equal(ui.element('admin-live-voice').value,'harema');
+  assert.match(ui.element('admin-ai-message').textContent,/OPENAI_API_KEY/);
+  assert.equal(rendered.at(-1)[3].configured,false);
+  await ui.element('admin-ai-form').events.submit({preventDefault(){}});
+  assert.deepEqual(JSON.parse(requests.at(-1).options.body),
+    {model:'managed-model',reasoning_effort:'high',live_voice:'harema'});
+  assert.equal(ui.requests.length,0);
+});
+
+test('late managed preferences cannot populate a different owner or a demoted account', async () => {
+  for(const change of ['owner','role']) {
+    const ui=settings();
+    ui.context.signedInUser.is_admin=true;
+    let finish;
+    ui.context.apiFetch=()=>new Promise(resolve=>{finish=resolve;});
+    vm.runInContext(readFileSync('static/admin-ai.js','utf8'),ui.context);
+    const pending=ui.context.renderAdminAISettings();
+    if(change==='owner')ui.context.signedInUser={user_id:'other',is_admin:true};
+    else ui.context.signedInUser.is_admin=false;
+    ui.context.dispatchEvent(new Event('vjbot-voice-changed'));
+    finish(Response.json({configured:true,models:[{id:'old-model',efforts:['high']}],voices:['shida'],
+      settings:{model:'old-model',reasoning_effort:'high',live_voice:'shida'}}));
+    await pending;
+    assert.equal(ui.element('admin-text-model').children.length,0);
+    assert.equal(ui.element('admin-ai-save').disabled,true);
+    assert.doesNotMatch(ui.element('admin-model-preview').textContent,/old-model/);
+  }
 });

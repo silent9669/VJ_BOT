@@ -13,6 +13,13 @@ const b64 = bytes => btoa(String.fromCharCode(...bytes));
 
 
 const platformInfo = async (env, admin, userId) => admin ? {configured:Boolean(env.OPENAI_API_KEY), ...await adminAISettings(env,userId)} : null;
+const platformProvider = async (env, userId, speech = false) => {
+  if (!env.OPENAI_API_KEY) return null;
+  const provider = {source:'platform',protocol:'openai',baseUrl:DEFAULT_BASES.openai,apiKey:env.OPENAI_API_KEY};
+  if (speech) return provider;
+  const settings = await adminAISettings(env, userId);
+  return {...provider,models:[settings.model],reasoningEffort:settings.reasoning_effort};
+};
 
 const activeProfile = (env, userId) => env.DB.prepare(`SELECT p.* FROM ai_providers p
   JOIN ai_active_profiles a ON a.user_id=p.user_id AND a.profile_id=p.id WHERE p.user_id=?`).bind(userId).first();
@@ -20,8 +27,16 @@ const connectionBase = (protocol, raw) => typeof protocol === 'string' && Object
   && (raw === undefined || typeof raw === 'string') ? cleanBaseUrl(protocol, raw) : {error: 'Kết nối API không hợp lệ.'};
 const ownedProfile = (env, userId, id) => env.DB.prepare('SELECT * FROM ai_providers WHERE user_id=? AND id=?').bind(userId, id).first();
 
-// An explicitly supplied device connection is transient and never borrows a server key.
+// Admin inference is server-managed; supplied private selections are never repurposed.
 export async function resolveProvider(env, userId, override, profileId) {
+  if (await isAdmin(env, userId)) {
+    if (override !== undefined || (profileId !== undefined && profileId !== 'platform_openai')) return {error:'invalid_connection'};
+    return platformProvider(env, userId);
+  }
+  if (profileId === 'platform_openai') return {error:'invalid_connection'};
+  return resolveConnection(env, userId, override, profileId);
+}
+async function resolveConnection(env, userId, override, profileId, speech = false) {
   if (typeof profileId === 'string' && (profileId === ANTIGRAVITY_PROFILE || profileId.startsWith(ANTIGRAVITY_PROFILE + ':'))) {
     const id = profileId.slice(ANTIGRAVITY_PROFILE.length + 1);
     if (override !== undefined || !connectionIdOk(id)) return {error:'invalid_connection'};
@@ -33,19 +48,16 @@ export async function resolveProvider(env, userId, override, profileId) {
     if (!override || typeof override !== 'object' || Array.isArray(override)) return {error: 'invalid_connection'};
     if (typeof override.base_url !== 'string') return {error: 'invalid_connection'};
     const base = connectionBase(override.protocol, override.base_url);
-    if (base.error || !modelOk(override.model) || !keyOk(override.api_key)
+    if (base.error || !(modelOk(override.model) || (speech && override.model === '')) || !keyOk(override.api_key)
       || override.model.includes(override.api_key) || base.url.includes(override.api_key)) return {error: 'invalid_connection'};
     return {source: 'device', protocol: override.protocol, baseUrl: base.url, apiKey: override.api_key, models: [override.model]};
   }
   const own = profileId !== undefined ? await ownedProfile(env, userId, profileId) : await activeProfile(env, userId);
   if (!own) {
     if (profileId !== undefined) return {error:'profile_changed'};
-    if (!env.OPENAI_API_KEY || !await isAdmin(env, userId)) return null;
-    const settings = await adminAISettings(env, userId);
-    return {source:'platform',protocol:'openai',baseUrl:DEFAULT_BASES.openai,apiKey:env.OPENAI_API_KEY,
-      models:[settings.model], reasoningEffort:settings.reasoning_effort};
+    return null;
   }
-  if (!modelOk(own.model)) return {error: 'no_model'};
+  if (!(modelOk(own.model) || (speech && own.model === ''))) return {error: 'no_model'};
   const apiKey = await unseal(env, userId, own.key_enc);
   if (!apiKey) return {error: 'rekey'};
   const base = connectionBase(own.protocol, own.base_url);
@@ -74,16 +86,28 @@ export async function askAI(env, userId, request, override, profileId, {beforeGe
   return {response: json({detail: failureMessage(result.status)}, result.status === 429 ? 429 : 503)};
 }
 
-// Read-aloud stays on the selected API-key profile; Antigravity is a separate chat connection.
-export async function googleSpeechKey(env, userId, override, profileId) {
-  if (typeof profileId === 'string' && (profileId === ANTIGRAVITY_PROFILE || profileId.startsWith(ANTIGRAVITY_PROFILE + ':'))) return {response:json({detail:'Antigravity chat does not provide this TTS API. Select a Google Gemini API-key profile for read-aloud.',code:'no_tts'},403)};
-  const provider = await resolveProvider(env, userId, override, profileId);
-  if (override !== undefined || provider?.error) {
-    const response = providerFailure(provider);
-    if (response) return {response};
+// Admin speech is server-managed; learners must explicitly select a native voice connection.
+export async function resolveSpeechProvider(env, userId, override, profileId) {
+  const admin = await isAdmin(env, userId);
+  const noSpeech = () => ({response:json({detail:admin
+    ? 'Server-managed OpenAI voice is not configured. No private connection was used.'
+    : 'Choose a native Google Gemini or official OpenAI voice connection in Sound settings. No other connection was used.',code:'no_tts'},403)});
+  if (profileId === 'platform_openai' && override !== undefined) return {response:providerFailure({error:'invalid_connection'})};
+  if (admin) {
+    if (override !== undefined || (profileId !== undefined && profileId !== 'platform_openai')) {
+      return {response:providerFailure({error:'invalid_connection'})};
+    }
+    const provider = await platformProvider(env, userId, true);
+    return provider ? {provider} : noSpeech();
   }
-  const google = provider?.protocol === 'gemini' && new URL(provider.baseUrl).hostname === 'generativelanguage.googleapis.com';
-  return {apiKey:google ? provider.apiKey : null};
+  if (profileId === 'platform_openai' || (override === undefined && profileId === undefined)) return noSpeech();
+  if (typeof profileId === 'string' && (profileId === ANTIGRAVITY_PROFILE || profileId.startsWith(ANTIGRAVITY_PROFILE + ':'))) return noSpeech();
+  const provider = await resolveConnection(env, userId, override, profileId, true);
+  const response = providerFailure(provider);
+  if (response) return {response};
+  if (!((provider.protocol === 'gemini' && provider.baseUrl === DEFAULT_BASES.gemini)
+    || (provider.protocol === 'openai' && provider.baseUrl === DEFAULT_BASES.openai))) return noSpeech();
+  return {provider};
 }
 
 async function body(request, limit = 4096) {
@@ -234,7 +258,7 @@ export async function aiRoute(request, env, url) {
     const row = await activeProfile(env, user.user_id);
     const own = row ? await publicProfile(env, user.user_id, row) : null;
     const platform = await platformInfo(env,admin,user.user_id);
-    return json({source:own?'own':platform?.configured?'platform':'none',is_admin:admin,own,platform,bases:DEFAULT_BASES,can_store:Boolean(env.AI_KEY_SECRET)});
+    return json({source:admin?'platform':own?'own':'none',is_admin:admin,own,platform,bases:DEFAULT_BASES,can_store:Boolean(env.AI_KEY_SECRET)});
   }
   if (path === '/api/ai/settings' && method === 'PUT') {
     const data = await body(request, 131072);

@@ -133,7 +133,10 @@ function featureLessons(feature,level){
     installCourseKaiwa();
     return Object.entries(window.JLPT_DATA.kaiwaScenarios).filter(([,s])=>s.level===level || s.level==='ALL').map(([key,s])=>{
       const unit=practicalCourse.units.find(u=>u.id===key);
-      return {id:`kaiwa-lesson:${level}:${key}`,completionId:s.course?`kaiwa:${key}`:`kaiwa:${level}:${key}`,title:s.title,summary:unit?.goal || s.desc,lessonKey:key,sourceLabel:'VJBot · hội thoại',examples:unit?.dialogue || s.prompts.flatMap(p=>[{jp:p.jp,vi:p.vi,ro:p.ro},...(p.responses || [])]),items:unit?.words,drills:unit?.questions,formula:unit?.formula,explanation:unit?.note};
+      const prompts=s.prompts.flatMap(p=>[{jp:p.jp,vi:p.vi,ro:p.ro},...(p.responses || [])]);
+      // Keep dialogue indexes stable; speaking may ask a separate production question.
+      const examples=unit?[...unit.dialogue,...prompts.filter(prompt=>!unit.dialogue.some(example=>example.jp===prompt.jp && example.vi===prompt.vi))]:prompts;
+      return {id:`kaiwa-lesson:${level}:${key}`,completionId:s.course?`kaiwa:${key}`:`kaiwa:${level}:${key}`,title:s.title,summary:unit?.goal || s.desc,lessonKey:key,sourceLabel:'VJBot · hội thoại',examples,items:unit?.words,drills:unit?.questions,formula:unit?.formula,explanation:unit?.note};
     });
   }
   if(feature==='quiz'){

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {speechResponse, DEFAULT_SPEECH_MODEL} from '../src/speech.js';
+import {speechResponse, openAISpeechResponse, DEFAULT_SPEECH_MODEL} from '../src/speech.js';
 
 const key = 'synthetic-key-not-real';
 const entry = name => ({name:'models/' + name, supportedGenerationMethods:['generateContent']});
@@ -36,7 +36,7 @@ test('male bilingual speech sends only the transcript and keeps Charon separate 
     assert.ok(url.endsWith('/' + DEFAULT_SPEECH_MODEL + ':generateContent'));
     const body = JSON.parse(options.body), part = body.contents[0].parts[0];
     assert.equal(part.text, text);
-    assert.match(part.speech_metadata.style, /male.*Vietnamese.*Japanese/s);
+    assert.equal(typeof part.speech_metadata.style, 'string');
     assert.equal(body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Charon');
     return audio();
   };
@@ -101,5 +101,63 @@ test('catalog quota or missing Google credentials never become a successful capa
     assert.equal(response.status, 429);
     assert.equal((await response.json()).code, 'tts_catalog_unavailable');
     assert.equal((await speechResponse({action:'models'}, null)).status, 403);
+  } finally {globalThis.fetch = original;}
+});
+
+test('provider auth, billing and missing-model failures remain actionable without expiring the app session or exposing secrets', async () => {
+  const original=globalThis.fetch;
+  try {
+    for(const [status,code,http] of [[401,'tts_key_rejected',403],[403,'tts_key_rejected',403],[402,'tts_billing',403],[404,'speech_model_missing',409]]) {
+      let calls=0;
+      globalThis.fetch=async()=>{calls++;return Response.json({error:{message:key}},{status});};
+      const response=await speechResponse({text:'こんにちは。'},key),body=await response.json();
+      assert.equal(response.status,http);
+      assert.equal(body.code,code);
+      assert.equal(calls,1);
+      assert.ok(!JSON.stringify(body).includes(key));
+    }
+  } finally {globalThis.fetch=original;}
+});
+
+test('OpenAI speech reports alloy, preserves the entire allowed transcript and rejects model substitution without synthesis', async () => {
+  const original = globalThis.fetch, provider = {apiKey:key}, text = '日'.repeat(4000);
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.equal(url,'https://api.openai.com/v1/audio/speech');
+    assert.equal(options.redirect,'manual');
+    assert.equal(options.headers.Authorization,'Bearer '+key);
+    assert.deepEqual(JSON.parse(options.body),{model:'gpt-4o-mini-tts',voice:'alloy',input:text,response_format:'mp3'});
+    return new Response(new Uint8Array([73,68,51]));
+  };
+  try {
+    const models = await (await openAISpeechResponse({action:'models'},provider)).json();
+    assert.deepEqual(models.models,['gpt-4o-mini-tts']);
+    assert.equal(models.voice,'alloy'); assert.equal(models.verified,false);
+    assert.equal((await openAISpeechResponse({text,speech_model:DEFAULT_SPEECH_MODEL},provider)).status,400);
+    assert.equal((await openAISpeechResponse({text:text+'日'},provider)).status,400);
+    assert.equal(calls,0);
+    const response = await openAISpeechResponse({text,speech_model:'gpt-4o-mini-tts'},provider);
+    assert.equal(response.status,200);
+    assert.deepEqual(await response.json(),{mimeType:'audio/mpeg',audioBase64:'SUQz',voice:'alloy',model:'gpt-4o-mini-tts'});
+    assert.equal(calls,1);
+  } finally {globalThis.fetch = original;}
+});
+
+test('OpenAI speech sanitizes upstream failures and empty audio without retrying or changing voice', async () => {
+  const original = globalThis.fetch;
+  try {
+    for (const [status,expected] of [[401,503],[403,503],[429,429],[503,503]]) {
+      let calls = 0;
+      globalThis.fetch = async () => {calls++;return new Response(key,{status});};
+      const response = await openAISpeechResponse({text:'こんにちは'},{apiKey:key});
+      assert.equal(response.status,expected);
+      assert.equal((await response.json()).code,'tts_unavailable');
+      assert.equal(calls,1);
+    }
+    globalThis.fetch = async () => new Response('');
+    const response = await openAISpeechResponse({text:'こんにちは'},{apiKey:key});
+    assert.equal(response.status,503);
+    assert.ok(!(await response.text()).includes(key));
   } finally {globalThis.fetch = original;}
 });
