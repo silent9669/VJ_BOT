@@ -374,3 +374,38 @@ node --test tests/learning-rag.test.mjs tests/learning-rag-integration.test.mjs 
 The external combined manifest names every exact saved capture and selected text
 file, preserves prior records and contains one explicit outcome per accessible
 source. Import records only; audit/rejected files must not become RAG passages.
+
+## N5 editorial lesson checkpoints
+
+`static/course/n5-teaching.json` is a separate **AI-authored editorial-staging
+asset**, not copied publisher text, a replacement corpus or canonical assessment
+truth. Background references retain exact existing source IDs and URLs. New
+explanations, contextual examples, common-error contrasts and task rationales are
+explicitly generated content. Source rights remain operator-asserted, not an
+independently verified publisher grant.
+
+The first checkpoint contains three complete pilots: topic `は`, requests
+`てください`, and comparison `より・ほうが`. Each has five contextual Japanese/
+Vietnamese examples with readings, two explained common errors, and five tasks
+with task-local option identities or provisional accepted variants.
+
+Two independent AI reviews inspected all three lessons, fifteen examples, six
+common errors, fifteen tasks and four source references. The Japanese review
+corrected neutral self-introduction to `教師` and clarified the distinction between
+the comparison baseline and `より`. The repeating-utterance example now uses
+`言ってください`; mixed-script answer variants are retained. The evidence review
+found no additional staging defect. This is **not qualified human approval**.
+
+Every lesson and task remains non-scored, with no mastery credit. Accepted variants
+are provisional task-specific references, not exhaustive judgments of grammatical
+possibility. The request pilot's `te-form` prerequisite is intentionally unresolved
+until the full twenty-topic content checkpoint; do not mistake this pilot for a
+complete independently navigable course.
+
+No canonical application consumer loads this staging asset yet. Active
+`feature/teaching-quality` owns the adapters, tutor, practice UI and progress
+cutover. Source acquisition must hand over committed content instead of editing
+that session's unfinished files or introducing another grading/runtime stack.
+Actual wrong-answer, hint, retry and persisted-progress acceptance remains blocked
+on that explicit canonical integration handoff. Runtime selected-API teaching and
+independent voice settings remain unchanged.

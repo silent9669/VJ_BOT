@@ -1,0 +1,578 @@
+{
+  "version": 1,
+  "status": "pilot",
+  "authorship": "VJBot AI-authored teaching drafts; not publisher text or official JLPT exercises.",
+  "rights_basis": "user_asserted_rights",
+  "publisher_permission_independently_verified": false,
+  "human_approved": false,
+  "level_note": "N5 is a study-track estimate, not official JLPT certification.",
+  "integration_status": "editorial_staging_not_loaded_by_canonical_app",
+  "normalization_policy": "No runtime normalizer yet. Variants are provisional explicit task-bound references, not exhaustive grammatical judgments.",
+  "lessons": [
+    {
+      "id": "n5-teaching:v1:topic",
+      "revision": 1,
+      "order": 1,
+      "level": "N5",
+      "title": "Nêu chủ đề bằng は",
+      "goal": "Giới thiệu một người và nêu thông tin về họ bằng NはNです.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-80d5cf658c54-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/01-tro-tu-wa",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "IR-895efe7d50ad-1",
+          "url": "https://jf.xcms.online/wp-content/uploads/2021/12/v1Grammar_NM_VN-1.pdf#page=1",
+          "source_name": "Irodori",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-80d5cf658c54-1] · Irodori [IR-895efe7d50ad-1]",
+      "formula": "N1 は N2 です。",
+      "explanation": "は nêu điều đang được nói đến; khi là trợ từ này, は đọc là wa. N2です đưa thông tin về chủ đề N1. Khi ngữ cảnh đã rõ, thường có thể lược chủ đề. Đây không phải quy tắc thay mọi chủ ngữ bằng は; が còn được dùng khi giới thiệu hoặc xác định chủ thể.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:topic:example:0",
+          "context": "Làm quen ở lớp",
+          "jp": "私はリンです。",
+          "reading": "わたしはりんです。",
+          "vi": "Tôi là Linh.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:1",
+          "context": "Giới thiệu nghề của bạn",
+          "jp": "アンさんは会社員です。",
+          "reading": "あんさんはかいしゃいんです。",
+          "vi": "An là nhân viên công ty.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:2",
+          "context": "Giới thiệu người dạy lớp",
+          "jp": "田中さんは先生です。",
+          "reading": "たなかさんはせんせいです。",
+          "vi": "Anh/chị Tanaka là giáo viên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:3",
+          "context": "Nói về mình trong buổi học",
+          "jp": "私は学生です。",
+          "reading": "わたしはがくせいです。",
+          "vi": "Tôi là sinh viên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:4",
+          "context": "Giới thiệu em gái với bạn",
+          "jp": "妹は高校生です。",
+          "reading": "いもうとはこうこうせいです。",
+          "vi": "Em gái tôi là học sinh cấp ba.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "私は学生だです。",
+          "correction": "私は学生です。",
+          "reason": "Trong câu lịch sự này dùng です, không ghép だです."
+        },
+        {
+          "problem": "Trợ từ は trong 私は được đọc ha.",
+          "correction": "Trợ từ は trong 私は được đọc wa.",
+          "reason": "Phân biệt cách đọc chữ は thông thường với cách đọc trợ từ chủ đề."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:topic:task:0",
+          "mode": "choice",
+          "prompt": "Giới thiệu nghề nghiệp. Điền trợ từ chủ đề: アンさん（　）会社員です。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "は"
+            },
+            {
+              "id": "option:1",
+              "text": "を"
+            },
+            {
+              "id": "option:2",
+              "text": "で"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "は nêu An làm chủ đề; phần sau giới thiệu nghề.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:1",
+          "mode": "choice",
+          "prompt": "Chọn câu lịch sự có nghĩa “Tôi là sinh viên”.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "私は学生です。"
+            },
+            {
+              "id": "option:1",
+              "text": "私は学生をです。"
+            },
+            {
+              "id": "option:2",
+              "text": "私は学生だです。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "N1はN2です là cấu trúc cần dùng; không thêm を hay だ trước です.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:2",
+          "mode": "choice",
+          "prompt": "は được đọc thế nào khi là trợ từ trong 私はリンです。?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "wa"
+            },
+            {
+              "id": "option:1",
+              "text": "ha"
+            },
+            {
+              "id": "option:2",
+              "text": "ga"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Ở vai trò trợ từ chủ đề, chữ は được đọc wa.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:3",
+          "mode": "short_text",
+          "prompt": "Tự giới thiệu nghề nghiệp bằng đúng mẫu NはNです: “Tôi là giáo viên”.",
+          "accepted_variants": [
+            "私は教師です。",
+            "わたしは教師です。",
+            "私はきょうしです。",
+            "わたしはきょうしです。"
+          ],
+          "rationale": "教師 nêu nghề nghiệp của mình một cách trung tính; 先生 thường là cách gọi hoặc nói về giáo viên khác. Bài này yêu cầu đủ chủ đề và câu lịch sự; hội thoại tự nhiên có thể lược 私は.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:4",
+          "mode": "short_text",
+          "prompt": "Chỉ điền một trợ từ chủ đề: 田中さん（　）先生です。",
+          "accepted_variants": [
+            "は"
+          ],
+          "rationale": "Theo yêu cầu đang luyện, chọn は. Không kết luận が luôn sai trong mọi ngữ cảnh.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:request",
+      "revision": 1,
+      "order": 8,
+      "level": "N5",
+      "title": "Nhờ làm bằng てください",
+      "goal": "Đổi động từ quen thuộc sang thể て và đưa ra một lời nhờ phù hợp.",
+      "prerequisites": [
+        "n5-teaching:v1:te-form"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-c2bb02acc5d3-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/requests.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-c2bb02acc5d3-1]",
+      "formula": "V-て + ください。",
+      "explanation": "Thể て đứng trước ください để nhờ hoặc hướng dẫn người nghe thực hiện hành động. Việc tạo thể て phụ thuộc nhóm động từ: 書く→書いて, 読む→読んで, する→して. Không chỉ bỏ ます rồi thêm て cho mọi động từ. てください không luôn đủ mềm với cấp trên hoặc trong mọi tình huống phục vụ.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:request:example:0",
+          "context": "Giáo viên hướng dẫn lớp",
+          "jp": "名前を書いてください。",
+          "reading": "なまえをかいてください。",
+          "vi": "Hãy viết tên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:1",
+          "context": "Nhờ bạn mở cửa",
+          "jp": "ドアを開けてください。",
+          "reading": "どあをあけてください。",
+          "vi": "Hãy mở cửa.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:2",
+          "context": "Chưa nghe rõ",
+          "jp": "もう一度言ってください。",
+          "reading": "もういちどいってください。",
+          "vi": "Xin nói lại một lần nữa.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:3",
+          "context": "Hướng dẫn vào phòng",
+          "jp": "ここに座ってください。",
+          "reading": "ここにすわってください。",
+          "vi": "Hãy ngồi ở đây.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:4",
+          "context": "Giáo viên yêu cầu đọc",
+          "jp": "この文を読んでください。",
+          "reading": "このぶんをよんでください。",
+          "vi": "Hãy đọc câu này.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "名前を書くください。",
+          "correction": "名前を書いてください。",
+          "reason": "Trước ください trong mẫu đang luyện dùng thể て, không dùng thể từ điển."
+        },
+        {
+          "problem": "この文を読てください。",
+          "correction": "この文を読んでください。",
+          "reason": "読む có thể て là 読んで; phải xét cách chia theo nhóm động từ."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:request:task:0",
+          "mode": "choice",
+          "prompt": "Nhờ người nghe viết tên. Chọn phần đúng: 名前を（　）ください。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "書いて"
+            },
+            {
+              "id": "option:1",
+              "text": "書く"
+            },
+            {
+              "id": "option:2",
+              "text": "書きます"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "書く đổi thành 書いて trước ください.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:1",
+          "mode": "choice",
+          "prompt": "Chọn thể て của 読む.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "読んで"
+            },
+            {
+              "id": "option:1",
+              "text": "読いて"
+            },
+            {
+              "id": "option:2",
+              "text": "読て"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Động từ nhóm1 kết thúc む chuyển thành んで.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:2",
+          "mode": "choice",
+          "prompt": "Giáo viên yêu cầu ngồi ở đây. Chọn câu đúng mẫu.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "ここに座ってください。"
+            },
+            {
+              "id": "option:1",
+              "text": "ここに座るください。"
+            },
+            {
+              "id": "option:2",
+              "text": "ここに座りますください。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "座る đổi thành 座って; không nối nguyên dạng hoặc ます với ください.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:3",
+          "mode": "short_text",
+          "prompt": "Đổi 開けます thành thể て, chỉ viết dạng động từ.",
+          "accepted_variants": [
+            "開けて",
+            "あけて"
+          ],
+          "rationale": "開ける là động từ nhóm2: bỏ る và thêm て.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:4",
+          "mode": "short_text",
+          "prompt": "Viết câu nhờ đọc câu này; dùng この文・読む và mẫu てください.",
+          "accepted_variants": [
+            "この文を読んでください。",
+            "このぶんをよんでください。",
+            "この文をよんでください。",
+            "このぶんを読んでください。"
+          ],
+          "rationale": "Đánh dấu đối tượng bằng を và đổi 読む thành 読んで trước ください.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:comparison",
+      "revision": 1,
+      "order": 15,
+      "level": "N5",
+      "title": "So sánh với より・ほうが",
+      "goal": "Nêu một so sánh và xác định mốc so sánh mà không đảo nghĩa.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-c28462d6b65a-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/comparison.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-c28462d6b65a-1]",
+      "formula": "A は B より tính từ。 / A より B のほうが tính từ。",
+      "explanation": "より đánh dấu mốc so sánh. AはBより高い nói A cao/đắt hơn B tùy ngữ cảnh. AよりBのほうが高い nhấn phía B cao/đắt hơn. Tính từ không thêm đuôi so sánh. Khi nói cao nhất trong một nhóm, dùng nhómで và いちばん; nhóm cần được xác định rõ.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:comparison:example:0",
+          "context": "So chiều cao đã đo",
+          "jp": "兄は私より背が高いです。",
+          "reading": "あにはわたしよりせがたかいです。",
+          "vi": "Anh trai cao hơn tôi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:1",
+          "context": "Giá hai đồ uống trên menu",
+          "jp": "コーヒーはお茶より高いです。",
+          "reading": "こーひーはおちゃよりたかいです。",
+          "vi": "Cà phê đắt hơn trà.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:2",
+          "context": "So độ khó hai bài trong lớp",
+          "jp": "この問題はその問題より簡単です。",
+          "reading": "このもんだいはそのもんだいよりかんたんです。",
+          "vi": "Câu này dễ hơn câu đó.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:3",
+          "context": "Nói sở thích cá nhân",
+          "jp": "私は夏より冬のほうが好きです。",
+          "reading": "わたしはなつよりふゆのほうがすきです。",
+          "vi": "Tôi thích mùa đông hơn mùa hè.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:4",
+          "context": "So ba túi ở trước mặt",
+          "jp": "この三つのかばんの中で、赤いかばんがいちばん軽いです。",
+          "reading": "このみっつのかばんのなかで、あかいかばんがいちばんかるいです。",
+          "vi": "Trong ba chiếc túi này, túi đỏ nhẹ nhất.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "AはBより高い được hiểu là B cao hơn A.",
+          "correction": "AはBより高い có nghĩa A cao hơn B.",
+          "reason": "B là mốc sau より; phía có tính chất được khẳng định ở đây là A."
+        },
+        {
+          "problem": "Chỉ nói いちばん rồi mặc định có nghĩa “nhất thế giới”.",
+          "correction": "Phải biết nhóm so sánh từ câu nói hoặc ngữ cảnh.",
+          "reason": "いちばん không tự xác định phạm vi so sánh là cả thế giới."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:comparison:task:0",
+          "mode": "choice",
+          "prompt": "Theo bảng giá: cà phê500 yên, trà300 yên. Chọn câu đúng.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "コーヒーはお茶より高いです。"
+            },
+            {
+              "id": "option:1",
+              "text": "お茶はコーヒーより高いです。"
+            },
+            {
+              "id": "option:2",
+              "text": "コーヒーとお茶は同じ値段です。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "500 lớn hơn300; cà phê là phía đắt hơn, trà là mốc sau より.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:1",
+          "mode": "choice",
+          "prompt": "Trong “AよりBのほうが安いです”, thứ nào rẻ hơn?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "B"
+            },
+            {
+              "id": "option:1",
+              "text": "A"
+            },
+            {
+              "id": "option:2",
+              "text": "Không nói có thứ nào rẻ hơn"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Bのほうが là phía được nói là rẻ hơn.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:2",
+          "mode": "choice",
+          "prompt": "Dựa vào số đo: túi đỏ1kg, xanh2kg, đen3kg. Trong ba túi, túi nào いちばん軽い?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "赤いかばん"
+            },
+            {
+              "id": "option:1",
+              "text": "青いかばん"
+            },
+            {
+              "id": "option:2",
+              "text": "黒いかばん"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Trong nhóm đã xác định, túi đỏ có khối lượng nhỏ nhất.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:3",
+          "mode": "short_text",
+          "prompt": "Chỉ điền trợ từ đánh dấu mốc so sánh: AはB（　）高いです。",
+          "accepted_variants": [
+            "より"
+          ],
+          "rationale": "より đi sau B để đánh dấu B là mốc so sánh.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:4",
+          "mode": "short_text",
+          "prompt": "Chỉ điền trợ từ phạm vi: この三つの中（　）、これがいちばん安いです。",
+          "accepted_variants": [
+            "で"
+          ],
+          "rationale": "で giới hạn nhóm mà いちばん đang so sánh.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    }
+  ],
+  "editorial_reviews": [
+    {
+      "checkpoint": "three_pilots",
+      "reviewed_on": "2026-11-13",
+      "review_kind": "independent_ai_not_human",
+      "reviewers": ["PilotJapaneseReview", "PilotEvidenceReview"],
+      "scope": "All three explanations, fifteen examples/readings/translations, six common errors, fifteen complete tasks and four cited source chunks.",
+      "findings_resolved": [
+        "Neutral self-introduction uses 教師, not an uncontextualized 先生 self-title.",
+        "Comparison prompt distinguishes baseline B from the marking particle より.",
+        "Repeating an unheard utterance uses 言ってください; mixed-script reading-answer variants are explicit."
+      ],
+      "decision": "AI-reviewed exploratory staging only; no canonical consumer, scored eligibility or human approval.",
+      "human_approved": false
+    }
+  ]
+}
