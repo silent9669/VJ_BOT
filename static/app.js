@@ -1247,7 +1247,7 @@ function setupEventListeners() {
   document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
   const voiceButton=document.getElementById('btn-voice-input');
-  createJapaneseInput({button:voiceButton,input:document.getElementById('chat-input'),onError:message=>chatError(message,null)});
+  voiceButton.addEventListener('click',()=>window.openLiveConversation?.());
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
   document.getElementById('kaiwa-level').onchange=e=>switchTab('kaiwa',{level:e.target.value});
@@ -1417,7 +1417,7 @@ function setupEventListeners() {
         });
         if(!response.ok)throw new Error("save");
         activeCurriculumLevel = lvl;
-        document.getElementById("level-chip-text").textContent = `Trình độ: ${lvl}`;
+        document.getElementById("level-chip-text").textContent = `JLPT ${lvl}`;
         status.textContent="";
         if (levelPicker) levelPicker.hidden = true;
         if(location.hash.startsWith('#curriculum/'))openLevelCourse(lvl);else restoreAppRoute();
@@ -1659,7 +1659,7 @@ function setupEventListeners() {
       const prof = await res.json();
       const chipText = document.getElementById("level-chip-text");
       if (chipText && prof.level) {
-        chipText.textContent = `Trình độ: ${prof.level}`;
+        chipText.textContent = `JLPT ${prof.level}`;
         activeCurriculumLevel = prof.level;
       }
     }

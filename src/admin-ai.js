@@ -1,8 +1,19 @@
+const reasoning=['low','medium','high'];
+const deepReasoning=[...reasoning,'xhigh','max'];
 export const ADMIN_MODELS = [
-  {id:'gpt-4.1-mini', efforts:[]},
-  {id:'gpt-5-mini', efforts:['low','medium','high']},
-  {id:'gpt-5.4-mini', efforts:['none','low','medium','high','xhigh']},
-  {id:'gpt-5.4', efforts:['none','low','medium','high','xhigh']}
+  {id:'gpt-6.1-sol',label:'GPT-6.1 Sol',efforts:deepReasoning},
+  {id:'gpt-6.1-terra',label:'GPT-6.1 Terra',efforts:['none',...deepReasoning]},
+  {id:'gpt-6-luna',label:'GPT-6 Luna',efforts:['none',...deepReasoning]},
+  {id:'gpt-6-sol',label:'GPT-6 Sol',efforts:['none',...deepReasoning]},
+  {id:'gpt-6-astra',label:'GPT-6 Astra',efforts:deepReasoning},
+  {id:'gpt-5.5',label:'GPT-5.5',efforts:[...reasoning,'xhigh']},
+  {id:'gpt-5.4',label:'GPT-5.4',efforts:['none',...reasoning,'xhigh']},
+  {id:'gpt-5.4-mini',label:'GPT-5.4 mini',efforts:['none',...reasoning,'xhigh']},
+  {id:'gpt-5-mini',label:'GPT-5 mini',efforts:reasoning},
+  {id:'gpt-4.1',label:'GPT-4.1',efforts:[]},
+  {id:'gpt-4.1-mini',label:'GPT-4.1 mini',efforts:[]},
+  {id:'gpt-4o',label:'GPT-4o',efforts:[]},
+  {id:'o3',label:'o3',efforts:reasoning}
 ];
 export const LIVE_VOICES = ['shida','harema','marin','cedar'];
 

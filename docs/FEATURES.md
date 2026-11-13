@@ -23,7 +23,7 @@ flowchart TD
 - **Thư viện**: từ vựng, ngữ pháp, Hán tự, đọc, nghe, viết theo cấp độ (10.720 mục OpenJLPT: 7.811 từ, 526 ngữ pháp, 2.383 Hán tự; 20 bài kana). Phần từ vựng/Hán tự/câu ví dụ trong thư viện còn tiếng Anh cho đến khi chạy `scripts/translate_corpus.py`.
 - **Mỗi bài**: tham khảo, 5 câu kiểm tra dựng từ chính ví dụ và bài tập của bài, xem lại câu sai, nút "Luyện với thầy Lâm" (cố định ở đáy màn hình), đánh dấu hoàn thành có thể hoàn tác (độc lập với điểm).
 - **Thẻ nhớ**: buổi 20 thẻ ưu tiên thẻ đến hạn, lịch SM-2 (đặt lại sau khi sai).
-- **Luyện nói (Kaiwa)**: gõ hoặc nói (nhận dạng giọng nói của trình duyệt); AI chấm bản chép lời, không chấm phát âm.
+- **Luyện nói (Kaiwa)**: gõ hoặc ghi âm để chép lời (OpenAI chính thức, nhận diện trình duyệt cho kết nối khác); AI chấm bản chép lời, không chấm phát âm.
 - **Bài luyện JLPT**: bộ câu hỏi theo chủ đề và bài thi thử có tính giờ theo từng phần dựa trên đề chính thức 2012/2018 (liên kết tới nguồn; điểm thô, không phải thang điểm JLPT). Mỗi đề lưu bài làm gần nhất.
 - **Tiến độ**: số mục, độ chính xác, chuỗi ngày, bài đã hoàn thành, sổ điểm yếu.
 
@@ -35,7 +35,7 @@ Thầy Lâm hiểu người học đang xem gì ở bất kỳ màn hình nào (
 
 ## API AI của người dùng
 
-Cài đặt > API AI: chọn OpenAI-compatible, Claude (Anthropic) hoặc Gemini, nhập URL (bỏ trống để dùng mặc định), model và API key; "Lưu và kiểm tra". Khóa được mã hóa phía máy chủ và không bao giờ hiển thị lại (chỉ 4 ký tự cuối). Chưa có API thì ô chat bị khóa và có nút dẫn tới Cài đặt.
+Cài đặt > API AI: chọn OpenAI-compatible, Claude (Anthropic) hoặc Gemini, nhập URL (bỏ trống để dùng mặc định), model và API key; "Lưu và kiểm tra". Hồ sơ API có thể lưu trên thiết bị (IndexedDB, AES-GCM) hoặc máy chủ (AES-GCM). Danh sách chỉ hiển thị 4 ký tự cuối. Tài khoản miễn phí chưa kết nối API thấy ô chat khóa và nút dẫn tới Cài đặt; admin có thể dùng OpenAI của Worker.
 
 ## Quản trị
 
@@ -49,25 +49,20 @@ Google và email/mật khẩu (không có xác minh email hay khôi phục mật
 
 Cài đặt chia hai cột (menu bên trái, thẻ bên phải): thẻ tài khoản (tên, email, loại đăng nhập, đăng xuất), thẻ API AI có chọn loại API dạng nút, gợi ý model, hiện/ẩn khóa và nhãn trạng thái (Chưa kết nối, Đã lưu, Kết nối được, Lỗi), thẻ âm thanh, thẻ xóa dữ liệu có nút đỏ. Trang bài học có cột "Trong chương" bên phải (vị trí hiện tại, bài đã xong, bấm để chuyển bài), khối cấu trúc, giải thích và thẻ ví dụ đánh số. Hộp đăng nhập, ô hỏi ⌘K, bảng chọn cấp độ và hộp quản trị dùng chung một khung. Hộp đăng ký có thanh độ dài mật khẩu, trường sai được viền đỏ, nút gửi có vòng chờ.
 
-Thầy Lâm pixel đi dạo quanh trang: rê chuột thì dừng và chào (nhắc đúng màn hình em đang xem), bấm để hỏi, kéo thả đến bất kỳ chỗ nào, nhấp đúp để về chỗ cũ.
+Thầy Lâm nằm trong sidebar, có hoạt ảnh đứng nghỉ và bấm để hỏi về bài đang xem. Nút Hỏi thầy Lâm ở thanh đầu vẫn dùng được khi sidebar thu gọn hoặc đóng. Tôn trọng giảm chuyển động, điều hướng bàn phím và không che bài học.
 
-Giấy ấm, sidebar thu gọn (rail 76 px, mở rộng được), landing có khung chat minh họa, hộp đăng nhập hai cột, nút cảm ứng tối thiểu 44 px trên điện thoại, tôn trọng `prefers-reduced-motion`. Ảnh thầy Lâm là Avataaars có giấy phép (xem `static/assets/lam/ATTRIBUTION.md`).
+## Không gian học và Voice
+
+- Sidebar 232 px có nhãn trên máy tính; tablet 740–1099 px mặc định dùng rail 72 px và có nút mở rộng. Dưới 740 px dùng drawer, đóng bằng Escape hoặc nền, giữ focus trong menu và trả focus về nút mở. Có nhóm Học tập, Luyện tập, quản trị/cài đặt và tài khoản.
+- Dashboard: tiếp tục bài đang học, tiến độ thực, khóa học và lịch sử hoàn thành. Bài học có tìm kiếm, lọc hoàn thành và phân trang.
+- Bài luyện JLPT: hai mục **Luyện theo bài** và **Thi thử có giờ**. Bài ngắn có tìm kiếm/lọc tiến độ; đề chính thức giữ đồng hồ, đáp án đã lưu và cơ chế tự đối chiếu. Không tuyên bố điểm thi chứng chỉ.
+- Chat: một cột hội thoại, ô soạn luôn ở cuối, công cụ ngắn và cuộn ngang trên điện thoại. Admin nhấn **Voice** để tự mở micro và bắt đầu GPT-Live; không cần gửi từng bản ghi.
+- Voice: âm thanh hai chiều qua WebRTC, sóng âm đo từ micro và giọng thầy, phụ đề riêng cho học viên/thầy, tắt/bật micro, kết thúc và về nhắn tin. Phiên tối đa 10 phút phía client. Phụ đề không lưu vào lịch sử chat; chuyển từ chat sang Voice không tự chuyển lịch sử chat sang phiên nói.
+- Kaiwa: ghi một câu rồi dừng để chép lời bằng `gpt-transcribe` khi dùng OpenAI chính thức (API riêng hoặc mặc định admin). Ghi tối đa 60 giây/2 MiB, nghe lại và sửa bản chép trước khi chấm. Nhà cung cấp khác dùng nhận diện trình duyệt nếu hỗ trợ; luôn có thể nhập tay. Chỉ đánh giá nội dung bản chép, không chấm phát âm.
+- Admin: 13 model văn bản, gồm GPT-6.1 Sol/Terra, GPT-6 Luna/Sol/Astra, GPT-5.5, GPT-5.4/mini, GPT-5 mini, GPT-4.1/mini, GPT-4o và o3. Mức suy luận theo model; lựa chọn riêng từng admin, API cá nhân vẫn ưu tiên. Thiết lập áp dụng với yêu cầu và phiên mới.
+- Tài khoản miễn phí tự gắn API cho AI. Admin dùng khóa Worker khi chưa chọn API riêng. GPT-Live chỉ dành cho admin. Khóa quản trị không xuất hiện trong bundle hoặc phản hồi API.
+- Favicon SVG/ICO và biểu tượng cảm ứng dùng cùng chân dung với sidebar. Lần tải dashboard không tự quét model hay danh mục giọng nói.
 
 ## Nguồn và giấy phép
 
 OpenJLPT, bản `0d1d3410bec90bd4098a7c72de820543cb4f707c` (`evanclan/OpenJLPT`), CC BY-SA 4.0: xem [NOTICE](../static/openjlpt/NOTICE.md), [LICENSE](../static/openjlpt/LICENSE), [manifest](../static/openjlpt/manifest.json) và trang [Nguồn](https://vjbot.dangphuc.me/sources.html). Tài liệu Irodori và JLPT/Japan Foundation chỉ được liên kết, không sao chép. Mức độ N5–N1 của OpenJLPT là ước lượng của cộng đồng, không phải danh sách chính thức.
-
-## Hội thoại, giọng nói và mascot
-
-Ô hỏi nhanh ⌘K dùng cùng lịch sử hội thoại, chặn gửi trùng và giữ nguyên mã yêu cầu khi thử lại. Ghi âm tiếng Nhật có nút dừng, giữ lỗi micro để sửa và giải phóng thiết bị khi chuyển màn hình. Có thể nhập câu trả lời trên trình duyệt không hỗ trợ nhận diện; Kaiwa chỉ nhận xét nội dung bản chép lời. Giọng AI dùng OpenAI chính thức hoặc Gemini-Google và có giọng trình duyệt dự phòng; nút Dừng đọc hủy cả yêu cầu đang tải.
-
-Mascot lớn ở góc màn hình máy tính; kéo hoặc dùng phím mũi tên để di chuyển, Home để trở về góc. Trên điện thoại, mascot nằm trong nút Hỏi thầy Lâm trên thanh đầu để không che nội dung. Favicon là khuôn mặt từ cùng sprite. Chuyển màn hình, hộp thoại và phản hồi bấm dùng cùng nhịp chuyển động; tắt chuyển động khi người dùng chọn giảm chuyển động.
-
-## Compact workspace and GPT-Live
-
-- Dashboard: next lesson, actual completion/review/streak counts, a compact chapter index and practice shortcuts. No mock progress figures.
-- Lesson library and practice lists: search, completion filters and 24-row pagination. Roadmap: search and grammar/situation/supplement filters.
-- Settings: independent account, AI connections, admin models, sound and data views, each with its own hash route. Opening account settings does not scan AI connections or fetch voice catalogs.
-- Admin text models: GPT-4.1 mini, GPT-5 mini, GPT-5.4 mini and GPT-5.4; reasoning options are restricted by model. Each admin keeps their own choices.
-- Live teacher: admin-only GPT-Live with microphone, live Japanese captions, mute/end controls, AI voice selection, connection failure cleanup and a ten-minute client session limit. Audio is sent to OpenAI; captions are not persisted.
-- The mascot portrait is shared by the sidebar, SVG/ICO favicon and touch icon. The larger companion stays in the desktop navigation area; mobile keeps the accessible topbar button. Reduced motion keeps all controls usable.

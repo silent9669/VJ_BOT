@@ -96,3 +96,9 @@ test('settings areas have stable routes and browser back can restore each view',
   }
   assert.equal(c.parseAppRoute('#settings/missing').view,'account');
 });
+
+test('practice catalog selection round trips separately from timed simulation sessions',async()=>{
+  const c=await navigation();const route=c.parseAppRoute(c.appRouteHash('quiz',{level:'N4',view:'catalog',id:'simulation'}));
+  assert.equal(route.tab,'quiz');assert.equal(route.level,'N4');assert.equal(route.view,'catalog');assert.equal(route.id,'simulation');
+  assert.equal(c.parseAppRoute('#quiz/N4/simulation/2018').view,'simulation');
+});

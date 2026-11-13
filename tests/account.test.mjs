@@ -104,9 +104,11 @@ test('OAuth inference pins the chosen opaque connection while read-aloud keeps i
   await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
   await b.context.apiFetch('/api/kaiwa/evaluate',{method:'POST',body:'{}'});
   await b.context.apiFetch('/api/tts',{method:'POST',body:'{}'});
+  await b.context.apiFetch('/api/stt',{method:'POST',body:'{}'});
   assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
   assert.equal(new Headers(requests[2].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
   assert.equal(new Headers(requests[3].options.headers).get('X-VJBot-Profile'),'server:voice-profile');
+  assert.equal(new Headers(requests[4].options.headers).get('X-VJBot-Profile'),'server:voice-profile');
 });
 
 test('missing, cleared and malformed OAuth choices fail closed instead of borrowing server active', async () => {

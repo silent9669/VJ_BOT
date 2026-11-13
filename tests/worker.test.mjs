@@ -875,6 +875,10 @@ test('admin model and reasoning settings persist per account and do not affect p
   for(const patch of [{model:'other'},{reasoning_effort:'none'},{reasoning_effort:'secret'},{live_voice:'unknown'}]){
     assert.equal((await change({model:'gpt-5-mini',reasoning_effort:'medium',live_voice:'shida',...patch})).status,400);
   }
+  for(const [model,effort] of [['gpt-6.1-sol','max'],['gpt-6.1-terra','none'],['gpt-6-luna','none'],['gpt-6-sol','high'],['gpt-6-astra','xhigh'],['gpt-5.5','high'],['gpt-4.1',''],['gpt-4o',''],['o3','medium']]){
+    assert.equal((await change({model,reasoning_effort:effort,live_voice:'shida'})).status,200,model);
+  }
+  for(const model of ['gpt-6.1-sol','gpt-6-astra'])assert.equal((await change({model,reasoning_effort:'none',live_voice:'shida'})).status,400);
   assert.equal((await change({model:'gpt-5-mini',reasoning_effort:'low',live_voice:'shida'})).status,200);
   const settings=await (await worker.fetch(request('/api/admin/ai'),env)).json();
   assert.equal(settings.settings.model,'gpt-5-mini');assert.equal(settings.settings.reasoning_effort,'low');
@@ -926,4 +930,38 @@ test('GPT-Live only exchanges SDP for admins and keeps configuration and keys on
     assert.ok(!(await denied.text()).includes(env.OPENAI_API_KEY));
     env.ADMIN_EMAILS='';assert.equal((await worker.fetch(make(payload),env)).status,403);
   } finally {globalThis.fetch=original;}
+});
+
+test('recorded speech requires an owned official OpenAI connection and never forwards provider errors',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  env.OPENAI_API_KEY='sk-server-stt-test';
+  const make=data=>{const r=request('/api/stt',data);r.headers.set('X-VJBot-Account','google:qa');return r;};
+  const wav=btoa('RIFF0000WAVEaudio'),body={audio:wav,mime_type:'audio/wav'};
+  assert.equal((await worker.fetch(new Request('https://vjbot.test/api/stt',{method:'POST',body:'{}'}),env)).status,401);
+  assert.equal((await worker.fetch(make(body),env)).status,403);
+  assert.equal((await (await worker.fetch(make({action:'capabilities'}),env)).json()).supported,false);
+  await asAdmin(env);
+  for(const patch of [{audio:'no binary'},{mime_type:'text/html'},{audio:btoa('not a wav file')},{audio:''}]){
+    assert.equal((await worker.fetch(make({...body,...patch}),env)).status,400);
+  }
+  assert.equal((await worker.fetch(request('/api/stt',body),env)).status,409);
+  assert.equal((await (await worker.fetch(make({action:'capabilities'}),env)).json()).model,'gpt-transcribe');
+  globalThis.fetch=async(url,options)=>{
+    assert.equal(url,'https://api.openai.com/v1/audio/transcriptions');assert.equal(options.redirect,'manual');
+    assert.equal(options.headers.Authorization,'Bearer '+env.OPENAI_API_KEY);
+    assert.equal(options.body.get('model'),'gpt-transcribe');assert.equal(options.body.get('file').type,'audio/wav');
+    return Response.json({text:' 私は学生です。 '});
+  };
+  try {
+    const response=await worker.fetch(make(body),env);assert.equal(response.status,200);assert.equal((await response.json()).text,'私は学生です。');
+    globalThis.fetch=async()=>new Response('echo '+env.OPENAI_API_KEY,{status:503});
+    const failed=await worker.fetch(make(body),env);assert.equal(failed.status,503);assert.ok(!(await failed.text()).includes(env.OPENAI_API_KEY));
+    await withApi(env,request);assert.equal((await worker.fetch(make(body),env)).status,403);
+    assert.equal((await (await worker.fetch(make({action:'capabilities'}),env)).json()).supported,false);
+    await withApi(env,request,{base_url:'https://api.openai.com/v1'});
+    await env.DB.prepare("DELETE FROM admins WHERE user_id='google:qa'").run();
+    globalThis.fetch=async(_url,options)=>{assert.equal(options.headers.Authorization,'Bearer sk-test-12345678');return Response.json({text:'自分のキーです'});};
+    assert.equal((await worker.fetch(make(body),env)).status,200);
+    const crossed=make(body);crossed.headers.set('X-VJBot-Account','another-user');assert.equal((await worker.fetch(crossed,env)).status,409);
+  }finally{globalThis.fetch=original;}
 });

@@ -30,7 +30,7 @@ All routes are under `/api` and return JSON `{detail}` on errors. Private routes
 
 ## AI (riêng tư, cần API của người dùng)
 
-Chat and speaking feedback use the learner's selected API-key or Antigravity OAuth connection. Read-aloud uses a separate selected Google Gemini API-key profile. AI requests share a limit of 20 requests per minute per VJBot account (`429` when exceeded).
+Chat and speaking feedback use the learner's selected API-key or Antigravity OAuth connection. Read-aloud and recorded transcription use the selected API-key profile; they do not reuse Antigravity chat OAuth. Official OpenAI (including admin shared access) and Google Gemini support their respective TTS paths. AI requests share a limit of 20 requests per minute per VJBot account (`429` when exceeded).
 
 | Route | Mô tả |
 | --- | --- |
@@ -258,3 +258,16 @@ Sources: [gateway configuration](https://help.router-for.me/configuration/option
 - Apply `0021_admin_ai_preferences.sql` after migration 0020. Account deletion removes preferences along with the existing owned data.
 
 API references: [GPT-Live WebRTC](https://developers.openai.com/api/docs/guides/voice-webrtc?api=live), [live session lifecycle](https://developers.openai.com/api/docs/guides/live-conversations), [model reasoning](https://developers.openai.com/api/docs/guides/reasoning).
+
+## Recorded Kaiwa transcription
+
+`POST /api/stt` requires a session, same-origin request and matching `X-VJBot-Account`. API-key profiles use the same owned, pinned selection as TTS; an explicit missing or unsupported profile cannot fall back to a shared key.
+
+- `{action:"capabilities"}` returns `{supported,model}` without generating audio or consuming an AI request slot. Only the exact official OpenAI base with an owned key (or admin Worker default) supports transcription.
+- `{audio:"<base64>",mime_type:"audio/webm;codecs=opus"}` returns `{text}`. MP4, Ogg, WAV and MP3 are also accepted after basic file signature checks. JSON is capped at 3 MiB; decoded audio at 2 MiB. The UI stops at 60 seconds. These limits are app limits, not OpenAI's limits.
+- The Worker forwards multipart audio to the fixed OpenAI `/v1/audio/transcriptions` endpoint using `gpt-transcribe`, with automatic language detection and a 25-second timeout. Audio is not stored in D1. The local playback URL is revoked when the input is reset; sending the edited transcript to Kaiwa is a separate action.
+- Responses: 401 no session, 409 account mismatch, 403 unsupported/missing connection, 400 invalid audio, 413 oversized JSON, 429 rate/quota limit, 502 invalid transcript, 503 provider failure, 504 connection failure. Provider bodies and keys are never returned.
+
+The text model catalog now includes 13 entries in `src/admin-ai.js`; `GET /api/admin/ai` is the source of truth for valid reasoning options. GPT-6.1 Sol and GPT-6 Astra do not accept `none`; reasoning-free models require an empty effort. Catalog inclusion does not guarantee account entitlement or available quota.
+
+References: [OpenAI transcription guide](https://developers.openai.com/api/docs/guides/speech-to-text), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [reasoning models](https://developers.openai.com/api/docs/guides/reasoning).

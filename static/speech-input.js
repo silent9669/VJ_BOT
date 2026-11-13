@@ -1,16 +1,20 @@
 // Chat and Kaiwa share recognition, microphone cleanup and accessible recording states.
 const japaneseInputs = [];
 function stopJapaneseInputs() { japaneseInputs.forEach(input => input.reset()); }
-function createJapaneseInput({button, input, status, playbackButton, onError}) {
+function createJapaneseInput(options) {
+  return window.MediaRecorder && navigator.mediaDevices?.getUserMedia && typeof apiFetch==='function'
+    ? createRecordedJapaneseInput(options) : createBrowserJapaneseInput(options);
+}
+function createBrowserJapaneseInput({button, input, status, playbackButton, onError, bindButton=true}) {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const label = button.querySelector?.('span:last-child') || button;
   const idleLabel = label.textContent;
-  const announce = text => { if (status) status.textContent = text; };
+  const announce = text => { if (status) {status.textContent = text;status.hidden=!text || text==='Micro sẵn sàng';} };
   if (!Recognition) {
-    button.disabled = true;
-    button.title = 'Trình duyệt không hỗ trợ nhận diện giọng nói';
-    announce('Nhập câu trả lời bằng bàn phím.');
-    return {reset() {}};
+    button.disabled = bindButton;
+    if(bindButton)button.title = 'Trình duyệt không hỗ trợ nhận diện giọng nói';
+    if(bindButton)announce('Nhập câu trả lời bằng bàn phím.');
+    return {reset() {},toggle(){announce('Nhập câu trả lời bằng bàn phím.');}};
   }
   const recognition = new Recognition();
   recognition.lang = 'ja-JP';
@@ -69,20 +73,21 @@ function createJapaneseInput({button, input, status, playbackButton, onError}) {
     active = false; draw(false); release();
     if (!failed) announce(input.value.trim() ? 'Đã nhận câu trả lời.' : 'Micro sẵn sàng');
   };
-  button.addEventListener('click', () => {
+  const toggle = () => {
     if (active) { recognition.stop(); return; }
     failed = false; active = true; generation++; prefix = input.value.trim();
     playback?.pause();
     announce('Đang mở micro…'); draw(true);
     try { recognition.start(); }
     catch { active = false; draw(false); announce('Chưa mở được micro. Hãy thử lại.'); }
-  });
+  };
+  if(bindButton)button.addEventListener('click',toggle);
   playbackButton?.addEventListener('click', () => {
     if (!audioUrl) return;
     playback?.pause(); playback = new Audio(audioUrl);
     playback.play().catch(() => announce('Chưa phát được bản ghi. Hãy thử lại.'));
   });
-  const controller = {reset() {
+  const controller = {toggle,get active(){return active;},reset() {
     generation++; failed = false;
     if (active) { active = false; recognition.abort(); }
     release(); draw(false); playback?.pause();
@@ -90,7 +95,7 @@ function createJapaneseInput({button, input, status, playbackButton, onError}) {
     if (playbackButton) playbackButton.hidden = true;
     announce('Micro sẵn sàng');
   }};
-  japaneseInputs.push(controller);
+  if(bindButton)japaneseInputs.push(controller);
   return controller;
 }
 addEventListener('pagehide', stopJapaneseInputs);

@@ -6,7 +6,7 @@
   const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
   const SUFFIX = {openai: /\/chat\/completions$/, anthropic: /\/v1\/messages$/, gemini: /\/v1(beta)?$/};
   const BLOCKED = /(^|\.)(localhost|local|internal|localdomain|home|lan|workers\.dev|dangphuc\.me)$/i;
-  const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/tts', '/api/ai/test'];
+  const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/tts', '/api/stt', '/api/ai/test'];
   const encoder = new TextEncoder(), decoder = new TextDecoder('utf-8', {fatal: true});
   const unavailable = () => problem('Device API profile unavailable. Open API settings and re-save or select a profile.', 'unavailable');
   const storageError = () => problem('Browser storage unavailable. Allow site storage and use a supported browser with IndexedDB and Web Crypto; the profile was not saved.', 'storage');

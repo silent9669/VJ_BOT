@@ -209,7 +209,7 @@ test('only exact intended same-origin inference POST paths receive an immutable 
   const b = browser(), profile = await b.api.save(owner, draft());
   b.api.setActive(owner, {scope: 'local', id: profile.id});
   const options = Object.freeze({method: 'POST', headers: Object.freeze({'X-CSRF-Token': 'synthetic-csrf'}), body: JSON.stringify({message: 'Hello'})});
-  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/tts', '/api/ai/test', 'https://tutor.example/api/chat']) {
+  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/tts', '/api/stt', '/api/ai/test', 'https://tutor.example/api/chat']) {
     const prepared = await b.api.prepareRequest(path, options, owner), body = JSON.parse(prepared.body);
     assert.notEqual(prepared, options);
     assert.equal(body.api_connection.api_key, draft().api_key);
