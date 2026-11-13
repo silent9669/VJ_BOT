@@ -9,7 +9,7 @@ function fixture(options={}) {
   const elements=new Map(),events=new Map(),recorders=[],recognizers=[],audios=[],blobs=[],revoked=[],errors=[],tts=[];
   let permissions=0,stoppedSpeech=0,liveStarts=0;
   const element=id=>{
-    if(!elements.has(id))elements.set(id,{value:'',textContent:'',style:{},dataset:{},hidden:false,disabled:false,events:{},listeners:{},attributes:{},inputEvents:0,dispatchEvent(event){if(event.type==='input')this.inputEvents++;},classList:{toggle(){},remove(){}},append(){},setAttribute(k,v){this.attributes[k]=v;},addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);this.events[k]=fn;},click(){return this.events.click?.({stopPropagation(){}}) ?? this.onclick?.();}});
+    if(!elements.has(id))elements.set(id,{value:'',textContent:'',style:{},dataset:{},hidden:false,disabled:false,events:{},listeners:{},attributes:{},inputEvents:0,children:[],dispatchEvent(event){if(event.type==='input')this.inputEvents++;},classList:{toggle(){},remove(){}},append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;},setAttribute(k,v){this.attributes[k]=v;},addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);this.events[k]=fn;},click(){return this.events.click?.({stopPropagation(){}}) ?? this.onclick?.();}});
     return elements.get(id);
   };
   class Recognition {
@@ -152,9 +152,15 @@ test('non-chat Japanese buttons use Japanese-only mode and only canonical single
 test('accepted in-app navigation cancels pending capture before route rendering',async()=>{
   const permission=deferred(),f=fixture({permission:permission.promise}),navigated=new Error('route rendering boundary');
   const pending=f.start();
+  f.element('kaiwa-criteria').append({textContent:'Previous assessment'});
+  f.element('kaiwa-model-text').textContent='Previous example';
+  f.element('kaiwa-result-card').hidden=false;
   f.c.authorizePage=()=>true;f.c.confirmWorkspaceNavigation=()=>true;f.c.rememberTeacherScreen=()=>{throw navigated;};
   vm.runInContext(source.slice(source.indexOf('function switchTab('),source.indexOf('// 8. CHAT')),f.c);
   assert.throws(()=>f.c.switchTab('dashboard'),error=>error===navigated);
+  assert.equal(f.element('kaiwa-result-card').hidden,true);
+  assert.deepEqual(f.element('kaiwa-criteria').children,[]);
+  assert.equal(f.element('kaiwa-model-text').textContent,'');
   permission.resolve(f.defaultStream);await pending;
   assert.equal(f.defaultStream.track.stops,1);assert.equal(f.recorders.length,0);
 });
