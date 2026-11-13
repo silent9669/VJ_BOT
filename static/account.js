@@ -60,6 +60,7 @@ function renderAccount(){
   const adminNav=document.getElementById('settings-admin-nav');
   const voice=document.getElementById('btn-voice-input');if(voice)voice.hidden=!signedInUser?.is_admin;
   if(adminNav)adminNav.hidden=!signedInUser?.is_admin;
+  globalThis.checkLiveAccount?.();
 }
 async function openAccount(message=''){
   const dialog=document.getElementById('auth-dialog');

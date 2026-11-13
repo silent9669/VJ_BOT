@@ -60,35 +60,55 @@
 #panel-classroom {max-width:960px}
 #panel-classroom .classroom-layout {display:block}
 #panel-classroom .classroom-chat-window {width:100%;margin:0;min-height:480px;height:calc(100dvh - 104px);max-height:1100px;overflow:hidden}
-#panel-classroom .chat-header {flex-shrink:0;min-height:64px}
+#panel-classroom .chat-header {flex-shrink:0;min-height:64px;padding:12px 24px;background:var(--sheet);border-bottom:1px solid var(--line)}
 #panel-classroom .chat-title {font-size:16px!important;line-height:1.5}
-#panel-classroom .chat-messages-stage {padding:24px 28px}
-#panel-classroom .chat-bubble-row {margin-bottom:24px}
-#panel-classroom .bubble-speech-card {max-width:85%;flex:0 1 auto;width:auto!important}
-#panel-classroom .bubble-speech-card:not(.user) {flex:1;max-width:calc(100% - 36px)}
+#panel-classroom .chat-messages-stage {padding:28px 32px;max-height:none;scrollbar-width:thin;scroll-padding-bottom:24px}
+#panel-classroom .chat-bubble-row {margin-bottom:28px;gap:12px}
+#panel-classroom .bubble-speech-card {max-width:80%;flex:0 1 auto;width:auto!important;padding:0;background:none}
+#panel-classroom .bubble-speech-card.user {background:var(--surface-2);padding:12px 16px;border-radius:12px 12px 4px 12px}
+#panel-classroom .bubble-speech-card:not(.user) {max-width:calc(100% - 42px)}
+#panel-classroom .bubble-body-text {font-size:15px;line-height:1.9;overflow-wrap:anywhere}
+#panel-classroom .bubble-avatar-box {margin-top:2px}
+#panel-classroom .bubble-header-meta {min-height:24px;margin-bottom:6px}
 #panel-classroom .bubble-header-meta {display:flex;align-items:center;gap:16px;justify-content:space-between}
 #panel-classroom .bubble-tts-btn {margin:0 0 0 auto;min-height:32px;min-width:44px;border:0;padding:4px 8px;text-decoration:none;color:var(--muted);white-space:nowrap}
-#panel-classroom .chat-chips-bar {flex-wrap:nowrap!important;overflow:auto!important;scrollbar-width:thin;padding:4px 16px;gap:4px;flex-shrink:0}
+#panel-classroom .chat-chips-bar {flex-wrap:nowrap!important;overflow:auto!important;scrollbar-width:thin;padding:4px 24px;gap:4px;flex-shrink:0;border:0}
 #panel-classroom .chat-chips-bar .prompt-chip {min-height:36px;font-size:12px;padding:6px 8px;background:none;border:0;flex:none}
-#panel-classroom .chat-input-bar {border-top:1px solid var(--line);padding:12px 16px!important;flex-shrink:0;align-items:end}
+#panel-classroom .chat-input-bar {margin:0 20px 16px;padding:8px!important;border:1px solid var(--border-dark);border-radius:12px;background:var(--sheet);flex-shrink:0;align-items:end;box-shadow:0 2px 6px #152b1b06}
+#panel-classroom .chat-input-bar:focus-within {border-color:var(--accent)}
 #panel-classroom .chat-audio-btn {display:flex;align-items:center;justify-content:center;gap:6px;min-width:82px;background:var(--surface-2);border:1px solid transparent;border-radius:6px;color:var(--ink)}
 #panel-classroom .chat-text-input {resize:none;min-height:44px;max-height:120px;height:44px}
+#panel-classroom .welcome-title {font-size:24px;letter-spacing:-.04em;max-width:360px;line-height:1.4}
+#panel-classroom .chat-welcome-state {padding:20px 12px;gap:20px}
+#panel-classroom .welcome-chips-row {display:grid;grid-template-columns:1fr;gap:0;width:min(100%,360px)}
+#panel-classroom .welcome-chip-btn {text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:12px 0;min-height:44px;display:flex;justify-content:space-between}
+#panel-classroom .welcome-chip-btn::after {content:'↗';color:var(--muted)}
 #chat-error {font-size:12px;padding:10px 16px;gap:8px}
 .live-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
 .live-heading .stage-btn {border:0;background:none;padding:4px 0}
-#panel-classroom .classroom-voice {padding:16px 24px;gap:12px}
-#panel-classroom .live-stage {background:none;min-height:128px;gap:20px}
-#panel-classroom .live-stage>img {height:112px;width:62px}
-#panel-classroom .live-stage h2 {font-size:20px;font-weight:500}
-#live-wave {display:block;width:100%;height:64px;max-width:640px;align-self:center;color:var(--accent);flex-shrink:0}
-.live-stage:not([data-active=true])+#live-wave {opacity:.35}
-#panel-classroom .live-captions {gap:24px;min-height:100px}
-#panel-classroom .live-captions p {margin-top:10px;min-height:24px;max-height:220px;font-size:15px}
-#panel-classroom .live-captions p:empty::after {content:'…';color:var(--muted)}
+#panel-classroom .classroom-voice {padding:12px 24px 20px;gap:12px;overflow:hidden}
+#panel-classroom .live-stage {display:grid;grid-template-columns:40px minmax(0,1fr) 180px;background:var(--surface-2);min-height:88px;gap:16px;padding:12px 20px;border-radius:8px}
+#panel-classroom .live-stage>img {height:64px;width:36px}
+#panel-classroom .live-stage h2 {font-size:16px;font-weight:500;margin-bottom:4px}
+#panel-classroom .live-stage p {margin:0;font-size:11px}
+#live-wave {display:block;width:100%;height:48px;color:var(--accent)}
+.live-stage:not([data-active=true]) #live-wave {opacity:.35}
+.live-transcript {flex:1;min-height:0;overflow:auto;scrollbar-width:thin;padding:12px 0;overscroll-behavior:contain}
+.live-transcript[data-empty=true]::before {content:'Lời nói và bản dịch sẽ xuất hiện ở đây.';display:block;text-align:center;color:var(--muted);font-size:13px;padding:32px 16px}
+.live-turn {max-width:88%;margin:0 0 24px;padding:0 4px;overflow-wrap:anywhere}
+.live-turn.user {margin-left:auto;background:var(--surface-2);border-radius:10px;padding:12px 16px}
+.live-turn header {display:flex;align-items:center;gap:12px;margin-bottom:6px;font-size:11px;color:var(--muted)}
+.live-turn header strong {color:var(--ink);font-size:12px;font-weight:500}
+.live-turn header span {margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.live-turn p {margin:0;white-space:pre-wrap;line-height:1.8}
+.live-original {font:400 16px/1.8 var(--font-jp)}
+.live-turn .live-translation {color:var(--muted);font:400 13px/1.7 var(--font-sans);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.live-translation-retry {border:0;background:none;color:var(--accent);padding:8px 0;min-height:36px;font:500 12px var(--font-sans);cursor:pointer}
 #panel-classroom .live-controls {justify-content:center;flex-shrink:0;padding-top:8px}
 #live-start:disabled {display:none}
 #live-status {text-align:center}
 #live-audio {display:none}
+.classroom-chat-window[data-mode=live] #btn-clear-chat-history {display:none}
 /* Short practice and timed papers share a compact list, with distinct entry points. */
 .exam-catalog-nav {display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;padding-bottom:8px}
 .exam-catalog-nav a {display:flex;align-items:center;min-height:36px;padding:6px 12px;font-size:13px;text-decoration:none;color:var(--muted);border-radius:4px}
@@ -115,23 +135,25 @@
   #panel-classroom .chat-messages-stage {padding:16px}
   #panel-classroom .bubble-speech-card:not(.user) {max-width:100%}
   #panel-classroom .bubble-speech-card {max-width:94%}
-  #panel-classroom .chat-input-bar {padding:10px 12px!important;gap:8px}
-  #panel-classroom .chat-chips-bar .prompt-chip {min-height:44px}
+  #panel-classroom .chat-input-bar {padding:6px!important;gap:6px;margin:0 12px 12px}
+  #panel-classroom .chat-chips-bar {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;overflow:visible!important;padding:0 16px}
+  #panel-classroom .chat-chips-bar .prompt-chip {min-height:44px;padding:6px}
   #panel-classroom .chat-audio-btn {min-width:44px;padding:8px}
   #panel-classroom .chat-audio-btn span {display:none}
   #panel-classroom .chat-text-input {font-size:16px}
   #panel-classroom .classroom-voice {padding:12px 16px;gap:10px}
-  #panel-classroom .live-stage {min-height:100px;gap:16px}
-  #panel-classroom .live-stage>img {height:92px;width:50px}
-  #panel-classroom .live-stage h2 {font-size:18px}
-  #panel-classroom .live-captions {grid-template-columns:1fr;gap:12px;flex:1}
-  #panel-classroom .live-captions p {max-height:120px;margin-top:6px}
-  #live-wave {height:48px}.live-heading>span {display:none}
+  #panel-classroom .live-stage {grid-template-columns:30px minmax(0,1fr) 72px;min-height:72px;gap:10px;padding:10px 12px}
+  #panel-classroom .live-stage>img {height:54px;width:30px}
+  #panel-classroom .live-stage h2 {font-size:14px}
+  #live-wave {height:40px}.live-heading>span {display:block}
+  .live-turn {max-width:94%;margin-bottom:20px}.live-turn.user {padding:10px 12px}.live-original {font-size:15px}
+  .live-translation-retry {min-height:44px}
   #exam-catalog .exam-set {grid-template-columns:24px minmax(0,1fr) auto;gap:8px;padding:12px 0}
   .exam-catalog-nav a {min-height:44px}.exam-set-action {font-size:11px}
   #panel-quiz .quiz-question-area {padding:16px!important}
 }
 @media(prefers-reduced-motion:reduce) {#app-sidebar,#app-sidebar * {animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:no-preference) {.live-turn {animation:caption-arrive 180ms var(--ease-out) both}@keyframes caption-arrive {from {opacity:0;transform:translateY(6px)}to {opacity:1;transform:translateY(0)}}}
 /* Practice uses the same control scale as the surrounding lesson. */
 :root {--practice-line:var(--line);--practice-green:var(--accent)}
 .lesson-mode-switch {margin-bottom:20px}

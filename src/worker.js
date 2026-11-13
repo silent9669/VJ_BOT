@@ -9,7 +9,7 @@ import {speechResponse, openAISpeechResponse} from './speech.js';
 import {antigravityOAuthRoute} from './antigravity-oauth.js';
 import { tutorChat } from './tutor-chat.js';
 import { clearTutorConversation } from './tutor-session.js';
-import {liveRoute} from './live.js';
+import {liveRoute, liveTranslationRoute} from './live.js';
 import {transcriptionRoute} from './transcription.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
@@ -67,6 +67,7 @@ export default {
     try {
       if (url.pathname.startsWith('/api/auth/')) return await authRoute(request,env);
       if (url.pathname === '/api/live') return await liveRoute(request,env);
+      if (url.pathname === '/api/live/translate') return await liveTranslationRoute(request,env);
       if (url.pathname === '/api/stt') return await transcriptionRoute(request,env);
       if (url.pathname.startsWith('/api/ai/oauth/antigravity')) return await antigravityOAuthRoute(request, env);
       if (url.pathname.startsWith('/api/ai/') || url.pathname.startsWith('/api/admin/')) return await aiRoute(request,env,url);

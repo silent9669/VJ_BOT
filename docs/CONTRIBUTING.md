@@ -51,7 +51,7 @@ git diff --check
 
 ## Kiểm thử giọng nói và điều hướng
 
-- Voice: một lần nhấn mở và kết nối; hai lượt nói liên tiếp, phụ đề hai vai, âm thanh đầu ra và waveform. Thử mute/unmute, về nhắn tin, rời route, từ chối micro và đổi tài khoản trong lúc kết nối; không còn track hoạt động sau khi đóng.
+- Voice: một lần nhấn mở và kết nối; hai lượt nói liên tiếp, phụ đề hai vai theo mốc thời gian và bản dịch Việt, âm thanh đầu ra và waveform. Kiểm tra lời lặp, nói chồng, dịch lỗi/thử lại và kết quả trả trễ sau khi nội dung hoặc tài khoản đổi. Thử mute/unmute, về nhắn tin, rời route, từ chối micro và đổi tài khoản trong lúc kết nối; không còn track hoạt động sau khi đóng.
 - Kaiwa: ghi/dừng/chép, sửa văn bản trước gửi, nghe lại. Rời bài khi đang xin quyền hoặc đang chép không được ghi đáp án trễ vào bài mới. Thử API cá nhân, admin mặc định và nhà cung cấp không hỗ trợ chép lời.
 - Tablet phải hiện rail và không làm nội dung `inert`. Điện thoại phải giữ focus trong drawer, Escape trả focus, chọn trang đóng menu. Kiểm tra sidebar ngắn bằng cuộn và giảm chuyển động.
 - Kiểm thử model mới bằng yêu cầu chat thực, giữ lựa chọn admin trước/sau kiểm thử. Danh sách model là catalog hỗ trợ, không đảm bảo mọi khóa đều có quyền/hạn mức.

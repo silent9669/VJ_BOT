@@ -3,9 +3,9 @@
   const el = id => document.getElementById(id);
   let peer=null, stream=null, channel=null, abort=null, version=0, ready=false, closing=false;
   let timer=null, closeTimer=null, connectTimer=null, disconnectedTimer=null, startedAt=0;
-  let audioContext=null,analyser=null,waveFrame=null;
+  let audioContext=null,analyser=null,waveFrame=null,callOwner=null;
   const audioSources=[];
-  const captions = {user:[],assistant:[]};
+  const timeline = createLiveTranscript(el('live-transcript'));
   const status = text => { el('live-status').textContent=text; };
   function controls(active) {
     el('live-start').disabled=active;
@@ -29,6 +29,7 @@
     el('live-play-audio').hidden=true;
     el('live-mute').setAttribute('aria-pressed','false');el('live-mute').textContent='Tắt micro';
     controls(false); if (message) status(message);
+    timeline.finish();
   }
   function connectWave(media) {
     if(!audioContext || !analyser)return;
@@ -62,23 +63,12 @@
     }
     cleanup('Đã kết thúc cuộc trò chuyện.');
   }
-  function transcript(event) {
-    const role=event.type==='session.input_transcript.delta'?'user':'assistant';
-    if (typeof event.delta!=='string' || !Number.isFinite(event.start_ms) || !Number.isFinite(event.end_ms)) return;
-    captions[role].push({text:event.delta,start:event.start_ms,end:event.end_ms});
-    // These are continuous captions, not completed or persisted conversational turns.
-    if(captions[role].length>500)captions[role].shift();
-    const caption=el(role==='user'?'live-user-caption':'live-teacher-caption');
-    const follow=caption.scrollHeight-caption.scrollTop-caption.clientHeight<40;
-    caption.textContent=captions[role].map(part=>part.text).join('').slice(-5000);
-    if(follow)caption.scrollTop=caption.scrollHeight;
-  }
   async function start() {
     if (peer || el('live-start').disabled) return;
     if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection==='undefined') {status('Trình duyệt cần hỗ trợ WebRTC và micro qua HTTPS hoặc localhost.');return;}
     const run=++version, owner=signedInUser?.user_id;
-    captions.user=[];captions.assistant=[];
-    el('live-user-caption').textContent='';el('live-teacher-caption').textContent='';
+    callOwner=owner;
+    timeline.reset();
     el('live-duration').textContent='00:00';controls(true);status('Cho phép micro để bắt đầu…');
     try {
       globalThis.stopSpeech?.();globalThis.stopJapaneseInputs?.();
@@ -114,7 +104,7 @@
             if(seconds>=600)end();
           },1000);
         } else if(event.type==='session.closed')cleanup('Đã kết thúc cuộc trò chuyện.');
-        else if(['session.input_transcript.delta','session.output_transcript.delta'].includes(event.type))transcript(event);
+        else if(['session.input_transcript.delta','session.output_transcript.delta'].includes(event.type))timeline.add(event);
         else if(event.type==='error')cleanup('GPT-Live báo lỗi. Kết thúc phiên; hãy thử lại.');
       });
       events.addEventListener('close',()=>{if(run===version)cleanup('Kết nối đã đóng.');});
@@ -147,6 +137,7 @@
   }
   function mode(live) {
     if(!live && (peer || el('live-start').disabled))end();
+    if(!live)timeline.stop();
     el('classroom-voice').hidden=!live;
     el('classroom-text').hidden=live;
     document.querySelector('.classroom-chat-window').dataset.mode=live?'live':'text';
@@ -165,11 +156,13 @@
     el('live-mute').setAttribute('aria-pressed',String(mute));el('live-mute').textContent=mute?'Bật micro':'Tắt micro';
   });
   for(const button of document.querySelectorAll('[data-chat-mode]'))button.addEventListener('click',()=>mode(button.dataset.chatMode==='live'));
-  window.addEventListener('pagehide',()=>end(true));
-  window.addEventListener('hashchange',()=>{if(!location.hash.startsWith('#classroom'))end();});
-  window.addEventListener('vjbot-account-ready',()=>{
-    if(!signedInUser?.is_admin)mode(false);
-  });
-  window.stopLiveConversation=()=>end();
+  window.addEventListener('pagehide',()=>{end(true);timeline.stop();});
+  window.addEventListener('hashchange',()=>{if(!location.hash.startsWith('#classroom')){end();timeline.stop();}});
+  window.checkLiveAccount=()=>{
+    timeline.accountChanged();
+    if(!signedInUser?.is_admin || callOwner && callOwner!==signedInUser?.user_id)mode(false);
+  };
+  window.addEventListener('vjbot-account-ready',window.checkLiveAccount);
+  window.stopLiveConversation=()=>{end();timeline.stop();timeline.accountChanged();};
   window.openLiveConversation=()=>{if(!signedInUser?.is_admin)return;mode(true);return start();};
 })();
