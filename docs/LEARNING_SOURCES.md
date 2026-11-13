@@ -409,3 +409,108 @@ that session's unfinished files or introducing another grading/runtime stack.
 Actual wrong-answer, hint, retry and persisted-progress acceptance remains blocked
 on that explicit canonical integration handoff. Runtime selected-API teaching and
 independent voice settings remain unchanged.
+
+### Canonical integration handoff boundary
+
+The content checkpoint's exact integration input is
+`static/course/n5-teaching.json`. `lessons[].id` and task-local `options[].id`
+are stable identities; use `lessons[].order` for sequence rather than assuming
+array position. The earlier three pilot objects stay at their published positions
+while new topic packages are appended. Prerequisites name lesson IDs, not indexes.
+
+Do not reinterpret `ai_reviewed` as qualified human approval or permission to
+award objective accuracy/mastery. Each lesson explicitly disables scored
+assessment and mastery credit. `accepted_variants` and `answer_option_id` are
+editorial references for the specified draft task, not an alternative server
+grading authority. Any canonical adapter must retain those limits across lesson
+display, teacher requests, task submission, progress and voice-provider requests.
+The active canonical owner must use its existing task contracts, not add a
+parallel application or a separate exact-string grader for this asset.
+
+Before closing `vls-n5-app-acceptance`, hand over one **committed** canonical
+implementation and resolve writer ownership explicitly. Then exercise an actual
+lesson with the staged content: open its complete context, submit a wrong
+response, receive a phase-safe hint, retry, and verify that persisted completion
+remains advisory/reference evidence rather than verified mastery. Separately
+held-out evaluation must not be fed back as lesson examples. Model output quality
+requires separately authorized, observed inference; synthetic responses prove
+request/state handling only. Nothing in this handoff authorizes deployment,
+production migrations, provider/account changes or paid generation.
+
+### Twenty-lesson content checkpoint
+
+The complete editorial-staging asset now contains **20 AI-reviewed N5 study-track
+packages, 100 contextual examples with readings and Vietnamese meanings, 40
+explained common errors and 100 provisional tasks**. Each lesson retains the
+explicit source-first background-reference header and separate AI authorship.
+All prerequisite IDs resolve within these twenty lessons, including the
+`te-form` prerequisite that was absent from the earlier three-pilot checkpoint.
+
+Study order and stable ID suffixes:
+
+1. `topic`: noun predicates and topic `は`.
+2. `also`: additive `も`, including a shared negative predicate.
+3. `possession`: `の`, ownership direction and other noun relations.
+4. `question`: polite `か`, yes/no versus information questions.
+5. `polite-verbs`: the four polite non-past/past and positive/negative forms.
+6. `past-negative`: `ませんでした・なかった`.
+7. `te-form`: verb groups, irregulars and meaningful connected actions.
+8. `request`: contextual `てください`.
+9. `negative-request`: `ないでください` and negative-form construction.
+10. `existence`: `あります・います`, location and the plant/object distinctions.
+11. `time-range`: starting and ending points with `から・まで`.
+12. `action-place`: action `で` versus existence `に`, with labeled event extension.
+13. `invitation`: contextual `ませんか`, acceptance and softened refusal.
+14. `reason`: causal `から` with correct predicate forms.
+15. `comparison`: `より・ほうが・いちばん`.
+16. `want-action`: `たい`, person/context limits and legitimate `を／が`.
+17. `want-object`: `がほしい` versus wanting to perform an action.
+18. `demonstratives`: `これ・それ・あれ`, speaker perspective and prices.
+19. `choice`: actual decisions with `にします`.
+20. `after-action`: constrained sequence with `てから`, not automatic causality.
+
+After the three-pilot review and checked commit, two independent AI reviewers
+read all remaining seventeen lessons: every explanation, **85 examples with
+readings/translations/contexts, 34 common errors and 85 complete tasks**, including
+all alternatives, keys, variant lists, rationales, prerequisites and actual
+source-topic bindings. They were reviewers, not those draft authors.
+
+Resolved findings are narrow and recorded in the asset: the journey-end question
+now states its `から・まで` restriction in the prompt rather than retroactively
+rejecting `へ`; the choice question includes both `なにに` and `なんに` kana
+references; polite-form instructions request the actual full verb form; the
+`て` explanation distinguishes past from non-past; and a money-related example
+has an unambiguous beginner context.
+
+All twenty lessons are **AI-reviewed only**, with `human_approved: false`,
+`scored_assessment: false`, `mastery_credit: false` and every task `scored: false`.
+No acquired source text, existing canonical answer/progress identity, provider
+selection or independent voice setting is changed. This content checkpoint is
+not evidence that the canonical application has loaded or taught these lessons.
+
+### Last exercised twenty-lesson verification
+
+An actual local Node data reader consumed the final asset and all referenced
+source records after the last content correction:
+
+- **20 packages / 100 examples / 40 common errors / 100 tasks** validated.
+  Tasks comprise **60 single-choice and 40 constrained short-text references**.
+- Source chunk IDs, exact URLs, source names and source-first headers resolve.
+  All lesson/example/task IDs and task-local option IDs are distinct within their
+  declared scope. Each choice key names one existing option; each short-text
+  reference list is nonempty and contains distinct strings.
+- Every prerequisite resolves to an earlier lesson, so no prerequisite cycle or
+  missing prerequisite remains. Study orders cover 1–20 without duplication.
+- All three earlier published pilot objects are exactly unchanged. The acquired
+  **33-document / 55-passage source corpus is also unchanged**.
+- All example Japanese fields contain Japanese script and no unintended Latin
+  characters. Every example has context, reading and Vietnamese meaning. These
+  mechanical checks supplement—not replace—the actual independent AI language
+  reviews recorded above.
+- The corrected range-particle restriction and both kana readings for the choice
+  question are present. All twenty lesson gates and all hundred task flags retain
+  non-scored, non-mastery and no-human-approval status.
+
+No application build or application-wide tests were rerun for an asset that has
+no canonical consumer yet. This result is content/data evidence only; it must not
+be substituted for the blocked actual lesson/tutor/progress acceptance.
