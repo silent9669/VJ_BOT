@@ -27,6 +27,7 @@ async function fixture(protocol = 'openai') {
     return level ? Response.json(catalogs[level]) : new Response('Not found', {status: 404});
   }}};
   await DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(token), 'google:injection', 'Probe', Date.now() + 600000).run();
+  await DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:injection','N5','openjlpt','now','Probe','probe@example.test')").run();
   const send = (path, body, method = body === undefined ? 'GET' : 'POST') => worker.fetch(new Request('https://vjbot.test' + path, {
     method, headers: {Cookie: 'vj_session=' + token, 'Content-Type': 'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)})
   }), env);

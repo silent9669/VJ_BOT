@@ -149,3 +149,44 @@ test('catalog uses the same complete canonical inventory and SHA256 revisions in
   const writing=catalogs.N5.lessons['practical:v1:N5:introductions:production'].questions;
   assert.equal(writing.length,1);assert.equal(writing[0].mode,'writing');
 });
+
+test('committed N5 packages use the existing curriculum and canonical tasks without invented scoring authority',async()=>{
+  const c=context(),source=JSON.parse(readFileSync('static/course/n5-teaching.json','utf8'));
+  await c.loadPracticalCourse();await c.ensureLessons('N5');
+  const units=c.createStudyPlan('N5'),unit=units.find(unit=>unit.id==='n5-teaching:v1'),seen=new Set();
+  assert.equal(unit.steps.length,source.lessons.length);
+  const catalogs=await buildTeacherCatalog();
+  for(const step of unit.steps){
+    const authored=source.lessons.find(lesson=>lesson.id===step.lesson.id),tasks=c.lessonQuestions(step.lesson,'N5','grammar'),canonical=catalogs.N5.lessons[authored.id];
+    for(const prerequisite of authored.prerequisites)assert.ok(seen.has(prerequisite),prerequisite);
+    seen.add(authored.id);assert.equal(tasks.length,authored.tasks.length);
+    assert.equal(canonical.authorship,'ai_authored');assert.equal(canonical.review.human_approved,false);
+    assert.equal(canonical.eligibility.scored_assessment,false);assert.equal(canonical.eligibility.mastery_credit,false);
+    assert.deepEqual(canonical.overview.common_errors,authored.common_errors);
+    for(const reference of authored.source_refs)assert.ok(canonical.sources.some(source=>source.id===reference.chunk_id && source.role==='background_reference_not_approval'));
+    for(const [index,task] of tasks.entries()){
+      const original=authored.tasks[index];
+      assert.equal(task.task_id,original.id);assert.equal(task.item_id,original.id);assert.equal(task.source_position,index);
+      assert.equal(task.explanation,original.rationale);assert.equal(task.review_status,'unreviewed');assert.equal(task.unavailable_reason,'');
+      assert.equal(canonical.questions[index].revision,hash(c,task));
+      if(original.mode==='choice'){
+        assert.deepEqual(plain(task.opts),original.options.map(option=>option.text));
+        assert.equal(original.options[task.answer_index].id,original.answer_option_id);
+      }else{
+        assert.equal(task.mode,'recall');assert.equal(task.answer_index,null);
+        assert.deepEqual(plain(task.accepted_answers),original.accepted_variants);
+      }
+    }
+  }
+  assert.equal(seen.size,20);
+});
+
+test('curriculum attempted coverage requires a current revision and never becomes manual completion or verified mastery',()=>{
+  const c=context(),step={ids:['task:one','task:two']},revisions=new Map([['one','current'],['two','current']]);
+  const evidence=[{task_id:'one',item_id:'task:one',revision:'current',validity:'valid',answered_at:'now'},
+    {task_id:'one',item_id:'task:one',revision:'current',validity:'valid',answered_at:'later'},
+    {task_id:'two',item_id:'task:two',revision:'old',validity:'valid',answered_at:'now'}];
+  const state=c.studyStepState(step,new Map(),evidence,revisions);
+  assert.equal(state.submitted,1);assert.equal(state.complete,false);assert.equal(state.reviewed,0);
+  assert.equal(c.studyStepState(step,new Map(),evidence).submitted,0);
+});

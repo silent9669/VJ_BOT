@@ -28,6 +28,8 @@ All minimum consumers cut over together: choice/recall practice, dedicated writi
 
 Runtime teaching still uses the selected chat provider, with independent voice configuration. Original/generated comparison is presentation-only; task renderers retain their context/target markup and canonical answer values. Rights/processing restrictions and known quarantine precede model/TTS use. Focused payload limits return actionable errors without automatic chunking, bulk translation or provider fallback. Attributed external RAG remains reference evidence, never grading authority.
 
+`loadN5Teaching` admits the immutable committed N5 editorial package through `ensureLessons`, not a second learning application. The existing curriculum presents its prerequisite-ordered lessons; native practice, teacher catalogs, task-safe coaching and progress reuse the same typed tasks. Source task IDs and original option positions remain stable. Examples retain their context/readings, and contrastive common errors stay reference material rather than pre-answer solution aliases. AI review does not grant scored/mastery eligibility. Curriculum coverage counts only actual submissions matching current task revisions, independently of manual markers and verified assessment.
+
 ## Bản đồ mã nguồn
 
 | Đường dẫn | Vai trò |

@@ -3,8 +3,32 @@ const lessonLoads = new Map();
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+async function loadN5Teaching(){
+  const response=await fetch('course/n5-teaching.json');
+  if(!response.ok)throw new Error('Không tải được bộ bài N5 Việt–Nhật. Hãy thử lại.');
+  const source=await response.json();
+  if(source.version!==1 || source.human_approved!==false || !Array.isArray(source.lessons)
+    || source.lessons.some(lesson=>lesson.level!=='N5' || lesson.eligibility?.reference_display!==true
+      || lesson.eligibility?.provider_teaching!=='advisory_only' || lesson.eligibility?.scored_assessment!==false
+      || lesson.eligibility?.mastery_credit!==false || !Array.isArray(lesson.tasks)))throw new Error('Bộ bài N5 chưa có cấu trúc và giới hạn sử dụng phù hợp.');
+  const titles=new Map(source.lessons.map(lesson=>[lesson.id,lesson.title]));
+  return [...source.lessons].sort((a,b)=>a.order-b.order).map(lesson=>({
+    ...lesson,lesson:lesson.order,editorial:true,source:'AI-authored N5 study drafts',sourceLabel:'VJBot · AI biên soạn · tham khảo',language:'vi',
+    meaning_vi:lesson.goal,summary:lesson.goal,prerequisite_titles:lesson.prerequisites.map(id=>titles.get(id)),
+    examples:lesson.examples.map(example=>({...example,ro:example.reading})),
+    drills:lesson.tasks.map(task=>({
+      task_key:task.id,item_id:task.id,source_identity:task.id,q:task.prompt,
+      mode:task.mode==='short_text'?'recall':task.mode,
+      opts:task.mode==='choice'?task.options.map(option=>option.text):[],
+      answer_index:task.mode==='choice'?task.options.findIndex(option=>option.id===task.answer_option_id):null,
+      accepted_answers:task.mode==='short_text'?task.accepted_variants:[],
+      explanation:task.rationale,source_language:'vi'
+    }))
+  }));
+}
 async function ensureLessons(level) {
   if (!lessonLoads.has(level)) lessonLoads.set(level, (async () => {
+    const editorial=level==='N5'?await loadN5Teaching():[];
     const [vocab,grammar,kanji] = await Promise.all(['vocab','grammar','kanji'].map(async kind => {
       const response = await fetch(`openjlpt/${kind}-${level.toLowerCase()}.json`);
       if(!response.ok) throw new Error('Không tải được bài học. Hãy thử lại.');
@@ -55,6 +79,7 @@ async function ensureLessons(level) {
         return {id:`kana:${name}:${index}`,lesson:index+1,title:`${name} · ${row[kind]}`,summary:'Bảng chữ cái cơ bản',explanation:index===9?'を thường được đọc là o khi làm trợ từ. ん là âm mũi, không thêm nguyên âm.':'Đọc từng chữ, nghe mẫu rồi chọn cách đọc trong phần luyện tập.',items,drills:items.map((w,i)=>makeDrill(`Cách đọc của ${w.jp}?`,w.reading,rows.flatMap(r=>r[2]),w.id,i))};
       }));
     }
+    skills.grammar.unshift(...editorial);
   })().catch(error => {lessonLoads.delete(level);throw error;}));
   return lessonLoads.get(level);
 }

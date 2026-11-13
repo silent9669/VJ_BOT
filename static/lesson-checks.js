@@ -35,7 +35,7 @@ function normalizedLessonTasks(item,level,skill){
       target:source.target || '',parts:Array.isArray(source.parts)?[...source.parts]:[],
       opts,answer_index:mode==='choice'?answer_index:null,accepted_answers,
       item_id:source.item_id || `${id}:${index}`,
-      task_id:`${canonicalId}:question:${key}`,source_position:index,mode,
+      task_id:source.task_key || `${canonicalId}:question:${key}`,source_position:index,mode,
       skill:source.skill || skill,review_status:quarantine?'quarantined':'unreviewed',
       explanation:source.explanation || source.explain || '',
       example_indexes:Array.isArray(source.example_indexes)?[...source.example_indexes]:[],
@@ -83,7 +83,7 @@ function normalizedLessonTasks(item,level,skill){
       add({mode:'recall',q:`Tự viết cách đọc của ${word.jp}.`,instruction:skill==='kana' || !word.reading?'Viết cách đọc bằng romaji theo nguồn.':'Viết cách đọc bằng kana theo nguồn.',
         accepted_answers:[reading],item_id:`${id}:${key}`,skill,passage:'',script_jp:''},tasks.length,key);
     }
-    if(skill==='grammar' && item.formula){
+    if(skill==='grammar' && item.formula && !tasks.some(task=>task.mode==='recall')){
       const key='recall:formation';
       add({mode:'recall',q:`Viết lại cấu trúc nguồn của mẫu ${item.title}.`,instruction:'Nhớ lại cấu trúc đã học; đối chiếu theo đúng ký hiệu của nguồn.',
         accepted_answers:[item.formula],item_id:`${id}:${key}`,skill,passage:'',script_jp:''},tasks.length,key);

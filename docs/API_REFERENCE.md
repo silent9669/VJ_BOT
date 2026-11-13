@@ -30,6 +30,10 @@ Migration `0022_task_attempt_evidence.sql` expands local/server persistence with
 
 Teaching stays explicit on the current chat connection. Focused source translation/teaching is limited to 12 requested fields and 8,000 source characters, with 12,000 characters after attributed retrieval; oversized requests return `413` and ask for one word/example. No automatic chunking, provider switching, background corpus translation or schema-as-semantic-approval claim.
 
+The committed `course/n5-teaching.json` packages are admitted by the existing N5 loader as AI-authored advisory references. Their explicit task IDs, original option order and provisional constrained-text variants become the same canonical lesson/task APIs above; no independent grading endpoint is added. Catalog provenance retains background-reference roles and `human_approved:false`, `scored_assessment:false`, `mastery_credit:false`. Curriculum attempted coverage matches current task revisions and does not activate personal completion markers or verified mastery.
+
+The existing loopback-only `scripts/evaluate_tutor.mjs` recorder now binds question requests and retained reports to locally generated canonical task IDs/revisions and rejects mismatched response task references. Default/report modes make no inference request. A deployed/local-server content mismatch remains a recorded HTTP/invalid-response failure, never semantic acceptance; reports still require human review.
+
 
 ## Công khai
 

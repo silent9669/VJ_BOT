@@ -1284,3 +1284,32 @@ test('reference teaching and read-aloud refuse restricted words and nested examp
     assert.equal(calls,0);
   }finally{globalThis.fetch=original;}
 });
+
+test('AI-authored N5 tasks use canonical hints and actual submissions without creating verified assessment',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;await withApi(env,request);
+  const lesson=teacherCatalogs.N5.lessons['n5-teaching:v1:topic'],question=lesson.questions[0];
+  const reference={lesson:{id:lesson.id,level:'N5'},view:'checks',task:{id:question.task_id,revision:question.revision}};
+  const evidence=[];
+  globalThis.fetch=async(url,options)=>{
+    evidence.push(JSON.parse(JSON.parse(options.body).messages.at(-1).content));
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Quan sát chức năng nêu chủ đề và thử giải thích lựa chọn của em.'})}}]});
+  };
+  try{
+    let response=await worker.fetch(request('/api/practice/coach',{...reference,question_index:0,item_id:question.item_id,action:'hint'}),env);
+    assert.equal(response.status,200);assert.equal(Object.hasOwn(evidence[0],'authored_answer'),false);
+    assert.ok(!JSON.stringify(evidence[0]).includes(question.explanation));
+    const attempt={...reference,question_index:0,attempt_id:'n5-package-answer-0001',event:'answer',answer_index:1};
+    response=await worker.fetch(request('/api/progress/record',attempt),env);assert.equal(response.status,200);
+    const recorded=await response.json();assert.equal(recorded.basis,'source_advisory');assert.equal(recorded.source_correct,false);assert.equal(recorded.verified,false);
+    response=await worker.fetch(request('/api/practice/coach',{...reference,question_index:0,item_id:question.item_id,action:'feedback',answer_index:1}),env);
+    const feedback=await response.json();assert.equal(response.status,200);assert.equal(feedback.correct,false);assert.equal(feedback.verified,false);
+    assert.equal(evidence[1].submission_index,1);assert.equal(evidence[1].authored_explanation,question.explanation);
+    const text=lesson.questions[3];
+    response=await worker.fetch(request('/api/progress/record',{...reference,task:{id:text.task_id,revision:text.revision},question_index:3,
+      attempt_id:'n5-package-recall-0001',event:'answer',response_text:text.accepted_answers[0]}),env);
+    assert.equal(response.status,200);assert.equal((await response.json()).basis,'source_advisory');
+    const progress=await(await worker.fetch(request('/api/progress'),env)).json();
+    assert.equal(progress.verified.answered,0);assert.equal(progress.source_advisory.answered,2);
+    assert.equal(progress.source_advisory.incorrect,1);assert.equal(progress.source_advisory.correct,1);
+  }finally{globalThis.fetch=original;}
+});

@@ -46,9 +46,11 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
   const sourceIds = new Set(unit?.source_ids || []);
   for (const resource of item.resources || []) sourceIds.add(resource.id);
   sources.push(...sourceCatalog.lessons.filter(resource => sourceIds.has(resource.id)));
+  if(item.editorial)sources.push(...item.source_refs.map(reference=>({id:reference.chunk_id,title:reference.source_name,url:reference.url,role:reference.role})));
   const overview = {
     formula: item.formula || unit?.formula, explanation: item.explanation || item.summary, meaning_vi: item.meaning_vi,
     note: unit?.note,
+    common_errors:item.common_errors,prerequisites:item.prerequisites,
     passage: item.passage, translation: item.translation, script_jp: item.script_jp, script_vi: item.script_vi,
     words: words.map(compactWord),
     // Beginner tracks classify vocabulary, not the difficulty of attached corpus sentences.
@@ -62,6 +64,7 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
     title: item.roleplay ? `${item.roleplay.title} · ${item.title}` : item.title || item.jp || 'Bài học',
     goal: item.roleplay?.goal || item.summary || item.meaning_vi || '',
     overview, words, examples, questions, sources,
+    ...(item.editorial?{authorship:item.authorship,review:item.review,eligibility:item.eligibility}:{}),
     ...(item.processing_allowed!==undefined?{processing_allowed:item.processing_allowed}:{}),
     ...(item.capabilities?{capabilities:item.capabilities}:{}),
     ...(Number.isInteger(item.examIndex) ? {exam_questions:questions} : {}),

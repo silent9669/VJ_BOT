@@ -26,7 +26,7 @@ test('all levels load once with source-keyed exercises and attributed reading/li
     for(const skill of ['vocabulary','grammar','kanji','reading','listening'])assert.ok(skills[skill].length>=5,level+skill);
     if(level==='N5'){assert.equal(skills.kana.length,20);assert.equal(skills.kana.flatMap(l=>l.items).length,92);}
     for(const lesson of skills.kanji){assert.equal(lesson.drills.length,lesson.items.length);for(const item of lesson.items){assert.ok(item.strokes>0);assert.ok(Array.isArray(item.words));}}
-    for(const lesson of skills.grammar.filter(l=>l.source))assert.equal(lesson.drills.length,1);
+    for(const lesson of skills.grammar.filter(l=>l.source==='OpenJLPT'))assert.equal(lesson.drills.length,1);
     const count=skills.vocabulary.length;await context.window.ensureLessons(level);assert.equal(skills.vocabulary.length,count);
     for(const lesson of skills.vocabulary.filter(x=>x.source)){
       assert.equal(lesson.drills.length,lesson.items.length);for(const q of lesson.drills){assert.ok(Number.isInteger(q.answer_index));assert.ok(q.answer_index>=0 && q.answer_index<q.opts.length);assert.ok(q.item_id);}
@@ -62,7 +62,7 @@ test('practical roadmaps follow authored goals and link only verified source rec
       assert.ok(context.window.JLPT_DATA.exams[level][unit.examIndex].questions.length);
       assert.equal(unit.exam.questions.length,3);assert.ok(unit.exam.questions.every(q=>q.passage && q.explanation));
     }
-    const chapters=units.filter(u=>u.type==='grammar');assert.equal(chapters.length,8);
+    const chapters=units.filter(u=>u.type==='grammar' && u.id!=='n5-teaching:v1');assert.equal(chapters.length,8);
     for(const chapter of chapters)assert.ok(chapter.steps.every(s=>s.lesson.source==='OpenJLPT' && s.ids.length));
     const step=units.find(u=>!u.optional).steps[0];
     const records=new Map(step.ids.map(id=>[id,{correct:0,incorrect:1,last_correct:0}]));

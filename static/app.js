@@ -640,6 +640,7 @@ function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
   return `<${tag} class="example-card"${nested?'':` data-teacher-example="${index}"`}>
     <span class="example-index" aria-hidden="true">${index+1}</span>
     <div class="example-text">
+      ${ex.context?`<p class="example-context">${escapeHtml(ex.context)}</p>`:''}
       ${listenFirst?`<details class="lesson-disclosure example-transcript"><summary>Lời thoại</summary>${sentence}</details>`:sentence}
       <div class="lesson-aids">
         ${ex.ro || hasFurigana?`<details class="lesson-disclosure"><summary>Cách đọc</summary><div class="lesson-aid-content">
@@ -703,12 +704,14 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     <div id="lesson-reference">
     <section class="lesson-intro">
       <span class="lesson-source">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT" : "Bài học"))}</span>
+      ${item.editorial?`<p class="lesson-study-hint">AI biên soạn, chỉ dùng tham khảo; chưa được giáo viên duyệt và không xác nhận thành thạo.</p><p>${escapeHtml(item.source_header)}</p>${item.prerequisite_titles.length?`<p>Học trước: ${escapeHtml(item.prerequisite_titles.join(' · '))}</p>`:''}`:''}
       <p class="lesson-meaning">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
       ${item.formula ? `<div class="lesson-formula"><span>Cấu trúc</span><code>${escapeHtml(item.formula)}</code></div>` : ""}
       ${item.explanation || item.summary ? `<p class="lesson-explain">${escapeHtml(item.explanation || item.summary || "")}</p>` : ""}
     </section>
     ${item.resources?.length ? `<aside class="lesson-resources"><h4>Học tiếp từ nguồn gốc</h4>${item.resources.map(r=>`<p>${escapeHtml(r.publisher)} · ${escapeHtml(r.title)}</p><a href="${escapeHtml(r.pdf_url)}" target="_blank" rel="noopener">Mở bài PDF</a> ${r.audio_page_url?`<a href="${escapeHtml(r.audio_page_url)}" target="_blank" rel="noopener">Nghe bản gốc</a>`:''}`).join('')}<p>Bài trong app được biên soạn riêng; nguồn gốc dùng hệ A1/A2/A2–B1.</p></aside>` : ''}
     ${examplesHtml}
+    ${item.common_errors?.length?`<section class="lesson-section"><h3>Lỗi dễ gặp và cách sửa</h3>${item.common_errors.map(error=>`<details class="lesson-disclosure"><summary>${escapeHtml(error.problem)}</summary><p>${escapeHtml(error.correction)}</p><p>${escapeHtml(error.reason)}</p></details>`).join('')}</section>`:''}
     ${vocabularyHtml}
     ${readingHtml}
     ${listeningHtml}
