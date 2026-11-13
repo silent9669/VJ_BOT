@@ -9,6 +9,7 @@ import {activateConnection, antigravityProvider, connectionFor, stateOwner} from
 import {askAI, googleSpeechKey} from '../src/providers.js';
 import {speechResponse} from '../src/speech.js';
 import {deleteUserData} from '../src/admin.js';
+import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
 
 const root = '/api/ai/oauth/antigravity';
 async function fixture() {
@@ -81,8 +82,11 @@ function gateway(f) {
       assert.equal(options.redirect, 'manual'); requests.push(body);
       if (control.beforeGeneration) await control.beforeGeneration();
       if (control.generationStatus !== 200) return new Response('', {status:control.generationStatus});
+      const answer = body.response_format?.json_schema?.name === 'tutor_reply'
+        ? JSON.stringify({reply:'何時に始まりますか。', action:'probe', open_probe:'何時に始まりますか。'})
+        : 'A real-shaped synthetic answer';
       return body.stream ? new Response('data: {"choices":[{"delta":{"content":"OK"}}]}\n\n', {headers:{'Content-Type':'text/event-stream'}})
-        : Response.json({choices:[{message:{content:'A real-shaped synthetic answer'}}]});
+        : Response.json({choices:[{message:{content:answer}}]});
     }
     throw new Error('Unexpected upstream destination: ' + url.origin + url.pathname);
   };
@@ -627,5 +631,37 @@ test('an unconfirmed gateway deletion cannot release the saved ownership record'
     assert.equal(JSON.stringify(await response.json()).includes('private-provider-error'), false);
     assert.equal((await connectionFor(f.env, 'alice', row.login_id)).state, 'disconnecting');
     assert.ok(g.credentials.has(row.auth_id)); assert.equal(g.requests.length, 0);
+  });
+});
+
+test('structured tutor chat pins its OAuth account and fences completed retries across selections', async () => {
+  const f = await fixture(), g = gateway(f), catalogs = await buildTeacherCatalog();
+  await f.seed(); await f.seed('bob');
+  g.credentials.set('alice-credential', {prefix:'alice-prefix'});
+  g.credentials.set('bob-credential', {prefix:'bob-prefix'});
+  f.env.ASSETS = {fetch: async request => {
+    const level = new URL(request.url).pathname.match(/^\/course\/teacher-(N[1-5])\.json$/)?.[1];
+    return level ? Response.json(catalogs[level]) : new Response('Not found', {status:404});
+  }};
+  const body = {message:'Em muốn học cách nói giờ bắt đầu công việc.', request_id:crypto.randomUUID()};
+  const send = (profileId, requestBody = body) => worker.fetch(new Request('https://vjbot.test/api/chat', {
+    method:'POST', headers:{Cookie:'vj_session=' + 'a'.repeat(64), Origin:'https://vjbot.test',
+      'Content-Type':'application/json', 'X-VJBot-Account':'alice', 'X-VJBot-Profile':profileId},
+    body:JSON.stringify(requestBody)
+  }), f.env);
+  await upstream(g, async () => {
+    const response = await send('antigravity_oauth:alice-login');
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.equal(data.reply, '何時に始まりますか。');
+    assert.equal(data.action, undefined);
+    assert.equal(data.open_probe, undefined);
+    assert.equal((await send('antigravity_oauth:alice-login')).status, 200);
+    assert.equal((await send('antigravity_oauth:bob-login')).status, 409);
+    assert.equal((await send('antigravity_oauth:bob-login', {...body, request_id:crypto.randomUUID()})).status, 409);
+    assert.equal(g.requests.length, 1);
+    assert.equal(g.requests[0].model, 'alice-prefix/gemini-chat');
+    assert.equal(f.sqlite.prepare("SELECT count(*) n FROM conversations WHERE user_id='alice'").get().n, 2);
+    assert.equal(f.sqlite.prepare("SELECT count(*) n FROM tutor_sessions WHERE user_id='bob'").get().n, 0);
   });
 });

@@ -1,4 +1,5 @@
 import {disconnectAllAntigravity} from './antigravity-gateway.js';
+import {clearTutorConversation} from './tutor-session.js';
 
 // Admin = a Google account whose VERIFIED email is in the ADMIN_EMAILS secret. Password accounts
 // have unverified emails, so they can never be admin. Both the grant row and the current secret are checked
@@ -17,7 +18,7 @@ export async function isAdmin(env, userId) {
 }
 
 const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const OWNED_TABLES = ['ai_antigravity_oauth_states', 'ai_active_antigravity', 'ai_antigravity_connections', 'ai_google_oauth_states', 'ai_google_oauth', 'exam_attempts', 'completions', 'progress_attempts', 'progress', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admins', 'profiles'];
+const OWNED_TABLES = ['ai_antigravity_oauth_states', 'ai_active_antigravity', 'ai_antigravity_connections', 'ai_google_oauth_states', 'ai_google_oauth', 'exam_attempts', 'completions', 'progress_attempts', 'progress', 'tutor_requests', 'tutor_sessions', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admins', 'profiles'];
 const RESET_TABLES = ['progress', 'progress_attempts', 'completions', 'exam_attempts', 'study_days'];
 const kindOf = id => id.startsWith('google:') ? 'google' : id.startsWith('email:') ? 'email' : 'guest';
 
@@ -56,7 +57,7 @@ export async function userDetail(env, id) {
 }
 
 const ACTIONS = {
-  clear_chat: (env, id) => env.DB.prepare('DELETE FROM conversations WHERE user_id=?').bind(id).run(),
+  clear_chat: (env, id) => clearTutorConversation(env, id),
   remove_api: async (env, id) => {
     await disconnectAllAntigravity(env, id);
     return env.DB.batch(['ai_google_oauth_states','ai_google_oauth','ai_active_profiles','ai_providers'].map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id)));

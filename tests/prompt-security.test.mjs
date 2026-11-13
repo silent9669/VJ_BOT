@@ -36,10 +36,13 @@ function provider(t, protocol = 'openai', answer = 'Em hãy viết một câu ti
   const requests = [];
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     assert.equal(new URL(url).hostname, 'offline.example.com');
-    requests.push(JSON.parse(options.body));
-    return Response.json(protocol === 'openai' ? {choices: [{message: {content: answer}}]}
-      : protocol === 'anthropic' ? {content: [{type: 'text', text: answer}]}
-        : {candidates: [{content: {parts: [{text: answer}]}}]});
+    const payload = JSON.parse(options.body);
+    requests.push(payload);
+    const schema = payload.response_format?.json_schema?.schema || payload.output_config?.format?.schema || payload.generationConfig?.responseJsonSchema;
+    const content = schema?.properties?.open_probe ? JSON.stringify({reply: answer, action: 'explanation', open_probe: null}) : answer;
+    return Response.json(protocol === 'openai' ? {choices: [{message: {content}}]}
+      : protocol === 'anthropic' ? {content: [{type: 'text', text: content}]}
+        : {candidates: [{content: {parts: [{text: content}]}}]});
   });
   return requests;
 }

@@ -55,10 +55,11 @@ const providerFailure = provider => !provider || provider.error === 'no_model'
   : provider.error ? json({detail: 'Kết nối API không hợp lệ.', code: 'invalid_connection'}, 400) : null;
 
 // Chat and Kaiwa share this: {text} on success, otherwise {response} ready to return.
-export async function askAI(env, userId, request, override, profileId) {
+export async function askAI(env, userId, request, override, profileId, {beforeGeneration} = {}) {
   const provider = await resolveProvider(env, userId, override, profileId);
   const response = providerFailure(provider);
   if (response) return {response};
+  if (beforeGeneration && !(await beforeGeneration())) return {response: json({detail: 'This conversation changed before generation. Please send a new message.'}, 409)};
   const result = await callLLM(provider, request);
   if (result.text) return {text: result.text};
   return {response: json({detail: failureMessage(result.status)}, result.status === 429 ? 429 : 503)};

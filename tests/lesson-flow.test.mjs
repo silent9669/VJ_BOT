@@ -37,6 +37,20 @@ test('feature lessons restore their own route and canonical completion identity'
   const unit=units.find(u=>u.type==='situation');const kaiwa=c.featureLessons('kaiwa','N5').find(l=>l.lessonKey===unit.id);assert.equal(c.activityId(kaiwa),`kaiwa:${unit.id}`);
   const quiz=c.featureLessons('quiz','N5')[unit.examIndex];assert.equal(c.activityId(quiz),`test:N5:${unit.exam.id}`);
 });
+test('quiz descriptors retain every raw exam position while lesson checks remain five',async()=>{
+  const c=await context();await c.ensureLessons('N5');
+  const lessons=c.featureLessons('quiz','N5');
+  assert.ok(lessons.some(item=>item.drills.length>5),'fixture includes a multi-question exam');
+  for(const item of lessons){
+    const raw=c.window.JLPT_DATA.exams.N5[item.examIndex].questions;
+    assert.equal(item.drills.length,raw.length);assert.equal(item.examples.length,raw.length);
+    assert.equal(c.lessonQuestions(item,'N5','reading').length,5);
+    for(let i=0;i<raw.length;i++){
+      assert.equal(item.drills[i].item_id,c.quizProgressId('N5',item.examIndex,raw[i],i));
+      assert.equal(item.drills[i].ans,raw[i].options[raw[i].answer]);
+    }
+  }
+});
 test('speaking completion and lesson completion share identity for built-in and practical scenarios',async()=>{
   const c=await context();await c.ensureLessons('N5');
   const app=fs.readFileSync('static/app.js','utf8');
@@ -57,7 +71,7 @@ test('returning from lesson chat preserves feature route for reload',async()=>{
   vm.runInContext(app.slice(app.indexOf('async function startReversedLesson(')),c);
   const host={replaceChildren(){},append(...children){this.children=children;}};
   c.document={getElementById:()=>host,createElement:()=>({})};
-  c.mountCompletion=()=>{};c.sendMessage=()=>{};c.updateHeroTopic=()=>{};
+  c.mountCompletion=()=>{};c.sendMessage=()=>{};c.restartTutorConversation=()=>{};c.updateHeroTopic=()=>{};
   c.sendingMessage=false;c.clearingChat=false;c.chatHistoryLoading=false;c.failedChatMessage=null;c.chatHistoryReady=true;
   c.loadChatHistory=async()=>{};
   let destination;
