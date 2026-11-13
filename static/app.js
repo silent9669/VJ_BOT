@@ -469,7 +469,9 @@ async function sendMessage(text,retry=false,options={}) {
   const screen=retry?failedChatMessage.screen:context?.screen || null;
   const focus=retry?failedChatMessage.focus:lesson && sameLesson?(Object.hasOwn(options,'focus')?options.focus:context?.focus || null):null;
   const intent=retry?failedChatMessage.intent:options.intent || 'message';
-  const body=retry?failedChatMessage.body:JSON.stringify({message:text,lesson,screen,focus,intent,request_id:requestId});
+  const question=retry?failedChatMessage.question:focus?.kind==='question' && sameLesson?context?.task:null;
+  const view=retry?failedChatMessage.view:context?.view || 'checks';
+  let body=retry?failedChatMessage.body:null;
   const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
   send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
@@ -478,16 +480,28 @@ async function sendMessage(text,retry=false,options={}) {
   if(!retry || input.value.trim()===text){input.value='';input.style.height='44px';}
   soundEngine.playSend();mascotMgr.setState('thinking');
   try {
+    if(!body){
+      const payload={message:text,lesson,screen,focus,view,intent,request_id:requestId};
+      if(focus?.kind==='question'){
+        const attempt=focusedTaskAttempt(lesson,focus,view,question);
+        if(!attempt)throw new Error('Chưa xác định đúng câu hỏi. Mở lại bài trước khi hỏi thầy.');
+        await recordTaskEvent(attempt,'assist',{help:'chat'});
+        payload.task=await taskReference(attempt.task);
+      }
+      body=JSON.stringify(payload);
+    }
     const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body});
     const data=await response.json();
     if(!response.ok)throw new Error(data.detail || 'Chưa gửi được tin nhắn.');
+    const reference=JSON.parse(body).task;
+    if(reference && (data.task?.id!==reference.id || data.task?.revision!==reference.revision))throw new Error('Phản hồi thuộc phiên bản câu hỏi khác. Mở lại bài.');
     const reply=data.reply || data.response;
     if(typeof reply!=='string' || !reply.trim())throw new Error('Thầy chưa trả lời. Hãy thử lại.');
     renderBubble('bot',reply);failedChatMessage=null;chatError('',null);
     soundEngine.playReceive();mascotMgr.setState('speaking');
     setTimeout(()=>mascotMgr.setState('idle'),2000);
   }catch(error){
-    failedChatMessage={text,id:requestId,lesson,screen,focus,intent,body};
+    failedChatMessage={text,id:requestId,lesson,screen,focus,view,question,intent,body};
     chatError(error.name==='TimeoutError'?'Kết nối quá lâu. Hãy thử lại.':error.message==='Failed to fetch'?'Mất kết nối. Hãy thử lại.':error.message,()=>sendMessage(failedChatMessage.text,true));
     mascotMgr.setState('idle');
   }finally{
@@ -632,7 +646,7 @@ function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
           ${hasFurigana?`<p lang="ja">${furiganaHtml(annotated)}</p>`:''}
           ${ex.ro?`<p class="example-ro">${escapeHtml(ex.ro)}</p>`:''}
         </div></details>`:''}
-        ${ex.vi?`<details class="lesson-disclosure"><summary>Nghĩa</summary><p class="example-vi lesson-aid-content">${escapeHtml(ex.vi)}</p></details>`:''}
+        ${ex.vi?`<details class="lesson-disclosure"><summary>Diễn giải từ nguồn</summary><p class="example-vi lesson-aid-content">${escapeHtml(ex.vi)}</p></details>`:''}
       </div>
       ${ex.source?`<a class="example-source" href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}
     </div>
@@ -678,9 +692,14 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
         </div></details>`).join('')}</div>` : "";
   const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage" lang="ja">${escapeHtml(item.passage)}</p>${item.translation?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content reading-translation">${escapeHtml(item.translation)}</p></details>`:''}</div>` : "";
   const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-study-hint">Nghe và tự nắm ý chính trước khi xem lời thoại.</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(item.script_jp)}">Nghe bài</button><details class="lesson-disclosure"><summary>Lời thoại</summary><p class="lesson-japanese-passage lesson-aid-content" lang="ja">${escapeHtml(item.script_jp)}</p></details>${item.script_vi?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content listening-translation">${escapeHtml(item.script_vi)}</p></details>`:''}</div>` : "";
+  const tasks=lessonQuestions(item,level,skill);
+  const taskReferenceHtml=Number.isInteger(item.examIndex)?`<section class="lesson-section"><h3>Bộ câu hỏi · ${tasks.length} câu</h3>
+    <p>Đọc đầy đủ đề và ngữ cảnh. Đáp án/lời giải chỉ xuất hiện sau khi em thử trả lời.</p>
+    <ol class="task-reference-list">${tasks.map(task=>`<li>${taskPromptHtml(task)}${task.unavailable_reason?`<p role="note">Tạm ngừng: ${escapeHtml(taskUnavailableMessage(task))}</p>`:
+      `<ol>${task.opts.map(option=>`<li lang="ja">${escapeHtml(option)}</li>`).join('')}</ol>`}</li>`).join('')}</ol></section>`:'';
 
   body.innerHTML = `
-    <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">5 câu kiểm tra</button></div>
+    <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">Luyện tập</button></div>
     <div id="lesson-reference">
     <section class="lesson-intro">
       <span class="lesson-source">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT" : "Bài học"))}</span>
@@ -693,6 +712,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     ${vocabularyHtml}
     ${readingHtml}
     ${listeningHtml}
+    ${taskReferenceHtml}
     ${item.externalResources?.length?`<div class="external-resources">${item.externalResources.map(r=>`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)} ↗</a>`).join('')}</div>`:''}
     </div><div id="lesson-exercises" hidden></div><div id="lesson-completion"></div>
     <div class="lesson-footer">
@@ -705,7 +725,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   const hasPractice=Boolean(item.production || item.dictation || lessonQuestions(item,level,skill).length);
   const modes=body.querySelector('.lesson-mode-switch');
   modes.hidden=!hasPractice;
-  const practiceLabel=item.production?'Thực hành viết':item.dictation?'Nghe và chép':'5 câu kiểm tra';
+  const practiceLabel=item.production?'Thực hành viết':item.dictation?'Nghe và chép':`${tasks.length} câu luyện tập`;
   modes.querySelector('[data-lesson-mode=practice]').textContent=practiceLabel;
   const selectMode=mode=>{
     body.dataset.mode=mode;
@@ -719,7 +739,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   };
   modes.querySelectorAll('button').forEach(b=>b.onclick=()=>selectMode(b.dataset.lessonMode));
   if(hasPractice){
-    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent=item.production || item.dictation?practiceLabel:'Làm 5 câu kiểm tra';
+    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent=item.production || item.dictation?practiceLabel:`Làm ${tasks.length} câu luyện tập`;
     start.onclick=()=>{selectMode('practice');body.querySelector('#lesson-exercises legend, #lesson-exercises textarea, #lesson-exercises button')?.focus();};
     body.querySelector('#lesson-reference').append(start);
   }
@@ -728,7 +748,9 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   body.querySelectorAll('.word-detail').forEach(word=>word.addEventListener('toggle',()=>{
     if(word.open && word.isConnected)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
   }));
-  mountCompletion(document.getElementById('lesson-completion'),{activity_id:activityId(item,level,skill),kind:owner==='quiz'?'test':owner==='kaiwa'?'kaiwa':'lesson',level,title:item.title || item.jp || 'Bài học'});
+  const completionHost=document.getElementById('lesson-completion');
+  if(tasks.length && tasks.every(task=>task.unavailable_reason))completionHost.textContent='Bài tập đang tạm ngừng; không tự tính hoàn thành khi chưa có câu khả dụng.';
+  else mountCompletion(completionHost,{activity_id:activityId(item,level,skill),kind:owner==='quiz'?'test':owner==='kaiwa'?'kaiwa':'lesson',level,title:item.title || item.jp || 'Bài học'});
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const word=btn.closest('[data-teacher-word]'),example=btn.closest('[data-teacher-example]');
@@ -813,7 +835,7 @@ function displayFlashcard() {
   const previousContext=globalThis.teacherContext?.();
   const item = fcDeck[fcIdx];
   const card = document.getElementById("flashcard-card");
-  if (card) {card.classList.remove("flipped");card.dataset.teacherWordId=item.id || '';}
+  if(card){card.classList.remove('flipped');card.dataset.teacherWordId=item.id || '';updateFlashcardFace(card,false);}
 
   const frontText = document.getElementById("fc-front-text");
   const readingText = document.getElementById("fc-reading-text");
@@ -836,6 +858,13 @@ function displayFlashcard() {
   const context=globalThis.teacherContext?.();
   if(JSON.stringify({lesson:previousContext?.lesson || null,focus:previousContext?.focus || null})!==JSON.stringify({lesson:context?.lesson || null,focus:context?.focus || null}))globalThis.invalidateTeacherQuery?.();
   globalThis.mountFlashcardTeaching?.(item);
+}
+
+function updateFlashcardFace(card,back){
+  const front=card.querySelector('.card-front'),reverse=card.querySelector('.card-back');
+  for(const [face,inactive] of [[front,back],[reverse,!back]])if(face){face.inert=inactive;face.setAttribute('aria-hidden',String(inactive));}
+  card.setAttribute('aria-label',back?'Thẻ nhớ đang mở nghĩa, nhấn Enter để quay lại':'Thẻ nhớ đang che nghĩa, nhấn Enter để đối chiếu');
+  document.getElementById('fc-face-status')?.replaceChildren(document.createTextNode(back?'Đang mở nghĩa và ví dụ':'Đang xem mặt chữ, nghĩa được che'));
 }
 
 // ==========================================
@@ -898,6 +927,7 @@ let examScore = 0;
 let activeQuizTestIdx = 0;
 
 let quizRequest=0;
+let examAnswers=new Map();
 async function renderQuiz(level = "N5", testIdx = 0) {
   const request=++quizRequest;
   try { await Promise.all([ensureLessons(level),loadPracticalCourse()]);createStudyPlan(level); } catch { document.getElementById("quiz-instruction").textContent="Chưa tải được bộ luyện. Chọn lại cấp độ để thử lại.";return; }
@@ -918,7 +948,8 @@ async function renderQuiz(level = "N5", testIdx = 0) {
   }
 
   const selectedExam = examList[testIdx] || examList[0];
-  let questions = selectedExam?.questions || [];
+  const descriptor=featureLessons('quiz',level).find(item=>item.examIndex===testIdx);
+  const questions=descriptor?lessonQuestions(descriptor,level,'reading'):[];
 
   if (!questions.length) {
     document.getElementById('quiz-instruction').textContent='Chưa có câu hỏi cho bộ này.';
@@ -930,6 +961,7 @@ async function renderQuiz(level = "N5", testIdx = 0) {
   currentExamQuestions = questions;
   examQuestionIdx = 0;
   examScore = 0;
+  examAnswers=new Map();
   const examDuration = selectedExam?.duration_minutes ? selectedExam.duration_minutes * 60 : 1500;
   startExamTimer(examDuration);
   displayQuizQuestion();
@@ -956,104 +988,71 @@ function startExamTimer(seconds = 1500) {
   examTimerInterval = setInterval(tick, 1000);
 }
 
-function displayQuizQuestion() {
+function displayQuizQuestion(){
   globalThis.clearStudySurface?.('quiz');
-  const quizCard = document.getElementById("quiz-card");
-  const resultCard = document.getElementById("quiz-result-card");
-  const feedbackBox = document.getElementById("quiz-feedback-box");
-  if (quizCard) quizCard.hidden = false;
-  if (resultCard) resultCard.hidden = true;
-  if (feedbackBox) feedbackBox.hidden = true;
-
-  document.getElementById("btn-quiz-next").disabled=true;
-  const q = currentExamQuestions[examQuestionIdx];
-  if (!q) {
-    finishExam();
-    return;
-  }
+  const quizCard=document.getElementById('quiz-card'),resultCard=document.getElementById('quiz-result-card'),feedback=document.getElementById('quiz-feedback-box');
+  quizCard.hidden=false;resultCard.hidden=true;feedback.hidden=true;
+  const next=document.getElementById('btn-quiz-next'),question=currentExamQuestions[examQuestionIdx];
+  next.disabled=true;
+  if(!question){finishExam();return;}
+  const descriptor=featureLessons('quiz',activeQuizLevel).find(item=>item.examIndex===activeQuizTestIdx);
+  const lesson=buildLessonContext(descriptor,activeQuizLevel,'reading');
+  taskAttempt(lesson,question,examQuestionIdx,'exam',true);
   globalThis.setTeacherFocus?.({kind:'question',index:examQuestionIdx});
-
-  const qNum = document.getElementById("quiz-q-num");
-  const qType = document.getElementById("quiz-q-type");
-  const inst = document.getElementById("quiz-instruction");
-  const sentence = document.getElementById("quiz-question-sentence");
-  const grid = document.getElementById("quiz-options-grid");
-
-  if (qNum) qNum.textContent = `Câu ${examQuestionIdx + 1} / ${currentExamQuestions.length}`;
-  if (qType) qType.textContent = q.mondai || q.type || "JLPT Mondai";
-  if (inst) inst.textContent = q.instruction || "Chọn đáp án chính xác nhất:";
-  let rawSentence = q.sentence || q.sentence_jp || "";
-  if(q.plain)rawSentence=escapeHtml(rawSentence);
-  if (q.target && rawSentence.includes(q.target) && !rawSentence.includes("<u>")) {
-    rawSentence = rawSentence.replace(q.target, `<u>${q.target}</u>`);
+  const number=document.getElementById('quiz-q-num'),instruction=document.getElementById('quiz-instruction'),sentence=document.getElementById('quiz-question-sentence'),grid=document.getElementById('quiz-options-grid');
+  number.textContent=`Câu ${examQuestionIdx+1} / ${currentExamQuestions.length}`;
+  document.getElementById('quiz-q-type').textContent=question.type || question.mode;
+  instruction.textContent=question.instruction || 'Chọn một đáp án để đối chiếu với nguồn.';
+  sentence.innerHTML=taskPromptHtml({...question,instruction:''});
+  grid.replaceChildren();delete grid.dataset.answered;
+  instruction.tabIndex=-1;
+  if(question.unavailable_reason){
+    sentence.append(document.createTextNode(`Tạm ngừng sử dụng: ${taskUnavailableMessage(question)}`));
+    document.getElementById('quiz-feedback-status').textContent='Câu chưa khả dụng — không chấm điểm';
+    document.getElementById('quiz-feedback-text').textContent=taskUnavailableMessage(question);
+    feedback.hidden=false;next.disabled=false;instruction.focus();return;
   }
-  if (sentence) sentence.innerHTML = (q.passage ? `<p class="lesson-japanese-passage">${escapeHtml(q.passage)}</p>` : "") + rawSentence;
-
-  if (grid) {
-    grid.innerHTML = q.options.map((opt, i) => `
-      <button type="button" class="quiz-option-btn" data-idx="${i}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 12px; padding: 14px 18px; text-align: left; font-family: var(--font-sans); font-size: 14.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
-        <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #f1f5f9; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; margin-right: 8px;">${i + 1}</span>
-        <span class="quiz-option-label">${escapeHtml(opt)}</span>
-      </button>
-    `).join("");
-
-    grid.querySelectorAll(".quiz-option-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        handleQuizAnswer(parseInt(btn.dataset.idx, 10));
-      });
-    });
+  if(question.script_jp){
+    const listen=document.createElement('button');listen.type='button';listen.textContent='Nghe ngữ cảnh câu hỏi';
+    listen.onclick=()=>playGeminiTTS(question.script_jp,{language:'ja-JP',lesson,focus:{kind:'question',index:examQuestionIdx},view:'exam',task:question});
+    grid.append(listen);
   }
-  globalThis.mountQuizTeaching?.();
+  for(const [index,option] of question.opts.entries()){
+    const button=document.createElement('button');button.type='button';button.className='quiz-option-btn';button.dataset.idx=String(index);
+    const label=document.createElement('span');label.className='quiz-option-label';label.lang='ja';label.textContent=option;
+    const ordinal=document.createElement('span');ordinal.className='practice-option-number';ordinal.textContent=String(index+1);
+    button.append(ordinal,label);button.onclick=()=>handleQuizAnswer(index);grid.append(button);
+  }
+  globalThis.mountQuizTeaching?.();instruction.focus();
 }
 
-function handleQuizAnswer(selectedIdx) {
-  document.getElementById("btn-quiz-next").disabled=true;
-  const q = currentExamQuestions[examQuestionIdx];
-  const grid = document.getElementById("quiz-options-grid");
-  const feedbackBox = document.getElementById("quiz-feedback-box");
-  const feedbackStatus = document.getElementById("quiz-feedback-status");
-  const feedbackText = document.getElementById("quiz-feedback-text");
-
-  if (grid) {
-    grid.querySelectorAll(".quiz-option-btn").forEach((btn, idx) => {
-      btn.disabled = true;
-      if (idx === q.answer) {
-        btn.style.background = "#dcfce7";
-        btn.style.borderColor = "#16a34a";
-        btn.style.color = "#15803d";
-      } else if (idx === selectedIdx) {
-        btn.style.background = "#fee2e2";
-        btn.style.borderColor = "#dc2626";
-        btn.style.color = "#b91c1c";
-      }
-    });
-  }
-
-  const isCorrect = selectedIdx === q.answer;
-  if (isCorrect) {
-    examScore++;
-    soundEngine.playCheer();
-    if (feedbackStatus) feedbackStatus.textContent = "Chính xác";
-  } else {
-    soundEngine.playError();
-    if (feedbackStatus) feedbackStatus.textContent = "Chưa chính xác";
-  }
-
-  const feedback=q.explain || q.explanation || "";
-  if (feedbackText) feedbackText.textContent=feedback;
-  if (feedbackBox) feedbackBox.hidden=false;
-  const request=quizRequest,attemptId=crypto.randomUUID();
-  const body={item_id:quizProgressId(activeQuizLevel,activeQuizTestIdx,q,examQuestionIdx),correct:isCorrect,level:activeQuizLevel,item_type:"exam",display:q.sentence_jp || q.sentence,quality:isCorrect?4:1,attempt_id:attemptId};
+function handleQuizAnswer(selectedIndex){
+  const question=currentExamQuestions[examQuestionIdx],grid=document.getElementById('quiz-options-grid');
+  if(!question || question.unavailable_reason || grid.dataset.answered==='true' || !Number.isInteger(selectedIndex) || selectedIndex<0 || selectedIndex>=question.opts.length)return;
+  grid.dataset.answered='true';
+  const index=examQuestionIdx,request=quizRequest;
+  const descriptor=featureLessons('quiz',activeQuizLevel).find(item=>item.examIndex===activeQuizTestIdx);
+  const attempt=taskAttempt(buildLessonContext(descriptor,activeQuizLevel,'reading'),question,index,'exam');
+  const feedback=document.getElementById('quiz-feedback-box'),status=document.getElementById('quiz-feedback-status'),text=document.getElementById('quiz-feedback-text'),next=document.getElementById('btn-quiz-next');
+  const matched=selectedIndex===question.answer_index;
+  status.textContent=matched?'Khớp đáp án nguồn — chưa phải điểm được xác minh':'Chưa khớp đáp án nguồn — chưa phải điểm được xác minh';
+  const explanation=`Em chọn (${selectedIndex+1}) ${question.opts[selectedIndex]}. Đáp án nguồn (${question.answer_index+1}): ${question.opts[question.answer_index]}. ${question.explanation || 'Nguồn chưa có lời giải đầy đủ. Nhờ thầy đối chiếu ngữ cảnh thay vì suy ra rằng mọi cách trả lời khác đều sai.'}`;
+  text.textContent=explanation;feedback.hidden=false;next.disabled=true;
+  grid.querySelectorAll('.quiz-option-btn').forEach((button,position)=>{
+    button.disabled=true;button.dataset.state=position===question.answer_index?'correct':position===selectedIndex?'incorrect':'idle';
+    button.setAttribute('aria-label',`${position+1}. ${question.opts[position]}${position===selectedIndex?' — em đã chọn':''}${position===question.answer_index?' — đáp án nguồn':''}`);
+  });
   document.getElementById('quiz-save-retry')?.remove();
-  const retry=document.createElement('button');retry.id='quiz-save-retry';retry.type='button';retry.className='stage-btn';retry.textContent='Lưu lại';retry.hidden=true;feedbackBox.append(retry);
+  const retry=document.createElement('button');retry.type='button';retry.id='quiz-save-retry';retry.className='stage-btn';retry.textContent='Lưu lại';retry.hidden=true;feedback.append(retry);
+  const current=()=>request===quizRequest && examQuestionIdx===index && !document.getElementById('quiz-card').hidden;
   async function save(){
     retry.disabled=true;
     try{
-      const response=await apiFetch('/api/progress/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      if(!response.ok)throw new Error('save');
-      if(request!==quizRequest)return;
-      feedbackText.textContent=feedback;retry.remove();document.getElementById('btn-quiz-next').disabled=false;
-    }catch{if(request!==quizRequest)return;feedbackText.textContent=feedback+' Chưa lưu được tiến độ.';retry.hidden=false;retry.disabled=false;}
+      await recordTaskEvent(attempt,'answer',{answer_index:selectedIndex});
+      if(!current())return;
+      examAnswers.set(index,matched);examScore=[...examAnswers.values()].filter(Boolean).length;
+      text.textContent=explanation;retry.remove();next.disabled=false;next.focus();
+    }catch(error){if(current()){text.textContent=explanation+' '+error.message;retry.hidden=false;retry.disabled=false;}}
   }
   retry.onclick=save;save();
 }
@@ -1070,55 +1069,73 @@ function finishExam() {
   globalThis.setTeacherFocus?.(null);
   globalThis.invalidateTeacherQuery?.();
 
-  const total = currentExamQuestions.length || 1;
-  const pct = Math.round((examScore / total) * 100);
-  if (scoreVal) scoreVal.textContent = `${pct}% (${examScore}/${total} câu)`;
-
-  if (praise) {
-    praise.textContent = pct >= 80 
-      ? "Xuất sắc! Em đã làm tốt bộ câu hỏi này."
-      : "Cố gắng lên nhé! Hãy ôn lại các câu chưa chính xác cùng Sensei.";
-  }
-
-  const exam=window.JLPT_DATA.exams[activeQuizLevel][activeQuizTestIdx];
-  mountCompletion(document.getElementById('quiz-completion'),{activity_id:`test:${examIdentity(activeQuizLevel,activeQuizTestIdx)}`,kind:'test',level:activeQuizLevel,title:exam.title});
+  const total=currentExamQuestions.length,answered=examAnswers.size,unavailable=currentExamQuestions.filter(task=>task.unavailable_reason).length;
+  if(scoreVal)scoreVal.textContent=`${examScore} / ${answered} câu đã đối chiếu với nguồn`;
+  if(praise)praise.textContent=`Đã lưu ${answered}/${total} câu. ${unavailable?`${unavailable} câu tạm ngừng vẫn thuộc bộ đề. `:''}Đây là luyện tham khảo, không phải điểm đánh giá năng lực được xác minh.`;
+  const exam=window.JLPT_DATA.exams[activeQuizLevel][activeQuizTestIdx],completion=document.getElementById('quiz-completion');
+  completion.replaceChildren();
+  if(answered===total && unavailable===0)mountCompletion(completion,{activity_id:`test:${examIdentity(activeQuizLevel,activeQuizTestIdx)}`,kind:'test',level:activeQuizLevel,title:exam.title});
+  else completion.textContent='Chưa xác nhận làm trọn bộ: vẫn còn câu chưa trả lời hoặc chưa khả dụng.';
   loadProgress();
 }
 
 // ==========================================
 // 13. MASTERY & PROGRESS CONTROLLER
 // ==========================================
+async function openProgressReview(record){
+  const level=record.level || record.jlpt_level;
+  if(!/^N[1-5]$/.test(level || '') || !record.item_id)throw new Error('Bản ghi cũ chưa có tham chiếu bài học đủ rõ; không tự mở nhầm bài.');
+  await Promise.all([ensureLessons(level),loadPracticalCourse()]);createStudyPlan(level);
+  const candidates=Object.entries(window.JLPT_DATA.curriculum[level].skills).flatMap(([skill,lessons])=>lessons.map(item=>({item,skill})));
+  for(const owner of ['flashcards','kaiwa','quiz'])candidates.push(...featureLessons(owner,level).map(item=>({item,skill:owner==='flashcards'?'vocabulary':'reading',owner})));
+  const matches=new Map();
+  for(const candidate of candidates){
+    if(record.lesson_id && activityId(candidate.item,level,candidate.skill)!==record.lesson_id)continue;
+    const questions=lessonQuestions(candidate.item,level,candidate.skill),index=questions.findIndex(task=>record.task_id?task.task_id===record.task_id:task.item_id===record.item_id);
+    if(index>=0)matches.set(activityId(candidate.item,level,candidate.skill),{...candidate,index});
+  }
+  if(matches.size!==1)throw new Error('Bản ghi này không xác định duy nhất một bài hiện tại. Hãy chọn bài từ thư viện.');
+  const match=[...matches.values()][0];
+  showLessonDetail({...match.item,reviewQuestionIndex:match.index},level,match.skill,false,match.owner || null);
+  document.querySelector('[data-lesson-mode=practice]')?.click();
+  const panel=document.getElementById('lesson-exercises');
+  panel.querySelector('legend,textarea,button')?.focus();
+}
+
 async function loadProgress() {
   showCompletedActivities(document.getElementById("completed-activities"));
   try {
     const resp = await apiFetch(`/api/progress?user_id=${encodeURIComponent(userId)}`);
     if (resp.ok) {
       const data = await resp.json();
-      document.getElementById("mastery-lessons-count").textContent=data.total_learned ?? 0;
-      document.getElementById("mastery-accuracy-rate").textContent=`${data.accuracy_rate ?? 0}%`;
+      document.getElementById('mastery-lessons-count').textContent=new Set([...(data.items || []).map(row=>row.item_id),...(data.evidence || []).filter(row=>row.answered_at).map(row=>row.item_id)]).size;
+      document.getElementById('mastery-accuracy-rate').textContent=`${data.legacy?.accuracy_rate ?? data.accuracy_rate ?? 0}%`;
+      const summary=document.getElementById('mastery-evidence-summary');
+      if(summary)summary.textContent=`Lịch sử cũ chưa xác minh: ${data.total_learned || 0} mục. Lượt mới chỉ được gọi là xác minh khi máy chủ có căn cứ chấm đã thẩm định; đối chiếu nguồn, tự đánh giá và AI luôn tách riêng.`;
       document.getElementById("mastery-streak-val").textContent=`${data.streak_days ?? 0} ngày`;
       document.getElementById("streak-counter").textContent=`${data.streak_days ?? 0} ngày`;
       document.getElementById("mastery-exams-count").textContent=(data.items || []).filter(x=>x.item_id?.startsWith("exam-")).length;
       const list = document.getElementById("weak-spots-list");
-      const weakItems = data.weak_spots || data.weak_items || [];
+      const weakItems=[...(data.evidence || []).filter(row=>row.source_correct===false || row.source_correct===0),...(data.weak_items || [])];
       if (list && !weakItems.length) list.textContent="Chưa có mục cần ôn.";
       if (list && weakItems.length) {
-        list.innerHTML = weakItems.map(it => {
+        list.innerHTML = weakItems.map((it,index) => {
           const item = typeof it === "string" ? { display: it } : it;
           return `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; border: 1.5px solid #fed7aa; border-radius: 10px; margin-bottom: 8px;">
             <div><strong style="color: #9a3412;">${escapeHtml(item.display || item.topic_id || "Mục cần ôn")}</strong>
-              <p style="font-size: 12px; color: #7c2d12; margin: 0;">Sai: ${item.incorrect || 1} lần • Đúng: ${item.correct || 0} lần</p>
+              <p style="font-size:12px;color:#7c2d12;margin:0;">${item.basis?`Căn cứ: ${escapeHtml(item.basis)}; chưa khớp nguồn`:'Lịch sử cũ chưa được xác minh'}</p>
             </div>
-            <button type="button" class="revise-btn" data-topic="${escapeHtml(item.display || item.topic_id || "mục này")}" style="background: #ea580c; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Ôn tập ngay</button>
+            <button type="button" class="revise-btn" data-record="${index}" style="background:#ea580c;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">Mở đúng bài để ôn</button>
           </div>
         `;
         }).join("");
 
         list.querySelectorAll(".revise-btn").forEach(b => {
-          b.addEventListener("click", () => {
-            switchTab("classroom");
-            sendMessage(`Sensei ơi, em muốn ôn tập lại phần:「${b.dataset.topic}」nhé!`);
+          b.addEventListener('click',async()=>{
+            b.disabled=true;
+            try{await openProgressReview(weakItems[Number(b.dataset.record)]);}
+            catch(error){b.textContent=error.message;b.disabled=false;}
           });
         });
       }
@@ -1142,7 +1159,7 @@ function setupFloatingSensei() {
   const scope=()=>{
     const context=globalThis.teacherContext?.() || null;
     // Selected canonical items have stable identity even while a timer or progress label changes.
-    const identity=context?.focus?{lesson:context.lesson,focus:context.focus}:context;
+    const identity=context?.focus?{lesson:context.lesson,focus:context.focus,task:context.task?taskRevisionSource(context.task):null}:context;
     return JSON.stringify({route:location.hash,context:identity});
   };
   const controls=busy=>{sendBtn.disabled=busy;retryBtn.disabled=busy;chips.forEach(chip=>chip.disabled=busy);};
@@ -1174,9 +1191,8 @@ function setupFloatingSensei() {
     if(query.length>6000){speechEl.textContent='Tin nhắn tối đa 6.000 ký tự.';return;}
     if(!signedInUser){openAccount();return;}
     const context=globalThis.teacherContext?.();
-    const request=retry?failed:{body:{message:query,channel:'quick',screen:context?.screen || null,lesson:context?.lesson || null,focus:context?.focus || null,intent:'message',request_id:crypto.randomUUID()},scope:scope()};
+    const request=retry?failed:{body:{message:query,channel:'quick',screen:context?.screen || null,lesson:context?.lesson || null,focus:context?.focus || null,view:context?.view || 'checks',intent:'message',request_id:crypto.randomUUID()},question:context?.task || null,scope:scope()};
     if(request.scope!==scope()){invalidate();speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';return;}
-    if(!retry)request.serializedBody=JSON.stringify(request.body);
     const owner={generation,controller:new AbortController()};inFlight=owner;controls(true);retryBtn.hidden=true;
     const current=()=>inFlight===owner && owner.generation===generation && !popover.hidden && scope()===request.scope;
     speechEl.textContent='Thầy đang suy nghĩ…';mascotMgr.setState('thinking');
@@ -1184,9 +1200,20 @@ function setupFloatingSensei() {
     if(!retry)inputEl.value='';
     const timeout=setTimeout(()=>owner.controller.abort(),35000);
     try{
+      if(!request.serializedBody){
+        if(request.body.focus?.kind==='question'){
+          const attempt=focusedTaskAttempt(request.body.lesson,request.body.focus,request.body.view,request.question);
+          if(!attempt)throw new Error('Chưa xác định đúng câu hỏi. Mở lại bài.');
+          await recordTaskEvent(attempt,'assist',{help:'chat'});
+          request.body.task=await taskReference(attempt.task);
+        }
+        request.serializedBody=JSON.stringify(request.body);
+      }
+      if(!current())return;
       const response=await apiFetch('/api/chat',{method:'POST',signal:owner.controller.signal,headers:{'Content-Type':'application/json'},body:request.serializedBody});
       const data=await response.json();
       if(!response.ok)throw new Error(data.detail || 'Chưa gửi được câu hỏi.');
+      if(request.body.task && (data.task?.id!==request.body.task.id || data.task?.revision!==request.body.task.revision))throw new Error('Phản hồi thuộc phiên bản câu hỏi khác. Mở lại bài.');
       const reply=data.reply || data.response;
       if(typeof reply!=='string' || !reply.trim())throw new Error('Thầy chưa trả lời. Hãy thử lại.');
       if(!current())return;
@@ -1480,10 +1507,10 @@ function setupEventListeners() {
   const fcCard = document.getElementById("flashcard-card");
   if (fcCard) {
     fcCard.addEventListener("keydown",e=>{if(e.target===fcCard && (e.key==="Enter" || e.key===" ")){e.preventDefault();fcCard.click();}});
-    fcCard.addEventListener("click", event => {
-      if(event.target.closest('details'))return;
-      soundEngine.playFlip();
-      fcCard.classList.toggle("flipped");
+    fcCard.addEventListener("click",event=>{
+      if(event.target.closest('details,button'))return;
+      soundEngine.playFlip();const back=!fcCard.classList.contains('flipped');
+      fcCard.classList.toggle('flipped',back);updateFlashcardFace(fcCard,back);
     });
   }
 
@@ -1538,7 +1565,7 @@ function setupEventListeners() {
     if (!card) return;
     const isCorrect = quality >= 3;
     savingCard=true;
-    if(!pendingCardAnswers.has(card.id))pendingCardAnswers.set(card.id,{item_id:card.id,display:card.front,level:card.level,item_type:'vocabulary',correct:isCorrect,quality,attempt_id:crypto.randomUUID()});
+    if(!pendingCardAnswers.has(card.id))pendingCardAnswers.set(card.id,{item_id:card.id,display:card.front,level:card.level,item_type:'vocabulary',correct:isCorrect,quality,basis:'self_report',attempt_id:crypto.randomUUID()});
     try { const response=await apiFetch("/api/progress/record", {
       method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(pendingCardAnswers.get(card.id))
     });

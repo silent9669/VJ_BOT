@@ -24,8 +24,8 @@ export async function isAdmin(env, userId) {
 }
 
 const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const OWNED_TABLES = ['admin_ai_preferences', 'ai_antigravity_oauth_states', 'ai_active_antigravity', 'ai_antigravity_connections', 'ai_google_oauth_states', 'ai_google_oauth', 'exam_attempts', 'completions', 'progress_attempts', 'progress', 'tutor_requests', 'tutor_sessions', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admin_grants', 'admins', 'profiles'];
-const RESET_TABLES = ['progress', 'progress_attempts', 'completions', 'exam_attempts', 'study_days'];
+const OWNED_TABLES = ['task_attempt_evidence', 'admin_ai_preferences', 'ai_antigravity_oauth_states', 'ai_active_antigravity', 'ai_antigravity_connections', 'ai_google_oauth_states', 'ai_google_oauth', 'exam_attempts', 'completions', 'progress_attempts', 'progress', 'tutor_requests', 'tutor_sessions', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admin_grants', 'admins', 'profiles'];
+const RESET_TABLES = ['task_attempt_evidence', 'progress', 'progress_attempts', 'completions', 'exam_attempts', 'study_days'];
 const kindOf = id => id.startsWith('google:') ? 'google' : id.startsWith('email:') ? 'email' : 'guest';
 
 // Every table keyed by user_id; used by account deletion and by the admin "delete" action.
@@ -75,7 +75,10 @@ const ACTIONS = {
     return env.DB.batch(['ai_google_oauth_states','ai_google_oauth','ai_active_profiles','ai_providers'].map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id)));
   },
   revoke_sessions: (env, id) => env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(id).run(),
-  reset_progress: (env, id) => env.DB.batch(RESET_TABLES.map(table => env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id))),
+  reset_progress:(env,id)=>env.DB.batch([
+    env.DB.prepare('UPDATE profiles SET task_evidence_epoch=lower(hex(randomblob(16))) WHERE user_id=?').bind(id),
+    ...RESET_TABLES.map(table=>env.DB.prepare(`DELETE FROM ${table} WHERE user_id=?`).bind(id))
+  ]),
   delete: (env, id) => deleteUserData(env, id)
 };
 

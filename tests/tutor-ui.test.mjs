@@ -2,8 +2,29 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {webcrypto} from 'node:crypto';
+import {TextEncoder} from 'node:util';
 
 const app=readFileSync('static/app.js','utf8');
+const checks=readFileSync('static/lesson-checks.js','utf8');
+const learning=readFileSync('static/learning.js','utf8');
+const plan=readFileSync('static/study-plan.js','utf8');
+const completion=readFileSync('static/completion.js','utf8');
+function loadLearning(context){
+  vm.runInContext(completion.slice(completion.indexOf('function activityId('),completion.indexOf('function mountCompletion(')),context);
+  vm.runInContext(checks,context);
+  vm.runInContext(plan.slice(plan.indexOf('function lessonQuestions('),plan.indexOf('function lessonProgressIds(')),context);
+  vm.runInContext(learning,context);
+}
+function taskFixture(overrides={}){
+  const task={q:'第一?',instruction:'',passage:'',script_jp:'',target:'',parts:[],opts:['A','B'],answer_index:0,
+    accepted_answers:[],item_id:'q0',task_id:'practice:question:0',source_position:0,mode:'choice',skill:'grammar',
+    review_status:'unreviewed',unavailable_reason:'',explanation:'',example_indexes:[],source_language:'vi',
+    capabilities:{answer:true,hint:true,evaluation:true,processing:true},...overrides};
+  for(const key of ['parts','opts','accepted_answers','example_indexes'])Object.freeze(task[key]);
+  Object.freeze(task.capabilities);return Object.freeze(task);
+}
+const plain=value=>JSON.parse(JSON.stringify(value));
 // Small DOM fixture: real parent/child ownership, parsed markup, selectors and events.
 // It deliberately does not mock the tutor's handlers or their request ownership.
 const decode=text=>text.replace(/&(?:amp|lt|gt|quot|#39);/g,x=>({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&#39;':"'"}[x]));
@@ -59,7 +80,7 @@ class Element {
   scrollIntoView(){}
 }
 function dom(){
-  const body=new Element('body'),document={body,createElement:tag=>new Element(tag),getElementById:id=>body.querySelector('#'+id),querySelector:selector=>body.querySelector(selector),querySelectorAll:selector=>body.querySelectorAll(selector)};
+  const body=new Element('body'),document={body,createElement:tag=>new Element(tag),createTextNode:text=>({nodeType:3,textContent:String(text)}),getElementById:id=>body.querySelector('#'+id),querySelector:selector=>body.querySelector(selector),querySelectorAll:selector=>body.querySelectorAll(selector)};
   const add=(id,tag='div',parent=body)=>{const element=new Element(tag);element.id=id;parent.append(element);return element;};
   return {document,add,element:id=>document.getElementById(id)};
 }
@@ -68,7 +89,8 @@ function quick(apiFetch){
   for(const id of ['btn-close-popover','btn-popover-send','popover-query-input','popover-speech-text','btn-popover-tts'])d.add(id,id.includes('btn-')?'button':'div',popover);
   d.add('btn-topbar-summon','button');const chip=d.add('chip','button',popover);chip.className='quick-chip-btn';chip.dataset.ask='Ví dụ';
   const timers=new Map(),listeners=new Map();let nextTimer=0;
-  const c=vm.createContext({crypto,AbortController,signedInUser:{},location:{hash:'#kaiwa/N3/session/A'},apiFetch,document:d.document,window:{addEventListener:(event,fn)=>{(listeners.get(event)||listeners.set(event,[]).get(event)).push(fn);}},setTimeout:fn=>{timers.set(++nextTimer,fn);return nextTimer;},clearTimeout:id=>timers.delete(id),soundEngine:{playBlip(){},playReceive(){}},mascotMgr:{setState(){}},playGeminiTTS(){},teacherContext:()=>({screen:{route:c.location.hash.slice(1),level:'N3'},lesson:{id:'kaiwa:N3:A',level:'N3'},focus:{kind:'example',index:1}})});
+  const c=vm.createContext({crypto:webcrypto,TextEncoder,AbortController,signedInUser:{user_id:'learner'},location:{hash:'#kaiwa/N3/session/A'},apiFetch,document:d.document,window:{addEventListener:(event,fn)=>{(listeners.get(event)||listeners.set(event,[]).get(event)).push(fn);}},setTimeout:fn=>{timers.set(++nextTimer,fn);return nextTimer;},clearTimeout:id=>timers.delete(id),soundEngine:{playBlip(){},playReceive(){}},mascotMgr:{setState(){}},playGeminiTTS(){},teacherContext:()=>({screen:{route:c.location.hash.slice(1),level:'N3'},lesson:{id:'kaiwa:N3:A',level:'N3'},focus:{kind:'example',index:1}})});
+  loadLearning(c);
   vm.runInContext(app.slice(app.indexOf('function setupFloatingSensei()'),app.indexOf('// 15. SETTINGS')),c);c.setupFloatingSensei();
   return {...d,c,chip,timers,fire:event=>Promise.all((listeners.get(event)||[]).map(fn=>fn({})))};
 }
@@ -79,7 +101,6 @@ function focusedQuick(apiFetch){
   b.add('reference','p',panel).textContent='Word A / Word B';
   b.c.location.hash='#curriculum/N3/lesson/vocabulary/words';
   b.c.currentLesson={level:'N3',skill:'vocabulary',item:{id:'words',items:[{id:'A'},{id:'B'}]}};
-  b.c.buildLessonContext=(item,level)=>({id:item.id,level});b.c.lessonQuestions=()=>[];
   vm.runInContext(readFileSync('static/teacher-context.js','utf8'),b.c);b.c.markTeacherScreen();
   b.c.setTeacherFocus({kind:'word',index:0});
   return b;
@@ -130,18 +151,26 @@ test('route and focus changes prevent old quick responses from updating the curr
   }
 });
 test('a running exam timer does not discard a reply for the unchanged question',async()=>{
-  const request=deferred(),b=quick(()=>request.promise);
+  const request=deferred(),started=deferred(),sent=[],b=quick((path,options)=>{
+    const body=JSON.parse(options.body);sent.push({path,body});
+    if(path==='/api/progress/record')return Promise.resolve(Response.json({task:body.task}));
+    started.resolve(body);return request.promise;
+  });
   const panel=b.add('panel-quiz');panel.className='tab-panel active';
   const workspace=b.add('practice-workspace','div',panel);b.add('quiz-card','div',workspace);
   const timer=b.add('exam-timer','span',workspace);timer.textContent='24:10';
   b.c.location.hash='#quiz/N3/practice/0';
-  b.c.findFeatureLesson=()=>null;b.c.featureLessons=()=>[{id:'exam',examIndex:0,drills:[{}]}];
-  b.c.buildLessonContext=(item,level)=>({id:item.id,level});
+  b.c.findFeatureLesson=()=>null;b.c.featureLessons=()=>[{id:'exam',examIndex:0,drills:[taskFixture()]}];
   vm.runInContext(readFileSync('static/teacher-context.js','utf8'),b.c);b.c.markTeacherScreen();
   b.c.setTeacherFocus({kind:'question',index:0});
   await b.element('btn-topbar-summon').click();b.element('popover-query-input').value='Explain this question';
   const sending=b.element('btn-popover-send').click();timer.textContent='24:09';
-  request.resolve(Response.json({reply:'The explanation for question one'}));await sending;
+  const body=await started.promise;
+  assert.deepEqual(sent.map(entry=>entry.path),['/api/progress/record','/api/chat']);
+  assert.equal(sent[0].body.event,'assist');assert.equal(sent[0].body.help,'chat');assert.equal(sent[0].body.view,'exam');
+  assert.deepEqual(body.task,sent[0].body.task);assert.match(body.task.revision,/^[a-f0-9]{64}$/);
+  assert.equal(body.task.id,'exam:question:0');
+  request.resolve(Response.json({reply:'The explanation for question one',task:body.task}));await sending;
   assert.equal(b.element('popover-speech-text').textContent,'The explanation for question one');
 });
 test('a changed Kaiwa prompt still invalidates the previous prompt response',async()=>{
@@ -150,7 +179,6 @@ test('a changed Kaiwa prompt still invalidates the previous prompt response',asy
   const prompts=[{jp:'お名前は？'},{jp:'お仕事は？'}];
   b.c.window.JLPT_DATA={kaiwaScenarios:{A:{prompts}}};
   b.c.findFeatureLesson=()=>({id:'kaiwa-lesson:N3:A',examples:prompts});
-  b.c.buildLessonContext=(item,level)=>({id:item.id,level});
   b.c.activeKaiwaKey='A';b.c.activeKaiwaLevel='N3';b.c.activeKaiwaPromptIdx=0;
   vm.runInContext(readFileSync('static/teacher-context.js','utf8'),b.c);b.c.markTeacherScreen();
   await b.element('btn-topbar-summon').click();b.element('popover-query-input').value='Explain this question';
@@ -174,12 +202,13 @@ test('scenario buttons navigate through addressable session routes and quick sco
   assert.equal(sent[0].lesson.id,'kaiwa:N3:B');
 });
 
-function lesson(){
+function lesson(globals={}){
   const d=dom(),panel=d.add('panel-lesson');panel.className='tab-panel active';
   for(const id of ['btn-close-lesson-modal','lesson-page','modal-lesson-badge','modal-lesson-title','modal-lesson-body'])d.add(id,'div',panel);
   d.add('topbar-view-title').textContent='Bài học';
-  const c=vm.createContext({document:d.document,window:{},location:{hash:''},crypto,curriculumView:'plan',studyPlans:new Map(),currentLesson:null,activeCurriculumSkill:'grammar',activeCurriculumLevel:'N5',soundEngine:{},playGeminiTTS(){},mountCompletion(){},addFeatureLessonAction(){},renderLessonOutline(){},returnToCourse(){},openStudyStep(){},speechReading:(word)=>word,lessonQuestions:()=>[],activityId:item=>item.id,apiFetch:async()=>Response.json({})});
-  vm.runInContext(readFileSync('static/learning.js','utf8'),c);
+  const c=vm.createContext({document:d.document,window:{},location:{hash:''},crypto:webcrypto,TextEncoder,AbortController,AbortSignal,curriculumView:'plan',studyPlans:new Map(),currentLesson:null,activeCurriculumSkill:'grammar',activeCurriculumLevel:'N5',soundEngine:{},playGeminiTTS(){},mountCompletion(){},addFeatureLessonAction(){},renderLessonOutline(){},returnToCourse(){},openStudyStep(){},speechReading:(word)=>word,apiFetch:async()=>Response.json({}),...globals});
+  loadLearning(c);
+  vm.runInContext(readFileSync('static/practice.js','utf8'),c);
   vm.runInContext(app.slice(app.indexOf('function lessonExampleHtml('),app.indexOf('// 10. FLASHCARDS CONTROLLER')),c);
   vm.runInContext(readFileSync('static/teacher-context.js','utf8'),c);
   c.switchTab=(_tab,route)=>{c.rememberTeacherScreen();c.location.hash=`#curriculum/${route.level}/lesson/${route.skill}/${route.id}`;c.markTeacherScreen();return true;};
@@ -191,17 +220,40 @@ test('opening the second word binds its actual canonical position and a new less
   assert.deepEqual(JSON.parse(JSON.stringify(b.c.teacherContext().focus)),{kind:'word',index:1});assert.equal(b.c.teacherContext().lesson.id,'words');
   b.c.showLessonDetail({...item,id:'next'},'N4','vocabulary');assert.equal(b.c.teacherContext().focus,null);assert.equal(b.c.teacherContext().lesson.level,'N4');
 });
-test('listening play, reveal and input focus bind their example and never capture learner text',async()=>{
-  const b=lesson(),item={id:'listening',title:'Nghe',dictation:true,examples:[{jp:'一',vi:'một'},{jp:'二',vi:'hai'}]};
+test('dictation requires an attempt before reveal and saves the actual text as self-report, never correctness',async()=>{
+  const b=lesson(),sent=[],revealing=deferred(),started=deferred();
+  const item={id:'listening',title:'Nghe',dictation:true,examples:[{jp:'一',vi:'một'},{jp:'二',vi:'hai'}]};
+  b.c.apiFetch=async(path,options)=>{
+    const body=JSON.parse(options.body);sent.push({path,body});
+    if(body.event==='assist'){started.resolve();return revealing.promise;}
+    return Response.json({task:body.task,basis:'self_report',source_correct:null});
+  };
   b.c.showLessonDetail(item,'N3','listening');await b.document.querySelector('[data-lesson-mode=practice]').click();
-  const rows=b.document.querySelectorAll('.lesson-exercise');await rows[1].children[0].click();assert.equal(b.c.teacherContext().focus.index,1);
-  await rows[0].children[2].click();assert.equal(b.c.teacherContext().focus.index,0);assert.equal(rows[0].children[3].hidden,false);
-  rows[1].children[1].value='PRIVATE SUBMISSION';await rows[1].children[1].focus();assert.equal(b.c.teacherContext().focus.index,1);assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
+  const rows=b.document.querySelectorAll('.lesson-exercise'),first=rows[0],second=rows[1];
+  const input=first.querySelector('textarea'),reveal=first.querySelectorAll('button')[1],answer=first.children[3];
+  await second.querySelector('button').click();
+  assert.deepEqual(plain(b.c.teacherContext().focus),{kind:'question',index:1});
+  await reveal.click();assert.equal(answer.hidden,true);assert.equal(sent.length,0);
+  input.value='いち';await input.focus();
+  assert.deepEqual(plain(b.c.teacherContext().focus),{kind:'question',index:0});
+  const revealingAnswer=reveal.click();await started.promise;
+  assert.equal(answer.hidden,true,'source transcript remains hidden until assistance is recorded');
+  assert.equal(sent[0].body.help,'source_reveal');assert.equal(sent[0].body.event,'assist');
+  revealing.resolve(Response.json({task:sent[0].body.task}));await revealingAnswer;
+  assert.equal(answer.hidden,false);assert.equal(input.readOnly,true);assert.match(answer.textContent,/一/);
+  await answer.querySelector('button').click();
+  const saved=sent[1].body;
+  assert.equal(saved.event,'answer');assert.equal(saved.response_text,'いち');assert.equal(saved.self_rating,4);
+  assert.equal(saved.attempt_id,sent[0].body.attempt_id);assert.deepEqual(saved.task,sent[0].body.task);
+  assert.equal(saved.task.id,'listening:question:0');assert.equal(saved.question_index,0);
+  for(const key of ['correct','quality','answer_index'])assert.equal(Object.hasOwn(saved,key),false);
+  assert.match(first.querySelector('output').textContent,/không cộng điểm đúng\/sai/);
+  second.querySelector('textarea').value='PRIVATE SUBMISSION';await second.querySelector('textarea').focus();
+  assert.equal(b.c.teacherContext().focus.index,1);assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE SUBMISSION'),false);
 });
 test('practice focus follows original question position rather than radio option index',async()=>{
-  const b=lesson(),questions=[{q:'第一?',opts:['A','B'],ans:'A',item_id:'q0'},{q:'第二?',opts:['A','B'],ans:'B',item_id:'q1'}];
-  b.c.lessonQuestions=()=>questions;vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
-  b.c.showLessonDetail({id:'practice',title:'Bài tập'},'N3','grammar');assert.equal(b.c.teacherContext().focus,null);
+  const b=lesson(),questions=[taskFixture(),taskFixture({q:'第二?',answer_index:1,item_id:'q1',task_id:'practice:question:1',source_position:1})];
+  b.c.showLessonDetail({id:'practice',title:'Bài tập',drills:questions},'N3','grammar');assert.equal(b.c.teacherContext().focus,null);
   await b.document.querySelector('[data-lesson-mode=practice]').click();assert.equal(b.c.teacherContext().focus.index,0);
   const option=b.document.querySelector('.practice-options input');option.checked=true;await option.dispatch('change');await b.document.querySelector('.practice-session .practice-primary').click();await b.document.querySelector('.practice-session .practice-primary').click();
   assert.equal(b.c.teacherContext().focus.index,1);await b.document.querySelector('.practice-options input').focus();assert.equal(b.c.teacherContext().focus.index,1);
@@ -227,6 +279,7 @@ test('SRS ordering retains canonical word identity without capturing either flas
   const review=b.add('flashcard-review','div',panel),card=b.add('flashcard-card','div',review);
   card.innerHTML='<div class="card-face card-front"><p id="fc-front-text"></p><p id="fc-reading-text"></p></div><div class="card-face card-back"><p id="fc-back-meaning"></p><p id="fc-example-jp"></p><p id="fc-example-vi"></p></div>';
   for(const id of ['fc-counter','fc-badge-lvl','fc-btn-prev','fc-btn-next'])b.add(id,'div',review);
+  b.add('fc-face-status','span',review);b.c.soundEngine.playFlip=()=>{};
   b.add('controls','div',review).className='fc-controls-bar';
   const item={id:'words',items:[{id:'word-a',jp:'私',vi:'PRIVATE A'},{id:'word-b',jp:'先生',vi:'PRIVATE B',examples:[{jp:'BACK EXAMPLE',vi:'BACK TRANSLATION'}]}]};
   b.c.window.JLPT_DATA={curriculum:{N3:{skills:{vocabulary:[item]}}}};
@@ -235,49 +288,91 @@ test('SRS ordering retains canonical word identity without capturing either flas
   b.c.apiFetch=async()=>Response.json({items:[{item_id:'word-b',next_review:'2020-01-01'}]});
   let invalidations=0;b.c.invalidateTeacherQuery=()=>invalidations++;
   vm.runInContext(app.slice(app.indexOf('let fcDeck ='),app.indexOf('// 11. KAIWA SPEAKING LAB CONTROLLER')),b.c);
+  vm.runInContext(app.slice(app.indexOf('  // Flashcard Flipper click'),app.indexOf('  // Flashcard audio TTS')),b.c);
   await b.c.renderFlashcards('N3','words');
   assert.equal(b.element('fc-front-text').textContent,'先生','reviewed due card sorts ahead of the unseen first word');
   assert.equal(b.c.teacherContext().focus.index,1,'focus is canonical word index, not SRS deck index zero');
   assert.equal(invalidations,1);
+  const front=card.querySelector('.card-front'),back=card.querySelector('.card-back');
+  assert.equal(front.inert,false);assert.equal(front.getAttribute('aria-hidden'),'false');
+  assert.equal(back.inert,true);assert.equal(back.getAttribute('aria-hidden'),'true');
+  assert.match(b.element('fc-face-status').textContent,/nghĩa được che/);
   b.c.displayFlashcard();assert.equal(invalidations,1,'same stable word does not invalidate quick ownership');
   assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
-  card.classList.add('flipped');
+  await card.dispatch('keydown',{key:'Enter'});
+  assert.equal(card.classList.contains('flipped'),true);
+  assert.equal(front.inert,true);assert.equal(front.getAttribute('aria-hidden'),'true');
+  assert.equal(back.inert,false);assert.equal(back.getAttribute('aria-hidden'),'false');
   assert.equal(b.c.teacherContext().focus.index,1);
   assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE B'),false);
   vm.runInContext('fcIdx=1;displayFlashcard();',b.c);
   assert.equal(b.c.teacherContext().focus.index,0);assert.equal(card.classList.contains('flipped'),false);
+  assert.equal(front.inert,false);assert.equal(front.getAttribute('aria-hidden'),'false');
+  assert.equal(back.inert,true);assert.equal(back.getAttribute('aria-hidden'),'true');
   assert.equal(invalidations,2,'moving to another automatic word invalidates quick ownership');
   assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE A'),false);
   card.dataset.teacherWordId='not-in-this-lesson';assert.equal(b.c.teacherContext().focus,null);
 });
-test('quiz session question eight keeps full-exam focus while ordinary lesson practice stays capped at five',()=>{
+function quiz(){
   const b=lesson(),panel=b.element('panel-lesson');panel.id='panel-quiz';
-  const workspace=b.add('practice-workspace','div',panel);
-  b.add('quiz-heading','h1',workspace).textContent='Quiz N3';
-  const card=b.add('quiz-card','div',workspace);
-  for(const id of ['quiz-feedback-box','btn-quiz-next','quiz-q-num','quiz-q-type','quiz-instruction','quiz-question-sentence','quiz-options-grid'])b.add(id,'div',card);
-  const result=b.add('quiz-result-card','div',workspace);result.textContent='Finished';
-  const raw=Array.from({length:20},(_,i)=>({sentence:`QUESTION ${i}`,options:['A','B'],answer:0}));
-  const item={id:'quiz-full',completionId:'test:N3:full',examIndex:2,drills:raw.map((q,i)=>({q:q.sentence,opts:q.options,ans:'A',item_id:`q${i}`}))};
+  const workspace=b.add('practice-workspace','div',panel),card=b.add('quiz-card','div',workspace);
+  for(const id of ['quiz-q-num','quiz-q-type','quiz-instruction','quiz-question-sentence','quiz-options-grid'])b.add(id,'div',card);
+  b.add('btn-quiz-next','button',card);
+  const feedback=b.add('quiz-feedback-box','div',card);
+  b.add('quiz-feedback-status','strong',feedback);b.add('quiz-feedback-text','p',feedback);
+  const result=b.add('quiz-result-card','div',workspace);
+  for(const id of ['quiz-final-score-val','quiz-result-praise','quiz-completion'])b.add(id,'div',result);
   b.c.location.hash='#quiz/N3/practice/2';b.c.markTeacherScreen();
-  b.c.findFeatureLesson=()=>item;b.c.featureLessons=()=>[item];b.c.lessonQuestions=()=>item.drills.slice(0,5);
-  b.c.currentExamQuestions=raw;b.c.examQuestionIdx=8;
-  vm.runInContext(app.slice(app.indexOf('function displayQuizQuestion()'),app.indexOf('function handleQuizAnswer(')),b.c);
-  b.c.displayQuizQuestion();assert.equal(b.c.teacherContext().focus.index,8);assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
+  b.c.examTimerInterval=null;b.c.examScore=0;b.c.examAnswers=new Map();b.c.quizRequest=0;
+  b.c.activeQuizLevel='N3';b.c.activeQuizTestIdx=2;b.c.examQuestionIdx=8;
+  const drills=Array.from({length:20},(_,i)=>taskFixture({q:`QUESTION ${i}`,item_id:`q${i}`,task_id:`test:N3:full:question:${i}`,source_position:i}));
+  const item={id:'quiz-full',completionId:'test:N3:full',examIndex:2,drills};
+  b.c.currentExamQuestions=b.c.lessonQuestions(item,'N3','reading');
+  b.c.findFeatureLesson=()=>item;b.c.featureLessons=()=>[item];
+  b.c.window.JLPT_DATA={exams:{N3:[null,null,{title:'Full exam'}]}};b.c.examIdentity=()=> 'N3:full';b.c.loadProgress=()=>{};
+  vm.runInContext(app.slice(app.indexOf('function displayQuizQuestion()'),app.indexOf('// 13. MASTERY & PROGRESS CONTROLLER')),b.c);
+  return {...b,item,panel};
+}
+test('full exam and ordinary lesson practice retain the same twenty canonical task positions',()=>{
+  const b=quiz();let invalidations=0;b.c.invalidateTeacherQuery=()=>invalidations++;
+  b.c.displayQuizQuestion();assert.equal(b.c.teacherContext().focus.index,8);
+  assert.equal(b.c.teacherContext().task.task_id,'test:N3:full:question:8');
+  assert.equal(b.element('quiz-q-num').textContent,'Câu 9 / 20');
+  assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
   b.c.setTeacherFocus({kind:'question',index:19});assert.equal(b.c.teacherContext().focus.index,19);
   b.c.setTeacherFocus({kind:'question',index:20});assert.equal(b.c.teacherContext().focus,null);
-  b.c.examTimerInterval=null;b.c.examScore=0;b.c.activeQuizLevel='N3';b.c.activeQuizTestIdx=2;
-  b.c.window.JLPT_DATA={exams:{N3:[null,null,{title:'Full exam'}]}};b.c.examIdentity=()=> 'N3:full';b.c.loadProgress=()=>{};
-  let invalidations=0;b.c.invalidateTeacherQuery=()=>invalidations++;
-  vm.runInContext(app.slice(app.indexOf('function finishExam()'),app.indexOf('// 13. MASTERY & PROGRESS CONTROLLER')),b.c);
-  b.c.setTeacherFocus({kind:'question',index:8});const beforeFinish=invalidations;
-  b.c.finishExam();
+  b.c.setTeacherFocus({kind:'question',index:8});const beforeFinish=invalidations;b.c.finishExam();
   assert.equal(b.c.teacherContext().lesson,null);assert.equal(b.c.teacherContext().focus,null);
   assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);assert.ok(invalidations>beforeFinish);
-  b.element('modal-lesson-title').textContent='Ordinary lesson practice';
-  panel.id='panel-lesson';b.c.location.hash='#quiz/N3/lesson/quiz-full';b.c.currentLesson={item,level:'N3',skill:'reading',owner:'quiz'};b.c.markTeacherScreen();
-  b.c.setTeacherFocus({kind:'question',index:8});assert.equal(b.c.teacherContext().focus,null);
-  b.c.setTeacherFocus({kind:'question',index:4});assert.equal(b.c.teacherContext().focus.index,4);
+  assert.match(b.element('quiz-completion').textContent,/Chưa xác nhận làm trọn bộ/);
+  b.panel.id='panel-lesson';b.c.location.hash='#quiz/N3/lesson/quiz-full';
+  b.c.currentLesson={item:b.item,level:'N3',skill:'reading',owner:'quiz'};b.c.markTeacherScreen();
+  b.c.setTeacherFocus({kind:'question',index:8});assert.equal(b.c.teacherContext().focus.index,8);
+  b.c.setTeacherFocus({kind:'question',index:19});assert.equal(b.c.teacherContext().focus.index,19);
+  b.c.setTeacherFocus({kind:'question',index:20});assert.equal(b.c.teacherContext().focus,null);
+});
+test('full exam grades duplicate option positions and records the original index on its canonical task',async()=>{
+  const b=quiz(),sent=[],saved=deferred();
+  const task=taskFixture({q:'提出の読みは？',target:'提出',opts:['あれ','あれ','これ','それ'],answer_index:1,
+    parts:['あれ','あれ','これ','それ'],passage:'文章を読んでください。',explanation:'POST ANSWER RATIONALE',
+    item_id:'q8',task_id:'test:N3:full:question:8',source_position:8});
+  b.item.drills[8]=task;b.c.currentExamQuestions=b.c.lessonQuestions(b.item,'N3','reading');
+  b.c.apiFetch=async(path,options)=>{const body=JSON.parse(options.body);sent.push({path,body});return Response.json({task:body.task});};
+  b.c.displayQuizQuestion();
+  const sentence=b.element('quiz-question-sentence');
+  assert.equal(sentence.querySelector('mark').textContent,'提出');
+  assert.equal(sentence.querySelector('.task-stimulus').textContent,'文章を読んでください。');
+  assert.deepEqual(sentence.querySelectorAll('.task-parts li').map(element=>element.textContent),['あれ','あれ','これ','それ']);
+  assert.doesNotMatch(sentence.textContent,/POST ANSWER RATIONALE/);
+  assert.deepEqual(b.element('quiz-options-grid').querySelectorAll('.quiz-option-label').map(element=>element.textContent),task.opts);
+  b.element('btn-quiz-next').addEventListener('focus',saved.resolve);
+  await b.element('quiz-options-grid').children[0].click();await saved.promise;
+  assert.equal(sent[0].path,'/api/progress/record');assert.equal(sent[0].body.answer_index,0);
+  assert.equal(sent[0].body.question_index,8);assert.equal(sent[0].body.view,'exam');
+  assert.equal(sent[0].body.task.id,'test:N3:full:question:8');
+  assert.equal(b.c.examAnswers.get(8),false,'same text at another position does not match the stored key');
+  assert.equal(b.element('quiz-options-grid').children[1].dataset.state,'correct');
+  assert.match(b.element('quiz-feedback-text').textContent,/POST ANSWER RATIONALE/);
 });
 
 test('completed quick A is cleared and no longer playable after selecting B, not after timer/same focus',async()=>{
@@ -319,70 +414,273 @@ test('legacy hidden level picker handlers still navigate through canonical featu
 
 test('managed administrator practice preserves canonical grading without reading private connection preferences',async()=>{
   const b=lesson(),sent=[];
-  const questions=[{q:'Chọn quan sát trực tiếp?',opts:['Không có gió lạnh','Phải thay máy'],ans:'Không có gió lạnh',item_id:'q0',explanation:'Dấu hiệu không phải kết luận.'}];
-  b.c.lessonQuestions=()=>questions;b.c.signedInUser={user_id:'learner',is_admin:true};b.c.AbortController=AbortController;b.c.AbortSignal=AbortSignal;
+  const questions=[taskFixture({q:'Chọn quan sát trực tiếp?',opts:['Không có gió lạnh','Phải thay máy'],explanation:'Dấu hiệu không phải kết luận.'})],events=[];
+  b.c.signedInUser={user_id:'learner',is_admin:true};
   b.c.usesAntigravityOAuth=()=>{throw new Error('Managed practice must not read private preferences');};
   b.c.apiFetch=async(path,options)=>{
-    if(path!=='/api/practice/coach')return Response.json({});
-    const body=JSON.parse(options.body);sent.push(body);
-    return Response.json({reply:'Hãy phân biệt điều nhìn thấy với kết luận.',action:body.action,item_id:'q0',...(body.action==='feedback'?{answer:questions[0].ans,correct:false}:{})});
+    const body=JSON.parse(options.body);events.push({path,body});
+    if(path!=='/api/practice/coach')return Response.json({task:body.task});
+    sent.push(body);
+    return Response.json({reply:'Hãy phân biệt điều nhìn thấy với kết luận.',action:body.action,item_id:'q0',task:body.task,
+      ...(body.action==='feedback'?{answer_index:questions[0].answer_index,correct:false}:{})});
   };
-  vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
-  b.c.showLessonDetail({id:'practice',title:'Bài tập'},'N3','grammar');
+  b.c.showLessonDetail({id:'practice',title:'Bài tập',drills:questions},'N3','grammar');
   await b.document.querySelector('[data-lesson-mode=practice]').click();
   await b.document.querySelector('.practice-coach button').click();
   assert.equal(sent[0].action,'hint');assert.equal(sent[0].item_id,'q0');assert.equal(sent[0].question_index,0);
   assert.equal(Object.hasOwn(sent[0],'answer_index'),false);
+  assert.deepEqual(events.map(entry=>[entry.path,entry.body.event || entry.body.action]),
+    [['/api/progress/record','assist'],['/api/practice/coach','hint']]);
+  assert.equal(events[0].body.help,'hint');assert.deepEqual(events[0].body.task,sent[0].task);
+  assert.match(sent[0].task.revision,/^[a-f0-9]{64}$/);
   await b.document.querySelectorAll('.practice-options input')[1].dispatch('change');
   await b.document.querySelector('.practice-session .practice-primary').click();
   await b.document.querySelector('.practice-coach button').click();
   assert.equal(sent[1].answer_index,1);assert.equal(sent[1].action,'feedback');
+  assert.deepEqual(events.map(entry=>entry.body.event || entry.body.action),['assist','hint','answer','assist','feedback']);
+  assert.equal(events[2].body.answer_index,1);assert.equal(events[2].body.attempt_id,events[0].body.attempt_id);
+  assert.equal(events[3].body.help,'chat');assert.deepEqual(sent[1].task,sent[0].task);
   assert.match(b.document.querySelector('.practice-feedback').textContent,/Không có gió lạnh/);
   assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'false');
   assert.equal(b.document.querySelector('.practice-coach-reply').textContent,'Hãy phân biệt điều nhìn thấy với kết luận.');
 });
 
 test('submitting an answer cancels its old hint and rejects a late response without blocking continuation',async()=>{
-  const b=lesson(),pending=deferred();let signal;
-  b.c.lessonQuestions=()=>[{q:'第一?',opts:['A','B'],ans:'A',item_id:'q0'}];
-  b.c.signedInUser={user_id:'learner'};b.c.AbortController=AbortController;b.c.AbortSignal=AbortSignal;
-  b.c.apiFetch=async(path,options)=>{if(path!=='/api/practice/coach')return Response.json({});signal=options.signal;return pending.promise;};
-  vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
-  b.c.showLessonDetail({id:'practice',title:'Bài tập'},'N3','grammar');
+  const b=lesson(),pending=deferred(),started=deferred();let signal,request;
+  b.c.signedInUser={user_id:'learner'};
+  b.c.apiFetch=async(path,options)=>{
+    const body=JSON.parse(options.body);
+    if(path!=='/api/practice/coach')return Response.json({task:body.task});
+    signal=options.signal;request=body;started.resolve();return pending.promise;
+  };
+  b.c.showLessonDetail({id:'practice',title:'Bài tập',drills:[taskFixture()]},'N3','grammar');
   await b.document.querySelector('[data-lesson-mode=practice]').click();
   const hint=b.document.querySelector('.practice-coach button').click();
+  await started.promise;
   await b.document.querySelector('.practice-options input').dispatch('change');
   await b.document.querySelector('.practice-session .practice-primary').click();
   assert.equal(signal.aborted,true);
-  pending.resolve(Response.json({reply:'Old hint must not appear',item_id:'q0',action:'hint'}));await hint;
+  pending.resolve(Response.json({reply:'Old hint must not appear',item_id:'q0',action:'hint',task:request.task}));await hint;
   assert.equal(b.document.querySelector('.practice-coach-reply').textContent,'');
   assert.equal(b.document.querySelector('.practice-session .practice-primary').disabled,false);
 });
 
 test('role changes clear pending and completed coaching while unrelated voice changes keep the current hint',async()=>{
-  const b=lesson(),pending=deferred(),listeners=new Map();let signal,held=true;
-  b.c.lessonQuestions=()=>[{q:'第一?',opts:['A','B'],ans:'A',item_id:'q0'}];
-  b.c.signedInUser={user_id:'learner'};b.c.AbortController=AbortController;b.c.AbortSignal=AbortSignal;
-  b.c.addEventListener=(name,handler)=>listeners.set(name,handler);
+  const pending=deferred(),started=deferred(),listeners=new Map();
+  const b=lesson({addEventListener:(name,handler)=>listeners.set(name,handler)});let signal,request,held=true;
+  b.c.signedInUser={user_id:'learner'};
   b.c.apiFetch=async(path,options)=>{
-    if(path!=='/api/practice/coach')return Response.json({});
-    signal=options.signal;
-    return held?pending.promise:Response.json({reply:'Gợi ý theo quyền hiện tại.',item_id:'q0',action:'hint'});
+    const body=JSON.parse(options.body);
+    if(path!=='/api/practice/coach')return Response.json({task:body.task});
+    signal=options.signal;request=body;started.resolve();
+    return held?pending.promise:Response.json({reply:'Gợi ý theo quyền hiện tại.',item_id:'q0',action:'hint',task:body.task});
   };
-  vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
-  b.c.showLessonDetail({id:'practice',title:'Bài tập'},'N3','grammar');
+  b.c.showLessonDetail({id:'practice',title:'Bài tập',drills:[taskFixture()]},'N3','grammar');
   await b.document.querySelector('[data-lesson-mode=practice]').click();
   const button=b.document.querySelector('.practice-coach button'),output=b.document.querySelector('.practice-coach-reply');
   const hint=button.click();
+  await started.promise;
   listeners.get('vjbot-voice-changed')();
   assert.equal(signal.aborted,false);assert.equal(button.disabled,true);
   b.c.signedInUser.is_admin=true;listeners.get('vjbot-voice-changed')();
   assert.equal(signal.aborted,true);assert.equal(output.hidden,true);
   assert.equal(output.textContent,'');assert.equal(button.disabled,false);
-  pending.resolve(Response.json({reply:'Phản hồi quyền cũ.',item_id:'q0',action:'hint'}));await hint;
+  pending.resolve(Response.json({reply:'Phản hồi quyền cũ.',item_id:'q0',action:'hint',task:request.task}));await hint;
   assert.equal(output.textContent,'');
   held=false;await button.click();assert.equal(output.textContent,'Gợi ý theo quyền hiện tại.');
   b.c.signedInUser.is_admin=false;listeners.get('vjbot-voice-changed')();
   assert.equal(output.hidden,true);assert.equal(output.textContent,'');
   await button.click();assert.equal(output.textContent,'Gợi ý theo quyền hiện tại.');
+});
+
+test('practice keeps passage, marked target and duplicate numbered parts without revealing the rationale before an attempt',async()=>{
+  const b=lesson(),sent=[],task=taskFixture({q:'提出の読みを選んでください。',target:'提出',
+    passage:'明日までに書類を提出してください。',parts:['あれ','あれ','これ','それ'],
+    opts:['あれ','あれ','これ','それ'],answer_index:1,explanation:'POST ATTEMPT EXPLANATION'});
+  b.c.apiFetch=async(path,options)=>{const body=JSON.parse(options.body);sent.push({path,body});return Response.json({task:body.task});};
+  b.c.showLessonDetail({id:'practice',title:'読み方',drills:[task]},'N3','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.practice-session');
+  assert.equal(b.element('lesson-reference').hidden,true);
+  assert.equal(section.querySelector('.task-stimulus').textContent,task.passage);
+  assert.equal(section.querySelector('mark').textContent,'提出');
+  assert.deepEqual(section.querySelectorAll('.task-parts li').map(element=>element.textContent),task.parts);
+  assert.deepEqual(section.querySelectorAll('.practice-option-number').map(element=>element.textContent),['1','2','3','4']);
+  assert.equal(section.querySelectorAll('.practice-options input').length,4);
+  assert.doesNotMatch(section.textContent,/POST ATTEMPT EXPLANATION/);
+  await section.querySelectorAll('.practice-options input')[0].dispatch('change');
+  assert.doesNotMatch(section.textContent,/POST ATTEMPT EXPLANATION/);
+  await section.querySelector('.practice-primary').click();
+  assert.equal(sent[0].body.answer_index,0);assert.equal(sent[0].body.task.id,'practice:question:0');
+  assert.equal(section.querySelector('.practice-feedback').dataset.correct,'false');
+  assert.equal(section.querySelectorAll('.practice-option')[1].dataset.state,'correct');
+  assert.match(section.querySelector('.practice-feedback').textContent,/POST ATTEMPT EXPLANATION/);
+  assert.equal(task.answer_index,1);assert.deepEqual(task.opts,['あれ','あれ','これ','それ']);
+});
+
+test('quarantined source slots stay unavailable without dropping later task positions or permitting completion',async()=>{
+  const b=lesson(),sent=[];
+  b.c.apiFetch=async(path,options)=>{const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task});};
+  const blocked=taskFixture({q:'子どもの ★',source_identity:'N3:1:3',item_id:'blocked'});
+  const available=taskFixture({q:'次の問題',item_id:'next',task_id:'practice:question:1',source_position:1});
+  b.c.showLessonDetail({id:'practice',title:'原文の位置',drills:[blocked,available]},'N3','reading');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  assert.equal(b.c.teacherContext().focus.index,0);
+  assert.equal(b.c.teacherContext().task.review_status,'quarantined');
+  assert.equal(b.c.teacherContext().task.capabilities.answer,false);
+  assert.equal(b.document.querySelectorAll('.practice-options input').length,0);
+  assert.equal(b.document.querySelector('.practice-coach'),null);
+  assert.equal(sent.length,0);
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  assert.equal(b.c.teacherContext().focus.index,1);
+  assert.equal(b.c.teacherContext().task.task_id,'practice:question:1');
+  await b.document.querySelector('.practice-options input').dispatch('change');
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  assert.equal(sent.length,1);assert.equal(sent[0].question_index,1);assert.equal(sent[0].item_id,undefined);
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  assert.equal(b.element('lesson-completion').hidden,true);
+  assert.match(b.document.querySelector('.practice-result').textContent,/1 câu chưa khả dụng/);
+});
+
+test('recall accepts typed text and persists it against the normalized task instead of a fabricated choice index',async()=>{
+  const b=lesson(),sent=[],task=taskFixture({mode:'recall',q:'先生の読みを書いてください。',opts:[],answer_index:null,
+    accepted_answers:['せんせい'],explanation:'SOURCE RECALL RATIONALE'});
+  b.c.apiFetch=async(path,options)=>{const body=JSON.parse(options.body);sent.push({path,body});return Response.json({task:body.task});};
+  b.c.showLessonDetail({id:'practice',title:'読みを思い出す',drills:[task]},'N3','vocabulary');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const input=b.document.querySelector('.practice-options input'),action=b.document.querySelector('.practice-session .practice-primary');
+  assert.equal(input.type,'text');assert.equal(action.disabled,true);
+  assert.doesNotMatch(b.document.querySelector('.practice-session').textContent,/せんせい|SOURCE RECALL RATIONALE/);
+  input.value=' せんせい ';await input.dispatch('input');await action.click();
+  assert.equal(sent[0].body.response_text,'せんせい');assert.equal(sent[0].body.event,'answer');
+  assert.equal(sent[0].body.task.id,'practice:question:0');assert.equal(sent[0].body.question_index,0);
+  assert.equal(Object.hasOwn(sent[0].body,'answer_index'),false);
+  assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'true');
+  assert.match(b.document.querySelector('.practice-feedback').textContent,/SOURCE RECALL RATIONALE/);
+});
+
+test('writing self-assessment saves the response and rating without reporting objective correctness',async()=>{
+  const sent=[],b=lesson({apiFetch:async(path,options)=>{
+    if(path==='/api/progress')return Response.json({evidence:[]});
+    const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task,basis:'self_report',source_correct:null});
+  }});
+  b.c.showLessonDetail({id:'writing',title:'書く',production:{prompt:'自己紹介を書いてください。',criteria:['名前を書く'],model:'SOURCE MODEL'}},'N3','production');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.production-task'),input=section.querySelector('textarea');
+  assert.equal(section.querySelector('.production-model').hidden,true);
+  input.value='私はランです。';section.querySelector('input').checked=true;
+  await section.querySelector('.production-save').click();
+  assert.equal(sent[0].response_text,'私はランです。');assert.equal(sent[0].self_rating,4);
+  assert.equal(sent[0].task.id,'writing:question:0');assert.equal(sent[0].event,'answer');
+  for(const key of ['correct','quality','answer_index'])assert.equal(Object.hasOwn(sent[0],key),false);
+  assert.match(section.querySelector('output').textContent,/chưa có kết luận đúng\/sai/);
+});
+
+function questionQuick(apiFetch){
+  const b=quick(apiFetch),panel=b.add('panel-quiz');panel.className='tab-panel active';
+  const workspace=b.add('practice-workspace','div',panel);b.add('quiz-card','div',workspace);
+  b.c.location.hash='#quiz/N3/practice/0';
+  const item={id:'exam',examIndex:0,drills:[taskFixture(),taskFixture({q:'第二?',item_id:'q1',source_position:1})]};
+  b.c.findFeatureLesson=()=>item;b.c.featureLessons=()=>[item];
+  vm.runInContext(readFileSync('static/teacher-context.js','utf8'),b.c);b.c.markTeacherScreen();b.c.setTeacherFocus({kind:'question',index:0});
+  return b;
+}
+
+test('quick question ownership is checked again after the actual asynchronous WebCrypto revision resolves',async()=>{
+  const hashing=deferred(),release=deferred(),sent=[];
+  const b=questionQuick(async(path,options)=>{const body=JSON.parse(options.body);sent.push({path,body});return Response.json({task:body.task,reply:'STALE'});});
+  b.c.crypto={randomUUID:()=>webcrypto.randomUUID(),subtle:{digest:async(...args)=>{
+    hashing.resolve();await release.promise;return webcrypto.subtle.digest(...args);
+  }}};
+  await b.element('btn-topbar-summon').click();b.element('popover-query-input').value='Question A?';
+  const sending=b.element('btn-popover-send').click();await hashing.promise;
+  assert.equal(b.element('btn-popover-send').disabled,true);
+  b.c.setTeacherFocus({kind:'question',index:1});release.resolve();await sending;
+  assert.equal(sent.some(entry=>entry.path==='/api/chat'),false);
+  assert.doesNotMatch(b.element('popover-speech-text').textContent,/STALE/);
+  assert.equal(b.element('btn-popover-send').disabled,false);assert.equal(b.element('btn-popover-retry').hidden,true);
+});
+
+test('quick help does not call the model when assistance persistence fails and rejects a mismatched response revision',async()=>{
+  for(const failure of ['assist','revision']){
+    const sent=[],b=questionQuick(async(path,options)=>{
+      const body=JSON.parse(options.body);sent.push({path,body});
+      if(path==='/api/progress/record')return failure==='assist'
+        ?Response.json({detail:'Assistance was not saved'},{status:503}):Response.json({task:body.task});
+      return Response.json({reply:'WRONG REVISION ANSWER',task:{...body.task,revision:'0'.repeat(64)}});
+    });
+    await b.element('btn-topbar-summon').click();b.element('popover-query-input').value='Hint?';await b.element('btn-popover-send').click();
+    assert.deepEqual(sent.map(entry=>entry.path),failure==='assist'?['/api/progress/record']:['/api/progress/record','/api/chat']);
+    assert.doesNotMatch(b.element('popover-speech-text').textContent,/WRONG REVISION ANSWER/);
+    assert.equal(b.element('btn-popover-retry').hidden,false);
+    assert.equal(b.element('btn-popover-tts').disabled,true);
+  }
+});
+
+test('full quiz keeps a quarantined slot visible but offers no answer buttons or score for it',()=>{
+  const b=quiz(),sent=[];
+  b.item.drills[8]=taskFixture({q:'子どもの ★',source_identity:'N3:1:3',item_id:'blocked-eight',source_position:8});
+  b.c.currentExamQuestions=b.c.lessonQuestions(b.item,'N3','reading');
+  b.c.apiFetch=async(path,options)=>{sent.push({path,body:JSON.parse(options.body)});return Response.json({});};
+  b.c.displayQuizQuestion();
+  assert.equal(b.c.teacherContext().task.task_id,'test:N3:full:question:8');
+  assert.equal(b.c.teacherContext().task.review_status,'quarantined');
+  assert.equal(b.element('quiz-q-num').textContent,'Câu 9 / 20');
+  assert.equal(b.element('quiz-options-grid').children.length,0);
+  assert.equal(b.element('quiz-feedback-box').hidden,false);
+  assert.equal(b.element('btn-quiz-next').disabled,false);
+  b.c.handleQuizAnswer(0);
+  assert.equal(sent.length,0);assert.equal(b.c.examAnswers.size,0);
+  b.c.finishExam();
+  assert.match(b.element('quiz-result-praise').textContent,/1 câu tạm ngừng/);
+  assert.match(b.element('quiz-completion').textContent,/Chưa xác nhận làm trọn bộ/);
+});
+
+test('listening practice retains task-bound playback while concealing the source transcript',async()=>{
+  const b=lesson(),spoken=[],task=taskFixture({script_jp:'PRIVATE_AUDIO_TRANSCRIPT',q:'何を買いますか。'});
+  b.c.playGeminiTTS=(text,options)=>spoken.push({text,options});
+  b.c.showLessonDetail({id:'listening-task',title:'聞く',drills:[task]},'N3','listening');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.practice-session');
+  assert.doesNotMatch(section.textContent,/PRIVATE_AUDIO_TRANSCRIPT/);
+  await section.querySelector('.task-listen').click();
+  assert.equal(spoken[0].text,'PRIVATE_AUDIO_TRANSCRIPT');
+  assert.equal(spoken[0].options.task.task_id,'listening-task:question:0');
+  assert.equal(spoken[0].options.focus.index,0);
+});
+
+test('dictation freezes the pre-reveal snapshot during persistence and restores editability on failure',async()=>{
+  const started=deferred(),pending=deferred(),b=lesson({apiFetch:async(path,options)=>{
+    if(path!=='/api/progress/record')return Response.json({});
+    started.resolve(JSON.parse(options.body));return pending.promise;
+  }});
+  b.c.showLessonDetail({id:'dictation-race',dictation:true,title:'聞く',examples:[{jp:'聞きました。',vi:'Đã nghe.'}]},'N3','listening');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const row=b.document.querySelector('.lesson-exercise'),input=row.children[1],reveal=row.children[2];
+  input.value='聞いた';const revealing=reveal.click(),body=await started.promise;
+  assert.equal(input.readOnly,true);assert.equal(body.response_text,'聞いた');assert.equal(row.children[3].hidden,true);
+  pending.resolve(Response.json({detail:'Save failed'},{status:503}));await revealing;
+  assert.equal(input.readOnly,false);assert.equal(row.children[3].hidden,true);assert.equal(reveal.disabled,false);
+});
+
+test('post-answer coaching is unavailable until the actual answer receipt succeeds',async()=>{
+  const started=deferred(),pending=deferred(),b=lesson({apiFetch:async(path,options)=>{
+    if(path!=='/api/progress/record')return Response.json({});
+    const body=JSON.parse(options.body);started.resolve(body);return pending.promise;
+  }});
+  b.c.showLessonDetail({id:'save-before-feedback',title:'試す',drills:[taskFixture()]},'N3','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  await b.document.querySelector('.practice-options input').dispatch('change');
+  const saving=b.document.querySelector('.practice-session .practice-primary').click();await started.promise;
+  assert.equal(b.document.querySelector('.practice-coach'),null);
+  pending.resolve(Response.json({status:'recorded'}));await saving;
+  assert.ok(b.document.querySelector('.practice-coach'));
+});
+
+test('task prompts identify actual lexical targets rather than source category labels or blank placeholders',()=>{
+  const b=lesson();
+  for(const target of ['質問','____'])assert.doesNotMatch(b.c.taskPromptHtml(taskFixture({q:'筆者の考えは何ですか。',target})),/Từ cần xét|<mark>/);
+  const marked=b.c.taskPromptHtml(taskFixture({q:'書類を提出する。',target:'提出'}));
+  assert.match(marked,/<mark>提出<\/mark>/);assert.match(marked,/Từ cần xét/);
+  assert.match(b.c.taskUnavailableMessage(taskFixture({review_status:'quarantined',unavailable_reason:'Technical source conflict'})),/chờ rà soát/);
 });

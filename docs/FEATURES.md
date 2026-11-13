@@ -12,7 +12,7 @@ flowchart TD
   S -- chưa --> B[Banner Kết nối API] --> C[Cài đặt: API AI] --> T[Lưu và kiểm tra]
   S -- rồi --> Q
   T --> Q[Chat với thầy Lâm]
-  D --> K[Lộ trình, bài học, 5 câu kiểm tra]
+  D --> K[Roadmap, lessons and complete source-based practice]
   K -->|Luyện với thầy Lâm| Q
   K --> M[Đánh dấu hoàn thành, Bài tiếp]
 ```
@@ -21,17 +21,19 @@ flowchart TD
 
 - **Lộ trình N5–N1**: 40 chương ngữ pháp (8 mỗi cấp, 163 mẫu câu, giải thích tiếng Việt) và 20 tình huống thực tế viết riêng bằng tiếng Việt (N5: 6, N4: 5, N3: 4, N2: 3, N1: 2). Mỗi tình huống gồm từ cần dùng, hiểu tình huống, tự trả lời bằng văn bản, Kaiwa và bài kiểm tra riêng. Chương kana là tùy chọn.
 - **Library**: vocabulary, grammar, kanji, reading, listening and writing by level (10,720 OpenJLPT entries: 7,811 words, 526 grammar points, 2,383 kanji; 20 kana lessons). Original English glosses remain attributed source data. **Nhờ thầy giảng bài** uses the selected chat API to translate the current presentation and teach from canonical lesson evidence on demand, rather than requiring a bulk corpus translation.
-- **Mỗi bài**: tham khảo, 5 câu kiểm tra dựng từ chính ví dụ và bài tập của bài, xem lại câu sai, nút "Luyện với thầy Lâm" (cố định ở đáy màn hình), đánh dấu hoàn thành có thể hoàn tác (độc lập với điểm).
+- **Lesson activities**: reference material and the actual available task inventory, without fixed-five padding. Questions retain their passage/dialogue, explicit target, numbered arrangement parts and original option positions. Source explanations appear after an attempt, never as fake sentence meanings. Known contradictory star tasks are temporarily unavailable in their original slots, not silently corrected or removed.
 - **Thẻ nhớ**: buổi 20 thẻ ưu tiên thẻ đến hạn, lịch SM-2 (đặt lại sau khi sai).
 - **Luyện nói (Kaiwa)**: gõ hoặc ghi âm để chép lời (OpenAI chính thức, nhận diện trình duyệt cho kết nối khác); AI chấm bản chép lời, không chấm phát âm.
 - **Bài luyện JLPT**: bộ câu hỏi theo chủ đề và bài thi thử có tính giờ theo từng phần dựa trên đề chính thức 2012/2018 (liên kết tới nguồn; điểm thô, không phải thang điểm JLPT). Mỗi đề lưu bài làm gần nhất.
-- **Tiến độ**: số mục, độ chính xác, chuỗi ngày, bài đã hoàn thành, sổ điểm yếu.
+- **Progress evidence**: actual submitted choices/text and task revisions are retained separately from old counters. Source-key comparisons are advisory until independently reviewed; writing/dictation/flashcard self-ratings, AI estimates, manual completion and verified assessment remain distinct. An unavailable or unattempted slot cannot become full-set completion.
+- **Recall and production**: source-grounded reading/form recall uses text entry rather than renamed multiple choice. Writing has explicit criteria and a deliberate source-model reveal. Dictation retains the pre-reveal attempted text and self-rating without pretending the learner's checkbox proves acoustic comprehension. These activities do not fall through into an unrelated generic quiz.
+- **Runtime teaching**: explicit selected-chat assistance, task-version ownership, help saved before disclosure and original/generated comparison. Generated prose is labeled advisory and never changes canonical option values or keys. Voice continues using its independent saved configuration; no background corpus translation or automatic provider retry is introduced.
 
 ## Lớp học đảo ngược cùng thầy Lâm
 
 Người học đã đọc bài; trong chat thầy hỏi, em tự nói và viết. Mỗi lượt: một câu hỏi, chờ trả lời, chẩn đoán đúng câu học viên viết, sửa tối đa hai lỗi kèm lý do, rồi một câu tiếp theo khó hơn hoặc dễ hơn. Có bậc gợi ý, nhắc "tự giải thích" mỗi 4 lượt, tóm tắt khi "kết thúc". Các nút gợi ý nhanh gửi những câu cố định mà prompt đã biết cách xử lý. Chi tiết trong `src/prompt.js`.
 
-Thầy Lâm hiểu người học đang xem gì ở bất kỳ màn hình nào (bài học, thẻ nhớ, quiz, Kaiwa, lộ trình): ô ⌘K và chat đều gửi kèm chữ trên màn hình và vài mục người học hay sai, nên "câu này", "từ này" được hiểu đúng; với bài tập đang làm, thầy gợi ý chứ không đưa đáp án. Chat mang theo bài đang học (cấp độ, tiêu đề, mục tiêu, nội dung giới hạn 4.000 ký tự), có thử lại/bỏ qua khi lỗi, `request_id` chống gửi trùng, và không lưu lượt bị lỗi vào lịch sử.
+Classroom and quick chat resolve the current canonical lesson/item across lessons, flashcards, quizzes, Kaiwa and curriculum. They send identifiers, task revisions and route/level metadata, not arbitrary screen text or learner-authored progress labels. The server supplies bounded task-safe evidence and scoped learner history. Requests support explicit retry/discard and idempotent `request_id`; failed generations do not become saved successful turns. Pre-answer question assistance excludes source keys and solution aliases, without claiming that prompts alone prevent every answer leak.
 
 ## API AI của người dùng
 
@@ -51,9 +53,9 @@ Cài đặt chia hai cột (menu bên trái, thẻ bên phải): thẻ tài kho�
 
 Lesson reference cards conceal readings and meanings until opened independently with native keyboard-accessible disclosures. Vocabulary and kanji rows reveal their answers only when opened; nested examples retain separate reading/meaning controls. Reading translations and listening transcripts also start collapsed. Japanese-only Listen buttons retain the independent saved voice account/model, canonical reading metadata and existing cancellation/error handling. Revealing a learning aid does not request speech or refresh the model catalog.
 
-Runtime teaching is available on lesson references, opened words/kanji, five-question checks, writing and dictation references, flashcard backs, Kaiwa prompts and topic quizzes. It explains one idea and asks a short self-check. **Em vẫn chưa hiểu** opens an inline conversation with Thầy Lâm below the explanation instead of regenerating it. The learner explicitly sends a question through the existing tutor endpoint, with canonical lesson/focus references and a private quick-chat scope for that panel. Coaching hints and feedback offer the same follow-up. Closing the box restores focus; item, route, account or chat-connection changes cancel pending replies and clear its private draft and transcript.
+Runtime teaching is available on lesson references, opened words/kanji, complete lesson task collections, writing and dictation references, flashcard backs, Kaiwa prompts and topic quizzes. It explains one idea and asks a short self-check. **Em vẫn chưa hiểu** opens an inline conversation with Thầy Lâm below the explanation instead of regenerating it. The learner explicitly sends a question through the existing tutor endpoint, with canonical lesson/focus references and a private quick-chat scope for that panel. Coaching hints and feedback offer the same follow-up. Closing the box restores focus; item, route, account or chat-connection changes cancel pending replies and clear its private draft and transcript.
 
-Translated labels retain original option indices, selected answers and canonical grading/progress. The original-source toggle and technical quota/validation footnotes are omitted from the study panels. Full topic quizzes use their complete original inventory, including repeated numbered arrangement segments; official external exam PDFs are unchanged.
+Translated labels retain original option indices, selected answers and canonical source comparisons. An explicit original/generated comparison keeps source context, markup and repeated numbered arrangement segments intact. Full topic quizzes use the same complete normalized inventory as lesson practice; official external exam PDFs are unchanged.
 
 No teaching request runs on page entry, revealing content, opening the follow-up box or choosing an answer. Only explicit teaching or message submission uses the selected chat connection and quota, not the separate voice connection. Failed messages retain the question and offer an explicit same-request retry or a new question. Errors do not fabricate a translation or block ordinary practice. Structural validation and synthetic tests do not certify Japanese pedagogy.
 

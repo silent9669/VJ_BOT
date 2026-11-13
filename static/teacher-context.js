@@ -46,7 +46,7 @@
   function validFocus(focus, descriptor) {
     if (!descriptor || !focus || Object.keys(focus).sort().join(',') !== 'index,kind' || !Number.isInteger(focus.index) || focus.index < 0) return null;
     const {item, skill, lesson} = descriptor;
-    const collections = {word: item.items || item.roleplay?.words || item.targetWords || [], example: item.examples || item.roleplay?.dialogue || [], question: descriptor.quizSession ? item.drills || [] : typeof lessonQuestions === 'function' ? lessonQuestions(item, lesson.level, skill) : []};
+    const collections={word:item.items || item.roleplay?.words || item.targetWords || [],example:item.examples || item.roleplay?.dialogue || [],question:typeof lessonQuestions==='function'?lessonQuestions(item,lesson.level,skill):[]};
     return collections[focus.kind] && focus.index < collections[focus.kind].length ? {kind: focus.kind, index: focus.index} : null;
   }
   function capture(hash = location.hash) {
@@ -67,7 +67,8 @@
       const matches = (descriptor.item.examples || []).flatMap((example, index) => prompt?.jp && example.jp === prompt.jp ? [index] : []);
       focus = matches.length === 1 ? validFocus({kind: 'example', index: matches[0]}, descriptor) : null;
     }
-    return {screen: {route, level}, lesson, focus};
+    const task=focus?.kind==='question' && descriptor?lessonQuestions(descriptor.item,lesson.level,descriptor.skill)[focus.index]:null;
+    return {screen:{route,level},lesson,focus,...(task?{task,view:descriptor.quizSession?'exam':'checks'}:{})};
   }
   globalThis.setTeacherFocus = focus => {
     const before=capture();

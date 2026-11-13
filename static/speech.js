@@ -96,9 +96,16 @@ async function playGeminiTTS(text, options = {}) {
   speechPlayback = {controller, audio: null};
   speechStatus(`Preparing ${language} audio…`, true);
   try {
+    let reference={};
+    const context=options.lesson?options:globalThis.teacherContext?.();
+    if(context?.lesson){
+      reference={lesson:context.lesson,focus:context.focus || null,view:context.view || 'checks'};
+      if(context.task)reference.task=await taskReference(context.task);
+    }
+    if(!current())return;
     const response = await apiFetch('/api/tts', {
       method: 'POST', signal: controller.signal,
-      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text: clean, speech_model:model})
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text:clean,speech_model:model,...reference})
     });
     if (!current()) return;
     const data = await response.json();

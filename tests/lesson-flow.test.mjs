@@ -7,7 +7,7 @@ async function context(){
   for(const file of ['jlpt-data.js','vi-labels.js','learning.js','lesson-checks.js','study-plan.js','workspace.js','completion.js'])vm.runInContext(fs.readFileSync('static/'+file,'utf8'),c);
   await c.loadPracticalCourse();return c;
 }
-test('every in-app curriculum and feature lesson has five distinct answerable source-based checks',async()=>{
+test('complete lesson inventories preserve source slots and explicit task modes without fixed-count filler',async()=>{
   const c=await context(),featureIds=new Set(),completionIds=new Set();
   for(const level of ['N5','N4','N3','N2','N1']){
     await c.ensureLessons(level);const units=c.createStudyPlan(level);
@@ -16,14 +16,26 @@ test('every in-app curriculum and feature lesson has five distinct answerable so
     for(const feature of ['flashcards','kaiwa','quiz'])for(const item of c.featureLessons(feature,level)){
       assert.ok(!featureIds.has(item.id),item.id);featureIds.add(item.id);
       const id=c.activityId(item,level,feature);assert.ok(!completionIds.has(id),id);completionIds.add(id);
-      all.push({item,skill:feature==='flashcards'?'vocabulary':'listening'});
+      all.push({item,skill:feature==='flashcards'?'vocabulary':feature==='quiz'?'quiz':'listening'});
     }
     for(const {item,skill} of all){
       const questions=c.lessonQuestions(item,level,skill);
-      assert.equal(questions.length,5,`${level} ${skill} ${item.id || item.title}`);
-      assert.equal(new Set(questions.map(q=>q.item_id)).size,5);
-      assert.equal(new Set(questions.map(q=>q.q)).size,5);
-      for(const q of questions){assert.ok(q.opts.length>=2);assert.equal(q.opts.filter(o=>o===q.ans).length,1);}
+      assert.equal(new Set(questions.map(q=>q.task_id)).size,questions.length);
+      assert.equal(new Set(questions.map(q=>q.item_id)).size,questions.length);
+      if(item.production){assert.equal(questions.length,1);assert.equal(questions[0].mode,'writing');}
+      else if(item.dictation){assert.equal(questions.length,item.examples.length);assert.ok(questions.every(q=>q.mode==='dictation'));}
+      else for(const [index,source] of (item.drills || []).entries()){
+        const q=questions[index];
+        assert.equal(q.source_position,index);assert.deepEqual(Array.from(q.opts),Array.from(source.opts));
+        assert.equal(q.item_id,source.item_id || `${item.id || c.activityId(item,level,skill)}:${index}`);
+      }
+      for(const q of questions){
+        assert.equal(Object.hasOwn(q,'ans'),false);assert.ok(['choice','recall','dictation','writing'].includes(q.mode));
+        assert.ok(['unreviewed','quarantined'].includes(q.review_status));
+        if(q.unavailable_reason)assert.ok(Object.values(q.capabilities).every(value=>value===false));
+        else if(q.mode==='choice'){assert.ok(q.opts.length>=2);assert.ok(Number.isInteger(q.answer_index));assert.ok(q.answer_index>=0 && q.answer_index<q.opts.length);}
+        else assert.equal(q.answer_index,null);
+      }
     }
   }
 });
@@ -37,17 +49,21 @@ test('feature lessons restore their own route and canonical completion identity'
   const unit=units.find(u=>u.type==='situation');const kaiwa=c.featureLessons('kaiwa','N5').find(l=>l.lessonKey===unit.id);assert.equal(c.activityId(kaiwa),`kaiwa:${unit.id}`);
   const quiz=c.featureLessons('quiz','N5')[unit.examIndex];assert.equal(c.activityId(quiz),`test:N5:${unit.exam.id}`);
 });
-test('quiz descriptors retain every raw exam position while lesson checks remain five',async()=>{
+test('quiz descriptors and lesson questions share every original exam position without fake examples',async()=>{
   const c=await context();await c.ensureLessons('N5');
   const lessons=c.featureLessons('quiz','N5');
   assert.ok(lessons.some(item=>item.drills.length>5),'fixture includes a multi-question exam');
   for(const item of lessons){
     const raw=c.window.JLPT_DATA.exams.N5[item.examIndex].questions;
-    assert.equal(item.drills.length,raw.length);assert.equal(item.examples.length,raw.length);
-    assert.equal(c.lessonQuestions(item,'N5','reading').length,5);
+    assert.equal(item.drills.length,raw.length);assert.equal(item.examples.length,0);
+    const tasks=c.lessonQuestions(item,'N5','quiz');
+    assert.equal(tasks.length,raw.length);
     for(let i=0;i<raw.length;i++){
       assert.equal(item.drills[i].item_id,c.quizProgressId('N5',item.examIndex,raw[i],i));
-      assert.equal(item.drills[i].ans,raw[i].options[raw[i].answer]);
+      assert.equal(item.drills[i].answer_index,raw[i].answer);
+      assert.deepEqual(Array.from(tasks[i].opts),Array.from(raw[i].options));
+      assert.equal(tasks[i].task_id,`${c.activityId(item)}:question:${i}`);
+      assert.equal(tasks[i].passage,raw[i].passage || '');
     }
   }
 });

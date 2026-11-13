@@ -1,6 +1,7 @@
 import {readFile, writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 
 const root = new URL('../static/', import.meta.url);
 const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
@@ -22,8 +23,9 @@ function compactWord(word) {
 }
 
 function catalogQuestions(context, item, level, skill) {
-  const checks = Array.from(context.lessonQuestions(item, level, skill));
-  return Number.isInteger(item.examIndex) ? [...checks, ...(item.drills || []).slice(5)] : checks;
+  return Array.from(context.lessonQuestions(item, level, skill), task => ({
+    ...task, revision: createHash('sha256').update(context.taskRevisionSource(task), 'utf8').digest('hex')
+  }));
 }
 
 function lessonData(context, item, level, skill, course, sourceCatalog) {
@@ -34,12 +36,7 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
     ...word, ...(word.examples ? {examples: Array.from(word.examples, example => exampleData(example, source))} : {})
   }));
   const examples = Array.from(item.examples || item.roleplay?.dialogue || [], example => exampleData(example, source));
-  const questions = catalogQuestions(context, item, level, skill).map(question => {
-    const example_indexes = examples.flatMap((example, index) =>
-      (example.jp && question.q.includes(example.jp)) || question.ans === example.jp || question.ans === example.vi ? [index] : []);
-    return {...question, explanation: question.explanation ?? null,
-      example_indexes: example_indexes.length ? example_indexes : unit ? examples.map((_, index) => index) : []};
-  });
+  const questions = catalogQuestions(context, item, level, skill);
   const sources = [];
   if (unit || source.includes('VJBot')) sources.push({id: 'vjbot', title: 'VJBot',
     authorship: course.authorship, level_note: course.level_note});
@@ -61,11 +58,13 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
   };
   // Normalize VM objects to JSON data without ever slicing serialized JSON or dropping addressable items.
   return JSON.parse(JSON.stringify({
-    id: context.activityId(item, level, skill), level,
+    id: context.activityId(item, level, skill), level, skill,
     title: item.roleplay ? `${item.roleplay.title} · ${item.title}` : item.title || item.jp || 'Bài học',
     goal: item.roleplay?.goal || item.summary || item.meaning_vi || '',
     overview, words, examples, questions, sources,
-    ...(Number.isInteger(item.examIndex) ? {exam_questions:Array.from(item.drills || [])} : {}),
+    ...(item.processing_allowed!==undefined?{processing_allowed:item.processing_allowed}:{}),
+    ...(item.capabilities?{capabilities:item.capabilities}:{}),
+    ...(Number.isInteger(item.examIndex) ? {exam_questions:questions} : {}),
     reference_url: item.reference_url || unit?.reference_url
   }));
 }
@@ -99,17 +98,15 @@ export async function buildTeacherCatalog() {
       .flatMap(([skill, lessons]) => lessons.map(item => ({item, skill})));
     entries.push(...units.flatMap(unit => unit.steps.filter(step => !step.kind).map(step => ({item: step.lesson, skill: step.skill}))));
     for (const feature of ['flashcards', 'kaiwa', 'quiz']) {
-      entries.push(...context.featureLessons(feature, level).map(item => ({item, skill: feature === 'flashcards' ? 'vocabulary' : 'listening'})));
+      entries.push(...context.featureLessons(feature, level).map(item => ({item, skill: feature === 'flashcards' ? 'vocabulary' : feature === 'quiz' ? 'quiz' : 'listening'})));
     }
     const lessons = Object.fromEntries(entries.map(({item, skill}) => {
       const data = lessonData(context, item, level, skill, practicalCourse, practicalSources);
       return [data.id, data];
     }));
-    const items = Object.fromEntries(entries.flatMap(({item, skill}) => [
-      ...catalogQuestions(context, item, level, skill).map(question => [question.item_id, question.q]),
-      ...(item.production ? [[item.id, item.production.prompt]] : []),
-      ...(item.dictation ? (item.examples || []).map((example, index) => [`${item.id}:${index}`, example.jp]) : [])
-    ]));
+    const items = Object.fromEntries(Object.values(lessons).flatMap(lesson =>
+      lesson.questions.map(question => [question.item_id, question.q])
+    ));
     const scenarios = Object.fromEntries(Object.entries(context.window.JLPT_DATA.kaiwaScenarios)
       .filter(([, scenario]) => scenario.level === level || scenario.level === 'ALL')
       .map(([id, scenario]) => {

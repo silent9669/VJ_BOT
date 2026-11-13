@@ -91,11 +91,11 @@ function addPracticeSets(level){
   const exams=window.JLPT_DATA.exams[level];
   if(exams.some(e=>typeof e.id==='string' && e.id.startsWith('mixed:')))return;
   const skills=window.JLPT_DATA.curriculum[level].skills;
-  const pools=['vocabulary','kanji','grammar','reading'].map(skill=>skills[skill].filter(l=>l.source==='OpenJLPT').flatMap(l=>(l.drills||[]).map(d=>({...d,skill}))));
+  const pools=['vocabulary','kanji','grammar','reading'].map(skill=>skills[skill].filter(l=>l.source==='OpenJLPT').flatMap(l=>(l.drills||[]).map(d=>({...d,skill,source_language:l.language,passage:d.passage || l.passage || '',script_jp:d.script_jp || l.script_jp || ''}))));
   for(let set=0;set<10;set++){
     const drills=pools.flatMap(pool=>pool.slice(set*5,set*5+5));
     if(!drills.length)continue;
-    exams.push({id:`mixed:${level}:${set+1}`,title:`Ôn tổng hợp ${set+1}`,source:'VJBot · nhận diện từ OpenJLPT · giải nghĩa EN',duration_minutes:20,questions:drills.map(d=>({id:d.item_id,sentence:d.q,options:d.opts,answer:d.opts.indexOf(d.ans),explanation:d.ans,type:d.skill,plain:true}))});
+    exams.push({id:`mixed:${level}:${set+1}`,title:`Ôn tổng hợp ${set+1}`,source:'VJBot · nhận diện từ OpenJLPT · giải nghĩa EN',duration_minutes:20,questions:drills.map(d=>({id:d.item_id,sentence:d.q,options:d.opts,answer:d.answer_index ?? d.opts.indexOf(d.ans),explanation:d.explanation || '',passage:d.passage,script_jp:d.script_jp,source_language:d.source_language,type:d.skill,plain:true}))});
   }
 }
 async function renderExamCatalog(route){
@@ -136,14 +136,23 @@ function featureLessons(feature,level){
       const prompts=s.prompts.flatMap(p=>[{jp:p.jp,vi:p.vi,ro:p.ro},...(p.responses || [])]);
       // Keep dialogue indexes stable; speaking may ask a separate production question.
       const examples=unit?[...unit.dialogue,...prompts.filter(prompt=>!unit.dialogue.some(example=>example.jp===prompt.jp && example.vi===prompt.vi))]:prompts;
-      return {id:`kaiwa-lesson:${level}:${key}`,completionId:s.course?`kaiwa:${key}`:`kaiwa:${level}:${key}`,title:s.title,summary:unit?.goal || s.desc,lessonKey:key,sourceLabel:'VJBot · hội thoại',examples,items:unit?.words,drills:unit?.questions,formula:unit?.formula,explanation:unit?.note};
+      return {id:`kaiwa-lesson:${level}:${key}`,completionId:s.course?`kaiwa:${key}`:`kaiwa:${level}:${key}`,title:s.title,summary:unit?.goal || s.desc,lessonKey:key,sourceLabel:'VJBot · hội thoại',examples,items:unit?.words,drills:unit?.questions?.map(q=>({...q,skill:'reading',passage:unit.dialogue.map(line=>line.jp).join('\n'),requires_passage:true})),formula:unit?.formula,explanation:unit?.note};
     });
   }
   if(feature==='quiz'){
     createStudyPlan(level);addPracticeSets(level);
     return window.JLPT_DATA.exams[level].map((exam,index)=>{
       const questions=exam.questions;
-      return {id:`quiz-lesson:${level}:${exam.id ?? index}`,completionId:`test:${examIdentity(level,index)}`,title:exam.title || `Bộ luyện ${index+1}`,summary:exam.source || 'VJBot · bài luyện',sourceLabel:exam.source || 'VJBot',examIndex:index,examples:questions.map(q=>({jp:(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,''),vi:q.explain || q.explanation || q.options[q.answer]})),drills:questions.map((q,i)=>({q:[q.instruction?.replace('chữ Hán được gạch chân', '「'+q.target+'」'),q.passage,(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,'')].filter(Boolean).join('\n'),opts:q.options,ans:q.options[q.answer],explanation:q.explain || q.explanation,item_id:quizProgressId(level,index,q,i)}))};
+      const item={id:`quiz-lesson:${level}:${exam.id ?? index}`,completionId:`test:${examIdentity(level,index)}`,title:exam.title || `Bộ luyện ${index+1}`,summary:exam.source || 'VJBot · bài luyện',sourceLabel:exam.source || 'VJBot',examIndex:index,examples:[],drills:questions.map((q,i)=>({
+        q:(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,''),instruction:q.instruction || '',
+        passage:q.passage || '',script_jp:q.script_jp || '',target:q.target || '',parts:q.parts || [],
+        opts:q.options,answer_index:q.answer,explanation:q.explain || q.explanation || '',
+        item_id:quizProgressId(level,index,q,i),source_identity:`${level}:${exam.id}:${q.id}`,
+        source_language:q.source_language || 'vi',example_indexes:q.example_indexes || [],
+        skill:q.item_type || ({kanji:'kanji',vocab:'vocabulary',star_grammar:'grammar'}[q.type]) || q.type || 'reading',
+        requires_passage:q.type==='reading' && !q.plain,requires_script:q.type==='listening'
+      }))};
+      return {...item,drills:lessonQuestions(item,level,'quiz')};
     });
   }
   return [];

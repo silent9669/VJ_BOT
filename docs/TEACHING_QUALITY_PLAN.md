@@ -4,7 +4,7 @@
 
 Improve the existing tutor, not replace its architecture or repaint two broken screens. Repair the shared source-to-task contract first; then deliver reviewed teaching and varied practice across **N5, N4, N3, N2 and N1**. A stronger model cannot recover discarded passages, identify an omitted target, or make a defective answer key authoritative.
 
-This checkpoint is **inspection and planning only**. It changes no application code, grading, source records, learner history, production data, provider settings or deployment. Implementation needs a separately owned workstream. No new inference, installation, crawling or paid operation was performed.
+The original planning checkpoint changed no application code, grading, source records, learner history, production data, provider settings or deployment. Sections 1–6 preserve that baseline and its proposed gates. **Section 7 records the subsequent user-authorized implementation checkpoint and its remaining acceptance limits.**
 
 Baseline: `204b55b8d994a36c4a5bceb77b62c7bb2f33014e`, the committed main inspected on 2026-11-13. The complete addressable structural inventory is [TEACHING_QUALITY_AUDIT.json](TEACHING_QUALITY_AUDIT.json). Counts describe that revision, not every future acquisition branch.
 
@@ -294,3 +294,33 @@ Use the exact application request path and selected provider/model, with isolate
 **Not completed or claimed:** product fixes, full-corpus Japanese semantic approval, real-provider teaching/injection measurement, learner-outcome evidence, assistive-technology acceptance, source-ingestion approval, new content admission, migration application, PR/merge or deployment.
 
 Implementation must name an owner and coordinate the active source workstream before editing shared paths. Qualified editorial capacity, disputed Japanese answers, source admission and separately authorized live evaluation are explicit dependencies. Existing canonical IDs/indices, learner history, selected chat connection and independent voice are non-negotiable preservation constraints.
+
+## 7. Runnable implementation checkpoint
+
+Implemented on `feature/teaching-quality`, based on `e9b2c4e` (the approved plan and committed `fc34877` source/RAG runtime). The dirty main checkout and other worktrees remain untouched. Later source acquisitions and the independently owned N5 editorial file are not silently copied or treated as approved assessments.
+
+### Delivered technical scope
+
+- **A/B:** one typed normalization path for the browser and generated catalogs. Source translation, rationale, passage/dialogue, instruction, lexical target, arrangement parts and original numeric option identities remain distinct. No fixed-five filler or explanation-derived quiz examples. All five confirmed defective star questions remain unavailable at their original positions.
+- **C:** shared lesson/practice/full-quiz rendering retains required context and real counts. Duplicate option strings retain separate source positions. Native choice, typed recall, writing and dictation are executable; writing/dictation no longer fall through into generic recognition questions. Manual completion is explicitly a personal marker. Flashcard hidden faces and feedback have accessible state.
+- **D:** task-bound teaching, hints, classroom/popover and read-aloud reject stale/quarantined/prohibited references before provider use. Selected-chat teaching retains original/generated comparison and independent voice. Pre-answer evidence omits solution aliases; post-answer explanations retain the actual submission and source basis. Missing Japanese-source translations remain on-demand teaching, not bulk corpus rewriting. Bounded requests fail visibly without automatic provider retries.
+- **E:** migration `0022_task_attempt_evidence.sql` and the existing progress route retain task/revision, actual submitted option/text, assistance/reveal snapshot and assessment basis. Post-answer assistance does not rewrite the original attempt basis. Random account epochs fence pending writes across reset, deletion and account recreation. Legacy counters/SRS stay readable without retroactive verified labels or rescoring.
+
+The cutover uses existing adapters, catalogs, APIs and progress storage rather than a second grading system. Superseded string-answer/fixed-five consumers were removed in the owned scope; no unrelated module rewrite was needed.
+
+### Exercised checks
+
+- Final UI/catalog/source/voice check: `node --test --test-concurrency=2 tests/tutor-ui.test.mjs tests/study-teacher-ui.test.mjs tests/task-contract.test.mjs tests/lesson-flow.test.mjs tests/lessons.test.mjs tests/teacher-context.test.mjs tests/chat-ui.test.mjs tests/speech.test.mjs` — **115/115 passed**.
+- Backend/ownership/provider regression set: `node --test --test-concurrency=2 tests/task-attempts.test.mjs tests/worker.test.mjs tests/tutor-context-boundary.test.mjs tests/tutor-session.test.mjs tests/study-teacher.test.mjs tests/tutor-ui.test.mjs tests/study-teacher-ui.test.mjs tests/api-profile-backend.test.mjs tests/antigravity-oauth.test.mjs` — **217/218 passed**. The remaining fixture created a second session without its profile; the fixture now creates both. Its exact rerun, `node --test --test-name-pattern="generated exercise labels survive" tests/worker.test.mjs`, passed **1/1**. These commands overlap; their counts are not a unique combined test denominator.
+- `npm run build` — catalog generation and Worker/static **dry-run succeeded** after the final behavioral edit. It generated 454/429/862/866/1,302 canonical lessons for N5/N4/N3/N2/N1. This did not apply a live migration or deploy.
+- Actual Edge browser used the real Worker and all migrations against disposable in-memory D1, with synthetic registration and external/provider network disabled. Source question targets and original numeric options were inspected at all five levels. N3 set 1 kept four slots, marked 提出, retained its reading passage and refused to grade the defective star slot or claim full completion. N1 set 2 retained separately addressable second/fourth `あれ` options.
+- Real UI submissions saved a writing response and checklist as self-report, a dictation response with immutable pre-reveal snapshot, and typed kana recall (`ya`) as source-advisory evidence. Verified answers remained zero. Dictation/mobile rendering at 390 px had no horizontal overflow. Browser diagnostics contained blocked external font/Google-sign-in loads, not observed JavaScript exceptions. No real speech generation, live-model teaching or full assistive-technology certification is claimed.
+- In-scope code review findings were fixed and covered: missing listening playback, dictation edits during reveal persistence, feedback coaching before answer acknowledgement, nested restricted-reference processing, late assistance races and evidence recreation after reset/deletion.
+
+### Remaining gates: not whole-application pedagogical completion
+
+**F remains open.** Source-grounded recall is executable, but that does not replace independently reviewed contextual transfer, contrastive feedback and objective alignment for every N5–N1 lesson. Unreviewed material remains labeled advisory/reference; the five defective source questions have no invented replacement keys. Independent N5 content work is a separate committed handoff dependency, not evidence of N4–N1 completion.
+
+**G remains open.** A finite reviewed teaching set, qualified Japanese/editorial adjudication, real-model semantic evaluation, representative learner comprehension and actual assistive-technology acceptance are still required. Synthetic provider tests and source-key agreement cannot certify teaching quality or universal injection resistance. No new paid inference or provider/account change was made.
+
+**H is not authorized by this checkpoint.** Publish the coherent checked task branch only. Integration, production D1 migration, PR/main merge and deployment require their separate approvals and integrated-head checks. Preserve historical attempt revisions, source option identities and quarantine decisions during any future rollout or rollback.

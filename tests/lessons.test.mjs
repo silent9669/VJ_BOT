@@ -16,7 +16,7 @@ test('pinned lesson files are intact and every record has an identity, reading o
   }
   assert.equal(total,10720);
 });
-test('all levels load once with answerable exercises and attributed reading/listening practice',async()=>{
+test('all levels load once with source-keyed exercises and attributed reading/listening practice',async()=>{
   const context=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(await fs.readFile('static/'+path,'utf8'))})});
   vm.runInContext(await fs.readFile('static/jlpt-data.js','utf8'),context);
   vm.runInContext(await fs.readFile('static/vi-labels.js','utf8'),context);
@@ -29,9 +29,9 @@ test('all levels load once with answerable exercises and attributed reading/list
     for(const lesson of skills.grammar.filter(l=>l.source))assert.equal(lesson.drills.length,1);
     const count=skills.vocabulary.length;await context.window.ensureLessons(level);assert.equal(skills.vocabulary.length,count);
     for(const lesson of skills.vocabulary.filter(x=>x.source)){
-      assert.equal(lesson.drills.length,lesson.items.length);for(const q of lesson.drills){assert.equal(q.opts.filter(x=>x===q.ans).length,1);assert.equal(new Set(q.opts).size,q.opts.length);assert.ok(q.item_id);}
+      assert.equal(lesson.drills.length,lesson.items.length);for(const q of lesson.drills){assert.ok(Number.isInteger(q.answer_index));assert.ok(q.answer_index>=0 && q.answer_index<q.opts.length);assert.ok(q.item_id);}
     }
-    for(const lesson of skills.reading.filter(x=>x.source)){assert.ok(lesson.examples.every(e=>e.source.startsWith('https://tatoeba.org/')));}
+    for(const lesson of skills.reading.filter(x=>x.source)){assert.ok(lesson.examples.every(e=>e.source.startsWith('https://tatoeba.org/')));assert.equal(lesson.drills.length,lesson.examples.length);for(const [i,q] of lesson.drills.entries())assert.deepEqual(Array.from(q.example_indexes),[i]);}
   }
 });
 
@@ -94,17 +94,28 @@ test('exam identities never share completion or answers between levels',async()=
 });
 
 
-test('practice confirms once, preserves original IDs in review and separates scores',async()=>{
+test('practice confirms numeric source positions once and keeps review agreement separate',async()=>{
   const context=vm.createContext({});vm.runInContext(await fs.readFile('static/practice.js','utf8'),context);
-  const questions=[{opts:['a','b'],ans:'a'},{opts:['c','d'],ans:'d'},{opts:['e','f'],ans:'e'}];
+  const questions=[{mode:'choice',opts:['a','b'],answer_index:0},{mode:'choice',opts:['c','d'],answer_index:1},{mode:'choice',opts:['e','f'],answer_index:0}];
   const round=context.createPracticeRound(questions);
   assert.equal(round.next(),false);assert.equal(round.answer('invalid'),null);
-  assert.equal(round.answer('b').correct,false);assert.equal(round.answer('a'),null);
-  round.next();assert.equal(round.answer('d').correct,true);round.next();round.answer('f');round.next();
+  assert.equal(round.answer(1).correct,false);assert.equal(round.answer(0),null);
+  round.next();assert.equal(round.answer(1).correct,true);round.next();round.answer(1);round.next();
   assert.equal(round.correct,1);assert.deepEqual(Array.from(round.missed),[0,2]);
   const review=context.createPracticeRound(questions,round.missed);
-  assert.equal(review.answer('a').originalIndex,0);review.next();assert.equal(review.answer('e').originalIndex,2);review.next();
+  assert.equal(review.answer(0).originalIndex,0);review.next();assert.equal(review.answer(0).originalIndex,2);review.next();
   assert.equal(review.correct,2);assert.equal(review.missed.length,0);assert.equal(round.correct,1);
+});
+
+test('practice distinguishes duplicate option positions, source recall and blocked tasks',async()=>{
+  const context=vm.createContext({});vm.runInContext(await fs.readFile('static/practice.js','utf8'),context);
+  const tasks=[{mode:'choice',opts:['あれ','あれ'],answer_index:1},
+    {mode:'recall',accepted_answers:['あう']},
+    {mode:'choice',opts:['a','b'],answer_index:0,unavailable_reason:'Contradictory source'}];
+  const round=context.createPracticeRound(tasks);
+  assert.equal(round.answer('あれ'),null);assert.equal(round.answer(0).correct,false);round.next();
+  assert.equal(round.answer(''),null);assert.equal(round.answer('あう').correct,true);round.next();
+  assert.equal(round.answer(0),null);assert.equal(round.checked,false);assert.equal(round.next(),false);
 });
 
 test('Erin contains 25 sourced lessons with distinct publisher activity links',async()=>{

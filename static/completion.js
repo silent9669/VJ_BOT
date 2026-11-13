@@ -9,7 +9,7 @@ function activityId(item,level,skill){return item.completionId || item.id || `le
 function mountCompletion(host,activity,loaded=false){
   host.replaceChildren();host.classList.add('completion-control');
   const button=document.createElement('button'),status=document.createElement('output');button.type='button';status.setAttribute('aria-live','polite');
-  const draw=()=>{const done=completionRecords.has(activity.activity_id);button.textContent=done?'Đã hoàn thành · Bỏ đánh dấu':'Đánh dấu hoàn thành';button.setAttribute('aria-pressed',String(done));};
+  const draw=()=>{const done=completionRecords.has(activity.activity_id);button.textContent=done?'Em đã tự đánh dấu · Bỏ đánh dấu':'Em tự đánh dấu đã xem bài';button.setAttribute('aria-pressed',String(done));button.title='Dấu ghi nhớ cá nhân, không xác nhận điểm hoặc mức thành thạo.';};
   draw();button.disabled=true;host.append(button,status);
   async function refresh(){
     try{await loadCompletions();draw();button.disabled=false;status.textContent='';}

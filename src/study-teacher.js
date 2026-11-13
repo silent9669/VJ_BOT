@@ -1,5 +1,5 @@
 import {askAI} from './providers.js';
-import {catalogLesson, teacherCatalog, validFocusReference, validLessonReference} from './tutor-context.js';
+import {catalogLesson,processingAllowed,referenceProcessingAllowed,resolveTaskReference,taskEvidence,teacherCatalog,validFocusReference,validLessonReference} from './tutor-context.js';
 import {attributedReply, learningBoundary, learningQuery, retrieveLearning} from './learning-rag.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers:{'Cache-Control':'no-store'}});
@@ -14,42 +14,51 @@ In question mode: the learner has NOT submitted. Do not name, solve, complete or
 Return only JSON matching the supplied schema. Include exactly the requested field keys once each, with no new fields. The reply is teaching prose, not a replacement exercise or score.`;
 
 function teachingEvidence(lesson, focus, view) {
+  if(focus?.kind!=='question'){
+    const selected=focus?lesson[{word:'words',example:'examples'}[focus.kind]]?.[focus.index]:{overview:lesson.overview,examples:lesson.examples};
+    if(!referenceProcessingAllowed(selected))return null;
+  }
   const fields = [];
   const add = (key, source) => {if (typeof source === 'string' && source.trim()) fields.push({key,source});};
   let evidence;
   if (focus?.kind === 'question') {
     const question = (view === 'exam' ? lesson.exam_questions : lesson.questions)?.[focus.index];
-    if (!question || typeof question.q !== 'string' || !Array.isArray(question.opts)
-      || question.opts.length < 2 || question.opts.length > 10 || !question.opts.every(option => typeof option === 'string' && option.trim())) return null;
-    add('question:q', question.q);
-    question.opts.forEach((option,index) => add(`question:option:${index}`,option));
-    // No overview, goal, glosses, authored key or explanation enters a pre-answer request.
-    evidence = {mode:'question',question:{text:question.q,options:question.opts}};
+    if (!question) return null;
+    const safe = taskEvidence(question);
+    add('question:q',safe.q);
+    add('question:instruction',safe.instruction);
+    add('question:passage',safe.passage);
+    add('question:script_jp',safe.script_jp);
+    add('question:target',safe.target);
+    (safe.parts || []).forEach((part,index) => add(`question:part:${index}`,part));
+    safe.opts.forEach((option,index) => add(`question:option:${index}`,option));
+    evidence = {mode:'question',question:safe};
   } else if (focus?.kind === 'word') {
     const word = lesson.words?.[focus.index];
     if (!word) return null;
-    add('word:vi',word.vi || word.meaning_vi);
-    (word.examples || []).forEach((example,index) => add(`word:example:${index}:vi`,example.vi));
+    const gloss=word.vi || word.meaning_vi;
+    add(gloss?'word:vi':'word:translation',gloss || word.jp);
+    (word.examples || []).forEach((example,index) => add(`word:example:${index}:${example.vi?'vi':'translation'}`,example.vi || example.jp));
     evidence = {mode:'reference',word:{jp:word.jp,reading:word.reading || word.ro,
       examples:(word.examples || []).map(example => ({jp:example.jp,furigana:example.furigana}))}};
   } else if (focus?.kind === 'example') {
     const example = lesson.examples?.[focus.index];
     if (!example) return null;
-    add('example:vi',example.vi);
+    add(example.vi?'example:vi':'example:translation',example.vi || example.jp);
     evidence = {mode:'reference',example:{jp:example.jp,furigana:example.furigana}};
   } else {
     const overview = lesson.overview || {};
     add('meaning',overview.meaning_vi);
     add('formula',overview.formula);
     add('explanation',overview.explanation || lesson.goal);
-    add('translation',overview.translation);
-    add('script_vi',overview.script_vi);
-    (lesson.examples || []).forEach((example,index) => add(`example:${index}:vi`,example.vi));
+    add('translation',overview.translation || overview.passage);
+    add(overview.script_vi?'script_vi':'script_translation',overview.script_vi || overview.script_jp);
+    (lesson.examples || []).forEach((example,index) => add(`example:${index}:${example.vi?'vi':'translation'}`,example.vi || example.jp));
     evidence = {mode:'reference',formula:overview.formula,passage:overview.passage,script_jp:overview.script_jp,
       task:overview.task ? {prompt:overview.task.prompt,criteria:overview.task.criteria} : undefined,
       examples:(lesson.examples || []).map(example => ({jp:example.jp,furigana:example.furigana}))};
   }
-  return {level:lesson.level,title:lesson.title,evidence,fields};
+  return {level:lesson.level,...(focus?.kind==='question'?{}:{title:lesson.title}),evidence,fields};
 }
 
 function validateTeaching(result, evidence) {
@@ -76,7 +85,7 @@ function validateTeaching(result, evidence) {
 }
 
 export async function studyTeacher(body, request, env) {
-  const allowed = ['user_id','api_connection','lesson','focus','view','action'];
+  const allowed = ['user_id','api_connection','lesson','focus','view','action','task'];
   if (!body || Object.keys(body).some(key => !allowed.includes(key)) || body.action !== 'teach'
     || !validLessonReference(body.lesson) || (body.focus != null && !validFocusReference(body.focus))
     || (body.view !== undefined && !['checks','exam'].includes(body.view))
@@ -85,14 +94,23 @@ export async function studyTeacher(body, request, env) {
   const catalog = await teacherCatalog(env,body.lesson.level);
   if (!catalog) return json({detail:'The lesson catalog is unavailable. No exercise result changed.'},503);
   const lesson = catalogLesson(catalog,body.lesson);
+  if (!lesson || !processingAllowed(lesson)) return json({detail:'This source is unavailable for provider processing.'},409);
+  let task;
+  if (focus?.kind === 'question') {
+    const resolved=resolveTaskReference(lesson,focus,view,body.task,'hint');
+    if(resolved.error)return json({detail:resolved.error},resolved.status);
+    task=resolved.reference;
+  } else if(body.task !== undefined)return json({detail:'A task reference needs a canonical question focus.'},400);
   const evidence = lesson && teachingEvidence(lesson,focus,view);
   if (!evidence) return json({detail:'This item does not belong to the lesson. Reopen it.'},409);
-  if (evidence.fields.length > 64 || JSON.stringify(evidence).length > 48000) return json({detail:'Choose one word or example for a focused explanation.'},413);
+  if (evidence.fields.length > 12 || JSON.stringify(evidence).length > 8000) return json({detail:'Choose one word or example for a focused explanation.'},413);
   const schema = {type:'object',additionalProperties:false,properties:{reply:{type:'string'},fields:{type:'array',items:{type:'object',additionalProperties:false,
     properties:{key:{type:'string'},text:{type:'string'}},required:['key','text']}}},required:['reply','fields']};
-  const target=focus?lesson[{word:'words',example:'examples',question:'questions'}[focus.kind]]?.[focus.index]:null;
+  const target=focus?lesson[focus.kind==='question' && view==='exam'?'exam_questions':{word:'words',example:'examples',question:'questions'}[focus.kind]]?.[focus.index]:null;
+  if(target && !processingAllowed(target))return json({detail:'This source item is unavailable for provider processing.'},409);
   const retrieval = await retrieveLearning(env, learningQuery(lesson,'',target), {assessment:focus?.kind==='question'});
   evidence.learning_retrieval = retrieval;
+  if(JSON.stringify(evidence).length>12000)return json({detail:'Choose one word or example for a focused explanation.'},413);
   const asked = await askAI(env,body.user_id,{system:system+'\n'+learningBoundary,schema,schemaName:'study_teaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
     body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
   if (asked.response) return asked.response;
@@ -102,5 +120,5 @@ export async function studyTeacher(body, request, env) {
   if (!result) return json({detail:'AI changed source text or returned incomplete teaching. Original content is unchanged.'},503);
   result.reply = attributedReply(result.reply, retrieval, 2000);
   if(!result.reply)return json({detail:'AI teaching with source attribution exceeded the reply limit. Original content is unchanged.'},503);
-  return json({action:'teach',lesson:{id:body.lesson.id,level:body.lesson.level},focus,view,...result});
+  return json({action:'teach',lesson:{id:body.lesson.id,level:body.lesson.level},focus,view,...(task?{task}:{}),...result});
 }

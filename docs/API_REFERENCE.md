@@ -2,6 +2,35 @@
 
 All routes are under `/api` and return JSON `{detail}` on errors. Private routes require the `vj_session` cookie. The Worker derives `user_id` from that session and ignores client `user_id` and top-level `api_key`. Device-only profiles use the explicitly validated transient `api_connection` object described below. A missing session returns `401`.
 
+## Revision-bound task attempts
+
+The task-integrity cutover replaces fixed-five previews with the complete normalized task inventory. Choice tasks retain source option positions, including repeated numbered parts; text tasks declare `mode` and explicit source variants. Each canonical task has `task_id`, `item_id`, `source_position`, `review_status`, availability/capabilities and a SHA-256 `revision` covering its evidence, source key, writing criteria/model and language/skill metadata. A hash is identity, not semantic approval.
+
+Question-specific chat, teaching, coaching and optional task read-aloud include `task:{id,revision}` alongside the existing `{lesson:{id,level},focus:{kind:'question',index},view:'checks'|'exam'}` selectors. Missing, stale, quarantined or prohibited references fail before inference or progress mutation. Original slots remain addressable when a task is unavailable. Non-question reference teaching retains its existing selectors.
+
+Canonical `POST /api/progress/record` submissions:
+
+```json
+{
+  "lesson": {"id": "test:N3:1", "level": "N3"},
+  "view": "checks",
+  "question_index": 0,
+  "task": {"id": "test:N3:1:question:0", "revision": "<64-character SHA-256>"},
+  "attempt_id": "<stable UUID for this attempt>",
+  "event": "answer",
+  "answer_index": 0
+}
+```
+
+Choice submissions use original numeric `answer_index`; recall/writing/dictation use bounded `response_text`, with optional explicit `self_rating` for self-assessment. Do not send a client-authored correctness boolean as verified evidence. `event:'assist'` records `help:'hint'|'translation'|'source_reveal'|'chat'` before help is shown; writing/dictation source reveals save the immutable pre-reveal response. Assistance arriving after an answer is recorded separately as `post_answer_help_mask`, without retrospectively reclassifying the answer. Reusing an answered attempt with a changed canonical task or submitted answer is a conflict, not a second success. Stale references require reopening the activity, not automatic retries.
+
+`GET /api/progress` retains legacy rows/counters labeled `statistics_basis:'legacy_unknown'`, and adds separate verified, source-advisory, self-report and assistance summaries plus per-attempt `evidence`. The evidence retains task/lesson/revision, source position, actual submitted option/text, assessment basis, assistance/reveal state and validity. Current unreviewed source-key comparisons are advisory; writing checkboxes and dictation/flashcard ratings are self-report, not objective accuracy or mastery. Missing assistance records mean unknown, not proven unaided. Manual completion remains independent.
+
+Migration `0022_task_attempt_evidence.sql` expands local/server persistence without deleting or rescoring existing history; it is not applied to a live D1 database by this checkpoint. Admin reset/account deletion covers the new evidence table. A random profile evidence epoch fences in-flight writes across reset, deletion and recreation of the same account identity. Rejected/conflicting receipts do not create a study-day streak.
+
+Teaching stays explicit on the current chat connection. Focused source translation/teaching is limited to 12 requested fields and 8,000 source characters, with 12,000 characters after attributed retrieval; oversized requests return `413` and ask for one word/example. No automatic chunking, provider switching, background corpus translation or schema-as-semantic-approval claim.
+
+
 ## Công khai
 
 | Route | Mô tả |
@@ -22,7 +51,7 @@ All routes are under `/api` and return JSON `{detail}` on errors. Private routes
 | `GET/POST /api/profile` | Cấp độ và track của tài khoản |
 | `GET /api/next-topic` | Mục tiếp theo cần học |
 | `GET /api/progress` | Tổng hợp và danh sách mục đã làm |
-| `POST /api/progress/record` | `{item_id, correct, quality 0–5, attempt_id?, display?, item_type?, response_text?}`; `attempt_id` giúp thử lại không đếm hai lần |
+| `POST /api/progress/record` | Canonical revision-bound task answer/assist events above; legacy/self-report `{item_id, correct, quality, attempt_id?, display?, item_type?, response_text?, basis:'self_report'}` remains explicitly non-verified and cannot establish mastery |
 | `GET/POST /api/completions` | Đánh dấu hoàn thành: `{activity_id, kind, level, title, completed}` |
 | `GET/POST /api/exam-attempts` | Trạng thái bài thi thử theo đề `N5:2018` |
 | `GET/DELETE /api/history` | General chat history, or one lesson selected by `lesson_id` and `level`. DELETE clears conversations, teaching state and request claims only for that scope, invalidating any running generation. `GET ?archive=legacy` reads preserved pre-migration history; the archive is read-only. |
@@ -34,11 +63,11 @@ Regular learners use their selected API-key or Antigravity OAuth connection for 
 
 | Route | Mô tả |
 | --- | --- |
-| `POST /api/chat` | `{message ≤ 6000 characters, lesson?: {id,level}, focus?: {kind:'word'\|'example'\|'question',index:integer ≥ 0}\|null, view?:'checks'\|'exam', intent?: 'message'\|'start'\|'hint'\|'explain'\|'situation'\|'check'\|'summary'\|'restart', screen?: {route,level?}, channel?: 'chat'\|'quick', request_id?}`. Canonical membership is server-validated. Screen metadata selects private storage and level only; raw DOM text, titles and routes never reach inference. Returns plain `{reply,response,updated_topic}`. Completed retries return saved replies; concurrent or changed-payload UUID reuse returns 409. |
+| `POST /api/chat` | `{message ≤ 6000 characters, lesson?: {id,level}, focus?: {kind:'word'\|'example'\|'question',index:integer ≥ 0}\|null, view?:'checks'\|'exam', task?:{id,revision}, intent?: 'message'\|'start'\|'hint'\|'explain'\|'situation'\|'check'\|'summary'\|'restart', screen?: {route,level?}, channel?: 'chat'\|'quick', request_id?}`. Question focus requires the current canonical task reference. Screen metadata selects private storage and level only; raw DOM text, titles and routes never reach inference. Returns plain `{reply,response,updated_topic}` and the question's task reference when applicable. Completed retries return saved replies; concurrent or changed-payload UUID reuse returns 409. |
 | `POST /api/kaiwa/evaluate` | `{scenario_id, prompt_index?: 0, user_speech, level}`. The server resolves the canonical question and rubric; client-authored scenario text, rubric, requirements, weights and score are rejected. Returns `{status,reason,score:null,rating:null,estimated_score,conclusion,criteria,feedback,model_answer,user_text,scenario}` after strict validation. See estimated Kaiwa assessment below. |
 | `POST /api/tts` | `{text, speech_model?}` returns `{audioBase64, mimeType, voice, model}`. `{action:"models"}` lists compatible speech candidates without audio generation. Learners explicitly select native Gemini/Charon or official OpenAI/alloy. Administrators automatically use server OpenAI with `gpt-4o-mini-tts` and alloy. Missing or unsupported learner voice selections fail closed; no browser-voice fallback. |
-| `POST /api/practice/coach` | `{lesson:{id,level}, question_index:integer ≥ 0, item_id, action:'hint'\|'feedback', answer_index?:integer ≥ 0}`. Feedback requires an option index; hints reject it. The server resolves the canonical question/options and rejects mismatched item IDs, forged answer/context fields and invalid option indices. Returns `{reply,action,item_id}` plus server-derived `{correct,answer}` for feedback. No score/progress/chat-history write. |
-| `POST /api/practice/coach` with `action:"teach"` | `{lesson:{id,level},focus?:{kind:'word'\|'example'\|'question',index},view?:'checks'\|'exam',action:'teach'}` retrieves the exact canonical reference. Returns `{action,lesson,focus,view,reply,fields:[{key,source,text}]}`; `source` is attached by the server, not the model. The browser sends no lesson text, answer key or DOM snapshot. |
+| `POST /api/practice/coach` | `{lesson:{id,level},question_index:integer ≥ 0,item_id?,task:{id,revision},view?:'checks'\|'exam',action:'hint'\|'feedback',answer_index?,response_text?}`. Feedback requires an original option index or actual text according to task mode; hints reject both. Rejects stale/quarantined tasks, mismatched item IDs and forged fields before inference. Returns `{reply,action,item_id,task}`; feedback also returns server-derived `{correct,source_correct,basis,verified,answer_index,answer}`. No score/progress/history write by coaching itself; the browser persists answer/help events separately. |
+| `POST /api/practice/coach` with `action:"teach"` | `{lesson:{id,level},focus?:{kind:'word'\|'example'\|'question',index},view?:'checks'\|'exam',task?:{id,revision},action:'teach'}` retrieves the exact canonical reference; question focus requires the current task. Returns `{action,lesson,focus,view,task?,reply,fields:[{key,source,text}]}`; `source` is server-attached. The browser sends no lesson text, answer key or DOM snapshot. |
 
 TTS sends `text` as the verbatim transcript. Reading directions stay in `speech_metadata`, never prepended to spoken text, preserving the transcript fix merged in PR #24.
 
@@ -69,9 +98,9 @@ Every coaching click uses the selected chat connection and provider quota; no re
 
 The same grounded action serves lesson references, opened vocabulary/kanji words, lesson checks, dictation comparisons, writing tasks, flashcard backs, Kaiwa prompts and topic quizzes. Source learning content is not bulk-translated, deleted or rewritten. Official external PDF/audio exams keep their existing answer-sheet flow.
 
-For an unanswered question, retrieval includes its prompt/options only: no authored answer, explanation, goal or answer-bearing overview. All option labels are translated together, in their original indexed positions; Japanese-only options remain verbatim. Strict validation rejects missing/extra/duplicate fields, changed Japanese sequences, merged distinct choices and model-authored grade fields. Original duplicated numbered arrangement segments remain distinct positions. Full topic quizzes retrieve `exam_questions`, not the normalized five-check preview.
+For an unanswered question, retrieval includes task-safe instruction, stimulus, target, parts and options only: no authored answer, explanation, accepted variants, goal or answer-bearing overview. Dictation transcripts remain reveal-only. All option labels retain their original indexed positions; Japanese-only options remain verbatim. Strict validation rejects missing/extra/duplicate fields, changed Japanese sequences, merged distinct choices and model-authored grade fields. Original duplicated numbered arrangement segments remain distinct positions. Full topic quizzes and lesson practice use the same complete normalized inventory, not a fixed-five preview.
 
-The browser updates text labels only and retains canonical values for grading, saved answers and progress. Replies and translated labels are invalidated when the item, route, owner or selected chat connection changes; old labels are restored during cleanup. No original-source toggle is currently exposed. The initial `action:"teach"` does not write history/progress, reveal hidden meanings, play voice, refresh models or generate on entry. Follow-up messages explicitly use the authenticated quick-chat route and its normal scoped history; failed sends retry the same request ID only when the learner asks. Every generation uses provider quota. Voice keeps its independent saved account/model.
+The browser updates presentation only and retains canonical values for grading, saved answers and progress. The original/generated comparison preserves task markup and original numbered choices. Replies and translated labels are invalidated when the item, route, owner, task revision or selected chat connection changes; old labels are restored during cleanup. Explicit question teaching first persists an assistance event; it does not create a correct answer, reveal hidden source material automatically, play voice, refresh models or generate on entry. Follow-up messages explicitly use the authenticated quick-chat route and its normal scoped history; failed sends retry the same request ID only when the learner asks. Every generation uses provider quota. Voice keeps its independent saved account/model.
 
 These structural protections do not prove translation accuracy or prevent every semantic answer leak. Generated explanations can be wrong; canonical source data remains retained independently. Real-model language and pedagogical quality require separately authorized evaluation.
 
@@ -79,7 +108,7 @@ These structural protections do not prove translation accuracy or prevent every 
 
 - Both classroom chat and the quick popover send the selected canonical lesson and optional focus. Focus is a zero-based position within that lesson's complete word/example/question collection, not an option index. Extra keys, unsupported kinds, negative/noninteger indexes, missing lesson references and out-of-range selections return 400 before inference.
 - Explicit exam follow-ups send `view:"exam"` with a question focus and use the original complete `exam_questions` option order, not normalized lesson checks. Invalid views or exam references without a question are rejected. Omitting focus resumes the canonical item/view. Sending `focus:null` clears a previously selected item, probe and exam view; repeated null keeps an existing overview conversation because browser follow-ups also serialize null. Explicitly selecting a check resets exam view. Retry fingerprints distinguish omission, removal and view changes.
-- The model receives a compact lesson overview plus the exact selected record. Question focus includes authored answers/options and relevant examples; source IDs and URLs remain attached. These fields support diagnosis, not permission to reveal answers. Ungraded corpus sentences are not treated as certified N5/N4 grammar.
+- Reference focus receives a compact overview and the selected permitted record. Question focus receives only the task-safe evidence above, not source keys, solution explanations or answer-bearing overview aliases. Post-answer coaching separately resolves the submitted original option/text and source rationale. Source IDs and URLs remain attached; ungraded corpus sentences are not treated as certified grammar.
 - `intent` defaults to `message`; natural learner requests still reach the model. Buttons supply explicit actions. A `hint` response cannot declare itself a solution. Repeated hints preserve the unresolved probe and saturate at scaffold stage two, never an automatic answer stage. Schema checks do not prove that the visible prose obeys these semantic constraints.
 - Existing lesson entry restores history without sending a new start. `restart` keeps stored UI history but establishes a fresh model-history boundary and teaching state only after successful generation. Failed restarts leave the previous boundary intact.
 - Apply `0019_tutor_sessions.sql` after the existing migrations through `0018_antigravity_accounts.sql` before serving this code. It adds account/scope teaching state and expiring database request/scope leases without changing API profiles or OAuth bindings. Identical in-flight UUIDs and another running message in the same scope return 409 without a second provider generation. Expired owners cannot commit after takeover or cleanup. A pre-migration request UUID without a bound fingerprint cannot be replayed; send a new UUID. Back up the database before migration; local build checks do not migrate production.

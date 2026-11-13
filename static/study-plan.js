@@ -2,11 +2,10 @@
 const studyPlans=new Map();
 const studySkillNames={kana:'Bảng chữ cái',vocabulary:'Từ vựng',grammar:'Ngữ pháp',kanji:'Hán tự',reading:'Lý thuyết',listening:'Nghe',production:'Thực hành'};
 function lessonQuestions(item,level,skill){
-  return fiveLessonQuestions(item,level,skill);
+  return normalizedLessonTasks(item,level,skill);
 }
 function lessonProgressIds(item,level,skill){
-  if(item.production)return [item.id];
-  return item.dictation ? (item.examples||[]).map((_,i)=>`${item.id}:${i}`) : lessonQuestions(item,level,skill).map(q=>q.item_id);
+  return lessonQuestions(item,level,skill).map(q=>q.item_id);
 }
 let practicalCourse=null,practicalSources=null,practicalLoad=null,courseChapters=null,jlptResources=null,erinResources=null;
 async function loadPracticalCourse(){
@@ -34,7 +33,7 @@ function createStudyPlan(level){
     const vocabulary={...common,id:unit.id+':words',title:'Từ cần dùng',summary:unit.goal,items:unit.words};
     vocabulary.drills=unit.words.map((w,i)=>({item_id:`${unit.id}:word:${i}`,q:`${w.jp} (${w.reading}) — nghĩa nào phù hợp?`,opts:unit.words.map(x=>x.vi).filter(x=>x!==w.vi).slice(0,3),ans:w.vi}));
     vocabulary.drills.forEach((q,i)=>q.opts.splice(i%(q.opts.length+1),0,q.ans));
-    const situation={...common,id:unit.id+':situation',title:'Lý thuyết tình huống',summary:unit.goal,formula:unit.formula,explanation:unit.note,examples:unit.dialogue,drills:unit.questions.map(q=>({...q,item_id:q.id})),resources:unit.source_ids.map(id=>practicalSources.lessons.find(s=>s.id===id)).filter(Boolean),reference_url:unit.reference_url};
+    const situation={...common,id:unit.id+':situation',title:'Lý thuyết tình huống',summary:unit.goal,formula:unit.formula,explanation:unit.note,passage:unit.dialogue.map(line=>line.jp).join('\n'),examples:unit.dialogue,drills:unit.questions.map(q=>({...q,item_id:q.id,requires_passage:true})),resources:unit.source_ids.map(id=>practicalSources.lessons.find(s=>s.id===id)).filter(Boolean),reference_url:unit.reference_url};
     const production={...common,id:unit.id+':production',title:'Tự trả lời trong tình huống',summary:unit.goal,production:unit.production,roleplay:unit};
     skills.production ||= [];
     if(!skills.production.some(l=>l.id===production.id))skills.production.push(production);
