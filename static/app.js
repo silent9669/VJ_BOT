@@ -274,10 +274,13 @@ function initLoadingScreen() {
 // 7. TAB SWITCHER & NAVIGATION
 // ==========================================
 function switchTab(tabId, route={}) {
+  const managedSettings=tabId==='settings' && route.view==='api' && signedInUser?.is_admin===true;
+  if(managedSettings)route={...route,view:'admin'};
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
   stopSpeech();
   globalThis.stopJapaneseInputs?.();
   if(tabId!=='classroom')globalThis.stopLiveConversation?.();
+  globalThis.cancelPracticeCoach?.();
   globalThis.rememberTeacherScreen?.();
   globalThis.invalidateTeacherQuery?.();
   featureVersion++;
@@ -323,7 +326,8 @@ function switchTab(tabId, route={}) {
 
   // Update URL hash
   const targetHash=appRouteHash(tabId,route);
-  if(!route.fromHistory && location.hash!==targetHash)history.pushState(null,'',targetHash);
+  if(managedSettings)history.replaceState(null,'',targetHash);
+  else if(!route.fromHistory && location.hash!==targetHash)history.pushState(null,'',targetHash);
   globalThis.markTeacherScreen?.();
 
   window.scrollTo({top:0,behavior:'instant'});
@@ -356,11 +360,10 @@ function switchTab(tabId, route={}) {
   } else if (tabId === "settings" || tabId === "admin") {
     if(tabId==='admin')window.renderAiPanels?.('admin');
     else {
-      const area=route.view || 'account';
-      window.showSettingsArea?.(area);
+      const area=window.showSettingsArea?.(route.view || 'account') || 'account';
       window.renderAccountSettings?.();
       if(area==='api')window.renderAiPanels?.('settings');
-      if(area==='sound')window.refreshSpeechModels?.();
+      if(area==='sound' && !signedInUser?.is_admin)window.loadVoiceProfiles?.();
       if(area==='admin')window.renderAdminAISettings?.();
     }
   }
@@ -420,6 +423,7 @@ function chatError(message,retry) {
   document.getElementById('chat-error-text').textContent=message;
   const button=document.getElementById('chat-retry');button.hidden=!retry;button.onclick=retry;
   const open=document.getElementById('chat-open-settings');open.hidden=!/Cài đặt/.test(message||'');open.onclick=()=>switchTab('settings',{view:'api'});
+  open.textContent=signedInUser?.is_admin?'Model quản trị':'Cài đặt API';
   const discard=document.getElementById('chat-discard');discard.hidden=!failedChatMessage;discard.onclick=()=>{failedChatMessage=null;loadChatHistory();};
 }
 async function loadChatHistory() {
@@ -612,6 +616,29 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
   setCurriculumView(curriculumView,false);
 }
 
+function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
+  const annotated=ex.furigana || ex.jp || '';
+  const japanese=annotated.replace(/\{([^{}|]+)\|([^{}|]+)\}/g,'$1');
+  const hasFurigana=/\{[^{}|]+\|[^{}|]+\}/.test(annotated);
+  const sentence=`<p class="example-jp" lang="ja">${escapeHtml(japanese)}</p>`;
+  const tag=nested?'div':'li';
+  return `<${tag} class="example-card"${nested?'':` data-teacher-example="${index}"`}>
+    <span class="example-index" aria-hidden="true">${index+1}</span>
+    <div class="example-text">
+      ${listenFirst?`<details class="lesson-disclosure example-transcript"><summary>Lời thoại</summary>${sentence}</details>`:sentence}
+      <div class="lesson-aids">
+        ${ex.ro || hasFurigana?`<details class="lesson-disclosure"><summary>Cách đọc</summary><div class="lesson-aid-content">
+          ${hasFurigana?`<p lang="ja">${furiganaHtml(annotated)}</p>`:''}
+          ${ex.ro?`<p class="example-ro">${escapeHtml(ex.ro)}</p>`:''}
+        </div></details>`:''}
+        ${ex.vi?`<details class="lesson-disclosure"><summary>Nghĩa</summary><p class="example-vi lesson-aid-content">${escapeHtml(ex.vi)}</p></details>`:''}
+      </div>
+      ${ex.source?`<a class="example-source" href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}
+    </div>
+    <button type="button" class="card-audio-btn modal-tts-btn" aria-label="Nghe câu ${index+1}" data-text="${encodeURIComponent(annotated)}">Nghe</button>
+  </${tag}>`;
+}
+
 function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   item={...item,items:item.items || item.roleplay?.words || item.targetWords,examples:item.examples || item.roleplay?.dialogue};
   const returnView=curriculumView;
@@ -635,30 +662,21 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     examplesHtml = `
       <section class="lesson-section">
         <h3 class="lesson-section-title">Ví dụ</h3>
-        <ol class="example-list">${item.examples.map((ex, index) => `
-          <li class="example-card" data-teacher-example="${index}">
-            <span class="example-index" aria-hidden="true">${index + 1}</span>
-            <div class="example-text">
-              <p class="example-jp" lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p>
-              ${ex.ro ? `<p class="example-ro">${escapeHtml(ex.ro)}</p>` : ""}
-              <p class="example-vi">${escapeHtml(ex.vi)}</p>${ex.source ? `<a class="example-source" href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>` : ""}
-            </div>
-            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.furigana || ex.jp)}">Nghe</button>
-          </li>`).join("")}
-        </ol>
+        <p class="lesson-study-hint">${item.dictation?'Nghe và thử chép lại trước khi mở lời thoại.':'Tự đọc hoặc nghe trước. Chỉ mở cách đọc và nghĩa khi cần.'}</p>
+        <ol class="example-list">${item.examples.map((ex,index)=>lessonExampleHtml(ex,index,{listenFirst:Boolean(item.dictation || (skill==='listening' && !owner))})).join("")}</ol>
       </section>
     `;
   }
 
   const vocabularyHtml = item.items?.length ? `
     <div class="lesson-vocabulary-list">${item.items.map((word,index)=>`
-      <details class="word-detail" data-teacher-word="${index}"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span>${escapeHtml(word.reading || word.ro || "")}</span><span>${escapeHtml(word.vi)}</span></summary>
-        <div class="word-detail-body"><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(speechReading(word.jp, word.reading))}">Nghe cách đọc</button>
+      <details class="word-detail" data-teacher-word="${index}"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span class="word-reveal-label">Cách đọc &amp; nghĩa</span></summary>
+        <div class="word-detail-body"><div class="word-answer"><p lang="ja">${escapeHtml(word.reading || word.ro || "")}</p><p>${escapeHtml(word.vi)}</p></div><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(word.jp)}" data-reading="${encodeURIComponent(word.reading || '')}">Nghe cách đọc</button>
         ${word.strokes ? `<dl class="kanji-facts"><div><dt>Số nét</dt><dd>${word.strokes}</dd></div><div><dt>Bộ thủ</dt><dd>${escapeHtml(word.radical)}</dd></div><div><dt>Âm On</dt><dd>${escapeHtml(word.onyomi.join(' · '))}</dd></div><div><dt>Âm Kun</dt><dd>${escapeHtml(word.kunyomi.join(' · '))}</dd></div></dl><p>${escapeHtml((word.words||[]).join(' · '))}</p>` : ''}
-        ${(word.examples||[]).map(ex=>`<div class="word-example"><p lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p><p>${escapeHtml(ex.vi)}</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.furigana || ex.jp)}">Nghe câu</button>${ex.source?`<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}</div>`).join('')}
+        ${(word.examples||[]).map((ex,index)=>lessonExampleHtml(ex,index,{nested:true})).join('')}
         </div></details>`).join('')}</div>` : "";
-  const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${escapeHtml(item.passage)}</p><p>${escapeHtml(item.translation || "")}</p></div>` : "";
-  const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${item.script_jp}</p><p>${item.script_vi || ""}</p></div>` : "";
+  const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage" lang="ja">${escapeHtml(item.passage)}</p>${item.translation?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content reading-translation">${escapeHtml(item.translation)}</p></details>`:''}</div>` : "";
+  const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-study-hint">Nghe và tự nắm ý chính trước khi xem lời thoại.</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(item.script_jp)}">Nghe bài</button><details class="lesson-disclosure"><summary>Lời thoại</summary><p class="lesson-japanese-passage lesson-aid-content" lang="ja">${escapeHtml(item.script_jp)}</p></details>${item.script_vi?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content listening-translation">${escapeHtml(item.script_vi)}</p></details>`:''}</div>` : "";
 
   body.innerHTML = `
     <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">5 câu kiểm tra</button></div>
@@ -705,6 +723,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     body.querySelector('#lesson-reference').append(start);
   }
   selectMode('read');
+  globalThis.mountLessonTeaching?.(body,item,level,skill);
   body.querySelectorAll('.word-detail').forEach(word=>word.addEventListener('toggle',()=>{
     if(word.open && word.isConnected)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
   }));
@@ -715,7 +734,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
       if(word)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
       else if(example)globalThis.setTeacherFocus?.({kind:'example',index:Number(example.dataset.teacherExample)});
       const text = decodeURIComponent(btn.dataset.text);
-      playGeminiTTS(text);
+      playGeminiTTS(text,{japaneseOnly:true,reading:singleSpeechReading(decodeURIComponent(btn.dataset.reading || ''))});
     });
   });
 
@@ -789,6 +808,7 @@ async function renderFlashcards(level = "N5",lessonId=null) {
 
 function displayFlashcard() {
   if (!fcDeck || fcDeck.length === 0) return;
+  globalThis.clearStudySurface?.('flashcards');
   const previousContext=globalThis.teacherContext?.();
   const item = fcDeck[fcIdx];
   const card = document.getElementById("flashcard-card");
@@ -806,6 +826,7 @@ function displayFlashcard() {
   document.getElementById("fc-btn-prev").disabled=fcIdx===0;
   document.getElementById("fc-btn-next").disabled=fcIdx===fcDeck.length-1;
   if (readingText) readingText.textContent = item.reading;
+  if(readingText?.closest('details'))readingText.closest('details').open=false;
   if (backMeaning) backMeaning.textContent = item.back;
   if (exampleJp) exampleJp.textContent = item.exampleJp;
   if (exampleVi) exampleVi.textContent = item.exampleVi;
@@ -813,6 +834,7 @@ function displayFlashcard() {
   if (counterEl) counterEl.textContent = `Thẻ ${fcIdx + 1} / ${fcDeck.length}`;
   const context=globalThis.teacherContext?.();
   if(JSON.stringify({lesson:previousContext?.lesson || null,focus:previousContext?.focus || null})!==JSON.stringify({lesson:context?.lesson || null,focus:context?.focus || null}))globalThis.invalidateTeacherQuery?.();
+  globalThis.mountFlashcardTeaching?.(item);
 }
 
 // ==========================================
@@ -839,11 +861,12 @@ async function renderKaiwaScenarios(){
 }
 
 function loadKaiwaPrompt() {
-  globalThis.stopJapaneseInputs?.();
   globalThis.stopSpeech?.();
   document.getElementById('kaiwa-error').hidden = true;
   const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
   if (!s) return;
+  globalThis.clearStudySurface?.('kaiwa');
+  globalThis.stopJapaneseInputs?.();
 
   const tag = document.getElementById("kaiwa-prompt-tag");
   const jp = document.getElementById("kaiwa-prompt-jp");
@@ -863,6 +886,8 @@ function loadKaiwaPrompt() {
   if (resultCard) resultCard.hidden = true;
   const hint = document.getElementById("kaiwa-prompt-hint");
   if (hint) hint.textContent = prompt.hints?.[0] || "Gợi ý: dùng câu lịch sự với です / ます.";
+  document.querySelectorAll('.kaiwa-prompt-card .lesson-disclosure').forEach(details=>{details.open=false;});
+  globalThis.mountKaiwaTeaching?.(s,prompt);
 }
 
 // ==========================================
@@ -933,6 +958,7 @@ function startExamTimer(seconds = 1500) {
 }
 
 function displayQuizQuestion() {
+  globalThis.clearStudySurface?.('quiz');
   const quizCard = document.getElementById("quiz-card");
   const resultCard = document.getElementById("quiz-result-card");
   const feedbackBox = document.getElementById("quiz-feedback-box");
@@ -968,7 +994,7 @@ function displayQuizQuestion() {
     grid.innerHTML = q.options.map((opt, i) => `
       <button type="button" class="quiz-option-btn" data-idx="${i}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 12px; padding: 14px 18px; text-align: left; font-family: var(--font-sans); font-size: 14.5px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
         <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #f1f5f9; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; margin-right: 8px;">${i + 1}</span>
-        ${escapeHtml(opt)}
+        <span class="quiz-option-label">${escapeHtml(opt)}</span>
       </button>
     `).join("");
 
@@ -978,6 +1004,7 @@ function displayQuizQuestion() {
       });
     });
   }
+  globalThis.mountQuizTeaching?.();
 }
 
 function handleQuizAnswer(selectedIdx) {
@@ -1240,14 +1267,24 @@ function setupSettings() {
   }
 }
 
+// MICROPHONE CAPTURE CONTROLLER
+function singleSpeechReading(value){
+  return typeof value==='string' && /^[ぁ-ゖァ-ヺー]+$/u.test(value.trim())?value.trim():'';
+}
+function setupMicrophoneControls(){
+  const el=id=>document.getElementById(id);
+  createJapaneseInput({button:el('btn-voice-input'),input:el('chat-input'),onError:message=>chatError(message,null)});
+  createJapaneseInput({button:el('btn-kaiwa-mic'),input:el('kaiwa-manual-input'),
+    status:el('kaiwa-mic-status'),playbackButton:el('btn-kaiwa-play-user')});
+}
+
 // ==========================================
 // 16. EVENT LISTENERS SETUP
 // ==========================================
 function setupEventListeners() {
   document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
-  const voiceButton=document.getElementById('btn-voice-input');
-  createJapaneseInput({button:voiceButton,input:document.getElementById('chat-input'),onError:message=>chatError(message,null)});
+  setupMicrophoneControls();
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
   document.getElementById('kaiwa-level').onchange=e=>switchTab('kaiwa',{level:e.target.value});
@@ -1442,7 +1479,8 @@ function setupEventListeners() {
   const fcCard = document.getElementById("flashcard-card");
   if (fcCard) {
     fcCard.addEventListener("keydown",e=>{if(e.target===fcCard && (e.key==="Enter" || e.key===" ")){e.preventDefault();fcCard.click();}});
-    fcCard.addEventListener("click", () => {
+    fcCard.addEventListener("click", event => {
+      if(event.target.closest('details'))return;
       soundEngine.playFlip();
       fcCard.classList.toggle("flipped");
     });
@@ -1454,7 +1492,7 @@ function setupEventListeners() {
     btnFcAudioFront.addEventListener("click", (e) => {
       e.stopPropagation();
       const txt = document.getElementById("fc-front-text")?.textContent;
-      if (txt) playGeminiTTS(txt, {reading:fcDeck[fcIdx]?.reading || ''});
+      if (txt) playGeminiTTS(txt,{japaneseOnly:true,reading:singleSpeechReading(fcDeck[fcIdx]?.reading)});
     });
   }
 
@@ -1463,7 +1501,7 @@ function setupEventListeners() {
     btnFcAudioBack.addEventListener("click", (e) => {
       e.stopPropagation();
       const txt = document.getElementById("fc-example-jp")?.textContent;
-      if (txt) playGeminiTTS(txt);
+      if (txt) playGeminiTTS(txt,{japaneseOnly:true});
     });
   }
 
@@ -1524,16 +1562,11 @@ function setupEventListeners() {
   if (btnKaiwaPlay) {
     btnKaiwaPlay.addEventListener("click", () => {
       const jp = document.getElementById("kaiwa-prompt-jp")?.textContent;
-      if (jp) playGeminiTTS(jp);
+      if (jp) playGeminiTTS(jp,{japaneseOnly:true});
     });
   }
 
-  const kaiwaInput = document.getElementById('kaiwa-manual-input');
-  createJapaneseInput({
-    button: document.getElementById('btn-kaiwa-mic'), input: kaiwaInput,
-    status: document.getElementById('kaiwa-mic-status'),
-    playbackButton: document.getElementById('btn-kaiwa-play-user')
-  });
+  const kaiwaInput=document.getElementById('kaiwa-manual-input');
 
   // Kaiwa Evaluation submit
   const btnEvalKaiwa = document.getElementById("btn-eval-kaiwa");
@@ -1600,7 +1633,7 @@ function setupEventListeners() {
   if (btnModelTTS) {
     btnModelTTS.addEventListener("click", () => {
       const txt = document.getElementById("kaiwa-model-text")?.textContent;
-      if (txt) playGeminiTTS(txt);
+      if (txt) playGeminiTTS(txt,{japaneseOnly:true});
     });
   }
 
@@ -1644,6 +1677,7 @@ function setupEventListeners() {
 
   setupWorkspace();
   await setupAccount();
+  if(signedInUser && !signedInUser.is_admin)await window.loadVoiceProfiles?.();
 
   // Pre-fetch greeting & user profile
   if(signedInUser)try {

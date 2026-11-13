@@ -10,7 +10,7 @@ const teacherAssets = {fetch: async request => {
 const tutorText = reply => JSON.stringify({reply, action: 'explanation', open_probe: null});
 
 test('shared AI and private progress require a session', async () => {
-  for (const path of ['/api/exam-attempts','/api/completions','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/progress?user_id=someone']) {
+  for (const path of ['/api/exam-attempts','/api/completions','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach','/api/progress?user_id=someone']) {
     const response = await worker.fetch(new Request('https://vjbot.test'+path, path.includes('?') ? {} : {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}), {});
     assert.equal(response.status,401,path);
   }
@@ -79,6 +79,7 @@ test('TTS keeps reading directions out of the transcript and returns the audio p
   const {env,request}=await authenticated(),original=globalThis.fetch;
   env.AI_KEY_SECRET='local-secret';
   await worker.fetch(new Request('https://vjbot.test/api/ai/settings',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'gemini',base_url:'',model:'gemini-3.8-flash',api_key:'test-only-key'})}),env);
+  const profileId=(await (await worker.fetch(request('/api/ai/profiles'),env)).json()).active_id;
   globalThis.fetch=async(url,options)=>{
     assert.equal(options.headers['x-goog-api-key'],'test-only-key');assert.match(url,/gemini-3\.8-flash-tts/);
     const payload=JSON.parse(options.body),part=payload.contents[0].parts[0];
@@ -87,7 +88,7 @@ test('TTS keeps reading directions out of the transcript and returns the audio p
     assert.equal(payload.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,'Charon');
     return Response.json({candidates:[{content:{parts:[{text:'metadata'},{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]}}]});
   };
-  try{const response=await worker.fetch(request('/api/tts',{text:'こんにちは。'}),env);assert.equal(response.status,200);assert.equal((await response.json()).audioBase64,'UklGRg==');}finally{globalThis.fetch=original;}
+  try{const selected=request('/api/tts',{text:'こんにちは。'});selected.headers.set('X-VJBot-Profile',profileId);const response=await worker.fetch(selected,env);assert.equal(response.status,200);assert.equal((await response.json()).audioBase64,'UklGRg==');}finally{globalThis.fetch=original;}
 });
 
 test('generated exercise labels survive requests and stay private to each account',async()=>{
@@ -229,7 +230,7 @@ test('failed chat does not persist a turn and retrying a completed request retur
     assert.equal(calls,2);assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,2);
   }finally{globalThis.fetch=previous;}
 });
-test('there is no built-in AI: even an admin needs an own API, and speech needs a Google Gemini key',async()=>{
+test('an admin missing the managed OpenAI key cannot fall back to saved private chat or voice',async()=>{
   const {env,request}=await authenticated(),previous=globalThis.fetch;
   env.GEMINI_API_KEY='platform-key';env.ADMIN_EMAILS='owner@example.test';await env.DB.prepare("INSERT INTO admins VALUES('google:qa','owner@example.test','now')").run();
   let calls=0;globalThis.fetch=async(url,options)=>{calls++;assert.ok(!JSON.stringify(options).includes('platform-key'));return Response.json({candidates:[{content:{parts:[{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]}}]});};
@@ -238,11 +239,14 @@ test('there is no built-in AI: even an admin needs an own API, and speech needs 
       const r=await worker.fetch(request(path,body),env);assert.equal(r.status,403,path);assert.equal((await r.json()).code,'no_ai');
     }
     let r=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);assert.equal(r.status,403);assert.equal((await r.json()).code,'no_tts');assert.equal(calls,0);
-    await withApi(env,request);r=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);assert.equal(r.status,403);assert.equal(calls,0);
-    await worker.fetch(new Request('https://vjbot.test/api/ai/settings',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'gemini',base_url:'https://proxy.example.com',model:'gemini-3.8-flash',api_key:'AIza-12345678'})}),env);
-    r=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);assert.equal(r.status,403);assert.equal(calls,0);
+    await withApi(env,request);
+    r=await worker.fetch(request('/api/chat',{message:'private fallback'}),env);assert.equal(r.status,403);assert.equal((await r.json()).code,'no_ai');
     await worker.fetch(new Request('https://vjbot.test/api/ai/settings',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'gemini',base_url:'',model:'gemini-3.8-flash',api_key:'AIza-12345678'})}),env);
-    r=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);assert.equal(r.status,200);assert.equal(calls,1);
+    const settings=await (await worker.fetch(request('/api/ai/settings'),env)).json();
+    assert.equal(settings.source,'platform');assert.equal(settings.platform.configured,false);assert.equal(settings.own.protocol,'gemini');
+    r=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);assert.equal(r.status,403);assert.equal((await r.json()).code,'no_tts');
+    const selected=request('/api/tts',{text:'こんにちは'});selected.headers.set('X-VJBot-Profile',settings.own.id);
+    r=await worker.fetch(selected,env);assert.equal(r.status,400);assert.equal((await r.json()).code,'invalid_connection');assert.equal(calls,0);
   }finally{globalThis.fetch=previous;}
 });
 const put=(request,path,body,method='PUT')=>new Request('https://vjbot.test'+path,{method,headers:request('/api/ai/settings').headers,body:body&&JSON.stringify(body)});
@@ -787,14 +791,23 @@ test('admins automatically use server OpenAI while free users cannot access the 
     assert.equal(calls[0].url,'https://api.openai.com/v1/chat/completions');
     assert.equal(calls[0].options.headers.Authorization,'Bearer '+env.OPENAI_API_KEY);
     await withApi(env,request);
+    const personal=await (await worker.fetch(request('/api/ai/settings'),env)).json();
+    assert.equal(personal.source,'platform');assert.equal(personal.own.model,'m1');
+    assert.equal((await worker.fetch(request('/api/chat',{message:'managed despite personal profile'}),env)).status,200);
+    assert.equal(calls[1].url,'https://api.openai.com/v1/chat/completions');
+    assert.equal(calls[1].options.headers.Authorization,'Bearer '+env.OPENAI_API_KEY);
+    assert.equal(JSON.parse(calls[1].options.body).model,'gpt-4.1-mini');
+    const stored=await env.DB.prepare('SELECT * FROM ai_providers').first();
+    delete env.OPENAI_API_KEY;
+    const missing=await worker.fetch(request('/api/chat',{message:'no personal fallback'}),env);
+    assert.equal(missing.status,403);assert.equal((await missing.json()).code,'no_ai');assert.equal(calls.length,2);
+    env.OPENAI_API_KEY='sk-server-only-test';env.ADMIN_EMAILS='';
     assert.equal((await (await worker.fetch(request('/api/ai/settings'),env)).json()).source,'own');
-    assert.equal((await worker.fetch(request('/api/chat',{message:'own api'}),env)).status,200);
-    assert.equal(calls[1].url,'https://api.example.com/v1/chat/completions');
-    await worker.fetch(put(request,'/api/ai/settings',undefined,'DELETE'),env);
-    assert.equal((await (await worker.fetch(request('/api/ai/settings'),env)).json()).source,'platform');
-    env.ADMIN_EMAILS='';
-    assert.equal((await worker.fetch(request('/api/chat',{message:'revoked'}),env)).status,403);
-    assert.equal(calls.length,2);
+    assert.equal((await worker.fetch(request('/api/chat',{message:'personal after revoked grant'}),env)).status,200);
+    assert.equal(calls[2].url,'https://api.example.com/v1/chat/completions');
+    assert.equal(calls[2].options.headers.Authorization,'Bearer sk-test-12345678');
+    assert.deepEqual(await env.DB.prepare('SELECT * FROM ai_providers').first(),stored);
+    assert.equal(calls.length,3);
   }finally{globalThis.fetch=previous;}
 });
 
@@ -825,10 +838,14 @@ test('admin role grants support registered accounts, take effect immediately and
   session=await (await worker.fetch(learner('/api/auth/session'),env)).json();assert.equal(session.user.is_admin,false);
 });
 
-test('official OpenAI speech uses the resolved key; proxy providers never receive speech calls',async()=>{
+test('admin OpenAI speech is automatic and fixed-model; explicit private and proxy selections are rejected',async()=>{
   const {env,request}=await authenticated(),previous=globalThis.fetch;
   await asAdmin(env);env.OPENAI_API_KEY='sk-server-voice-test';
-  const calls=[];
+  const calls=[],selected=(id='platform_openai')=>{
+    const voice=request('/api/tts',{text:'こんにちは'});
+    voice.headers.set('X-VJBot-Profile',id);
+    return voice;
+  };
   globalThis.fetch=async(url,options)=>{calls.push({url,options});return new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type':'audio/mpeg'}});};
   try{
     let response=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);
@@ -837,12 +854,16 @@ test('official OpenAI speech uses the resolved key; proxy providers never receiv
     assert.equal(calls[0].options.redirect,'manual');
     assert.equal(calls[0].options.headers.Authorization,'Bearer '+env.OPENAI_API_KEY);
     assert.equal(JSON.parse(calls[0].options.body).input,'こんにちは');
+    assert.equal(JSON.parse(calls[0].options.body).model,'gpt-4o-mini-tts');
+    assert.equal(JSON.parse(calls[0].options.body).voice,'alloy');
+    response=await worker.fetch(selected(),env);assert.equal(response.status,200);
     await withApi(env,request);
-    response=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);
-    assert.equal(response.status,403);assert.equal(calls.length,1);
-    await worker.fetch(put(request,'/api/ai/settings',undefined,'DELETE'),env);
-    globalThis.fetch=async()=>new Response('unavailable',{status:503});
-    response=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);
+    const profileId=(await (await worker.fetch(request('/api/ai/profiles'),env)).json()).active_id;
+    response=await worker.fetch(selected(profileId),env);
+    assert.equal(response.status,400);assert.equal((await response.json()).code,'invalid_connection');assert.equal(calls.length,2);
+    globalThis.fetch=async()=>new Response('private failure '+env.OPENAI_API_KEY,{status:503});
+    response=await worker.fetch(selected(),env);
+    assert.ok(!(await response.clone().text()).includes(env.OPENAI_API_KEY));
     assert.equal(response.status,503);assert.equal((await response.json()).code,'tts_unavailable');
   }finally{globalThis.fetch=previous;}
 });
@@ -884,9 +905,9 @@ test('admin model and reasoning settings persist per account and do not affect p
     assert.equal((await worker.fetch(request('/api/chat',{message:'こんにちは'}),env)).status,200);
     assert.equal(bodies[0].model,'gpt-5-mini');assert.equal(bodies[0].reasoning_effort,'low');
     await withApi(env,request);
-    assert.equal((await worker.fetch(request('/api/chat',{message:'personal'}),env)).status,200);
-    assert.equal(bodies[1].model,'m1');assert.equal(bodies[1].reasoning_effort,undefined);
-    const another=await (await worker.fetch(request('/api/ai/settings'),env)).json();assert.equal(another.source,'own');
+    assert.equal((await worker.fetch(request('/api/chat',{message:'managed with personal profile retained'}),env)).status,200);
+    assert.equal(bodies[1].model,'gpt-5-mini');assert.equal(bodies[1].reasoning_effort,'low');
+    const another=await (await worker.fetch(request('/api/ai/settings'),env)).json();assert.equal(another.source,'platform');assert.equal(another.own.model,'m1');
     await worker.fetch(request('/api/account/delete',{}),env);
     assert.equal((await env.DB.prepare('SELECT count(*) n FROM admin_ai_preferences').first()).n,0);
   } finally {globalThis.fetch=original;}
@@ -926,4 +947,63 @@ test('GPT-Live only exchanges SDP for admins and keeps configuration and keys on
     assert.ok(!(await denied.text()).includes(env.OPENAI_API_KEY));
     env.ADMIN_EMAILS='';assert.equal((await worker.fetch(make(payload),env)).status,403);
   } finally {globalThis.fetch=original;}
+});
+
+test('practice hints omit the authored key and feedback resolves the exact canonical selected option without changing progress',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  await withApi(env,request);
+  const lesson={id:'practical:v1:N5:introductions:situation',level:'N5'};
+  const question=teacherCatalogs.N5.lessons[lesson.id].questions[1],calls=[];
+  globalThis.fetch=async(_url,options)=>{
+    const body=JSON.parse(options.body);calls.push(JSON.parse(body.messages.at(-1).content));
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Hãy nhìn chức năng của trợ từ trong câu này.'})}}]});
+  };
+  try{
+    const base={lesson,question_index:1,item_id:question.item_id};
+    const hint=await worker.fetch(request('/api/practice/coach',{...base,action:'hint'}),env);
+    assert.equal(hint.status,200);assert.equal((await hint.json()).answer,undefined);
+    assert.equal(Object.hasOwn(calls[0],'authored_answer'),false);
+    assert.equal(Object.hasOwn(calls[0],'authored_explanation'),false);
+    assert.equal(Object.hasOwn(calls[0],'submission'),false);
+    const wrong=question.opts.findIndex(option=>option!==question.ans);
+    const response=await worker.fetch(request('/api/practice/coach',{...base,action:'feedback',answer_index:wrong}),env),body=await response.json();
+    assert.equal(response.status,200);assert.equal(body.correct,false);assert.equal(body.answer,question.ans);
+    assert.equal(calls[1].submission,question.opts[wrong]);assert.equal(calls[1].authored_answer,question.ans);
+    const right=await worker.fetch(request('/api/practice/coach',{...base,action:'feedback',answer_index:question.opts.indexOf(question.ans)}),env);
+    assert.equal(right.status,200);assert.equal((await right.json()).correct,true);
+    assert.equal(calls[2].correct,true);
+    assert.equal((await env.DB.prepare('SELECT count(*) n FROM progress').first()).n,0);
+    assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,0);
+  }finally{globalThis.fetch=original;}
+});
+
+test('practice coaching rejects forged questions, answer keys and out-of-range selections before any provider request',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  await withApi(env,request);let calls=0;
+  globalThis.fetch=async()=>{calls++;throw new Error('Unexpected generation');};
+  const lesson={id:'practical:v1:N5:introductions:situation',level:'N5'},question=teacherCatalogs.N5.lessons[lesson.id].questions[0];
+  const base={lesson,question_index:0,item_id:question.item_id,action:'hint'};
+  try{
+    for(const change of [{item_id:'forged'},{question_index:999},{answer:'forged'},{action:'hint',answer_index:0},{action:'feedback',answer_index:999},{lesson:{id:'unknown',level:'N5'}}]){
+      const response=await worker.fetch(request('/api/practice/coach',{...base,...change}),env);
+      assert.ok([400,409].includes(response.status));
+    }
+    await env.DB.prepare('DELETE FROM ai_usage').run();
+    await env.DB.prepare('INSERT INTO ai_usage VALUES(?,?,20)').bind('google:qa',Math.floor(Date.now()/60000)).run();
+    assert.equal((await worker.fetch(request('/api/practice/coach',base),env)).status,429);
+    assert.equal(calls,0);
+  }finally{globalThis.fetch=original;}
+});
+
+test('practice coaching refuses model-authored grades and malformed replies rather than treating them as successful feedback',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  await withApi(env,request);
+  const lesson={id:'practical:v1:N5:introductions:situation',level:'N5'},question=teacherCatalogs.N5.lessons[lesson.id].questions[0];
+  try{
+    for(const content of [JSON.stringify({reply:'Fake grade',correct:true}),JSON.stringify({reply:''}),'not json']){
+      globalThis.fetch=async()=>Response.json({choices:[{message:{content}}]});
+      const response=await worker.fetch(request('/api/practice/coach',{lesson,question_index:0,item_id:question.item_id,action:'feedback',answer_index:0}),env);
+      assert.equal(response.status,503);assert.equal((await response.json()).correct,undefined);
+    }
+  }finally{globalThis.fetch=original;}
 });

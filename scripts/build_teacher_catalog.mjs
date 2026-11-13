@@ -50,7 +50,8 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
   for (const resource of item.resources || []) sourceIds.add(resource.id);
   sources.push(...sourceCatalog.lessons.filter(resource => sourceIds.has(resource.id)));
   const overview = {
-    formula: item.formula || unit?.formula, explanation: item.explanation || unit?.note, meaning_vi: item.meaning_vi,
+    formula: item.formula || unit?.formula, explanation: item.explanation || item.summary, meaning_vi: item.meaning_vi,
+    note: unit?.note,
     passage: item.passage, translation: item.translation, script_jp: item.script_jp, script_vi: item.script_vi,
     words: words.map(compactWord),
     // Beginner tracks classify vocabulary, not the difficulty of attached corpus sentences.
@@ -64,6 +65,7 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
     title: item.roleplay ? `${item.roleplay.title} · ${item.title}` : item.title || item.jp || 'Bài học',
     goal: item.roleplay?.goal || item.summary || item.meaning_vi || '',
     overview, words, examples, questions, sources,
+    ...(Number.isInteger(item.examIndex) ? {exam_questions:Array.from(item.drills || [])} : {}),
     reference_url: item.reference_url || unit?.reference_url
   }));
 }

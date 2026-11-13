@@ -1,4 +1,6 @@
 let signedInUser=null,accountUnavailable=true,preparingSignIn=false,localAdminAvailable=false;
+let renderedAccountOwner=null,renderedAccountAdmin=false,voiceRevision=0;
+window.addEventListener?.('vjbot-voice-changed',()=>{voiceRevision++;});
 function usesAntigravityOAuth(owner) {
   if (!owner) return false;
   const key='vjbot_ai_method:'+owner, saved=localStorage.getItem(key);
@@ -12,28 +14,46 @@ function antigravityConnectionId(owner) {
 async function apiFetch(path,options={}) {
   if(signedInUser) {
     const owner=signedInUser.user_id;
-    const inference=['/api/chat','/api/kaiwa/evaluate','/api/tts','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
-    let oauth,connectionId,method;
-    try {
-      method=inference&&path!=='/api/tts'?usesAntigravityOAuth(owner):false;
-      oauth=inference&&path!=='/api/tts'&&method;
-      connectionId=oauth?antigravityConnectionId(owner):null;
-      if(oauth&&!connectionId)return Response.json({detail:'Choose a saved Antigravity connection in Settings.',code:'api_profile_unavailable'},{status:409});
-    } catch { return Response.json({detail:'Connection preference storage is unavailable. Restore browser storage before using AI.',code:'api_profile_unavailable'},{status:409}); }
-    if(inference&&!oauth&&!window.VJProfiles)return Response.json({detail:'API profile support did not load. Reload before using AI.',code:'api_profile_unavailable'},{status:503});
-    let prepared=options;
-    try {
-      if(oauth) {
-        const headers=new Headers(options.headers);
-        headers.set('X-VJBot-Profile','antigravity_oauth:'+connectionId);
-        prepared={...options,headers};
-      } else if(window.VJProfiles)prepared=await VJProfiles.prepareRequest(path,options,owner);
-    } catch { return Response.json({detail:'The selected API profile is unavailable. Open Settings to choose or repair it.',code:'api_profile_unavailable'},{status:409}); }
+    const inference=['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
+    const speech=inference&&path==='/api/tts', revision=voiceRevision;
+    const managed=inference&&signedInUser.is_admin===true;
+    let oauth,connectionId,method,voiceChoice,prepared=options;
+    if(managed) {
+      const headers=new Headers(options.headers);
+      headers.set('X-VJBot-Profile','platform_openai');
+      prepared={...options,headers};
+    } else {
+      try {
+        method=inference&&!speech?usesAntigravityOAuth(owner):false;
+        oauth=Boolean(method);
+        connectionId=oauth?antigravityConnectionId(owner):null;
+        if(oauth&&!connectionId)return Response.json({detail:'Choose a saved Antigravity connection in Settings.',code:'api_profile_unavailable'},{status:409});
+      } catch { return Response.json({detail:'Connection preference storage is unavailable. Restore browser storage before using AI.',code:'api_profile_unavailable'},{status:409}); }
+      if(inference&&!oauth&&!window.VJProfiles)return Response.json({detail:'API profile support did not load. Reload before using AI.',code:'api_profile_unavailable'},{status:503});
+      if(speech) {
+        try {
+          const selected=VJProfiles.voice(owner);
+          if(!selected||selected.scope==='none')throw new Error('No voice selected');
+          voiceChoice=JSON.stringify(selected);
+        } catch { return Response.json({detail:'Choose an available voice account in Settings.',code:'api_profile_unavailable'},{status:409}); }
+      }
+      try {
+        if(oauth) {
+          const headers=new Headers(options.headers);
+          headers.set('X-VJBot-Profile','antigravity_oauth:'+connectionId);
+          prepared={...options,headers};
+        } else if(window.VJProfiles)prepared=await VJProfiles.prepareRequest(path,options,owner);
+      } catch { return Response.json({detail:'The selected API profile is unavailable. Open Settings to choose or repair it.',code:'api_profile_unavailable'},{status:409}); }
+      try {
+        if(speech&&(revision!==voiceRevision||voiceChoice!==JSON.stringify(VJProfiles.voice(owner))))
+          return Response.json({detail:'The voice connection changed. Press Listen again.',code:'api_profile_unavailable'},{status:409});
+        if(inference&&!speech&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
+          return Response.json({detail:'The selected AI connection changed. Send the request again.',code:'api_profile_unavailable'},{status:409});
+      } catch { return Response.json({detail:'Connection preference storage is unavailable.',code:'api_profile_unavailable'},{status:409}); }
+    }
     if(signedInUser?.user_id!==owner)return Response.json({detail:'The signed-in account changed.'},{status:401});
-    try {
-      if(inference&&path!=='/api/tts'&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
-        return Response.json({detail:'The selected AI connection changed. Send the request again.',code:'api_profile_unavailable'},{status:409});
-    } catch { return Response.json({detail:'Connection preference storage is unavailable.',code:'api_profile_unavailable'},{status:409}); }
+    if(inference&&(signedInUser.is_admin===true)!==managed)
+      return Response.json({detail:'AI access changed. Send the request again.',code:'api_profile_unavailable'},{status:409});
     const headers=new Headers(prepared.headers);
     headers.set('X-VJBot-Account',owner);
     const response=await fetch(path,{...prepared,headers});
@@ -46,6 +66,8 @@ async function apiFetch(path,options={}) {
 }
 
 function renderAccount(){
+  const owner=signedInUser?.user_id||null,admin=signedInUser?.is_admin===true;
+  if(owner!==renderedAccountOwner||admin!==renderedAccountAdmin){renderedAccountOwner=owner;renderedAccountAdmin=admin;window.dispatchEvent?.(new Event('vjbot-voice-changed'));}
   document.querySelectorAll?.('[data-enter=dashboard]').forEach(b=>b.textContent=signedInUser?'Vào học ↗':'Đăng nhập');
   const initial = document.getElementById('topbar-user-initial');
   if (initial) initial.textContent = (signedInUser?.name || '?').trim().charAt(0).toUpperCase();
@@ -155,7 +177,7 @@ async function setupAccount() {
     finally{submit.disabled=false;}
   });
   document.getElementById('auth-logout').addEventListener('click',async()=>{
-    try{const response=await fetch('/api/auth/logout',{method:'POST'});if(!response.ok)throw new Error('logout');sessionStorage.removeItem('vjbot_return_route');location.hash='#landing';location.reload();}
+    try{const response=await fetch('/api/auth/logout',{method:'POST'});if(!response.ok)throw new Error('logout');signedInUser=null;renderAccount();sessionStorage.removeItem('vjbot_return_route');location.hash='#landing';location.reload();}
     catch{status.textContent='Chưa đăng xuất được. Hãy thử lại.';}
   });
   try{

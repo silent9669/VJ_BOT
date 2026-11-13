@@ -62,24 +62,43 @@ function stopSpeech() {
   if (previous) mascotMgr.setState('idle');
   speechStatus('');
 }
+function speechIdentity() {
+  try {
+    if (typeof window.voiceIdentity !== 'function' || typeof window.selectedSpeechModel !== 'function') return null;
+    const identity = window.voiceIdentity();
+    return identity ? JSON.stringify([identity, window.selectedSpeechModel()]) : null;
+  }
+  catch { return null; }
+}
+
 
 async function playGeminiTTS(text, options = {}) {
   stopSpeech();
-  window.refreshSpeechModels?.();
+  globalThis.stopJapaneseInputs?.();
   window.speechSynthesis?.cancel();
   const clean = speechText(text, options);
   if (!/\p{L}/u.test(clean)) {
     speechStatus('No text to read.');
     return;
   }
+  const identity = speechIdentity();
+  if (identity === null) {speechStatus('Voice settings are unavailable. Reopen voice settings.'); return;}
+  const model = window.selectedSpeechModel();
+  if (!model) {speechStatus('Choose a voice account and model in Settings.'); return;}
   const controller = new AbortController();
-  const current = () => speechPlayback?.controller === controller;
+  const current = () => {
+    if (speechPlayback?.controller !== controller) return false;
+    if (speechIdentity() === identity) return true;
+    stopSpeech();
+    return false;
+  };
+  const language = options.japaneseOnly ? 'Japanese' : 'Vietnamese–Japanese';
   speechPlayback = {controller, audio: null};
-  speechStatus('Preparing Vietnamese–Japanese audio…', true);
+  speechStatus(`Preparing ${language} audio…`, true);
   try {
     const response = await apiFetch('/api/tts', {
       method: 'POST', signal: controller.signal,
-      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text: clean, speech_model:window.selectedSpeechModel?.() || 'gemini-3.8-flash-tts'})
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text: clean, speech_model:model})
     });
     if (!current()) return;
     const data = await response.json();
@@ -97,7 +116,7 @@ async function playGeminiTTS(text, options = {}) {
     await audio.play();
     if (!current()) {audio.pause(); return;}
     mascotMgr.setState('speaking');
-    speechStatus(`Reading Vietnamese–Japanese · Charon${data.model ? ' · ' + data.model : ''}`, true);
+    speechStatus(`Reading ${language}${data.voice ? ' · ' + data.voice : ''}${data.model ? ' · ' + data.model : ''}`, true);
   } catch (error) {
     if (!current()) return;
     stopSpeech();
@@ -109,3 +128,5 @@ document.getElementById('speech-stop').addEventListener('click', stopSpeech);
 window.addEventListener('pagehide', stopSpeech);
 window.addEventListener('hashchange', stopSpeech);
 window.addEventListener('popstate', stopSpeech);
+window.addEventListener('vjbot-voice-changed', stopSpeech);
+window.addEventListener('vjbot-account-ready', stopSpeech);

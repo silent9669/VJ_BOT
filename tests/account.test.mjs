@@ -10,7 +10,10 @@ function browser(fetch){
     return elements.get(id);
   };
   const configs=[],google={accounts:{id:{initialize(config){configs.push(config);},renderButton(){}}}};
-  const context=vm.createContext({fetch,google,crypto,Response,Headers,Date,JSON,setTimeout,location:{reload(){reloads++;}},document:{getElementById:element},localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}});
+  const events=new EventTarget();
+  const context=vm.createContext({fetch,google,crypto,Response,Headers,Date,JSON,Event,setTimeout,
+    addEventListener:events.addEventListener.bind(events),dispatchEvent:events.dispatchEvent.bind(events),
+    location:{reload(){reloads++;}},document:{getElementById:element},localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}});
   context.window=context;vm.runInContext(readFileSync('static/account.js','utf8'),context);
   return {context,element,configs,storage,reloads:()=>reloads};
 }
@@ -100,13 +103,13 @@ test('OAuth inference pins the chosen opaque connection while read-aloud keeps i
   await b.context.setupAccount();
   b.storage.set('vjbot_ai_method:google:first','antigravity');
   b.storage.set('vjbot_ai_oauth:google:first','opaque-first');
-  b.context.VJProfiles={prepareRequest:async(_path,options)=>({...options,headers:{'X-VJBot-Profile':'server:voice-profile'}})};
+  b.context.VJProfiles={voice:()=>({scope:'server',id:'voice-profile'}),prepareRequest:async(_path,options)=>({...options,headers:{'X-VJBot-Profile':'voice-profile'}})};
   await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
   await b.context.apiFetch('/api/kaiwa/evaluate',{method:'POST',body:'{}'});
   await b.context.apiFetch('/api/tts',{method:'POST',body:'{}'});
   assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
   assert.equal(new Headers(requests[2].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
-  assert.equal(new Headers(requests[3].options.headers).get('X-VJBot-Profile'),'server:voice-profile');
+  assert.equal(new Headers(requests[3].options.headers).get('X-VJBot-Profile'),'voice-profile');
 });
 
 test('missing, cleared and malformed OAuth choices fail closed instead of borrowing server active', async () => {
@@ -150,4 +153,121 @@ test('switching method while an API profile loads blocks the stale inference req
   release();
   assert.equal((await pending).status,409);
   assert.equal(calls,1);
+});
+
+test('voice choices and owner changes are rechecked after local or server credential preparation', async () => {
+  for (const scope of ['local','server']) {
+    for (const changed of ['voice','owner','round-trip']) {
+      let release,started,calls=0;
+      const ready=new Promise(resolve=>{started=resolve;});
+      const b=browser(async()=>{calls++;return Response.json({user:{name:'Learner',user_id:'alice'}});});
+      await b.context.setupAccount();
+      let selected={scope,id:'voice-a'};
+      b.context.VJProfiles={
+        voice:()=>selected,
+        prepareRequest:async(_path,options)=>{started();await new Promise(resolve=>{release=resolve;});return options;}
+      };
+      const pending=b.context.apiFetch('/api/tts',{method:'POST',body:'{}'});
+      await ready;
+      if(changed==='owner')vm.runInContext("signedInUser={user_id:'bob'}",b.context);
+      else {
+        selected={scope,id:'voice-b'};
+        b.context.dispatchEvent(new Event('vjbot-voice-changed'));
+        if(changed==='round-trip')selected={scope,id:'voice-a'};
+      }
+      release();
+      assert.equal((await pending).status,changed==='owner'?401:409,scope+'/'+changed);
+      assert.equal(calls,1);
+    }
+  }
+});
+
+test('missing or corrupt voice choice fails closed even with a working chat profile', async () => {
+  for(const voice of [()=>null,()=>({scope:'none',id:''}),()=>{throw new Error('corrupt');}]) {
+    let calls=0,prepared=0;
+    const b=browser(async()=>{calls++;return Response.json({user:{name:'Learner',user_id:'alice'}});});
+    await b.context.setupAccount();
+    b.context.VJProfiles={voice,prepareRequest:async(_path,options)=>{prepared++;return options;}};
+    assert.equal((await b.context.apiFetch('/api/tts',{method:'POST',body:'{}'})).status,409);
+    assert.equal(calls,1);assert.equal(prepared,0);
+  }
+});
+
+test('changing API or OAuth chat while voice prepares does not rotate or cancel the pinned voice', async () => {
+  let release,started;
+  const ready=new Promise(resolve=>{started=resolve;});
+  const requests=[];
+  const b=browser(async(path,options)=>{requests.push({path,options});return Response.json({user:{name:'Learner',user_id:'alice'}});});
+  await b.context.setupAccount();
+  b.context.VJProfiles={
+    voice:()=>({scope:'server',id:'voice-b'}),
+    prepareRequest:async(_path,options)=>{started();await new Promise(resolve=>{release=resolve;});return {...options,headers:{'X-VJBot-Profile':'voice-b'}};}
+  };
+  const pending=b.context.apiFetch('/api/tts',{method:'POST',body:'{}'});
+  await ready;
+  b.storage.set('vjbot_ai_method:alice','antigravity');
+  b.storage.set('vjbot_ai_oauth:alice','oauth-chat');
+  release();
+  assert.equal((await pending).status,200);
+  assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Profile'),'voice-b');
+  assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Account'),'alice');
+});
+
+test('account rendering invalidates voice on owner or administrator-role changes, not routine renders', async () => {
+  const b=browser(async()=>Response.json({user:{name:'Learner',user_id:'alice'}}));
+  let changes=0;b.context.addEventListener('vjbot-voice-changed',()=>{changes++;});
+  await b.context.setupAccount();
+  assert.equal(changes,1);
+  b.context.renderAccount();assert.equal(changes,1);
+  vm.runInContext("signedInUser={user_id:'bob'};renderAccount()",b.context);
+  assert.equal(changes,2);
+  vm.runInContext("signedInUser.is_admin=true;renderAccount()",b.context);
+  assert.equal(changes,3);
+  b.context.renderAccount();assert.equal(changes,3);
+  vm.runInContext("signedInUser.is_admin=false;renderAccount()",b.context);
+  assert.equal(changes,4);
+  vm.runInContext('signedInUser=null;renderAccount()',b.context);
+  assert.equal(changes,5);
+});
+
+test('administrators send managed AI requests without reading private API, OAuth or voice storage',async()=>{
+  const calls=[];
+  const b=browser(async(path,options)=>{
+    if(path.endsWith('/session'))return Response.json({user:{user_id:'alice',name:'Admin',is_admin:true}});
+    calls.push({path,options});return Response.json({ok:true});
+  });
+  await b.context.setupAccount();
+  b.storage.set('vjbot_ai_method:alice','antigravity');
+  b.storage.set('vjbot_ai_oauth:alice','saved-private-oauth');
+  const before=[...b.storage];
+  b.context.localStorage.getItem=()=>{throw new Error('Managed AI must not read personal preferences');};
+  b.context.VJProfiles={
+    prepareRequest(){throw new Error('Managed AI must not read credentials');},
+    voice(){throw new Error('Managed voice must not read saved voice');}
+  };
+  for(const path of ['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/ai/test']){
+    const body=JSON.stringify({message:'こんにちは',text:'こんにちは'});
+    assert.equal((await b.context.apiFetch(path,{method:'POST',body})).status,200);
+    const sent=calls.at(-1),headers=new Headers(sent.options.headers);
+    assert.equal(sent.options.body,body);
+    assert.equal(headers.get('X-VJBot-Account'),'alice');
+    assert.equal(headers.get('X-VJBot-Profile'),'platform_openai');
+  }
+  assert.equal(calls.length,5);assert.deepEqual([...b.storage],before);
+});
+
+test('a role change while private credentials load blocks the stale request before dispatch',async()=>{
+  const calls=[];
+  const b=browser(async(path,options)=>{
+    if(path.endsWith('/session'))return Response.json({user:{user_id:'alice',name:'Learner'}});
+    calls.push({path,options});return Response.json({});
+  });
+  await b.context.setupAccount();
+  let release;
+  b.context.VJProfiles={prepareRequest:()=>new Promise(resolve=>{release=resolve;})};
+  const request=b.context.apiFetch('/api/chat',{method:'POST',body:JSON.stringify({message:'こんにちは'})});
+  vm.runInContext('signedInUser.is_admin=true',b.context);
+  release({method:'POST',body:JSON.stringify({api_connection:{api_key:'private-must-not-leave'}})});
+  assert.equal((await request).status,409);
+  assert.equal(calls.length,0);
 });

@@ -19,6 +19,7 @@ class Element {
   append(...children){for(const child of children){child.parentElement=this;this.childNodes.push(child);}}
   appendChild(child){this.append(child);return child;}
   prepend(child){child.parentElement=this;this.childNodes.unshift(child);}
+  before(child){if(this.parentElement){child.parentElement=this.parentElement;this.parentElement.childNodes.splice(this.parentElement.childNodes.indexOf(this),0,child);}}
   replaceChildren(...children){for(const child of this.childNodes)child.parentElement=null;this.childNodes=[];this.append(...children);}
   remove(){if(this.parentElement){this.parentElement.childNodes=this.parentElement.childNodes.filter(c=>c!==this);this.parentElement=null;}}
   get textContent(){return this.childNodes.map(n=>n.textContent).join('');}
@@ -167,7 +168,7 @@ function lesson(){
   d.add('topbar-view-title').textContent='Bài học';
   const c=vm.createContext({document:d.document,window:{},location:{hash:''},crypto,curriculumView:'plan',studyPlans:new Map(),currentLesson:null,activeCurriculumSkill:'grammar',activeCurriculumLevel:'N5',soundEngine:{},playGeminiTTS(){},mountCompletion(){},addFeatureLessonAction(){},renderLessonOutline(){},returnToCourse(){},openStudyStep(){},speechReading:(word)=>word,lessonQuestions:()=>[],activityId:item=>item.id,apiFetch:async()=>Response.json({})});
   vm.runInContext(readFileSync('static/learning.js','utf8'),c);
-  vm.runInContext(app.slice(app.indexOf('function showLessonDetail('),app.indexOf('// 10. FLASHCARDS CONTROLLER')),c);
+  vm.runInContext(app.slice(app.indexOf('function lessonExampleHtml('),app.indexOf('// 10. FLASHCARDS CONTROLLER')),c);
   vm.runInContext(readFileSync('static/teacher-context.js','utf8'),c);
   c.switchTab=(_tab,route)=>{c.rememberTeacherScreen();c.location.hash=`#curriculum/${route.level}/lesson/${route.skill}/${route.id}`;c.markTeacherScreen();return true;};
   return {...d,c};
@@ -301,4 +302,74 @@ test('legacy hidden level picker handlers still navigate through canonical featu
   vm.runInContext(app.slice(app.indexOf('  // Quiz Level Picker buttons'),app.indexOf('  const btnQuizRestart =')),c);
   await b.element('fc-level-picker-N4').click();await b.element('quiz-level-picker-N4').click();
   assert.deepEqual(destinations,[{tab:'flashcards',level:'N4'},{tab:'quiz',level:'N4'}]);
+});
+
+test('managed administrator practice preserves canonical grading without reading private connection preferences',async()=>{
+  const b=lesson(),sent=[];
+  const questions=[{q:'Chọn quan sát trực tiếp?',opts:['Không có gió lạnh','Phải thay máy'],ans:'Không có gió lạnh',item_id:'q0',explanation:'Dấu hiệu không phải kết luận.'}];
+  b.c.lessonQuestions=()=>questions;b.c.signedInUser={user_id:'learner',is_admin:true};b.c.AbortController=AbortController;b.c.AbortSignal=AbortSignal;
+  b.c.usesAntigravityOAuth=()=>{throw new Error('Managed practice must not read private preferences');};
+  b.c.apiFetch=async(path,options)=>{
+    if(path!=='/api/practice/coach')return Response.json({});
+    const body=JSON.parse(options.body);sent.push(body);
+    return Response.json({reply:'Hãy phân biệt điều nhìn thấy với kết luận.',action:body.action,item_id:'q0',...(body.action==='feedback'?{answer:questions[0].ans,correct:false}:{})});
+  };
+  vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
+  b.c.showLessonDetail({id:'practice',title:'Bài tập'},'N3','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  await b.document.querySelector('.practice-coach button').click();
+  assert.equal(sent[0].action,'hint');assert.equal(sent[0].item_id,'q0');assert.equal(sent[0].question_index,0);
+  assert.equal(Object.hasOwn(sent[0],'answer_index'),false);
+  await b.document.querySelectorAll('.practice-options input')[1].dispatch('change');
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  await b.document.querySelector('.practice-coach button').click();
+  assert.equal(sent[1].answer_index,1);assert.equal(sent[1].action,'feedback');
+  assert.match(b.document.querySelector('.practice-feedback').textContent,/Không có gió lạnh/);
+  assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'false');
+  assert.equal(b.document.querySelector('.practice-coach-reply').textContent,'Hãy phân biệt điều nhìn thấy với kết luận.');
+});
+
+test('submitting an answer cancels its old hint and rejects a late response without blocking continuation',async()=>{
+  const b=lesson(),pending=deferred();let signal;
+  b.c.lessonQuestions=()=>[{q:'第一?',opts:['A','B'],ans:'A',item_id:'q0'}];
+  b.c.signedInUser={user_id:'learner'};b.c.AbortController=AbortController;b.c.AbortSignal=AbortSignal;
+  b.c.apiFetch=async(path,options)=>{if(path!=='/api/practice/coach')return Response.json({});signal=options.signal;return pending.promise;};
+  vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
+  b.c.showLessonDetail({id:'practice',title:'Bài tập'},'N3','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const hint=b.document.querySelector('.practice-coach button').click();
+  await b.document.querySelector('.practice-options input').dispatch('change');
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  assert.equal(signal.aborted,true);
+  pending.resolve(Response.json({reply:'Old hint must not appear',item_id:'q0',action:'hint'}));await hint;
+  assert.equal(b.document.querySelector('.practice-coach-reply').textContent,'');
+  assert.equal(b.document.querySelector('.practice-session .practice-primary').disabled,false);
+});
+
+test('role changes clear pending and completed coaching while unrelated voice changes keep the current hint',async()=>{
+  const b=lesson(),pending=deferred(),listeners=new Map();let signal,held=true;
+  b.c.lessonQuestions=()=>[{q:'第一?',opts:['A','B'],ans:'A',item_id:'q0'}];
+  b.c.signedInUser={user_id:'learner'};b.c.AbortController=AbortController;b.c.AbortSignal=AbortSignal;
+  b.c.addEventListener=(name,handler)=>listeners.set(name,handler);
+  b.c.apiFetch=async(path,options)=>{
+    if(path!=='/api/practice/coach')return Response.json({});
+    signal=options.signal;
+    return held?pending.promise:Response.json({reply:'Gợi ý theo quyền hiện tại.',item_id:'q0',action:'hint'});
+  };
+  vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
+  b.c.showLessonDetail({id:'practice',title:'Bài tập'},'N3','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const button=b.document.querySelector('.practice-coach button'),output=b.document.querySelector('.practice-coach-reply');
+  const hint=button.click();
+  listeners.get('vjbot-voice-changed')();
+  assert.equal(signal.aborted,false);assert.equal(button.disabled,true);
+  b.c.signedInUser.is_admin=true;listeners.get('vjbot-voice-changed')();
+  assert.equal(signal.aborted,true);assert.equal(output.hidden,true);
+  assert.equal(output.textContent,'');assert.equal(button.disabled,false);
+  pending.resolve(Response.json({reply:'Phản hồi quyền cũ.',item_id:'q0',action:'hint'}));await hint;
+  assert.equal(output.textContent,'');
+  held=false;await button.click();assert.equal(output.textContent,'Gợi ý theo quyền hiện tại.');
+  b.c.signedInUser.is_admin=false;listeners.get('vjbot-voice-changed')();
+  assert.equal(output.hidden,true);assert.equal(output.textContent,'');
+  await button.click();assert.equal(output.textContent,'Gợi ý theo quyền hiện tại.');
 });

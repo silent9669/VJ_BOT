@@ -1,7 +1,7 @@
 // Browser storage contains only per-user connection preferences, never OAuth secrets.
 (function () {
   const el = id => document.getElementById(id), root = '/api/ai/oauth/antigravity';
-  const owner = () => signedInUser?.user_id;
+  const owner = () => signedInUser?.is_admin === true ? null : signedInUser?.user_id;
   const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(id);
   const selected = () => window.antigravityConnectionId?.(owner());
   let rows = [], rowsOwner = null, rendering = 0, revision = 0, busy = false;
@@ -18,6 +18,10 @@
     return id === owner() && connection === selected() && version === revision && usesAntigravityOAuth(id);
   }
   function paint() {
+    if (signedInUser?.is_admin === true) {
+      el('ai-form').hidden = el('ai-oauth-panel').hidden = true;
+      return;
+    }
     if (panelOwner !== owner()) { panelOwner = owner(); panel = null; }
     const oauth = panel ? panel === 'oauth' : usesAntigravityOAuth(owner());
     el('ai-form').hidden = oauth;
@@ -40,6 +44,7 @@
     localStorage.setItem('vjbot_ai_oauth:' + id, connection);
     localStorage.setItem('vjbot_ai_method:' + id, 'antigravity');
     revision++; loaded = ''; panel = null; panelOwner = id; paint();
+    window.cancelPracticeCoach?.();
     el('ai-oauth-manage').open = false;
     window.refreshSavedConnections?.(); window.checkAiReady?.();
   }
@@ -84,7 +89,7 @@
     el('ai-oauth-test-hint').hidden = !changed;
     el('ai-oauth-model-hint').textContent = changed
       ? 'New selection. Test and save it before using it in chat.'
-      : 'This model is saved for this account. You can start chatting above.';
+      : '';
   }
   async function catalog(connection, savedModel = '') {
     const id = owner(), version = revision, request = ++catalogRequest;
@@ -98,7 +103,7 @@
     }
     if (savedModel) select.value = savedModel;
     modelActionState();
-    el('ai-oauth-status').textContent = `${data.models.length} catalog candidates. ${savedModel ? 'Saved chat model: '+savedModel+'.' : 'Choose and test a chat model.'}`;
+    el('ai-oauth-status').textContent = `${data.models.length} models listed · access not checked.`;
   }
   async function usage() {
     const id = owner(), connection = selected(), version = revision, request = ++usageRequest;
@@ -203,7 +208,7 @@
       if (data.pending) startPolling(data.pending, id); else stopPolling();
       el('ai-oauth-status').textContent = data.pending ? 'Waiting for Google sign-in. Existing saved connections remain available.'
         : !data.configured ? 'The server needs a dedicated Antigravity gateway. API-key connections remain available.'
-        : row && oauth ? row.state === 'active' ? `Saved chat model: ${row.model || 'not selected'}.` : 'This account needs attention. Add another account or delete this connection.'
+        : row && oauth ? row.state === 'active' ? '' : 'This account needs attention. Add another account or delete this connection.'
         : connection && oauth ? 'The selected OAuth connection is unavailable. Choose another; no fallback is used.'
         : 'Sign in to add an Antigravity account. Existing connections are kept.';
       const identity = `${id}:${connection}`;
@@ -308,6 +313,7 @@
   window.showAiConnectionForm = showPanel;
   window.aiConnectionChanged = () => {
     revision++; rendering++; loaded = ''; panel = null; paint();
+    window.cancelPracticeCoach?.();
     el('ai-oauth-model').replaceChildren(); el('ai-oauth-usage-models').replaceChildren();
   };
   window.renderAntigravityOAuth = render;

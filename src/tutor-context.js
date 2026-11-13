@@ -41,12 +41,14 @@ export function catalogLesson(catalog, reference) {
 }
 
 // Only the compact overview and one explicitly selected canonical item enter the model request.
-export function groundLesson(lesson, focus = null) {
-  if (!lesson || !lesson.overview) return null;
+export function groundLesson(lesson, focus = null, view = 'checks') {
+  if (!lesson || !lesson.overview || !['checks', 'exam'].includes(view)
+    || view === 'exam' && focus?.kind !== 'question') return null;
   let selected = null;
   if (focus !== null) {
     if (!validFocusReference(focus)) return null;
-    const items = lesson[{word: 'words', example: 'examples', question: 'questions'}[focus.kind]];
+    const items = lesson[focus.kind === 'question' && view === 'exam' ? 'exam_questions'
+      : {word: 'words', example: 'examples', question: 'questions'}[focus.kind]];
     if (!Array.isArray(items) || focus.index >= items.length) return null;
     const item = items[focus.index];
     selected = {kind: focus.kind, index: focus.index, item};
@@ -55,7 +57,8 @@ export function groundLesson(lesson, focus = null) {
     }
   }
   const context = {id: lesson.id, level: lesson.level, title: lesson.title, goal: lesson.goal,
-    overview: lesson.overview, sources: lesson.sources, reference_url: lesson.reference_url, focus: selected};
+    overview: lesson.overview, sources: lesson.sources, reference_url: lesson.reference_url, focus: selected,
+    ...(view === 'exam' ? {view} : {})};
   // Fail closed on an oversized canonical object rather than sending malformed partial JSON.
   return JSON.stringify(context).length <= 48000 ? context : null;
 }

@@ -311,6 +311,62 @@ test('quick requests ground word five, listening example nine and question three
   assert.equal(calls[2].envelope.reference.lesson.focus.item.item_id, 'sentences:N5:1:3');
 });
 
+test('exam follow-ups use original option positions, retain the view across turns and bind retries to it', async t => {
+  const {env, send} = await authenticated(t);
+  const canonical = Object.values(catalogs.N5.lessons).find(entry => entry.exam_questions?.length > 5 && entry.exam_questions.some((question, index) =>
+    entry.questions[index] && JSON.stringify(question.opts) !== JSON.stringify(entry.questions[index].opts)
+      && question.opts.indexOf(question.ans) !== entry.questions[index].opts.indexOf(entry.questions[index].ans)));
+  assert.ok(canonical, 'real exam and normalized checks have different correct-option positions');
+  const index = canonical.exam_questions.findIndex((question, index) => canonical.questions[index]
+    && question.opts.indexOf(question.ans) !== canonical.questions[index].opts.indexOf(canonical.questions[index].ans));
+  const lesson = {id: canonical.id, level: 'N5'}, focus = {kind: 'question', index};
+  const screen = {route: 'study/exam-view', title: 'Hỏi về câu thi', level: 'N5', text: ''};
+  const body = {request_id: crypto.randomUUID(), channel: 'quick', lesson, focus, view: 'exam', screen, message: 'Em đọc các lựa chọn thế nào?'};
+  let result = structured('Em hãy so sánh các lựa chọn.', 'probe', 'Em thấy điểm khác nhau nào?');
+  const calls = provider(t, () => providerResponse(result));
+  await successful(await send(body), result.reply);
+  const selected = () => calls.at(-1).envelope.reference.lesson.focus.item;
+  assert.deepEqual(selected(), canonical.exam_questions[index]);
+  assert.notDeepEqual(selected().opts, canonical.questions[index].opts);
+  const snapshot = await saved(env, USER, 'quick:' + screen.route);
+  await successful(await send(body), result.reply);
+  assert.equal(calls.length, 1);
+  assert.equal((await send({...body, view: 'checks'})).status, 409);
+  assert.equal((await send({...body, view: undefined})).status, 409);
+  assert.deepEqual(await saved(env, USER, 'quick:' + screen.route), snapshot);
+  result = structured('Em xem lại sự khác nhau ấy nhé.', 'hint');
+  await successful(await send({channel: 'quick', lesson, screen, intent: 'hint', message: 'Thầy gợi ý thêm nhé.'}), result.reply);
+  assert.deepEqual(selected(), canonical.exam_questions[index]);
+  assert.equal(calls.at(-1).envelope.reference.teaching.state.probe, teachingState(snapshot).probe);
+  result = structured('Ta xem phần luyện trong bài.', 'probe', 'Em thử đọc câu luyện nhé?');
+  await successful(await send({...body, request_id: crypto.randomUUID(), view: 'checks'}), result.reply);
+  assert.deepEqual(selected(), canonical.questions[index]);
+  assert.equal(calls.at(-1).envelope.reference.teaching.state, null);
+  const last = canonical.exam_questions.length - 1;
+  assert.ok(last >= 5);
+  await successful(await send({...body, request_id: crypto.randomUUID(), focus: {kind: 'question', index: last}}), result.reply);
+  assert.deepEqual(selected(), canonical.exam_questions[last]);
+});
+
+test('invalid exam views and forged question answer fields fail before inference or persistence', async t => {
+  const {env, send} = await authenticated(t);
+  const calls = provider(t, () => providerResponse(structured('Không được gọi', 'probe', ORIGINAL_PROBE)));
+  const canonical = Object.values(catalogs.N5.lessons).find(entry => entry.exam_questions?.length > 5);
+  assert.ok(canonical);
+  const lesson = {id: canonical.id, level: 'N5'}, focus = {kind: 'question', index: 0};
+  for (const change of [
+    {view: 'other'}, {view: null}, {view: 'exam', focus: null},
+    {view: 'exam', focus: {kind: 'example', index: 0}},
+    {view: 'exam', lesson: undefined},
+    {view: 'exam', focus: {...focus, answer_index: 0}},
+    {view: 'exam', focus: {...focus, item: {opts: ['forged'], ans: 'forged'}}},
+    {view: 'exam', focus: {kind: 'question', index: canonical.exam_questions.length}}
+  ]) assert.equal((await send({lesson, focus, message: 'Giúp em', ...change})).status, 400);
+  assert.equal(calls.length, 0);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM tutor_sessions').first()).n, 0);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM tutor_requests').first()).n, 0);
+});
+
 test('forged, malformed and out-of-range focus references are rejected before inference', async t => {
   const {env, send} = await authenticated(t);
   const calls = provider(t, () => providerResponse(structured('未使用', 'probe', ORIGINAL_PROBE)));

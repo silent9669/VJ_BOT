@@ -16,8 +16,13 @@ async function resolveRequest(env, body) {
   const suppliedLesson = body.lesson ?? null, suppliedFocus = body.focus ?? null;
   if (suppliedLesson !== null && !validLessonReference(suppliedLesson)) return {response: failure('Invalid lesson reference.')};
   if (suppliedFocus !== null && (!suppliedLesson || !validFocusReference(suppliedFocus))) return {response: failure('Invalid lesson focus.')};
+  if (body.view !== undefined && (!['checks', 'exam'].includes(body.view) || !suppliedLesson)
+    || body.view === 'exam' && suppliedFocus?.kind !== 'question') return {response: failure('Invalid lesson view.')};
   const reference = suppliedLesson ? {id: suppliedLesson.id, level: suppliedLesson.level} : null;
   const focus = suppliedFocus ? {kind: suppliedFocus.kind, index: suppliedFocus.index} : null;
+  // An explicit item without a view remains an ordinary lesson check. A turn without
+  // either selector may continue the canonical item and view already in this session.
+  const view = body.view ?? (focus ? 'checks' : null);
   const screen = cleanScreen(body.screen);
   if (body.screen != null && !screen) return {response: failure('Invalid screen context.')};
   const channel = body.channel || 'chat';
@@ -28,17 +33,19 @@ async function resolveRequest(env, body) {
   if (!catalog) return {response: failure('The lesson catalog is unavailable. Please try again later.', 503)};
   const lesson = reference ? catalogLesson(catalog, reference) : null;
   if (reference && !lesson) return {response: failure('Unknown lesson reference.')};
-  if (focus && !groundLesson(lesson, focus)) return {response: failure('The selected item does not belong to this lesson.')};
+  if (focus && !groundLesson(lesson, focus, view)) return {response: failure('The selected item does not belong to this lesson.')};
   const scope = conversationScope(channel, lesson, screen);
-  return {message, intent, requestId, reference, focus, screen, level, catalog, lesson, scope};
+  return {message, intent, requestId, reference, focus, view, screen, level, catalog, lesson, scope};
 }
 
 function currentTeaching(session, request) {
   const prior = request.intent === 'restart' ? null : session.state;
   const sameLesson = prior?.lesson?.id === request.lesson?.id && prior?.lesson?.level === request.lesson?.level;
   const focus = request.focus || (sameLesson ? prior?.focus : null) || null;
-  const changed = prior && (!sameLesson || request.focus && (request.focus.kind !== prior.focus?.kind || request.focus.index !== prior.focus?.index));
-  return {focus, previous: changed ? null : prior};
+  const view = request.view ?? (sameLesson ? prior?.view : null) ?? 'checks';
+  const changed = prior && (!sameLesson || view !== (prior.view ?? 'checks')
+    || request.focus && (request.focus.kind !== prior.focus?.kind || request.focus.index !== prior.focus?.index));
+  return {focus, view, previous: changed ? null : prior};
 }
 
 async function dialogue(env, userId, scope, session, restart) {
@@ -49,8 +56,8 @@ async function dialogue(env, userId, scope, session, restart) {
 }
 
 async function generateTurn(env, userId, request, session, token) {
-  const {focus, previous} = currentTeaching(session, request);
-  const lesson = request.lesson ? groundLesson(request.lesson, focus) : null;
+  const {focus, view, previous} = currentTeaching(session, request);
+  const lesson = request.lesson ? groundLesson(request.lesson, focus, view) : null;
   if (request.lesson && !lesson) return {response: failure('The lesson changed. Select the item again.', 409)};
   const {history, historyAfter} = await dialogue(env, userId, request.scope, session, request.intent === 'restart');
   const learner = await learnerSnapshot(env, userId, request.level, request.catalog);
@@ -63,7 +70,9 @@ async function generateTurn(env, userId, request, session, token) {
   if (asked.response) return {response: asked.response};
   const result = parseTutorReply(asked.text, {intent: request.intent, previous});
   if (!result) return {response: failure('The tutor returned an incomplete or invalid teaching response. Please retry.', 503)};
-  return {result, historyAfter, state: nextTeachingState(previous, result, request.intent, request.lesson, focus)};
+  const state = nextTeachingState(previous, result, request.intent, request.lesson, focus);
+  if (view === 'exam') state.view = view;
+  return {result, historyAfter, state};
 }
 
 export async function tutorChat(request, env) {
@@ -72,13 +81,13 @@ export async function tutorChat(request, env) {
   if (!userId) return failure('user_id required');
   const resolved = await resolveRequest(env, body);
   if (resolved.response) return resolved.response;
-  const {scope, requestId, lesson, intent, message, reference, focus} = resolved;
+  const {scope, requestId, lesson, intent, message, reference, focus, view} = resolved;
   // Bind retries to the explicit connection choice; only this digest reaches persistence.
   const selection = {profileId: profileId ?? null, device: body.api_connection === undefined ? null : {
     protocol: body.api_connection.protocol, base_url: body.api_connection.base_url,
     model: body.api_connection.model, api_key: body.api_connection.api_key
   }};
-  const fingerprint = await requestFingerprint({scope, message, intent, lesson: reference, focus, selection});
+  const fingerprint = await requestFingerprint({scope, message, intent, lesson: reference, focus, view, selection});
   const claim = await claimTutorRequest(env, userId, scope, requestId, fingerprint);
   if (claim.error) return failure(claim.error, 409);
   if (claim.cached !== undefined) return json({reply: claim.cached, response: claim.cached});

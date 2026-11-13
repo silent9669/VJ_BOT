@@ -351,7 +351,7 @@
 
               <!-- Quick Response Chips with Furigana Toggle & Bookmark -->
               <div id="chat-ai-gate" class="chat-ai-gate" hidden>
-                <h2>Kết nối API để chat với thầy Lâm</h2>
+                <h2 id="chat-gate-title">Kết nối API để chat với thầy Lâm</h2>
                 <button type="button" class="public-cta" id="chat-gate-open">Thêm API</button>
               </div>
               <div class="chat-chips-bar" id="chat-prompt-chips">
@@ -473,7 +473,7 @@
                       <button type="button" class="card-audio-btn" id="btn-fc-audio-front" title="Nghe phát âm">Nghe</button>
                     </div>
                     <div class="card-japanese-text" id="fc-front-text">私</div>
-                    <div class="card-reading-text" id="fc-reading-text">わたし (watashi)</div>
+                    <details class="lesson-disclosure flashcard-reading"><summary>Cách đọc</summary><div class="card-reading-text lesson-aid-content" id="fc-reading-text">わたし (watashi)</div></details>
                   </div>
 
                   <!-- Back Side -->
@@ -530,8 +530,9 @@
                   <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-prompt" title="Nghe Sensei nói">Nghe</button>
                 </div>
                 <p id="kaiwa-context" class="lesson-japanese-passage" lang="ja" hidden></p><div class="kaiwa-prompt-japanese" id="kaiwa-prompt-jp" lang="ja">いらっしゃいませ！お弁当温めますか？</div>
-                <button type="button" class="stage-btn" id="kaiwa-next-prompt">Câu tiếp →</button><p id="kaiwa-prompt-hint"></p>
-                <div class="kaiwa-prompt-vietnamese" id="kaiwa-prompt-vi">Xin chào quý khách! Cơm hộp có cần hâm nóng không ạ?</div>
+                <button type="button" class="stage-btn" id="kaiwa-next-prompt">Câu tiếp →</button>
+                <details class="lesson-disclosure"><summary>Gợi ý trả lời</summary><p class="lesson-aid-content" id="kaiwa-prompt-hint"></p></details>
+                <details class="lesson-disclosure"><summary>Nghĩa của câu</summary><div class="kaiwa-prompt-vietnamese lesson-aid-content" id="kaiwa-prompt-vi">Xin chào quý khách! Cơm hộp có cần hâm nóng không ạ?</div></details>
               </div>
 
               <!-- User Response Input & Mic -->
@@ -739,7 +740,7 @@
         </section>
         <section class="tab-panel" id="panel-settings" hidden>
           <div class="settings-container settings-layout"><h1>Cài đặt</h1>
-            <nav class="settings-nav" aria-label="Mục cài đặt"><button type="button" data-settings="account" data-target="settings-account-card" aria-current="true">Tài khoản</button><button type="button" data-settings="api" data-target="ai-card">Kết nối AI</button><button type="button" data-settings="admin" data-target="settings-admin-ai" id="settings-admin-nav" hidden>Model quản trị</button><button type="button" data-settings="sound" data-target="settings-sound-card">Âm thanh</button><button type="button" data-settings="data" data-target="settings-danger-card">Dữ liệu</button></nav>
+            <nav class="settings-nav" aria-label="Mục cài đặt"><button type="button" data-settings="account" data-target="settings-account-card" aria-current="true">Tài khoản</button><button type="button" data-settings="api" data-target="ai-card" id="settings-api-nav">Kết nối AI</button><button type="button" data-settings="admin" data-target="settings-admin-ai" id="settings-admin-nav" hidden>Model quản trị</button><button type="button" data-settings="sound" data-target="settings-sound-card">Âm thanh</button><button type="button" data-settings="data" data-target="settings-danger-card">Dữ liệu</button></nav>
             <div class="settings-stack">
               <section class="settings-card" id="settings-admin-ai" hidden>
                 <header class="card-head"><h2 class="card-title">Model quản trị</h2></header>
@@ -760,7 +761,6 @@
               <section class="settings-card ai-settings-card" id="ai-card">
                 <header class="card-head"><h2 class="card-title">Kết nối AI</h2></header>
                 <p id="ai-source" class="ai-source" role="status"></p>
-                <div id="ai-platform" class="ai-platform" hidden><span id="ai-platform-model" hidden></span><a class="stage-btn" href="#settings/admin">Model &amp; giọng nói ↗</a><button type="button" class="stage-btn" id="ai-platform-test">Kiểm tra kết nối</button></div>
                 <section class="ai-current" aria-label="Current chat setup">
                   <div class="ai-current-heading"><span class="ai-current-dot" aria-hidden="true"></span><span class="status-pill" id="ai-pill" data-state="none">No account selected</span></div>
                   <strong id="ai-current-model">Choose an account to get started</strong>
@@ -781,18 +781,17 @@
                     <details><summary>Callback did not open?</summary><p class="ai-field-hint">For a remote gateway, paste the final localhost callback address after Google sign-in. Do not paste account passwords or API keys.</p><label>Callback URL<input type="url" id="ai-oauth-callback-url" autocomplete="off" spellcheck="false"></label><button type="button" class="stage-btn" id="ai-oauth-callback-submit">Submit callback</button></details>
                   </div>
                   <div id="ai-oauth-selection" class="ai-form" hidden>
-                    <label><span class="ai-section-label">Choose a different model</span><select id="ai-oauth-model" aria-describedby="ai-oauth-model-hint"></select></label>
-                    <p class="ai-field-hint" id="ai-oauth-model-hint">The model above is saved for this account. Change it here when needed.</p>
-                    <div class="ai-actions ai-model-apply"><button type="button" class="public-cta" id="ai-oauth-use" disabled>Test &amp; save this model</button><button type="button" class="stage-btn" id="ai-oauth-refresh">Reload model list</button></div>
+                    <div class="ai-section-heading"><label for="ai-oauth-model">Chat model</label><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-refresh">Refresh models</button></div>
+                    <select id="ai-oauth-model" aria-describedby="ai-oauth-model-hint"></select>
+                    <p class="ai-field-hint" id="ai-oauth-model-hint"></p>
+                    <div class="ai-actions ai-model-apply"><button type="button" class="public-cta" id="ai-oauth-use" disabled>Test &amp; save model</button></div>
                     <p class="ai-field-hint" id="ai-oauth-test-hint" hidden>Testing sends one request. Quota or charges may apply. Your current model stays active if the test fails.</p>
                   </div>
                   <section id="ai-oauth-usage" class="ai-usage" aria-labelledby="ai-oauth-usage-title" hidden>
-                    <div class="ai-actions"><h3 id="ai-oauth-usage-title">Account usage</h3><button type="button" class="stage-btn" id="ai-oauth-usage-refresh">Update usage</button></div>
+                    <div class="ai-actions"><h3 id="ai-oauth-usage-title">Lowest model quota</h3><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-usage-refresh">Refresh quota</button></div>
                     <p id="ai-oauth-usage-overview" class="ai-quota-overview">Loading quota…</p>
                     <meter id="ai-oauth-usage-meter" class="ai-quota-meter" min="0" max="1" value="0" aria-label="Lowest reported model quota remaining" aria-describedby="ai-quota-bar-hint" hidden></meter>
-                    <p class="ai-field-hint ai-quota-scope" id="ai-quota-bar-hint">Lowest model quota · not a shared balance</p>
-                    <p id="ai-oauth-usage-status" class="ai-field-hint" role="status" aria-live="polite"></p>
-                    <details class="ai-quota-details"><summary>See usage for each model</summary><ul id="ai-oauth-usage-models" class="ai-usage-models" tabindex="0" aria-label="Per-model remaining usage"></ul>
+                    <details class="ai-quota-details"><summary>Model limits &amp; details</summary><p class="ai-field-hint ai-quota-scope" id="ai-quota-bar-hint">Lowest model quota · not a shared balance</p><p id="ai-oauth-usage-status" class="ai-field-hint" role="status" aria-live="polite"></p><ul id="ai-oauth-usage-models" class="ai-usage-models" tabindex="0" aria-label="Per-model remaining usage"></ul>
                     <p class="ai-field-hint">Provider model IDs may differ from chat aliases. Unknown is not zero. Refreshing does not generate text.</p></details>
                   </section>
                   <details id="ai-oauth-manage" class="ai-disclosure"><summary>Account settings</summary>
@@ -804,7 +803,7 @@
                 </section>
                 <form id="ai-form" class="ai-form" autocomplete="off">
                   <fieldset class="ai-step">
-                    <legend>Choose a different model</legend>
+                    <legend>Chat model</legend>
                     <label id="ai-models" hidden>Previously checked models<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
                     <input id="ai-model" type="hidden" maxlength="100">
                     <p class="ai-field-hint" id="ai-selection-hint">Only tested models are listed. Availability can change.</p>
@@ -870,13 +869,28 @@
                 </dialog>
 
               </section>
-              <section class="settings-card" id="settings-sound-card">
+              <section class="settings-card ai-settings-card" id="settings-sound-card">
                 <header class="card-head"><h2 class="card-title">Âm thanh</h2></header>
-                <details class="ai-disclosure ai-voice-disclosure"><summary>Giọng đọc</summary><div class="ai-voice-controls">
-                  <p class="ai-field-hint" id="ai-oauth-voice-hint">Read-aloud keeps its selected API-key profile when chat uses OAuth.</p>
-                  <label for="speech-model">Model đọc bài<select id="speech-model" aria-describedby="speech-model-status"><option value="gemini-3.8-flash-tts">gemini-3.8-flash-tts</option></select></label>
-                  <button type="button" class="stage-btn" id="speech-model-refresh">Tải lại model giọng đọc</button>
-                  <p id="speech-model-status" class="ai-field-hint" role="status">Uses the active OpenAI or Gemini API-key connection. Antigravity chat is separate. Voice access is checked when you press Listen.</p>
+                <details class="ai-disclosure ai-voice-disclosure" open><summary>Voice &amp; read-aloud</summary><div class="ai-voice-controls">
+                  <p id="speech-managed-summary" class="ai-field-hint" hidden>OpenAI quản trị · gpt-4o-mini-tts · alloy · Tự động dùng cấu hình máy chủ. <a href="#settings/admin">Model văn bản &amp; GPT-Live ↗</a></p>
+                  <div class="ai-section-heading ai-voice-connect" id="speech-account-controls"><label for="speech-profile">Voice account</label><button type="button" class="stage-btn" id="speech-key-add" aria-expanded="false" aria-controls="speech-key-form">+ Add key</button></div>
+                  <form id="speech-key-form" class="ai-voice-form" autocomplete="off" aria-label="Add a voice account" hidden>
+                    <label for="speech-key-provider">Voice provider<select id="speech-key-provider"><option value="gemini">Google Gemini</option><option value="openai">Official OpenAI</option></select></label>
+                    <div class="ai-profile-fields"><label for="speech-key-name">Account label<input id="speech-key-name" maxlength="80" required autocomplete="off" placeholder="My voice account"></label><label for="speech-key-storage">Save location<select id="speech-key-storage" aria-describedby="speech-key-privacy"><option value="local">This device only</option><option value="server" id="speech-key-server" disabled>My account on the server</option></select></label></div>
+                    <div class="ai-field"><label for="speech-key">Voice API key</label><div class="auth-password-wrap"><input id="speech-key" type="password" required minlength="8" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="speech-key-privacy speech-key-status"><button type="button" id="speech-key-toggle" aria-pressed="false" aria-label="Show voice API key">Show</button></div></div>
+                    <p id="speech-key-privacy" class="ai-field-hint">Device: encrypted in this browser, not synced. Server: encrypted under your VJBot account. The backend receives the key for voice requests.</p>
+                    <div class="ai-actions"><button type="submit" class="public-cta" id="speech-key-save">Save voice account</button><button type="button" class="stage-btn" id="speech-key-cancel">Cancel</button></div>
+                    <p id="speech-key-status" class="ai-field-hint" role="status" aria-live="polite"></p>
+                  </form>
+                  <select id="speech-profile" aria-describedby="ai-oauth-voice-hint speech-model-status"><option value="">Choose a saved voice account</option></select>
+                  <div class="ai-voice-listen"><button type="button" class="public-cta" id="speech-test" aria-describedby="speech-test-hint" disabled>Listen to a sample</button><p id="speech-test-hint" class="ai-field-hint">One audio request. Uses quota; charges may apply.</p></div>
+                  <p id="speech-model-status" class="ai-field-hint" role="status"></p>
+                  <details class="ai-voice-help" id="speech-personal-setup"><summary>Speech model &amp; setup</summary><div class="ai-voice-options">
+                    <label for="speech-model"><span id="speech-model-label">Speech model</span><select id="speech-model" aria-describedby="speech-model-status" disabled><option value="">Choose a voice account</option></select></label>
+                    <div class="ai-actions"><button type="button" class="stage-btn" id="speech-model-refresh" disabled>Refresh models</button><a class="stage-btn" href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Get a Gemini key ↗</a><a class="stage-btn" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Get an OpenAI key ↗</a></div>
+                    <p class="ai-field-hint" id="ai-oauth-voice-hint">Voice uses its own saved account, independently of chat.</p>
+                    <p class="ai-field-hint">Access is checked when you listen. Antigravity sign-in is for chat, not this TTS API. <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer">Gemini pricing ↗</a> · <a href="https://openai.com/api/pricing/" target="_blank" rel="noopener noreferrer">OpenAI pricing ↗</a></p>
+                  </div></details>
                 </div></details>
                 <div class="setting-toggle-row"><strong>Âm báo khi học</strong><button type="button" class="sketch-action-chip" id="btn-toggle-sound-setting" aria-label="Âm báo khi học" aria-pressed="true">Bật âm thanh</button></div>
               </section>
@@ -1048,6 +1062,7 @@
   <script src="ai-settings.js"></script>
   <script src="admin-users.js"></script>
   <script src="teacher-context.js"></script>
+  <script src="study-teacher.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="speech-input.js"></script><script src="app.js"></script>

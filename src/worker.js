@@ -1,7 +1,7 @@
 import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
 import { deleteUserData } from './admin.js';
-import { aiRoute, askAI, googleSpeechKey, resolveProvider } from './providers.js';
+import { aiRoute, askAI, resolveSpeechProvider, resolveProvider } from './providers.js';
 import {rateLimited} from './ai-usage.js';
 import { conversationScope, teacherCatalog, validLessonReference } from './tutor-context.js';
 import { KAIWA_SCHEMA, KAIWA_SYSTEM, parseKaiwaEvaluation } from './kaiwa.js';
@@ -10,6 +10,7 @@ import {antigravityOAuthRoute} from './antigravity-oauth.js';
 import { tutorChat } from './tutor-chat.js';
 import { clearTutorConversation } from './tutor-session.js';
 import {liveRoute} from './live.js';
+import {practiceCoach} from './practice-coach.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
  * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
@@ -68,7 +69,7 @@ export default {
       if (url.pathname === '/api/live') return await liveRoute(request,env);
       if (url.pathname.startsWith('/api/ai/oauth/antigravity')) return await antigravityOAuthRoute(request, env);
       if (url.pathname.startsWith('/api/ai/') || url.pathname.startsWith('/api/admin/')) return await aiRoute(request,env,url);
-      const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/account/delete'];
+      const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
         if(!user) return jsonResponse({detail:'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'},401);
@@ -83,7 +84,7 @@ export default {
           if(!body || Array.isArray(body) || typeof body!=='object') return jsonResponse({detail:'Invalid body'},400);
           body.user_id=user.user_id;
           delete body.api_key;
-          if (['/api/chat','/api/tts','/api/kaiwa/evaluate'].includes(url.pathname)
+          if (['/api/chat','/api/kaiwa/evaluate','/api/practice/coach'].includes(url.pathname)
             && Object.hasOwn(body, 'api_connection') && (await resolveProvider(env,user.user_id,body.api_connection))?.error) {
             return jsonResponse({detail:'Kết nối API không hợp lệ.',code:'invalid_connection'},400);
           }
@@ -93,7 +94,7 @@ export default {
           }
           request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
         }
-        if(['/api/chat','/api/tts','/api/kaiwa/evaluate'].includes(url.pathname) && request.method==='POST') {
+        if(['/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach'].includes(url.pathname) && request.method==='POST') {
           if(await rateLimited(env,user.user_id)) return jsonResponse({detail:'Bạn hãy đợi một phút rồi thử lại.'},429);
         }
       }
@@ -366,14 +367,14 @@ export default {
         return jsonResponse(rows.results || []);
       }
 
-      // 8. TTS API (Gemini Flash TTS)
+      // 8. TTS API (explicit Gemini or official OpenAI voice connection)
       if (url.pathname === "/api/tts" && request.method === "POST") {
         const body = await request.json();
-        const provider = await resolveProvider(env,url.searchParams.get('user_id'),body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
-        if (provider?.protocol === 'openai' && provider.baseUrl === 'https://api.openai.com/v1') return await openAISpeechResponse(body,provider);
-        const speech = await googleSpeechKey(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
+        const speech = await resolveSpeechProvider(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
         if (speech.response) return speech.response;
-        return await speechResponse(body, speech.apiKey);
+        return speech.provider.protocol === 'openai'
+          ? await openAISpeechResponse(body, speech.provider)
+          : await speechResponse(body, speech.provider.apiKey);
       }
 
       // 9. Kaiwa Speaking Lab Evaluation API
@@ -412,6 +413,8 @@ export default {
 
         return jsonResponse({detail:'Sensei chưa chấm được câu trả lời. Vui lòng thử lại sau.'},503);
       }
+
+      if (url.pathname === '/api/practice/coach' && request.method === 'POST') return await practiceCoach(request,env);
 
       if (url.pathname === "/api/chat" && request.method === "POST") return await tutorChat(request, env);
 
