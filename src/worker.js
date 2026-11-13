@@ -4,7 +4,7 @@ import { deleteUserData } from './admin.js';
 import { aiRoute, askAI, resolveSpeechProvider, resolveProvider } from './providers.js';
 import {rateLimited} from './ai-usage.js';
 import { conversationScope, teacherCatalog, validLessonReference } from './tutor-context.js';
-import { KAIWA_SCHEMA, KAIWA_SYSTEM, parseKaiwaEvaluation } from './kaiwa.js';
+import { kaiwaSchema, KAIWA_SYSTEM, parseKaiwaEvaluation } from './kaiwa.js';
 import {speechResponse, openAISpeechResponse} from './speech.js';
 import {antigravityOAuthRoute} from './antigravity-oauth.js';
 import { tutorChat } from './tutor-chat.js';
@@ -384,7 +384,7 @@ export default {
       if (url.pathname === "/api/kaiwa/evaluate" && request.method === "POST") {
         const body = await request.json();
         const {user_speech, level = 'N5', scenario_id, prompt_index = 0} = body;
-        if (['scenario_title', 'context', 'prompt_jp'].some(key => Object.hasOwn(body, key))
+        if (['scenario_title', 'context', 'prompt_jp', 'rubric', 'requirements', 'weights', 'score'].some(key => Object.hasOwn(body, key))
           || typeof scenario_id !== 'string' || scenario_id.length > 300 || !Number.isInteger(prompt_index) || prompt_index < 0) {
           return jsonResponse({detail: 'Invalid scenario reference'}, 400);
         }
@@ -393,28 +393,43 @@ export default {
         const scenario = Object.hasOwn(catalog.scenarios, scenario_id) ? catalog.scenarios[scenario_id] : null;
         const question = scenario?.prompts[prompt_index];
         if (!question) return jsonResponse({detail: 'Unknown scenario or question'}, 400);
+        const rubric = scenario.rubrics?.[prompt_index];
+        let schema;
+        try {
+          if (rubric?.question !== question) throw new Error('Question rubric mismatch');
+          schema = kaiwaSchema(rubric);
+        } catch {
+          return jsonResponse({detail: 'The question rubric is unavailable. No score was estimated.'}, 503);
+        }
+        if (user_speech !== undefined && typeof user_speech !== 'string') {
+          return jsonResponse({detail: 'Invalid submission'}, 400);
+        }
         const cleanSpeech = (user_speech || "").trim();
 
         if (!cleanSpeech) {
           return jsonResponse({
-            score: 0,
-            rating: "Chưa nói",
-            feedback: "Sensei chưa nghe rõ câu trả lời của bạn. Hãy nhấn Micro và nói thử nhé!",
-            model_answer: question
+            status: 'ungraded', reason: 'empty_submission', score: null, rating: null,
+            estimated_score: null, conclusion: 'empty',
+            feedback: 'No answer was submitted. Nothing has been assessed.',
+            model_answer: '', criteria: [], user_text: '', scenario: scenario.title
           });
         }
 
         const asked = await askAI(env, url.searchParams.get("user_id"), {
-          system: KAIWA_SYSTEM, schema: KAIWA_SCHEMA,
-          turns: [{role: 'user', content: JSON.stringify({level, scenario: {title: scenario.title, context: scenario.context}, question, submission: cleanSpeech})}]
+          system: KAIWA_SYSTEM, schema,
+          turns: [{role: 'user', content: JSON.stringify({level, scenario: {title: scenario.title, context: scenario.context}, question, rubric, submission: cleanSpeech})}]
         }, body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
         if (asked.response) return asked.response;
-        const aiEval = parseKaiwaEvaluation(asked.text);
+        const aiEval = parseKaiwaEvaluation(asked.text, cleanSpeech, rubric);
         if (aiEval) {
           return jsonResponse({...aiEval, user_text: cleanSpeech, scenario: scenario.title});
         }
 
-        return jsonResponse({detail:'Sensei chưa chấm được câu trả lời. Vui lòng thử lại sau.'},503);
+        return jsonResponse({
+          status: 'ungraded', reason: 'invalid_feedback', score: null, rating: null,
+          estimated_score: null, conclusion: 'uncertain',
+          detail: 'No consistent criterion assessment was returned. No score was estimated.'
+        },503);
       }
 
       if (url.pathname === '/api/practice/coach' && request.method === 'POST') return await practiceCoach(request,env);

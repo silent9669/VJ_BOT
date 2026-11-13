@@ -70,5 +70,8 @@ export function conversationScope(channel, lesson, screen = null) {
 }
 
 export function chatEnvelope(message, lesson, screen, learner, history, teaching = null) {
-  return JSON.stringify({message, reference: {lesson, screen, learner, history, teaching}});
+  const learnerHistory = history.filter(turn => turn.role === 'user' && typeof turn.content === 'string')
+    .slice(-12).map(turn => ({role: 'user', content: turn.content.slice(0, 6000)}));
+  const context_status = lesson ? 'canonical_lesson' : screen ? 'unresolved_screen' : 'no_screen';
+  return JSON.stringify({message, reference: {lesson, context_status, learner, history: learnerHistory, teaching}});
 }

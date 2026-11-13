@@ -68,7 +68,7 @@ function quick(apiFetch){
   for(const id of ['btn-close-popover','btn-popover-send','popover-query-input','popover-speech-text','btn-popover-tts'])d.add(id,id.includes('btn-')?'button':'div',popover);
   d.add('btn-topbar-summon','button');const chip=d.add('chip','button',popover);chip.className='quick-chip-btn';chip.dataset.ask='Ví dụ';
   const timers=new Map(),listeners=new Map();let nextTimer=0;
-  const c=vm.createContext({crypto,AbortController,signedInUser:{},location:{hash:'#kaiwa/N3/session/A'},apiFetch,document:d.document,window:{addEventListener:(event,fn)=>{(listeners.get(event)||listeners.set(event,[]).get(event)).push(fn);}},setTimeout:fn=>{timers.set(++nextTimer,fn);return nextTimer;},clearTimeout:id=>timers.delete(id),soundEngine:{playBlip(){},playReceive(){}},mascotMgr:{setState(){}},playGeminiTTS(){},teacherContext:()=>({screen:{route:c.location.hash.slice(1),level:'N3',text:'先生'},lesson:{id:'kaiwa:N3:A',level:'N3'},focus:{kind:'example',index:1}})});
+  const c=vm.createContext({crypto,AbortController,signedInUser:{},location:{hash:'#kaiwa/N3/session/A'},apiFetch,document:d.document,window:{addEventListener:(event,fn)=>{(listeners.get(event)||listeners.set(event,[]).get(event)).push(fn);}},setTimeout:fn=>{timers.set(++nextTimer,fn);return nextTimer;},clearTimeout:id=>timers.delete(id),soundEngine:{playBlip(){},playReceive(){}},mascotMgr:{setState(){}},playGeminiTTS(){},teacherContext:()=>({screen:{route:c.location.hash.slice(1),level:'N3'},lesson:{id:'kaiwa:N3:A',level:'N3'},focus:{kind:'example',index:1}})});
   vm.runInContext(app.slice(app.indexOf('function setupFloatingSensei()'),app.indexOf('// 15. SETTINGS')),c);c.setupFloatingSensei();
   return {...d,c,chip,timers,fire:event=>Promise.all((listeners.get(event)||[]).map(fn=>fn({})))};
 }
@@ -130,19 +130,31 @@ test('route and focus changes prevent old quick responses from updating the curr
   }
 });
 test('a running exam timer does not discard a reply for the unchanged question',async()=>{
-  const request=deferred(),b=quick(()=>request.promise);let remaining='24:10';
+  const request=deferred(),b=quick(()=>request.promise);
+  const panel=b.add('panel-quiz');panel.className='tab-panel active';
+  const workspace=b.add('practice-workspace','div',panel);b.add('quiz-card','div',workspace);
+  const timer=b.add('exam-timer','span',workspace);timer.textContent='24:10';
   b.c.location.hash='#quiz/N3/practice/0';
-  b.c.teacherContext=()=>({screen:{route:'quiz/N3/practice/0',level:'N3',text:`Time ${remaining}\nQuestion one`},lesson:{id:'quiz:N3:0',level:'N3'},focus:{kind:'question',index:0}});
+  b.c.findFeatureLesson=()=>null;b.c.featureLessons=()=>[{id:'exam',examIndex:0,drills:[{}]}];
+  b.c.buildLessonContext=(item,level)=>({id:item.id,level});
+  vm.runInContext(readFileSync('static/teacher-context.js','utf8'),b.c);b.c.markTeacherScreen();
+  b.c.setTeacherFocus({kind:'question',index:0});
   await b.element('btn-topbar-summon').click();b.element('popover-query-input').value='Explain this question';
-  const sending=b.element('btn-popover-send').click();remaining='24:09';
+  const sending=b.element('btn-popover-send').click();timer.textContent='24:09';
   request.resolve(Response.json({reply:'The explanation for question one'}));await sending;
   assert.equal(b.element('popover-speech-text').textContent,'The explanation for question one');
 });
 test('a changed Kaiwa prompt still invalidates the previous prompt response',async()=>{
-  const request=deferred(),b=quick(()=>request.promise);let question='Question one';
-  b.c.teacherContext=()=>({screen:{route:'kaiwa/N3/session/A',level:'N3',text:question},lesson:{id:'kaiwa:N3:A',level:'N3'},focus:null});
+  const request=deferred(),b=quick(()=>request.promise);
+  const panel=b.add('panel-kaiwa');panel.className='tab-panel active';b.add('kaiwa-session','div',panel);
+  const prompts=[{jp:'お名前は？'},{jp:'お仕事は？'}];
+  b.c.window.JLPT_DATA={kaiwaScenarios:{A:{prompts}}};
+  b.c.findFeatureLesson=()=>({id:'kaiwa-lesson:N3:A',examples:prompts});
+  b.c.buildLessonContext=(item,level)=>({id:item.id,level});
+  b.c.activeKaiwaKey='A';b.c.activeKaiwaLevel='N3';b.c.activeKaiwaPromptIdx=0;
+  vm.runInContext(readFileSync('static/teacher-context.js','utf8'),b.c);b.c.markTeacherScreen();
   await b.element('btn-topbar-summon').click();b.element('popover-query-input').value='Explain this question';
-  const sending=b.element('btn-popover-send').click();question='Question two';
+  const sending=b.element('btn-popover-send').click();b.c.activeKaiwaPromptIdx=1;
   request.resolve(Response.json({reply:'STALE EXPLANATION'}));await sending;
   assert.doesNotMatch(b.element('popover-speech-text').textContent,/STALE EXPLANATION/);
   assert.equal(b.element('btn-popover-send').disabled,false);
@@ -184,7 +196,7 @@ test('listening play, reveal and input focus bind their example and never captur
   b.c.showLessonDetail(item,'N3','listening');await b.document.querySelector('[data-lesson-mode=practice]').click();
   const rows=b.document.querySelectorAll('.lesson-exercise');await rows[1].children[0].click();assert.equal(b.c.teacherContext().focus.index,1);
   await rows[0].children[2].click();assert.equal(b.c.teacherContext().focus.index,0);assert.equal(rows[0].children[3].hidden,false);
-  rows[1].children[1].value='PRIVATE SUBMISSION';await rows[1].children[1].focus();assert.equal(b.c.teacherContext().focus.index,1);assert.doesNotMatch(b.c.teacherContext().screen.text,/PRIVATE SUBMISSION/);
+  rows[1].children[1].value='PRIVATE SUBMISSION';await rows[1].children[1].focus();assert.equal(b.c.teacherContext().focus.index,1);assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
 });
 test('practice focus follows original question position rather than radio option index',async()=>{
   const b=lesson(),questions=[{q:'第一?',opts:['A','B'],ans:'A',item_id:'q0'},{q:'第二?',opts:['A','B'],ans:'B',item_id:'q1'}];
@@ -210,7 +222,7 @@ test('classroom chip clicks send explicit pedagogical intents',async()=>{
   assert.ok(b.element('btn-restart-chat'),'restart control is present in general chat too');
 });
 
-test('SRS ordering retains canonical word identity and only the visible flashcard face is captured',async()=>{
+test('SRS ordering retains canonical word identity without capturing either flashcard face',async()=>{
   const b=lesson(),panel=b.element('panel-lesson');panel.id='panel-flashcards';
   const review=b.add('flashcard-review','div',panel),card=b.add('flashcard-card','div',review);
   card.innerHTML='<div class="card-face card-front"><p id="fc-front-text"></p><p id="fc-reading-text"></p></div><div class="card-face card-back"><p id="fc-back-meaning"></p><p id="fc-example-jp"></p><p id="fc-example-vi"></p></div>';
@@ -228,13 +240,14 @@ test('SRS ordering retains canonical word identity and only the visible flashcar
   assert.equal(b.c.teacherContext().focus.index,1,'focus is canonical word index, not SRS deck index zero');
   assert.equal(invalidations,1);
   b.c.displayFlashcard();assert.equal(invalidations,1,'same stable word does not invalidate quick ownership');
-  assert.doesNotMatch(b.c.teacherContext().screen.text,/PRIVATE B|BACK EXAMPLE|BACK TRANSLATION/);
+  assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
   card.classList.add('flipped');
-  assert.match(b.c.teacherContext().screen.text,/PRIVATE B/);assert.doesNotMatch(b.c.teacherContext().screen.text,/先生/);
+  assert.equal(b.c.teacherContext().focus.index,1);
+  assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE B'),false);
   vm.runInContext('fcIdx=1;displayFlashcard();',b.c);
   assert.equal(b.c.teacherContext().focus.index,0);assert.equal(card.classList.contains('flipped'),false);
   assert.equal(invalidations,2,'moving to another automatic word invalidates quick ownership');
-  assert.doesNotMatch(b.c.teacherContext().screen.text,/PRIVATE A/);
+  assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE A'),false);
   card.dataset.teacherWordId='not-in-this-lesson';assert.equal(b.c.teacherContext().focus,null);
 });
 test('quiz session question eight keeps full-exam focus while ordinary lesson practice stays capped at five',()=>{
@@ -250,7 +263,7 @@ test('quiz session question eight keeps full-exam focus while ordinary lesson pr
   b.c.findFeatureLesson=()=>item;b.c.featureLessons=()=>[item];b.c.lessonQuestions=()=>item.drills.slice(0,5);
   b.c.currentExamQuestions=raw;b.c.examQuestionIdx=8;
   vm.runInContext(app.slice(app.indexOf('function displayQuizQuestion()'),app.indexOf('function handleQuizAnswer(')),b.c);
-  b.c.displayQuizQuestion();assert.equal(b.c.teacherContext().focus.index,8);assert.match(b.c.teacherContext().screen.text,/QUESTION 8/);
+  b.c.displayQuizQuestion();assert.equal(b.c.teacherContext().focus.index,8);assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
   b.c.setTeacherFocus({kind:'question',index:19});assert.equal(b.c.teacherContext().focus.index,19);
   b.c.setTeacherFocus({kind:'question',index:20});assert.equal(b.c.teacherContext().focus,null);
   b.c.examTimerInterval=null;b.c.examScore=0;b.c.activeQuizLevel='N3';b.c.activeQuizTestIdx=2;
@@ -260,7 +273,7 @@ test('quiz session question eight keeps full-exam focus while ordinary lesson pr
   b.c.setTeacherFocus({kind:'question',index:8});const beforeFinish=invalidations;
   b.c.finishExam();
   assert.equal(b.c.teacherContext().lesson,null);assert.equal(b.c.teacherContext().focus,null);
-  assert.doesNotMatch(b.c.teacherContext().screen.text,/QUESTION 8/);assert.ok(invalidations>beforeFinish);
+  assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);assert.ok(invalidations>beforeFinish);
   b.element('modal-lesson-title').textContent='Ordinary lesson practice';
   panel.id='panel-lesson';b.c.location.hash='#quiz/N3/lesson/quiz-full';b.c.currentLesson={item,level:'N3',skill:'reading',owner:'quiz'};b.c.markTeacherScreen();
   b.c.setTeacherFocus({kind:'question',index:8});assert.equal(b.c.teacherContext().focus,null);

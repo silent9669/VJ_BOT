@@ -1,0 +1,379 @@
+{
+  "version": 1,
+  "authorship": "VJBot authored task criteria; not independently teacher-calibrated. Judge only the current question, not unasked production-task extras.",
+  "scenarios": {
+    "freestyle": [
+      {
+        "question": "こんにちは！今日はどんな一日でしたか？何か面白いことがありましたか？",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Describe how your day went; an ordinary or uneventful day is valid."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Mention an event or explicitly say that nothing noteworthy happened."
+          }
+        ]
+      },
+      {
+        "question": "あなたの好きな日本のアニメや料理は何ですか？理由も教えてくださいね！",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Name a Japanese anime or food you like, or state that you have no preference."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Give a reason for that preference or lack of preference."
+          }
+        ]
+      }
+    ],
+    "combini": [
+      {
+        "question": "いらっしゃいませ！お弁当温めますか？",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Clearly accept or decline having the bento warmed; either choice is valid."
+          }
+        ]
+      },
+      {
+        "question": "レジ袋はご利用になりますか？（一枚五円です）",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Clearly accept or decline a shopping bag; either choice is valid."
+          }
+        ]
+      }
+    ],
+    "ramen": [
+      {
+        "question": "食券をお預かりします！麺のかたさはどうなさいますか？",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Specify the noodle firmness you want, or say you have no preference."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N5:introductions": [
+      {
+        "question": "はじめまして。お名前とお仕事を教えてください。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "State your name; accept any name or natural self-identification."
+          },
+          {
+            "id": "requirement_2",
+            "description": "State your occupation or current student/employment status; unemployment and other truthful statuses are valid. Do not require hometown or a greeting not requested by this question."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N5:ordering": [
+      {
+        "question": "何をご注文ですか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Say what food or drink you want to order. Do not require two items, quantities or a price question unless the current question requests them."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N5:time": [
+      {
+        "question": "何時から何時まで勉強しますか。いつ会いましょうか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Give study start and end times."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Propose a meeting time after the study period, or explain another workable arrangement."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N5:transport": [
+      {
+        "question": "このバスについて、運転手に何を聞きますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Ask the driver to confirm the bus destination or whether it reaches your intended stop. Accept equivalent natural questions."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N5:shopping": [
+      {
+        "question": "いらっしゃいませ。何をお探しですか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Identify an item you are looking for, or clearly say that you are only browsing. Do not require a price question or a particular counter."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N5:asking-help": [
+      {
+        "question": "わからない言葉があったら、どう聞きますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Ask about an unknown word or request clarification/repetition in a way that communicates what help is needed."
+          }
+        ]
+      }
+    ],
+    "station": [
+      {
+        "question": "すみません、渋谷へ行きたいんですが、何番線に乗ればいいですか？",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Answer with a platform or line for the requested trip, or honestly say you do not know. Do not invent verifiable route facts beyond the canonical context."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N4:late": [
+      {
+        "question": "今どこですか。何時ごろ着きますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "State your current location or honestly explain that it is uncertain."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Give an approximate arrival time or explicitly explain that the time is not yet known."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N4:leave": [
+      {
+        "question": "いつ休みたいですか。仕事の準備はどうしますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "State when you want time off."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Explain how work will be prepared or handed over."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N4:clinic": [
+      {
+        "question": "今日はどうしましたか。いつからですか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Describe symptoms or the reason for the visit without inventing a diagnosis."
+          },
+          {
+            "id": "requirement_2",
+            "description": "State when symptoms began or explicitly explain uncertainty about onset."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N4:booking": [
+      {
+        "question": "何曜日の何時に、何名様でご予約ですか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "State the reservation day."
+          },
+          {
+            "id": "requirement_2",
+            "description": "State the reservation time."
+          },
+          {
+            "id": "requirement_3",
+            "description": "State the number of guests. Do not require an alternative time that was not asked for."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N4:instructions": [
+      {
+        "question": "作業の順番を説明してください。わからないときはどうしますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Describe the work steps in the order supported by the canonical context. Equivalent wording is valid."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Explain how you would ask for help if something is unclear."
+          }
+        ]
+      }
+    ],
+    "interview": [
+      {
+        "question": "週に何日くらいシフトに入ることができますか？土日は働けますか？",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "State how many days per week you can work, or explicitly state that availability is not yet known."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Address weekend availability; accept any truthful yes/no/limited availability."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N3:repair": [
+      {
+        "question": "どんな故障ですか。いつ修理に伺えばよろしいですか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Describe the malfunction or observed symptoms without asserting an unknown cause as fact."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Propose or communicate an acceptable repair visit time."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N3:scam": [
+      {
+        "question": "このメールを受け取ったら、どうやって本物か確認しますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Describe an independent verification route rather than trusting links or claims in the email."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Do not offer to disclose passwords or sensitive credentials as verification."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N3:handover": [
+      {
+        "question": "在庫が不足していたら、どんな順番で対応しますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Explain the response order supported by the canonical context, including reporting the shortage before unauthorized ordering."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Explain what happens when stock is insufficient."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N3:interview": [
+      {
+        "question": "これまでの経験と、今できるようになったことを教えてください。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Describe past experience; having no prior experience is a valid truthful answer. Do not verify personal biography against invented facts."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Describe a concrete ability or improvement you have gained. Do not require an unasked future goal."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N2:policy": [
+      {
+        "question": "資料室の規定で、例外として認められるのはどんな場合ですか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Describe both exception conditions accurately from the canonical context."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Do not invent broader eligibility or extension rights not supported by the policy. Do not require the effective date unless needed to answer the question."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N2:comparison": [
+      {
+        "question": "どちらの印刷会社を選びますか。数字を使って理由を説明してください。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Clearly choose a printing company."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Support the choice with the canonical numerical cost and timing information relevant to the decision."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N2:proposal": [
+      {
+        "question": "会議を減らす案について、利点とリスクをどう評価しますか。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Evaluate at least one benefit of reducing meetings."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Evaluate at least one risk, distinguishing expected effects from established facts."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N1:argument": [
+      {
+        "question": "手続きの統一と例外的な支援は両立しますか。本文を踏まえて説明してください。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Explain how common procedures and exceptional support can coexist using the canonical text."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Preserve the text’s distinctions and qualify inferences; do not turn an example into a universal conclusion."
+          }
+        ]
+      }
+    ],
+    "practical:v1:N1:synthesis": [
+      {
+        "question": "研修の評価について、二人の共通点と相違点を説明してください。",
+        "requirements": [
+          {
+            "id": "requirement_1",
+            "description": "Explain the two speakers’ common position about training evaluation."
+          },
+          {
+            "id": "requirement_2",
+            "description": "Explain their differences while attributing claims to the correct speaker. Do not require an additional proposal not requested by the question."
+          }
+        ]
+      }
+    ]
+  }
+}
