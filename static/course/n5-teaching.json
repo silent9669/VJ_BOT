@@ -1,0 +1,3731 @@
+{
+  "version": 1,
+  "status": "ai_reviewed_editorial_staging",
+  "authorship": "VJBot AI-authored teaching drafts; not publisher text or official JLPT exercises.",
+  "rights_basis": "user_asserted_rights",
+  "publisher_permission_independently_verified": false,
+  "human_approved": false,
+  "level_note": "N5 is a study-track estimate, not official JLPT certification.",
+  "integration_status": "editorial_staging_not_loaded_by_canonical_app",
+  "normalization_policy": "No runtime normalizer yet. Variants are provisional explicit task-bound references, not exhaustive grammatical judgments.",
+  "lessons": [
+    {
+      "id": "n5-teaching:v1:topic",
+      "revision": 1,
+      "order": 1,
+      "level": "N5",
+      "title": "Nêu chủ đề bằng は",
+      "goal": "Giới thiệu một người và nêu thông tin về họ bằng NはNです.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-80d5cf658c54-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/01-tro-tu-wa",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "IR-895efe7d50ad-1",
+          "url": "https://jf.xcms.online/wp-content/uploads/2021/12/v1Grammar_NM_VN-1.pdf#page=1",
+          "source_name": "Irodori",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-80d5cf658c54-1] · Irodori [IR-895efe7d50ad-1]",
+      "formula": "N1 は N2 です。",
+      "explanation": "は nêu điều đang được nói đến; khi là trợ từ này, は đọc là wa. N2です đưa thông tin về chủ đề N1. Khi ngữ cảnh đã rõ, thường có thể lược chủ đề. Đây không phải quy tắc thay mọi chủ ngữ bằng は; が còn được dùng khi giới thiệu hoặc xác định chủ thể.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:topic:example:0",
+          "context": "Làm quen ở lớp",
+          "jp": "私はリンです。",
+          "reading": "わたしはりんです。",
+          "vi": "Tôi là Linh.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:1",
+          "context": "Giới thiệu nghề của bạn",
+          "jp": "アンさんは会社員です。",
+          "reading": "あんさんはかいしゃいんです。",
+          "vi": "An là nhân viên công ty.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:2",
+          "context": "Giới thiệu người dạy lớp",
+          "jp": "田中さんは先生です。",
+          "reading": "たなかさんはせんせいです。",
+          "vi": "Anh/chị Tanaka là giáo viên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:3",
+          "context": "Nói về mình trong buổi học",
+          "jp": "私は学生です。",
+          "reading": "わたしはがくせいです。",
+          "vi": "Tôi là sinh viên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:topic:example:4",
+          "context": "Giới thiệu em gái với bạn",
+          "jp": "妹は高校生です。",
+          "reading": "いもうとはこうこうせいです。",
+          "vi": "Em gái tôi là học sinh cấp ba.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "私は学生だです。",
+          "correction": "私は学生です。",
+          "reason": "Trong câu lịch sự này dùng です, không ghép だです."
+        },
+        {
+          "problem": "Trợ từ は trong 私は được đọc ha.",
+          "correction": "Trợ từ は trong 私は được đọc wa.",
+          "reason": "Phân biệt cách đọc chữ は thông thường với cách đọc trợ từ chủ đề."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:topic:task:0",
+          "mode": "choice",
+          "prompt": "Giới thiệu nghề nghiệp. Điền trợ từ chủ đề: アンさん（　）会社員です。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "は"
+            },
+            {
+              "id": "option:1",
+              "text": "を"
+            },
+            {
+              "id": "option:2",
+              "text": "で"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "は nêu An làm chủ đề; phần sau giới thiệu nghề.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:1",
+          "mode": "choice",
+          "prompt": "Chọn câu lịch sự có nghĩa “Tôi là sinh viên”.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "私は学生です。"
+            },
+            {
+              "id": "option:1",
+              "text": "私は学生をです。"
+            },
+            {
+              "id": "option:2",
+              "text": "私は学生だです。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "N1はN2です là cấu trúc cần dùng; không thêm を hay だ trước です.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:2",
+          "mode": "choice",
+          "prompt": "は được đọc thế nào khi là trợ từ trong 私はリンです。?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "wa"
+            },
+            {
+              "id": "option:1",
+              "text": "ha"
+            },
+            {
+              "id": "option:2",
+              "text": "ga"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Ở vai trò trợ từ chủ đề, chữ は được đọc wa.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:3",
+          "mode": "short_text",
+          "prompt": "Tự giới thiệu nghề nghiệp bằng đúng mẫu NはNです: “Tôi là giáo viên”.",
+          "accepted_variants": [
+            "私は教師です。",
+            "わたしは教師です。",
+            "私はきょうしです。",
+            "わたしはきょうしです。"
+          ],
+          "rationale": "教師 nêu nghề nghiệp của mình một cách trung tính; 先生 thường là cách gọi hoặc nói về giáo viên khác. Bài này yêu cầu đủ chủ đề và câu lịch sự; hội thoại tự nhiên có thể lược 私は.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:task:4",
+          "mode": "short_text",
+          "prompt": "Chỉ điền một trợ từ chủ đề: 田中さん（　）先生です。",
+          "accepted_variants": [
+            "は"
+          ],
+          "rationale": "Theo yêu cầu đang luyện, chọn は. Không kết luận が luôn sai trong mọi ngữ cảnh.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:request",
+      "revision": 1,
+      "order": 8,
+      "level": "N5",
+      "title": "Nhờ làm bằng てください",
+      "goal": "Đổi động từ quen thuộc sang thể て và đưa ra một lời nhờ phù hợp.",
+      "prerequisites": [
+        "n5-teaching:v1:te-form"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-c2bb02acc5d3-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/requests.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-c2bb02acc5d3-1]",
+      "formula": "V-て + ください。",
+      "explanation": "Thể て đứng trước ください để nhờ hoặc hướng dẫn người nghe thực hiện hành động. Việc tạo thể て phụ thuộc nhóm động từ: 書く→書いて, 読む→読んで, する→して. Không chỉ bỏ ます rồi thêm て cho mọi động từ. てください không luôn đủ mềm với cấp trên hoặc trong mọi tình huống phục vụ.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:request:example:0",
+          "context": "Giáo viên hướng dẫn lớp",
+          "jp": "名前を書いてください。",
+          "reading": "なまえをかいてください。",
+          "vi": "Hãy viết tên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:1",
+          "context": "Nhờ bạn mở cửa",
+          "jp": "ドアを開けてください。",
+          "reading": "どあをあけてください。",
+          "vi": "Hãy mở cửa.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:2",
+          "context": "Chưa nghe rõ",
+          "jp": "もう一度言ってください。",
+          "reading": "もういちどいってください。",
+          "vi": "Xin nói lại một lần nữa.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:3",
+          "context": "Hướng dẫn vào phòng",
+          "jp": "ここに座ってください。",
+          "reading": "ここにすわってください。",
+          "vi": "Hãy ngồi ở đây.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:request:example:4",
+          "context": "Giáo viên yêu cầu đọc",
+          "jp": "この文を読んでください。",
+          "reading": "このぶんをよんでください。",
+          "vi": "Hãy đọc câu này.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "名前を書くください。",
+          "correction": "名前を書いてください。",
+          "reason": "Trước ください trong mẫu đang luyện dùng thể て, không dùng thể từ điển."
+        },
+        {
+          "problem": "この文を読てください。",
+          "correction": "この文を読んでください。",
+          "reason": "読む có thể て là 読んで; phải xét cách chia theo nhóm động từ."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:request:task:0",
+          "mode": "choice",
+          "prompt": "Nhờ người nghe viết tên. Chọn phần đúng: 名前を（　）ください。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "書いて"
+            },
+            {
+              "id": "option:1",
+              "text": "書く"
+            },
+            {
+              "id": "option:2",
+              "text": "書きます"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "書く đổi thành 書いて trước ください.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:1",
+          "mode": "choice",
+          "prompt": "Chọn thể て của 読む.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "読んで"
+            },
+            {
+              "id": "option:1",
+              "text": "読いて"
+            },
+            {
+              "id": "option:2",
+              "text": "読て"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Động từ nhóm1 kết thúc む chuyển thành んで.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:2",
+          "mode": "choice",
+          "prompt": "Giáo viên yêu cầu ngồi ở đây. Chọn câu đúng mẫu.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "ここに座ってください。"
+            },
+            {
+              "id": "option:1",
+              "text": "ここに座るください。"
+            },
+            {
+              "id": "option:2",
+              "text": "ここに座りますください。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "座る đổi thành 座って; không nối nguyên dạng hoặc ます với ください.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:3",
+          "mode": "short_text",
+          "prompt": "Đổi 開けます thành thể て, chỉ viết dạng động từ.",
+          "accepted_variants": [
+            "開けて",
+            "あけて"
+          ],
+          "rationale": "開ける là động từ nhóm2: bỏ る và thêm て.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:request:task:4",
+          "mode": "short_text",
+          "prompt": "Viết câu nhờ đọc câu này; dùng この文・読む và mẫu てください.",
+          "accepted_variants": [
+            "この文を読んでください。",
+            "このぶんをよんでください。",
+            "この文をよんでください。",
+            "このぶんを読んでください。"
+          ],
+          "rationale": "Đánh dấu đối tượng bằng を và đổi 読む thành 読んで trước ください.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:comparison",
+      "revision": 1,
+      "order": 15,
+      "level": "N5",
+      "title": "So sánh với より・ほうが",
+      "goal": "Nêu một so sánh và xác định mốc so sánh mà không đảo nghĩa.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-c28462d6b65a-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/comparison.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-c28462d6b65a-1]",
+      "formula": "A は B より tính từ。 / A より B のほうが tính từ。",
+      "explanation": "より đánh dấu mốc so sánh. AはBより高い nói A cao/đắt hơn B tùy ngữ cảnh. AよりBのほうが高い nhấn phía B cao/đắt hơn. Tính từ không thêm đuôi so sánh. Khi nói cao nhất trong một nhóm, dùng nhómで và いちばん; nhóm cần được xác định rõ.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:comparison:example:0",
+          "context": "So chiều cao đã đo",
+          "jp": "兄は私より背が高いです。",
+          "reading": "あにはわたしよりせがたかいです。",
+          "vi": "Anh trai cao hơn tôi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:1",
+          "context": "Giá hai đồ uống trên menu",
+          "jp": "コーヒーはお茶より高いです。",
+          "reading": "こーひーはおちゃよりたかいです。",
+          "vi": "Cà phê đắt hơn trà.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:2",
+          "context": "So độ khó hai bài trong lớp",
+          "jp": "この問題はその問題より簡単です。",
+          "reading": "このもんだいはそのもんだいよりかんたんです。",
+          "vi": "Câu này dễ hơn câu đó.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:3",
+          "context": "Nói sở thích cá nhân",
+          "jp": "私は夏より冬のほうが好きです。",
+          "reading": "わたしはなつよりふゆのほうがすきです。",
+          "vi": "Tôi thích mùa đông hơn mùa hè.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:comparison:example:4",
+          "context": "So ba túi ở trước mặt",
+          "jp": "この三つのかばんの中で、赤いかばんがいちばん軽いです。",
+          "reading": "このみっつのかばんのなかで、あかいかばんがいちばんかるいです。",
+          "vi": "Trong ba chiếc túi này, túi đỏ nhẹ nhất.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "AはBより高い được hiểu là B cao hơn A.",
+          "correction": "AはBより高い có nghĩa A cao hơn B.",
+          "reason": "B là mốc sau より; phía có tính chất được khẳng định ở đây là A."
+        },
+        {
+          "problem": "Chỉ nói いちばん rồi mặc định có nghĩa “nhất thế giới”.",
+          "correction": "Phải biết nhóm so sánh từ câu nói hoặc ngữ cảnh.",
+          "reason": "いちばん không tự xác định phạm vi so sánh là cả thế giới."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:comparison:task:0",
+          "mode": "choice",
+          "prompt": "Theo bảng giá: cà phê500 yên, trà300 yên. Chọn câu đúng.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "コーヒーはお茶より高いです。"
+            },
+            {
+              "id": "option:1",
+              "text": "お茶はコーヒーより高いです。"
+            },
+            {
+              "id": "option:2",
+              "text": "コーヒーとお茶は同じ値段です。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "500 lớn hơn300; cà phê là phía đắt hơn, trà là mốc sau より.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:1",
+          "mode": "choice",
+          "prompt": "Trong “AよりBのほうが安いです”, thứ nào rẻ hơn?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "B"
+            },
+            {
+              "id": "option:1",
+              "text": "A"
+            },
+            {
+              "id": "option:2",
+              "text": "Không nói có thứ nào rẻ hơn"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Bのほうが là phía được nói là rẻ hơn.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:2",
+          "mode": "choice",
+          "prompt": "Dựa vào số đo: túi đỏ1kg, xanh2kg, đen3kg. Trong ba túi, túi nào いちばん軽い?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "赤いかばん"
+            },
+            {
+              "id": "option:1",
+              "text": "青いかばん"
+            },
+            {
+              "id": "option:2",
+              "text": "黒いかばん"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Trong nhóm đã xác định, túi đỏ có khối lượng nhỏ nhất.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:3",
+          "mode": "short_text",
+          "prompt": "Chỉ điền trợ từ đánh dấu mốc so sánh: AはB（　）高いです。",
+          "accepted_variants": [
+            "より"
+          ],
+          "rationale": "より đi sau B để đánh dấu B là mốc so sánh.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:comparison:task:4",
+          "mode": "short_text",
+          "prompt": "Chỉ điền trợ từ phạm vi: この三つの中（　）、これがいちばん安いです。",
+          "accepted_variants": [
+            "で"
+          ],
+          "rationale": "で giới hạn nhóm mà いちばん đang so sánh.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:also",
+      "revision": 1,
+      "order": 2,
+      "level": "N5",
+      "title": "Bổ sung thông tin giống nhau bằng も",
+      "goal": "Dùng も để nói một người hoặc vật cũng có cùng đặc điểm, kể cả cùng một thông tin phủ định.",
+      "prerequisites": [
+        "n5-teaching:v1:topic"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-002ef04d556a-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/04-tro-tu-mo",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-002ef04d556a-1]",
+      "formula": "A は N です。B も N です。／A は N ではありません。B も N ではありません。",
+      "explanation": "も bổ sung một đối tượng có cùng thông tin với đối tượng đã nêu hoặc đã rõ trong ngữ cảnh. Trong mẫu danh từ của bài này, BもNです nghĩa là B cũng là N; dùng も thay vị trí của は, không ghép はも. Với câu phủ định, BもNではありません nghĩa là B cũng không phải N: chính phần phủ định của vị ngữ tạo nghĩa không. Vì vậy, không dùng một câu khẳng định với も để diễn đạt 'cũng không'. Phạm vi bài là mẫu danh từ cơ bản; không suy ra rằng も luôn thay được mọi trợ từ trong mọi cấu trúc.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:also:example:0",
+          "context": "Giới thiệu hai người có cùng nghề tại buổi giao lưu",
+          "jp": "佐藤さんは医者です。木村さんも医者です。",
+          "reading": "さとうさんはいしゃです。きむらさんもいしゃです。",
+          "vi": "Anh/chị Sato là bác sĩ. Anh/chị Kimura cũng là bác sĩ.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:also:example:1",
+          "context": "Hai chị em cùng đang học đại học",
+          "jp": "姉は大学生です。私も大学生です。",
+          "reading": "あねはだいがくせいです。わたしもだいがくせいです。",
+          "vi": "Chị gái tôi là sinh viên đại học. Tôi cũng là sinh viên đại học.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:also:example:2",
+          "context": "Xác nhận quốc tịch của hai thành viên trong nhóm",
+          "jp": "ハンさんは韓国人です。キムさんも韓国人です。",
+          "reading": "はんさんはかんこくじんです。きむさんもかんこくじんです。",
+          "vi": "Anh/chị Han là người Hàn Quốc. Anh/chị Kim cũng là người Hàn Quốc.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:also:example:3",
+          "context": "Phân loại hai quyển sách đang chỉ vào trên bàn",
+          "jp": "これは英語の本です。それも英語の本です。",
+          "reading": "これはえいごのほんです。それもえいごのほんです。",
+          "vi": "Đây là sách tiếng Anh. Quyển đó cũng là sách tiếng Anh.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:also:example:4",
+          "context": "Đính chính rằng cả hai khách đều không phải giáo viên",
+          "jp": "山田さんは先生ではありません。私も先生ではありません。",
+          "reading": "やまださんはせんせいではありません。わたしもせんせいではありません。",
+          "vi": "Anh/chị Yamada không phải là giáo viên. Tôi cũng không phải là giáo viên.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn nói mình cũng là sinh viên nhưng viết 私はも学生です。",
+          "correction": "私も学生です。",
+          "reason": "Trong mẫu danh từ này, も đứng thay は sau đối tượng được bổ sung; không ghép はも."
+        },
+        {
+          "problem": "Sau khi biết Sato không phải bác sĩ, muốn nói mình cũng không phải bác sĩ nhưng viết 私も医者です。",
+          "correction": "私も医者ではありません。",
+          "reason": "も chỉ bổ sung nghĩa 'cũng'; muốn giữ cùng thông tin phủ định phải dùng vị ngữ phủ định ではありません."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:also:task:0",
+          "mode": "choice",
+          "prompt": "Sato là bác sĩ. Bạn muốn nói Kimura CŨNG là bác sĩ. Chọn câu đúng với ý định đó.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "木村さんは医者ではありません。"
+            },
+            {
+              "id": "option:1",
+              "text": "木村さんも医者です。"
+            },
+            {
+              "id": "option:2",
+              "text": "木村さんも学生です。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Thông tin chung là nghề bác sĩ, nên dùng 木村さんも医者です. Hai lựa chọn còn lại đổi nội dung, dù bản thân chúng có thể là câu đúng trong ngữ cảnh khác.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:also:task:1",
+          "mode": "choice",
+          "prompt": "Đọc: 姉は大学生です。私も大学生です。 Thông tin nào được nêu?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Chỉ chị gái là sinh viên đại học; người nói không phải."
+            },
+            {
+              "id": "option:1",
+              "text": "Chị gái và người nói đều là giáo viên."
+            },
+            {
+              "id": "option:2",
+              "text": "Chị gái và người nói đều là sinh viên đại học."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "も nối người nói với thông tin 大学生 đã nêu về chị gái. Không có phủ định hay thông tin nghề giáo viên trong đoạn này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:also:task:2",
+          "mode": "choice",
+          "prompt": "Một người nói 山田さんは先生ではありません。 Bạn cũng không phải giáo viên. Chọn lời bổ sung đúng nghĩa 'Tôi cũng không phải giáo viên'.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "私も先生ではありません。"
+            },
+            {
+              "id": "option:1",
+              "text": "私も先生です。"
+            },
+            {
+              "id": "option:2",
+              "text": "山田さんも先生です。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Cần giữ cả đối tượng 私 và vị ngữ phủ định 先生ではありません. も một mình không biến câu khẳng định thành phủ định.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:also:task:3",
+          "mode": "short_text",
+          "prompt": "Chỉ viết một trợ từ hiragana mang nghĩa 'cũng' vào chỗ trống: 兄は会社員です。姉（　）会社員です。",
+          "accepted_variants": [
+            "も"
+          ],
+          "rationale": "Hai người có cùng thông tin 会社員; も đánh dấu người được bổ sung. Bài chỉ yêu cầu một trợ từ, không yêu cầu chép cả câu.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:also:task:4",
+          "mode": "short_text",
+          "prompt": "Sửa đúng một chỗ trong 私はも学生です。 để thành 'Tôi cũng là sinh viên'. Giữ 私・学生・です, viết cả câu với dấu 。, không thêm khoảng trắng.",
+          "accepted_variants": [
+            "私も学生です。"
+          ],
+          "rationale": "Bỏ は trước も để được mẫu NもNです. Đây là đáp án cho phép sửa đã giới hạn, không phải danh sách mọi cách nói tự nhiên cùng nghĩa.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:possession",
+      "revision": 1,
+      "order": 3,
+      "level": "N5",
+      "title": "Nối danh từ và nói sở hữu bằng の",
+      "goal": "Hiểu đúng chiều AのB và dùng の để chỉ chủ sở hữu hoặc quan hệ giữa hai danh từ.",
+      "prerequisites": [
+        "n5-teaching:v1:topic"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "TN-d3a35d5388da-1",
+          "url": "https://www.tiengnhatdongian.com/ngu-phap-n5-tro-tu-no/",
+          "source_name": "Tiếng Nhật Đơn Giản",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Tiếng Nhật Đơn Giản [TN-d3a35d5388da-1]",
+      "formula": "A の B ／ これは A の B です。／これは A のです。（B đã rõ）",
+      "explanation": "Trong AのB, danh từ trung tâm là B; A đứng trước để bổ nghĩa cho B. Khi nói sở hữu, A là chủ sở hữu: リンさんのかばん là chiếc cặp của Linh, không phải Linh của chiếc cặp. の còn diễn đạt nhiều quan hệ không phải quyền sở hữu: 日本語の本 là sách tiếng Nhật, 大学の学生 là sinh viên của một trường đại học. Khi người nghe đã biết đang nói về vật gì, có thể lược danh từ chỉ vật sau の, như 私のです trong câu trả lời về một chiếc ô. Không tự lược B nếu việc lược bỏ khiến người nghe không biết đang nói đến vật nào. Các ví dụ dưới đây được biên soạn mới; không dùng cách diễn giải đảo chủ sở hữu trong tài liệu tham khảo.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:possession:example:0",
+          "context": "Linh để quên cặp; bạn chỉ cho nhân viên chiếc cặp của Linh",
+          "jp": "これはリンさんのかばんです。",
+          "reading": "これはりんさんのかばんです。",
+          "vi": "Đây là chiếc cặp của Linh.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:possession:example:1",
+          "context": "Nói rõ môn mà cô Mori giảng dạy",
+          "jp": "森さんは音楽の先生です。",
+          "reading": "もりさんはおんがくのせんせいです。",
+          "vi": "Cô Mori là giáo viên âm nhạc.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:possession:example:2",
+          "context": "Giới thiệu cuốn sách đang dùng để học",
+          "jp": "これは日本語の本です。",
+          "reading": "これはにほんごのほんです。",
+          "vi": "Đây là sách tiếng Nhật.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:possession:example:3",
+          "context": "Xác định chủ của chiếc ô màu xanh; màu sắc chỉ nằm trong ngữ cảnh",
+          "jp": "その傘は兄のです。",
+          "reading": "そのかさはあにのです。",
+          "vi": "Chiếc ô đó là của anh trai tôi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:possession:example:4",
+          "context": "Nói quan hệ của mình với một trường đại học cụ thể",
+          "jp": "私はこの大学の学生です。",
+          "reading": "わたしはこのだいがくのがくせいです。",
+          "vi": "Tôi là sinh viên của trường đại học này.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Diễn giải リンさんのかばん thành 'Linh của chiếc cặp', đảo chiều sở hữu.",
+          "correction": "リンさんのかばん nghĩa là 'chiếc cặp của Linh'.",
+          "reason": "かばん là danh từ trung tâm ở sau の; リンさん ở trước の chỉ chủ sở hữu trong cụm này."
+        },
+        {
+          "problem": "Muốn nói 'Đây là điện thoại của mẹ tôi' nhưng viết これは母電話です。",
+          "correction": "これは母の電話です。",
+          "reason": "Trong cụm sở hữu này cần の để nối 母 với 電話; không chỉ đặt hai danh từ cạnh nhau."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:possession:task:0",
+          "mode": "choice",
+          "prompt": "Đọc: これは木村さんの時計です。 Chủ sở hữu chiếc đồng hồ được nêu là ai?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Người nói, không phải Kimura."
+            },
+            {
+              "id": "option:1",
+              "text": "Không có chủ sở hữu nào được nêu."
+            },
+            {
+              "id": "option:2",
+              "text": "Anh/chị Kimura."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "木村さん đứng trước の, còn 時計 là vật được sở hữu. Câu chỉ rõ chiếc đồng hồ của Kimura.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:possession:task:1",
+          "mode": "choice",
+          "prompt": "Trong 音楽の先生, の biểu thị quan hệ nào?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Môn mà người giáo viên giảng dạy: âm nhạc."
+            },
+            {
+              "id": "option:1",
+              "text": "Âm nhạc là người sở hữu giáo viên."
+            },
+            {
+              "id": "option:2",
+              "text": "Giáo viên không dạy âm nhạc."
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "の nối hai danh từ theo quan hệ môn học–giáo viên, không phải lúc nào cũng là sở hữu tài sản. Cụm này cũng không chứa phủ định.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:possession:task:2",
+          "mode": "choice",
+          "prompt": "Hai người cùng nhìn một chiếc ô. Hỏi: これはだれの傘ですか。 Bạn muốn đáp ngắn 'Là của tôi', có dùng の để thay cho 私の傘. Chọn câu phù hợp.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "私です。"
+            },
+            {
+              "id": "option:1",
+              "text": "私のです。"
+            },
+            {
+              "id": "option:2",
+              "text": "私の先生です。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "傘 đã rõ nên 私のです giữ nghĩa 'của tôi' khi lược 傘. 私です nhận diện bản thân; 私の先生です nói về giáo viên của mình, không trả lời ý sở hữu chiếc ô.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:possession:task:3",
+          "mode": "short_text",
+          "prompt": "Dùng đúng ba thành phần あね・の・かばん để viết cụm 'chiếc cặp của chị gái tôi'. Chỉ viết hiragana, không khoảng trắng, không thêm です hay dấu câu.",
+          "accepted_variants": [
+            "あねのかばん"
+          ],
+          "rationale": "Chủ sở hữu あね đứng trước の; vật được sở hữu かばん đứng sau. Yêu cầu hiragana và các thành phần cố định giới hạn đáp án của bài.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:possession:task:4",
+          "mode": "short_text",
+          "prompt": "Trong cuộc nói chuyện về cùng một cuốn sách, rút gọn 私の本です。 bằng cách chỉ lược 本. Giữ chữ 私 và dấu 。; không thêm khoảng trắng.",
+          "accepted_variants": [
+            "私のです。"
+          ],
+          "rationale": "Giữ の để còn nghĩa 'của tôi' sau khi lược tên vật đã biết. Đáp án này chỉ áp dụng khi 本 đã được xác định trong ngữ cảnh như đề cho.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:question",
+      "revision": 1,
+      "order": 4,
+      "level": "N5",
+      "title": "Hỏi lịch sự bằng か",
+      "goal": "Tạo câu hỏi danh từ với ですか và phân biệt câu hỏi xác nhận với câu hỏi cần thông tin.",
+      "prerequisites": [
+        "n5-teaching:v1:topic",
+        "n5-teaching:v1:possession"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "TN-245ed912a419-1",
+          "url": "https://www.tiengnhatdongian.com/ngu-phap-n5-tro-tu-ka/",
+          "source_name": "Tiếng Nhật Đơn Giản",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Tiếng Nhật Đơn Giản [TN-245ed912a419-1]",
+      "formula": "N は N ですか。／これは何ですか。／N はどこですか。",
+      "explanation": "Trong mẫu lịch sự đang học, đặt か sau です để hỏi; không đảo trật tự danh từ như một số ngôn ngữ khác. Câu 先生ですか hỏi xác nhận và có thể đáp はい hoặc いいえ kèm nội dung phù hợp. Câu có từ nghi vấn như 何（なん）ですか hay どこですか cần thông tin tương ứng, không chỉ はい. Trong văn viết bài học này dùng 。 sau か; dấu hỏi ？ cũng có thể gặp. Hội thoại có thể tạo câu hỏi bằng ngữ điệu mà không có か, nên việc thiếu か không tự động làm mọi câu nói thành sai; bài này luyện riêng mẫu ですか. Các cách dùng か khác và câu rủ rê nằm ngoài phạm vi bài.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:question:example:0",
+          "context": "Hỏi một người mới quen có phải sinh viên không",
+          "jp": "学生ですか。",
+          "reading": "がくせいですか。",
+          "vi": "Bạn có phải là sinh viên không?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:question:example:1",
+          "context": "Chỉ vào một đồ vật lạ và hỏi đó là gì",
+          "jp": "これは何ですか。",
+          "reading": "これはなんですか。",
+          "vi": "Đây là cái gì?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:question:example:2",
+          "context": "Nhìn một tấm bản đồ tòa nhà và hỏi vị trí quầy tiếp tân",
+          "jp": "受付はどこですか。",
+          "reading": "うけつけはどこですか。",
+          "vi": "Quầy tiếp tân ở đâu?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:question:example:3",
+          "context": "Kiểm tra thứ trong tuần trước khi sắp lịch",
+          "jp": "明日は何曜日ですか。",
+          "reading": "あしたはなんようびですか。",
+          "vi": "Ngày mai là thứ mấy?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:question:example:4",
+          "context": "Thấy một chiếc ô để quên và hỏi chủ sở hữu",
+          "jp": "この傘はだれのですか。",
+          "reading": "このかさはだれのですか。",
+          "vi": "Chiếc ô này là của ai?",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Định hỏi lịch sự theo mẫu ですか nhưng viết 学生かです。",
+          "correction": "学生ですか。",
+          "reason": "か đứng sau phần kết thúc lịch sự です trong mẫu này, không chen vào giữa 学生 và です."
+        },
+        {
+          "problem": "Được hỏi 受付はどこですか。 nhưng chỉ đáp はい。 như thể đó là câu hỏi có/không.",
+          "correction": "受付は一階です。",
+          "reason": "どこ yêu cầu thông tin vị trí. Nếu quầy ở tầng một như trong ví dụ sửa, cần nêu 一階, không chỉ xác nhận 'vâng'."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:question:task:0",
+          "mode": "choice",
+          "prompt": "Chọn đúng mẫu câu hỏi lịch sự để xác nhận 'Đây có phải là từ điển không?'.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "これは辞書ですか。"
+            },
+            {
+              "id": "option:1",
+              "text": "これは辞書かです。"
+            },
+            {
+              "id": "option:2",
+              "text": "これは何ですか。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "辞書ですか hỏi xác nhận về từ điển. 何ですか cũng là câu hỏi đúng nhưng hỏi 'cái gì', không phải xác nhận thông tin 辞書; かです sai trật tự của mẫu đang học.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:question:task:1",
+          "mode": "choice",
+          "prompt": "Lịch ghi ngày mai là thứ ba. Người khác hỏi 明日は何曜日ですか。 Chọn câu trả lời phù hợp với lịch.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "はい、そうです。"
+            },
+            {
+              "id": "option:1",
+              "text": "月曜日です。"
+            },
+            {
+              "id": "option:2",
+              "text": "火曜日です。"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "何曜日 cần tên thứ; 火曜日 là thứ ba. 月曜日 là thứ hai, còn はい、そうです không cung cấp thông tin được hỏi.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:question:task:2",
+          "mode": "choice",
+          "prompt": "Bạn không phải giáo viên mà là nhân viên công ty. Được hỏi 先生ですか。 Chọn câu trả lời đúng tình huống.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "はい、先生です。"
+            },
+            {
+              "id": "option:1",
+              "text": "いいえ、会社員です。"
+            },
+            {
+              "id": "option:2",
+              "text": "いいえ、学生です。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "いいえ bác bỏ thông tin nghề giáo viên, rồi 会社員です nêu đúng nghề mà đề đã cho. Hai câu còn lại mâu thuẫn dữ kiện.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:question:task:3",
+          "mode": "short_text",
+          "prompt": "Viết đúng một trợ từ hiragana ở cuối mẫu câu hỏi lịch sự: これは時計です（　）。 Không viết cả câu hay dấu câu.",
+          "accepted_variants": [
+            "か"
+          ],
+          "rationale": "Mẫu luyện tập là ですか. Đáp án này không phủ nhận khả năng dùng ngữ điệu hỏi trong các kiểu hội thoại khác.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:question:task:4",
+          "mode": "short_text",
+          "prompt": "Bạn chưa biết thư viện ở đâu. Chỉ điền từ nghi vấn hiragana nghĩa là 'ở đâu' vào 図書館は（　）ですか。",
+          "accepted_variants": [
+            "どこ"
+          ],
+          "rationale": "どこ hỏi vị trí; だれ hỏi người và 何 hỏi sự vật hoặc nội dung nên không đáp ứng yêu cầu cụ thể này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:polite-verbs",
+      "revision": 1,
+      "order": 5,
+      "level": "N5",
+      "title": "Bốn đuôi động từ lịch sự",
+      "goal": "Chọn ます・ません・ました・ませんでした theo thời gian và tính khẳng định hay phủ định của hành động.",
+      "prerequisites": [
+        "n5-teaching:v1:topic",
+        "n5-teaching:v1:question"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-78585f6975c8-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/19-ong-tu-v-v-v-v",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "NK-78585f6975c8-2",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/19-ong-tu-v-v-v-v",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "NK-78585f6975c8-3",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/19-ong-tu-v-v-v-v",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "NK-78585f6975c8-4",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/19-ong-tu-v-v-v-v",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-78585f6975c8-1; NK-78585f6975c8-2; NK-78585f6975c8-3; NK-78585f6975c8-4]",
+      "formula": "Thân dạng ます + ます／ません／ました／ませんでした。",
+      "explanation": "Khi đã biết dạng Vます, giữ phần đứng trước ます rồi đổi đuôi: 読みます→読みません→読みました→読みませんでした. ます là khẳng định phi quá khứ, thường dùng cho thói quen hoặc hành động tương lai theo ngữ cảnh; ません là phủ định phi quá khứ. ました là khẳng định quá khứ; ませんでした là phủ định quá khứ. Đừng đồng nhất ます với hành động đang diễn ra ngay lúc nói: diễn tả 'đang làm' thường cần mẫu khác như ています. Từ thời gian như 毎日, 昨日, 明日 giúp xác định ý định, nhưng 今日 có thể nói cả việc đã xảy ra lẫn việc sắp làm trong hôm nay. Bài cho sẵn dạng ます; không tạo dạng này bằng cách gắn ます trực tiếp vào mọi động từ từ điển. Câu đã kết thúc bằng động từ lịch sự thì không thêm です.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:polite-verbs:example:0",
+          "context": "Nói về thói quen đọc tin tức mỗi sáng",
+          "jp": "毎朝、新聞を読みます。",
+          "reading": "まいあさ、しんぶんをよみます。",
+          "vi": "Mỗi sáng tôi đọc báo.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:example:1",
+          "context": "Thông báo kế hoạch đến thư viện vào ngày mai",
+          "jp": "明日、図書館に行きます。",
+          "reading": "あした、としょかんにいきます。",
+          "vi": "Ngày mai tôi sẽ đến thư viện.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:example:2",
+          "context": "Buổi sáng xác nhận hôm nay là ngày nghỉ và sẽ không làm việc",
+          "jp": "今日は働きません。",
+          "reading": "きょうははたらきません。",
+          "vi": "Hôm nay tôi không làm việc.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:example:3",
+          "context": "Kể lại việc mua sắm đã hoàn thành hôm qua",
+          "jp": "昨日、靴を買いました。",
+          "reading": "きのう、くつをかいました。",
+          "vi": "Hôm qua tôi đã mua giày.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:example:4",
+          "context": "Báo lại rằng tối qua không xem truyền hình",
+          "jp": "昨夜、テレビを見ませんでした。",
+          "reading": "さくや、てれびをみませんでした。",
+          "vi": "Tối qua tôi đã không xem ti vi.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn kể chuyến đi đã hoàn thành hôm qua nhưng nói 昨日、図書館に行きます。",
+          "correction": "昨日、図書館に行きました。",
+          "reason": "Trong lời kể thông thường về việc đã hoàn thành hôm qua, cần đuôi quá khứ ました, không phải phi quá khứ ます."
+        },
+        {
+          "problem": "読みますです。",
+          "correction": "読みます。",
+          "reason": "ます đã là đuôi lịch sự của động từ; không ghép thêm です sau nó."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:polite-verbs:task:0",
+          "mode": "choice",
+          "prompt": "Bạn kể rằng HÔM QUA đã mua một quyển sách. Chọn dạng động từ đúng để điền: 昨日、本を（　）。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "買います"
+            },
+            {
+              "id": "option:1",
+              "text": "買いませんでした"
+            },
+            {
+              "id": "option:2",
+              "text": "買いました"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "Việc đã mua trong quá khứ cần 買いました. 買います không biểu đạt quá khứ trong lời kể này; 買いませんでした phủ định việc mua.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:task:1",
+          "mode": "choice",
+          "prompt": "Sáng nay bạn thông báo kế hoạch ngày mai: 'Ngày mai tôi không làm việc'. Chọn câu đúng nội dung.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "明日、働きます。"
+            },
+            {
+              "id": "option:1",
+              "text": "明日、働きません。"
+            },
+            {
+              "id": "option:2",
+              "text": "昨日、働きませんでした。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "明日 xác định ngày mai, còn 働きません phủ định hành động phi quá khứ. Câu cuối nói một việc không xảy ra hôm qua, không phải kế hoạch ngày mai.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:task:2",
+          "mode": "choice",
+          "prompt": "Trong 明日、図書館に行きます。, đuôi ます được hiểu thế nào nhờ 明日?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Một hành động dự định thực hiện ngày mai."
+            },
+            {
+              "id": "option:1",
+              "text": "Một chuyến đi đã hoàn thành hôm qua."
+            },
+            {
+              "id": "option:2",
+              "text": "Bằng chứng rằng người nói đang đi ngay lúc nói."
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "明日 đặt hành động vào tương lai. ます không tự mang nghĩa 'đang làm ngay bây giờ', và câu cũng không nói về hôm qua.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:task:3",
+          "mode": "short_text",
+          "prompt": "Đổi のみます sang phủ định lịch sự PHI QUÁ KHỨ. Chỉ viết dạng động từ bằng hiragana, không dấu câu.",
+          "accepted_variants": [
+            "のみません"
+          ],
+          "rationale": "Giữ のみ, thay ます bằng ません. のみませんでした cũng là dạng đúng của động từ nhưng mang nghĩa quá khứ nên không đáp ứng yêu cầu này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:polite-verbs:task:4",
+          "mode": "short_text",
+          "prompt": "Đổi かいます sang khẳng định lịch sự QUÁ KHỨ. Chỉ viết dạng động từ bằng hiragana, không dấu câu.",
+          "accepted_variants": [
+            "かいました"
+          ],
+          "rationale": "Thay ます bằng ました; giữ nguyên phần かい trước đuôi. Bài yêu cầu dạng khẳng định, không phải phủ định.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:past-negative",
+      "revision": 1,
+      "order": 6,
+      "level": "N5",
+      "title": "Kể việc đã không làm bằng ませんでした・なかった",
+      "goal": "Phân biệt phủ định quá khứ với phủ định phi quá khứ và chuyển dạng phủ định đã biết sang quá khứ.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "SR-f4b26d1d125d-1",
+          "url": "https://www.saromalang.com/2016/07/vmasendeshita-vnakatta.html",
+          "source_name": "Saromalang",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Saromalang [SR-f4b26d1d125d-1]",
+      "formula": "Vません → Vませんでした ／ Vない → Vなかった。",
+      "explanation": "Phủ định quá khứ nói rằng hành động đã không xảy ra trong thời điểm hoặc khoảng thời gian quá khứ đang bàn. Với dạng lịch sự, thêm でした sau dạng ません: 飲みません→飲みませんでした. Với dạng thường đã biết, thay phần ない bằng なかった: 飲まない→飲まなかった. Hai dạng sau đều phủ định quá khứ nhưng khác mức độ lịch sự; dạng thường phù hợp với nhật ký hoặc người thân quen, không tự thay cho cách nói lịch sự trong mọi tình huống. Cũng có cách nói 飲まなかったです; bài tập yêu cầu đuôi ませんでした sẽ chỉ nhận đúng dạng đã chỉ định. Phân biệt 飲みました 'đã uống', 飲みません 'không/sẽ không uống' và 飲みませんでした 'đã không uống'. Dạng phủ định quá khứ đơn thuần không nhất thiết có nghĩa 'chưa từng' hay 'chưa làm xong'; những ý đó cần ngữ cảnh hoặc mẫu khác.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:past-negative:example:0",
+          "context": "Kể với giáo viên rằng hôm qua đã bỏ bữa sáng",
+          "jp": "昨日、朝ご飯を食べませんでした。",
+          "reading": "きのう、あさごはんをたべませんでした。",
+          "vi": "Hôm qua tôi đã không ăn sáng.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:example:1",
+          "context": "Báo lại rằng hôm qua không mang ô theo",
+          "jp": "昨日、傘を持って行きませんでした。",
+          "reading": "きのう、かさをもっていきませんでした。",
+          "vi": "Hôm qua tôi đã không mang ô đi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:example:2",
+          "context": "Báo với đồng nghiệp về một người vắng mặt hôm qua",
+          "jp": "昨日、木村さんは会社に来ませんでした。",
+          "reading": "きのう、きむらさんはかいしゃにきませんでした。",
+          "vi": "Hôm qua anh/chị Kimura đã không đến công ty.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:example:3",
+          "context": "Viết trong nhật ký về buổi tối không dùng điện thoại",
+          "jp": "昨夜、電話を使わなかった。",
+          "reading": "さくや、でんわをつかわなかった。",
+          "vi": "Tối qua tôi đã không dùng điện thoại.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:example:4",
+          "context": "Kể với bạn thân rằng chủ nhật tuần trước không ra ngoài",
+          "jp": "先週の日曜日は出かけなかった。",
+          "reading": "せんしゅうのにちようびはでかけなかった。",
+          "vi": "Chủ nhật tuần trước tôi đã không đi ra ngoài.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn nói lịch sự 'đã không đọc' nhưng viết 読みませんだった。",
+          "correction": "読みませんでした。",
+          "reason": "Ở dạng lịch sự này, ません kết hợp với でした, không phải だった."
+        },
+        {
+          "problem": "Muốn đổi 食べない sang phủ định quá khứ dạng thường nhưng viết 食べないでした。",
+          "correction": "食べなかった。",
+          "reason": "Thay ない bằng なかった. Nếu cần dạng lịch sự với ませんでした thì dùng 食べませんでした; không ghép ないでした."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:past-negative:task:0",
+          "mode": "choice",
+          "prompt": "Bạn kể với giáo viên rằng hôm qua đã KHÔNG đọc báo. Chọn câu đúng thời gian và tính phủ định.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "昨日、新聞を読みました。"
+            },
+            {
+              "id": "option:1",
+              "text": "昨日、新聞を読みませんでした。"
+            },
+            {
+              "id": "option:2",
+              "text": "明日、新聞を読みません。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "読みませんでした là phủ định quá khứ. 読みました khẳng định đã đọc, còn câu với 明日 nói về ngày mai.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:task:1",
+          "mode": "choice",
+          "prompt": "Câu nhật ký 昨夜、電話を使わなかった。 cho biết điều gì?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Tối qua người viết đã không dùng điện thoại."
+            },
+            {
+              "id": "option:1",
+              "text": "Tối nay người viết sẽ không dùng điện thoại."
+            },
+            {
+              "id": "option:2",
+              "text": "Tối qua người viết đã dùng điện thoại."
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "昨夜 là tối qua; 使わなかった phủ định hành động trong quá khứ. Câu không nói về tối nay và không khẳng định đã dùng.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:task:2",
+          "mode": "choice",
+          "prompt": "Dạng nào chuyển 行かなかった sang cách nói lịch sự có đuôi ませんでした mà giữ nguyên nghĩa cơ bản 'đã không đi'?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "行きました"
+            },
+            {
+              "id": "option:1",
+              "text": "行きません"
+            },
+            {
+              "id": "option:2",
+              "text": "行きませんでした"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "行きませんでした giữ cả phủ định và quá khứ, đồng thời dùng dạng lịch sự được yêu cầu. Hai dạng kia mất một trong hai nét nghĩa.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:task:3",
+          "mode": "short_text",
+          "prompt": "Đổi かりません sang phủ định quá khứ lịch sự bằng đuôi ませんでした. Chỉ viết hiragana của dạng động từ, không dấu câu.",
+          "accepted_variants": [
+            "かりませんでした"
+          ],
+          "rationale": "Dạng ません có sẵn chỉ cần thêm でした. Những cách nói khác như かりなかったです không nằm trong yêu cầu đuôi cụ thể của bài này, không vì thế mà bị coi là sai ngữ pháp nói chung.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:past-negative:task:4",
+          "mode": "short_text",
+          "prompt": "Dạng phủ định thường đã cho là みない. Đổi sang phủ định QUÁ KHỨ dạng thường. Chỉ viết hiragana của dạng động từ, không thêm です hoặc dấu câu.",
+          "accepted_variants": [
+            "みなかった"
+          ],
+          "rationale": "Thay ない bằng なかった. Đề cho sẵn dạng phủ định nên không cần đoán nhóm động từ từ cách kết thúc của từ điển.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:te-form",
+      "revision": 1,
+      "order": 7,
+      "level": "N5",
+      "title": "Tạo thể て theo nhóm động từ",
+      "goal": "Tạo thể て của động từ đã biết nhóm và nhận ra các dạng đặc biệt して・来て・行って.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-81a6ccb7a4cc-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/te-form.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-81a6ccb7a4cc-1]",
+      "formula": "Nhóm 1: う・つ・る→って／む・ぶ・ぬ→んで／く→いて／ぐ→いで／す→して。Nhóm 2: bỏ る + て。する→して／来る→来て（きて）／行く→行って。",
+      "explanation": "Xác định nhóm từ tài liệu hoặc từ điển trước khi chia, không đoán chỉ vì thấy đuôi る: 食べる là nhóm 2 nhưng 帰る là nhóm 1. Với nhóm 1, đổi âm cuối của dạng từ điển theo bảng: 買う・待つ・帰る→買って・待って・帰って; 読む・遊ぶ・死ぬ→読んで・遊んで・死んで; 書く→書いて; 泳ぐ→泳いで; 話す→話して. Với nhóm 2, bỏ る rồi thêm て: 食べる→食べて, 起きる→起きて. Hai động từ bất quy tắc là する→して và 来る（くる）→来て（きて）; 行く tuy thuộc nhóm 1 nhưng có thể て đặc biệt 行って（いって）, không phải 行いて. Thể て tự nó không xác định thời quá khứ hay phi quá khứ của câu. Trong chuỗi hành động có thứ tự của các ví dụ, động từ cuối giúp xác định thời gian; không suy ra mọi lần dùng て đều chỉ 'rồi'. Thể て còn ghép với ください để nhờ làm và với います trong các mẫu sẽ học tiếp. Không có quy tắc chung 'bỏ ます rồi thêm て' cho mọi động từ.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:te-form:example:0",
+          "context": "Nêu thứ tự đọc hướng dẫn trước khi viết tên; 読む thuộc nhóm 1",
+          "jp": "説明を読んで、名前を書きます。",
+          "reading": "せつめいをよんで、なまえをかきます。",
+          "vi": "Tôi đọc hướng dẫn rồi viết tên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:te-form:example:1",
+          "context": "Kể lịch buổi sáng theo thứ tự; 食べる thuộc nhóm 2",
+          "jp": "朝ご飯を食べて、学校に行きます。",
+          "reading": "あさごはんをたべて、がっこうにいきます。",
+          "vi": "Tôi ăn sáng rồi đến trường.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:te-form:example:2",
+          "context": "Nêu thứ tự làm bài tập rồi mới xem ti vi; する có dạng して",
+          "jp": "宿題をして、テレビを見ます。",
+          "reading": "しゅくだいをして、てれびをみます。",
+          "vi": "Tôi làm bài tập rồi xem ti vi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:te-form:example:3",
+          "context": "Hướng dẫn bạn học đến đúng căn phòng; ください dùng để nhờ làm",
+          "jp": "この部屋に来てください。",
+          "reading": "このへやにきてください。",
+          "vi": "Hãy đến phòng này.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:te-form:example:4",
+          "context": "Nêu kế hoạch đến nhà ga rồi mua vé; 行く có dạng đặc biệt 行って",
+          "jp": "駅に行って、切符を買います。",
+          "reading": "えきにいって、きっぷをかいます。",
+          "vi": "Tôi đến nhà ga rồi mua vé.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Từ 読みます tạo thể て thành 読みて bằng cách bỏ ます rồi thêm て.",
+          "correction": "読む→読んで。",
+          "reason": "読む là nhóm 1, đuôi む đổi thành んで. Cách bỏ ます thêm て không áp dụng chung cho nhóm 1."
+        },
+        {
+          "problem": "Vì thấy 帰る kết thúc bằng る nên coi là nhóm 2 và chia 帰て.",
+          "correction": "帰る（nhóm 1）→帰って。",
+          "reason": "Nhóm động từ là thông tin phải học hoặc tra cứu. Đuôi る xuất hiện ở cả nhóm 1 và nhóm 2; với 帰る dùng quy tắc nhóm 1 る→って."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:te-form:task:0",
+          "mode": "choice",
+          "prompt": "泳ぐ（およぐ, nhóm 1）cần thể て. Chọn dạng đúng theo quy tắc ぐ→いで.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "泳いで（およいで）"
+            },
+            {
+              "id": "option:1",
+              "text": "泳いだ（およいだ）"
+            },
+            {
+              "id": "option:2",
+              "text": "泳がない（およがない）"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "泳いで là thể て. 泳いだ là dạng quá khứ thường; 泳がない là phủ định thường. Các dạng đó tồn tại nhưng không phải dạng được hỏi.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:te-form:task:1",
+          "mode": "choice",
+          "prompt": "Đã biết 食べる thuộc nhóm 2 và 帰る thuộc nhóm 1. Nhận xét nào dùng đúng thông tin nhóm để tạo thể て?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Cả hai đều kết thúc bằng る nên đều chỉ bỏ る rồi thêm て."
+            },
+            {
+              "id": "option:1",
+              "text": "Nhóm không quan trọng; với cả hai chỉ cần thêm て sau dạng từ điển."
+            },
+            {
+              "id": "option:2",
+              "text": "食べる→食べて theo nhóm 2; 帰る→帰って theo nhóm 1."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "Đuôi る không đủ để xác định nhóm. Với nhóm đã cho, 食べる bỏ る thêm て, còn 帰る đổi る thành って.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:te-form:task:2",
+          "mode": "choice",
+          "prompt": "Trong ngữ cảnh kể thứ tự buổi sáng, 朝ご飯を食べて、学校に行きます。 diễn đạt điều gì?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Không ăn sáng rồi đến trường."
+            },
+            {
+              "id": "option:1",
+              "text": "Ăn sáng rồi đến trường; thể て nối hành động đầu với hành động sau."
+            },
+            {
+              "id": "option:2",
+              "text": "Chỉ riêng 食べて đã khẳng định rằng cả hai việc xảy ra hôm qua."
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Ngữ cảnh ở đây là chuỗi hành động có thứ tự. 食べて không có phủ định và tự nó không đánh dấu quá khứ; 行きます là đuôi phi quá khứ của chuỗi này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:te-form:task:3",
+          "mode": "short_text",
+          "prompt": "Điền thể て của 来る（くる）vào （　）ください để nhờ người nghe đến. Chỉ viết phần còn thiếu bằng hiragana, không viết ください.",
+          "accepted_variants": [
+            "きて"
+          ],
+          "rationale": "来る chuyển bất quy tắc thành 来て, đọc きて. Bài yêu cầu hiragana nên dạng chữ Hán không nằm trong đáp án giới hạn này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:te-form:task:4",
+          "mode": "short_text",
+          "prompt": "Viết thể て đặc biệt của 行く（いく）bằng hiragana. Chỉ viết dạng động từ, không dấu câu.",
+          "accepted_variants": [
+            "いって"
+          ],
+          "rationale": "行く có thể て đặc biệt 行って. Không áp dụng máy móc quy tắc く→いて của 書く cho động từ này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:negative-request",
+      "revision": 1,
+      "order": 9,
+      "level": "N5",
+      "title": "Nhờ đừng làm bằng ないでください",
+      "goal": "Tạo lời yêu cầu không thực hiện hành động và phân biệt với lời nhờ làm bằng てください.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs",
+        "n5-teaching:v1:te-form",
+        "n5-teaching:v1:request"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-c2bb02acc5d3-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/requests.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-c2bb02acc5d3-1]",
+      "formula": "Động từ thể ない + でください。例: 開けない + でください → 開けないでください。",
+      "explanation": "ないでください nhờ hoặc hướng dẫn người nghe không làm một việc. Trước hết tạo thể ない theo nhóm đã xác định: nhóm 1 đổi âm cuối từ hàng u sang hàng a rồi thêm ない, như 書く→書かない, 話す→話さない, 待つ→待たない; riêng đuôi う đổi thành わない, như 買う→買わない. Nhóm 2 bỏ る rồi thêm ない, như 開ける→開けない. Các dạng bất quy tắc cần nhớ là する→しない, 来る（くる）→来ない（こない）; riêng ある có phủ định ない. Không đoán nhóm chỉ vì từ kết thúc bằng る. Sau dạng ない, thêm でください; không ghép ません với でください. 開けてください nhờ mở, còn 開けないでください nhờ đừng mở. Đây không phải lời kể 'tôi không mở'. Dù có ください, mức độ phù hợp còn tùy quan hệ và tình huống; với cấp trên hoặc khách hàng có thể cần cách nhờ mềm hơn.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:negative-request:example:0",
+          "context": "Nhân viên hướng dẫn giữ yên lặng trong phòng đọc",
+          "jp": "ここで大きな声で話さないでください。",
+          "reading": "ここでおおきなこえではなさないでください。",
+          "vi": "Xin đừng nói lớn tiếng ở đây.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:example:1",
+          "context": "Người hướng dẫn chỉ vào một công tắc không được đụng vào",
+          "jp": "このスイッチに触らないでください。",
+          "reading": "このすいっちにさわらないでください。",
+          "vi": "Xin đừng chạm vào công tắc này.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:example:2",
+          "context": "Phòng đang bật điều hòa nên người phụ trách yêu cầu giữ cửa sổ đóng",
+          "jp": "窓を開けないでください。",
+          "reading": "まどをあけないでください。",
+          "vi": "Xin đừng mở cửa sổ.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:example:3",
+          "context": "Nhắc học viên mang hộ chiếu đến buổi làm thủ tục",
+          "jp": "パスポートを忘れないでください。",
+          "reading": "ぱすぽーとをわすれないでください。",
+          "vi": "Xin đừng quên hộ chiếu.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:example:4",
+          "context": "Phòng làm việc đóng cửa ngày mai; người phụ trách hướng dẫn khách không đến đây ngày đó",
+          "jp": "明日はここに来ないでください。",
+          "reading": "あしたはここにこないでください。",
+          "vi": "Ngày mai xin đừng đến đây.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn nhờ đừng nói nhưng viết 話しませんでください。",
+          "correction": "話さないでください。",
+          "reason": "Mẫu yêu cầu không làm dùng thể ない + でください. 話す là nhóm 1 nên có dạng 話さない, không dùng đuôi lịch sự ません ở vị trí này."
+        },
+        {
+          "problem": "Muốn nhờ đừng mở cửa sổ nhưng viết 窓を開けなくてください。",
+          "correction": "窓を開けないでください。",
+          "reason": "Lời nhờ không thực hiện hành động dùng ないでください. Dạng なくて có chức năng nối phủ định trong những cấu trúc khác, không thay cho ないで trong mẫu yêu cầu này."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:negative-request:task:0",
+          "mode": "choice",
+          "prompt": "Trong khu vực cấm chụp ảnh, nhân viên muốn nói 'Xin đừng chụp ảnh ở đây'. Chọn lời yêu cầu đúng.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "ここで写真を撮らないでください。"
+            },
+            {
+              "id": "option:1",
+              "text": "ここで写真を撮ってください。"
+            },
+            {
+              "id": "option:2",
+              "text": "ここで写真を撮りませんでした。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "撮らないでください yêu cầu không chụp. 撮ってください yêu cầu chụp, còn 撮りませんでした là lời kể phủ định quá khứ, không phải yêu cầu người nghe.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:task:1",
+          "mode": "choice",
+          "prompt": "待つ（まつ）thuộc nhóm 1. Muốn nhờ người nghe ĐỪNG ĐỢI, chọn dạng phù hợp.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "待ってください。"
+            },
+            {
+              "id": "option:1",
+              "text": "待たないでください。"
+            },
+            {
+              "id": "option:2",
+              "text": "待ちませんでした。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "待つ→待たない rồi thêm でください. 待ってください mang ý ngược lại là nhờ đợi; 待ちませんでした chỉ việc đã không đợi.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:task:2",
+          "mode": "choice",
+          "prompt": "Người phụ trách nói 窓を開けないでください。 Người nghe được yêu cầu làm gì?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Mở cửa sổ ngay."
+            },
+            {
+              "id": "option:1",
+              "text": "Báo lại rằng hôm qua đã không mở cửa sổ."
+            },
+            {
+              "id": "option:2",
+              "text": "Không mở cửa sổ."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "開けないでください nhắm tới hành động của người nghe và yêu cầu không mở. Câu không khẳng định một việc quá khứ hay yêu cầu mở.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:task:3",
+          "mode": "short_text",
+          "prompt": "買う（かう, nhóm 1）cần thể ない để ghép với でください. Chỉ viết thể ない bằng hiragana, không thêm でください hoặc dấu câu.",
+          "accepted_variants": [
+            "かわない"
+          ],
+          "rationale": "Với đuôi う của động từ nhóm 1, chuyển thành わない, không phải あない. Bài chỉ hỏi phần thể ない trước でください.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:negative-request:task:4",
+          "mode": "short_text",
+          "prompt": "Điền phần còn thiếu để nhờ 'đừng đến': 明日はここに（　）でください。 Động từ là 来る（くる）. Chỉ viết phần còn thiếu bằng hiragana.",
+          "accepted_variants": [
+            "こない"
+          ],
+          "rationale": "来る có thể ない là 来ない, đọc こない. Khi ghép với phần でください đã có trong đề, được こないでください; きない không phải dạng này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:existence",
+      "revision": 1,
+      "order": 10,
+      "level": "N5",
+      "title": "Nói có và ở đâu bằng あります・います",
+      "goal": "Chọn あります hoặc います theo đối tượng và phân biệt に chỉ nơi tồn tại với で chỉ nơi diễn ra hành động.",
+      "prerequisites": [
+        "n5-teaching:v1:topic",
+        "n5-teaching:v1:possession",
+        "n5-teaching:v1:polite-verbs"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-692d6cf7e490-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/existence.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "IR-85e99cb5c4a8-1",
+          "url": "https://jf.xcms.online/wp-content/uploads/2021/12/v1Grammar_NM_VN-1.pdf#page=25",
+          "source_name": "Irodori",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-692d6cf7e490-1] · Irodori [IR-85e99cb5c4a8-1]",
+      "formula": "Địa điểm に N が あります／います。／N は địa điểm に あります／います。／Phủ định: ありません／いません。",
+      "explanation": "Khi nói về sự có mặt ở một nơi, dùng います cho người và động vật như người chị, chó, mèo; dùng あります cho đồ vật, công trình và thông thường cả cây cối như 木, 花. Không áp dụng quy tắc tuyệt đối 'mọi sinh vật sống đều dùng います': cây đang mọc trong vườn thường đi với あります. Cũng không chỉ dựa vào việc một vật có thể di chuyển hay không; một chiếc xe đỗ trong bãi vẫn dùng あります. Trong mẫu tồn tại của người/vật ở bài này, に chỉ nơi có mặt; đối chiếu 図書館にいます 'ở thư viện' với 図書館で勉強します 'học tại thư viện', nơi で đánh dấu địa điểm diễn ra hành động. Khi giới thiệu vật hoặc người có mặt, thường dùng が; khi nói vị trí của đối tượng đã là chủ đề, dùng Nは…にあります／います. Câu phủ định có thể dùng は để nêu điều được phủ định, như テレビはありません. Phủ định lịch sự lần lượt là ありません và いません. Bài chỉ bàn sự tồn tại của người/vật, không khái quát sang mọi cấu trúc nói về nơi tổ chức sự kiện.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:existence:example:0",
+          "context": "Giới thiệu đồ dùng trong căn hộ mới",
+          "jp": "台所に冷蔵庫があります。",
+          "reading": "だいどころにれいぞうこがあります。",
+          "vi": "Có một chiếc tủ lạnh trong bếp.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:existence:example:1",
+          "context": "Báo cho bạn biết có một con chó ở lối vào nhà",
+          "jp": "玄関に犬がいます。",
+          "reading": "げんかんにいぬがいます。",
+          "vi": "Có một con chó ở lối vào nhà.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:existence:example:2",
+          "context": "Trả lời câu hỏi chị gái hiện ở đâu",
+          "jp": "姉は図書館にいます。",
+          "reading": "あねはとしょかんにいます。",
+          "vi": "Chị gái tôi đang ở thư viện.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:existence:example:3",
+          "context": "Mô tả một khu vườn có cây đang mọc, không phải con vật",
+          "jp": "庭に木があります。",
+          "reading": "にわにきがあります。",
+          "vi": "Trong vườn có cây.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:existence:example:4",
+          "context": "Khách hỏi phòng này có ti vi không; chủ nhà xác nhận là không có",
+          "jp": "この部屋にテレビはありません。",
+          "reading": "このへやにてれびはありません。",
+          "vi": "Trong phòng này không có ti vi.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn nói em gái có mặt ở thư viện nhưng viết 妹は図書館でいます。",
+          "correction": "妹は図書館にいます。",
+          "reason": "Với います chỉ sự có mặt của người, địa điểm đi với に. Nếu nói hành động học ở thư viện thì dùng 図書館で勉強します, với で đánh dấu nơi diễn ra hành động."
+        },
+        {
+          "problem": "Coi mọi sinh vật sống đều dùng います nên viết 庭に木がいます。 khi tả cây thông thường trong vườn.",
+          "correction": "庭に木があります。",
+          "reason": "Cây cối thông thường được nói bằng あります trong mẫu tồn tại này. Không lấy tiêu chí sống/không sống làm quy tắc tuyệt đối; います ở đây dùng cho người và động vật."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:existence:task:0",
+          "mode": "choice",
+          "prompt": "Tả cảnh bình thường: trong vườn có một con mèo. Chọn câu phù hợp với đối tượng là động vật.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "庭に猫があります。"
+            },
+            {
+              "id": "option:1",
+              "text": "庭に猫がいます。"
+            },
+            {
+              "id": "option:2",
+              "text": "庭に猫がいません。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Mèo là động vật nên dùng います khi nói có mặt. いません phủ định có mèo, trái dữ kiện; あります không phải lựa chọn thông thường cho con mèo sống trong cảnh này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:existence:task:1",
+          "mode": "choice",
+          "prompt": "Chọn cặp trợ từ theo thứ tự hai chỗ trống: 妹は図書館（　）います。妹は図書館（　）勉強します。 Câu đầu chỉ nơi có mặt; câu sau chỉ nơi học.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "で ／ に"
+            },
+            {
+              "id": "option:1",
+              "text": "に ／ に"
+            },
+            {
+              "id": "option:2",
+              "text": "に ／ で"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "に đi với nơi tồn tại trong 図書館にいます; で đánh dấu nơi diễn ra hành động trong 図書館で勉強します. Không đổi hai chức năng này cho nhau trong các mẫu đã cho.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:existence:task:2",
+          "mode": "choice",
+          "prompt": "Đọc: この部屋にテレビはありません。 Điều gì được phủ định?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Sự có mặt của ti vi trong phòng này."
+            },
+            {
+              "id": "option:1",
+              "text": "Sự có mặt của mọi người trong cả tòa nhà."
+            },
+            {
+              "id": "option:2",
+              "text": "Việc xem ti vi tối qua, chứ không phải việc phòng có ti vi hay không."
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "ありません phủ định sự tồn tại của テレビ ở この部屋. Câu không nói mọi người ở đâu hay ai đã xem ti vi trong quá khứ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:existence:task:3",
+          "mode": "short_text",
+          "prompt": "Trong cảnh vườn bình thường có cây đang mọc, điền động từ tồn tại lịch sự khẳng định: 庭に木が（　）。 Chỉ viết hiragana, không dấu câu.",
+          "accepted_variants": [
+            "あります"
+          ],
+          "rationale": "木 là cây nên thông thường dùng あります, dù cây là sinh vật sống. Đề yêu cầu khẳng định lịch sự nên không dùng ありません hoặc dạng thường ある.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:existence:task:4",
+          "mode": "short_text",
+          "prompt": "Một chiếc xe đang đỗ trong bãi. Điền động từ tồn tại lịch sự khẳng định để nói có xe ở đó: 駐車場に車が（　）。 Chỉ viết hiragana, không dấu câu.",
+          "accepted_variants": [
+            "あります"
+          ],
+          "rationale": "Xe đỗ là đồ vật nên dùng あります trong câu này; khả năng tự di chuyển của một chiếc xe không khiến nó được xếp như người hay động vật. Đáp án chỉ áp dụng cho cách tả tồn tại bình thường đã nêu.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:time-range",
+      "revision": 1,
+      "order": 11,
+      "level": "N5",
+      "title": "Nêu khoảng thời gian với から・まで",
+      "goal": "Nêu đúng điểm bắt đầu và điểm kết thúc của một lịch hoạt động hoặc hành trình.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-a202b54c59cc-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/21-tro-tu-kara-made",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "NK-a202b54c59cc-2",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/21-tro-tu-kara-made",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-a202b54c59cc-1; NK-a202b54c59cc-2] — phần giải thích nền; ví dụ và bài tập do AI biên soạn, không phải văn bản của nguồn.",
+      "formula": "Mốc bắt đầu + から + mốc kết thúc + まで + Vます。 / Nは mốc bắt đầuから mốc kết thúcまでです。",
+      "explanation": "から đứng sau mốc bắt đầu, còn まで đứng sau mốc kết thúc: 7時から8時まで là từ 7 giờ đến 8 giờ. Mốc có thể là giờ, ngày hoặc địa điểm; với địa điểm, mẫu nêu nơi xuất phát và nơi đến, không tự cho biết quãng đường dài bao nhiêu. Có thể chỉ dùng から nếu chỉ cần nói lúc bắt đầu, hoặc chỉ dùng まで nếu chỉ cần nói lúc kết thúc. Không thêm に ngay trước から・まで trong các mẫu giờ đang học. Phân biệt 10時から là ‘từ 10 giờ’ với 忙しいですから là ‘vì bận’: から sau một mệnh đề có thể nêu lý do, không phải mốc thời gian. Các giờ sáng/chiều phải đọc theo ngữ cảnh, không tự suy ra từ chữ 時.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:time-range:example:0",
+          "context": "Nói lịch tự học buổi tối, bắt đầu 19 giờ và kết thúc 20 giờ",
+          "jp": "夜七時から八時まで漢字を勉強します。",
+          "reading": "よるしちじからはちじまでかんじをべんきょうします。",
+          "vi": "Tôi học kanji từ 7 giờ đến 8 giờ tối.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:time-range:example:1",
+          "context": "Thông báo lịch làm việc tuần này, từ thứ Ba đến thứ Năm",
+          "jp": "今週は火曜日から木曜日まで働きます。",
+          "reading": "こんしゅうはかようびからもくようびまではたらきます。",
+          "vi": "Tuần này tôi làm việc từ thứ Ba đến thứ Năm.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:time-range:example:2",
+          "context": "Đang ở công viên và nói chặng đi bộ về nhà",
+          "jp": "公園から家まで歩きます。",
+          "reading": "こうえんからいえまであるきます。",
+          "vi": "Tôi đi bộ từ công viên về nhà.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:time-range:example:3",
+          "context": "Bạn chỉ hỏi giờ bắt đầu lớp sáng nay; chưa nói giờ kết thúc",
+          "jp": "授業は午前十時からです。",
+          "reading": "じゅぎょうはごぜんじゅうじからです。",
+          "vi": "Lớp học bắt đầu từ 10 giờ sáng.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:time-range:example:4",
+          "context": "Trả lời mình sẽ ở thư viện đến lúc nào chiều nay",
+          "jp": "午後四時まで図書館にいます。",
+          "reading": "ごごよじまでとしょかんにいます。",
+          "vi": "Tôi ở thư viện đến 4 giờ chiều.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn nói học từ 7 giờ đến 8 giờ nhưng viết 七時まで八時から勉強します。",
+          "correction": "七時から八時まで勉強します。",
+          "reason": "Với lịch đã cho, 七時 là mốc bắt đầu nên đi với から; 八時 là mốc kết thúc nên đi với まで. Không đảo vai trò của hai mốc."
+        },
+        {
+          "problem": "授業は十時にからです。",
+          "correction": "授業は十時からです。",
+          "reason": "から trực tiếp đánh dấu mốc 十時 trong mẫu này; không ghép にから. 十時に始まります là một cấu trúc khác, vẫn có nghĩa lớp bắt đầu lúc 10 giờ."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:time-range:task:0",
+          "mode": "choice",
+          "prompt": "Lịch học là 19:00–20:00. Chọn cặp trợ từ đúng theo thứ tự: 夜七時（　）八時（　）勉強します。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "まで／から"
+            },
+            {
+              "id": "option:1",
+              "text": "から／まで"
+            },
+            {
+              "id": "option:2",
+              "text": "から／から"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Mốc 7 giờ tối là lúc bắt đầu, còn 8 giờ tối là lúc kết thúc; vì vậy dùng から rồi まで.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:time-range:task:1",
+          "mode": "choice",
+          "prompt": "Bảng thông báo ghi: 受付は午前十時から午後二時までです。Quầy tiếp nhận đóng lúc nào?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "10 giờ sáng"
+            },
+            {
+              "id": "option:1",
+              "text": "12 giờ trưa"
+            },
+            {
+              "id": "option:2",
+              "text": "2 giờ chiều"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "午後二時 đứng trước まで nên là mốc kết thúc của giờ tiếp nhận.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:time-range:task:2",
+          "mode": "choice",
+          "prompt": "Câu nào dùng から để nêu điểm bắt đầu của thời gian, không phải lý do?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "午後一時から働きます。"
+            },
+            {
+              "id": "option:1",
+              "text": "寒いですから、窓を閉めます。"
+            },
+            {
+              "id": "option:2",
+              "text": "雨ですから、出かけません。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "午後一時 là một mốc giờ. Hai câu còn lại đặt から sau mệnh đề để giải thích vì sao đóng cửa sổ hoặc không ra ngoài.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:time-range:task:3",
+          "mode": "short_text",
+          "prompt": "Chỉ điền một trợ từ thuộc cặp から・まで đang học: 駅からホテル（　）歩きます。Ý cần nói: đi bộ từ ga đến khách sạn.",
+          "accepted_variants": [
+            "まで"
+          ],
+          "rationale": "まで nêu giới hạn cuối của hành trình trong cặp から・まで. へ cũng có thể tạo một câu đúng để nêu hướng hoặc đích đến, nhưng không thuộc cặp trợ từ mà đề yêu cầu.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:time-range:task:4",
+          "mode": "short_text",
+          "prompt": "Viết riêng cụm ‘từ 10 giờ đến 12 giờ’ bằng から・まで. Dùng đúng dạng số 10時 và 12時, không thêm câu hay dấu câu.",
+          "accepted_variants": [
+            "10時から12時まで"
+          ],
+          "rationale": "Ghép mốc đầu 10時 với から, mốc cuối 12時 với まで. Cách viết chữ hoặc kana ngoài yêu cầu không bị coi là sai tiếng Nhật nói chung.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:action-place",
+      "revision": 1,
+      "order": 12,
+      "level": "N5",
+      "title": "Nói nơi diễn ra hoạt động bằng で",
+      "goal": "Phân biệt nơi làm một việc, nơi có một sự kiện và nơi người hoặc vật hiện diện.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs",
+        "n5-teaching:v1:existence"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-945d8cf4a5d4-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/34-tro-tu-de-phan-2",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "NK-945d8cf4a5d4-2",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/34-tro-tu-de-phan-2",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-945d8cf4a5d4-1; NK-945d8cf4a5d4-2] — phần giải thích nền về nơi hoạt động; ví dụ và bài tập do AI biên soạn.",
+      "formula": "Địa điểm + で + hành động。 / Địa điểm + で + sự kiện + があります。 / Địa điểm + に + người/vật + がいます／あります。",
+      "explanation": "で đánh dấu nơi một hoạt động diễn ra: 台所で料理をします là nấu ăn ở bếp. Với câu chỉ sự hiện diện của người hay đồ vật, dùng に: 台所に母がいます là mẹ đang ở bếp. Không chọn trợ từ chỉ bằng việc nhìn thấy あります: một sự kiện diễn ra ở đâu có thể dùng で, như 教室でテストがあります. Khi đó テスト là sự kiện, khác với 本 là đồ vật nằm ở một nơi. で còn có các nghĩa khác như phương tiện, nhưng bài này chỉ luyện nghĩa địa điểm. Ví dụ sự kiện là phần mở rộng do AI biên soạn, không phải trích dẫn của nguồn.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:action-place:example:0",
+          "context": "Nói nơi tự nấu bữa tối",
+          "jp": "台所で晩ご飯を作ります。",
+          "reading": "だいどころでばんごはんをつくります。",
+          "vi": "Tôi làm bữa tối ở bếp.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:action-place:example:1",
+          "context": "Bạn hỏi sẽ tập bóng đá ở đâu sau giờ học",
+          "jp": "放課後、公園でサッカーをします。",
+          "reading": "ほうかご、こうえんでさっかーをします。",
+          "vi": "Sau giờ học, tôi chơi bóng đá ở công viên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:action-place:example:2",
+          "context": "Kể nơi đã mua chiếc bút đang dùng",
+          "jp": "駅の店でペンを買いました。",
+          "reading": "えきのみせでぺんをかいました。",
+          "vi": "Tôi đã mua bút ở cửa hàng trong ga.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:action-place:example:3",
+          "context": "Giáo viên thông báo nơi tổ chức bài kiểm tra sáng mai",
+          "jp": "明日、この教室でテストがあります。",
+          "reading": "あした、このきょうしつでてすとがあります。",
+          "vi": "Ngày mai sẽ có bài kiểm tra ở phòng học này.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:action-place:example:4",
+          "context": "Đứng ngoài phòng học và báo rằng giáo viên hiện đang ở trong đó",
+          "jp": "教室に先生がいます。",
+          "reading": "きょうしつにせんせいがいます。",
+          "vi": "Có giáo viên ở trong phòng học.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn nói đọc báo ở quán cà phê nhưng viết 喫茶店に新聞を読みます。",
+          "correction": "喫茶店で新聞を読みます。",
+          "reason": "喫茶店 là nơi hành động 読みます diễn ra, không phải đích đến hay nơi tồn tại trong mẫu này."
+        },
+        {
+          "problem": "Muốn báo vị trí một quyển sách nhưng viết 机の上で本があります。",
+          "correction": "机の上に本があります。",
+          "reason": "Quyển sách là đồ vật hiện diện trên bàn nên dùng に. Không áp dụng máy móc cho sự kiện: 公園でお祭りがあります có thể dùng で vì lễ hội diễn ra ở công viên."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:action-place:task:0",
+          "mode": "choice",
+          "prompt": "Bạn đang nói nơi làm bánh, không nói đích di chuyển. Điền vào: 台所（　）ケーキを作ります。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "を"
+            },
+            {
+              "id": "option:1",
+              "text": "で"
+            },
+            {
+              "id": "option:2",
+              "text": "に"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "で đánh dấu căn bếp là nơi thực hiện 作ります; を đã đánh dấu ケーキ là thứ được làm ra.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:action-place:task:1",
+          "mode": "choice",
+          "prompt": "Bạn chỉ muốn báo ‘Có một con mèo ở trong phòng’, không nói nó làm gì. Chọn câu đúng với nghĩa ấy.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "部屋に猫がいます。"
+            },
+            {
+              "id": "option:1",
+              "text": "部屋で猫を見ます。"
+            },
+            {
+              "id": "option:2",
+              "text": "部屋に猫がありません。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Câu đầu nêu sự hiện diện bằng に＋います. Câu thứ hai nói nhìn thấy mèo; câu thứ ba vừa dùng sai động từ tồn tại cho con mèo sống vừa mang phủ định.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:action-place:task:2",
+          "mode": "choice",
+          "prompt": "明日、学校でお祭りがあります。Trong câu này, vì sao 学校 đi với で dù cuối câu là あります?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Vì trường là phương tiện đi lại."
+            },
+            {
+              "id": "option:1",
+              "text": "Vì tất cả câu có あります đều phải dùng で."
+            },
+            {
+              "id": "option:2",
+              "text": "Vì lễ hội là một sự kiện diễn ra ở trường."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "Cần xét nội dung: お祭り là sự kiện được tổ chức, không phải một đồ vật đang nằm ở trường.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:action-place:task:3",
+          "mode": "short_text",
+          "prompt": "Chỉ điền một trợ từ: かばんの中（　）財布があります。Đang tìm vị trí chiếc ví, không nói về sự kiện.",
+          "accepted_variants": [
+            "に"
+          ],
+          "rationale": "Vị trí tồn tại của chiếc ví được đánh dấu bằng に.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:action-place:task:4",
+          "mode": "short_text",
+          "prompt": "Viết riêng cụm ‘ở nhà hàng’ để ghép trước パンを食べました trong câu ‘Tôi đã ăn bánh mì ở nhà hàng’. Dùng từ レストラン, không thêm câu hay dấu câu.",
+          "accepted_variants": [
+            "レストランで",
+            "れすとらんで"
+          ],
+          "rationale": "Ghép nơi hoạt động với で: レストランでパンを食べました. Ở đây không dùng に để thay cho nơi ăn.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:invitation",
+      "revision": 1,
+      "order": 13,
+      "level": "N5",
+      "title": "Mời cùng làm bằng ませんか",
+      "goal": "Đưa ra lời rủ lịch sự và nhận ra lời nhận hoặc từ chối theo ngữ cảnh.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs",
+        "n5-teaching:v1:past-negative"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-38e01c01e8ec-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/35-v-v-masen-ka",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "NK-38e01c01e8ec-2",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/35-v-v-masen-ka",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-38e01c01e8ec-1; NK-38e01c01e8ec-2] — phần giải thích nền; các tình huống và câu luyện do AI biên soạn.",
+      "formula": "Vます → bỏ ます + ませんか。 / 一緒に + Vませんか。",
+      "explanation": "Trong ngữ cảnh rủ người nghe cùng thực hiện một hoạt động, Vませんか là lời mời: 行きます→行きませんか, します→しませんか. 一緒に nghĩa là ‘cùng nhau’, giúp làm rõ ý cùng tham gia. Không ghép nguyên Vます với ませんか. Hình thức này cũng có thể là câu hỏi phủ định trong ngữ cảnh khác, nên không dịch mọi câu ませんか thành lời mời. Khi nhận lời có thể nói いいですね; khi không tham gia được, すみません、今日はちょっと…… có thể là lời từ chối nhẹ. Không suy rằng người nghe đã nhận lời chỉ vì không nói thẳng いいえ.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:invitation:example:0",
+          "context": "Hai bạn cùng rảnh vào Chủ nhật; người nói rủ bạn đi công viên",
+          "jp": "日曜日、一緒に公園へ行きませんか。",
+          "reading": "にちようび、いっしょにこうえんへいきませんか。",
+          "vi": "Chủ nhật đi công viên cùng mình nhé?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:invitation:example:1",
+          "context": "Rủ bạn cùng chụp một tấm ảnh sau buổi gặp mặt",
+          "jp": "ここで一緒に写真を撮りませんか。",
+          "reading": "ここでいっしょにしゃしんをとりませんか。",
+          "vi": "Mình cùng chụp ảnh ở đây nhé?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:invitation:example:2",
+          "context": "Đang ở quán và mời người bạn đang ngồi cùng uống trà",
+          "jp": "温かいお茶を飲みませんか。",
+          "reading": "あたたかいおちゃをのみませんか。",
+          "vi": "Bạn uống trà nóng nhé?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:invitation:example:3",
+          "context": "Được rủ cùng đi công viên và vui vẻ nhận lời",
+          "jp": "いいですね。一緒に行きましょう。",
+          "reading": "いいですね。いっしょにいきましょう。",
+          "vi": "Hay đấy. Mình cùng đi nhé.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:invitation:example:4",
+          "context": "Bạn rủ đi chơi hôm nay nhưng mình đã có lịch; trả lời nhẹ nhàng",
+          "jp": "すみません。今日はちょっと……。",
+          "reading": "すみません。きょうはちょっと……。",
+          "vi": "Xin lỗi, hôm nay thì hơi khó cho mình…",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "一緒に行きますませんか。",
+          "correction": "一緒に行きませんか。",
+          "reason": "Thay đuôi ます bằng ませんか, không nối hai đuôi lịch sự vào nhau."
+        },
+        {
+          "problem": "Trong tình huống bạn vừa rủ đi chơi, hiểu 今日はちょっと…… là đã đồng ý đi một lúc ngắn.",
+          "correction": "Trong tình huống từ chối đã nêu, câu này ngụ ý hôm nay không tiện tham gia.",
+          "reason": "ちょっと có thể làm mềm lời từ chối; không chỉ có nghĩa định lượng ‘một chút’. Cần đọc cả tình huống và cách đáp."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:invitation:task:0",
+          "mode": "choice",
+          "prompt": "Rủ bạn cùng đọc truyện tranh. Chọn phần đúng: 一緒に漫画を（　）。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "読みますませんか"
+            },
+            {
+              "id": "option:1",
+              "text": "読むませんか"
+            },
+            {
+              "id": "option:2",
+              "text": "読みませんか"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "読みます bỏ ます rồi thêm ませんか thành 読みませんか.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:invitation:task:1",
+          "mode": "choice",
+          "prompt": "Hai bạn đang chọn hoạt động làm cùng nhau. Một người nói 一緒に散歩しませんか。Ý của lời nói này là gì?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Rủ người nghe cùng đi dạo."
+            },
+            {
+              "id": "option:1",
+              "text": "Cấm người nghe đi dạo."
+            },
+            {
+              "id": "option:2",
+              "text": "Báo rằng hôm qua đã đi dạo một mình."
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Ngữ cảnh chọn việc cùng làm và 一緒に xác định đây là lời rủ, không phải mệnh lệnh cấm hay lời kể quá khứ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:invitation:task:2",
+          "mode": "choice",
+          "prompt": "Bạn được rủ đi xem phim nhưng đã có hẹn và muốn từ chối nhẹ nhàng. Chọn lời đáp phù hợp với ý định ấy.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "はい、ぜひ。"
+            },
+            {
+              "id": "option:1",
+              "text": "すみません。今日はちょっと……。"
+            },
+            {
+              "id": "option:2",
+              "text": "いいですね。一緒に行きましょう。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Lời xin lỗi kèm 今日はちょっと…… phù hợp với việc không tiện đi hôm nay; hai lời còn lại thể hiện nhận lời.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:invitation:task:3",
+          "mode": "short_text",
+          "prompt": "Rủ cùng chơi quần vợt: 一緒にテニスを（　）。Đổi します sang dạng lời rủ đang học; chỉ viết phần trong ngoặc, không viết dấu câu.",
+          "accepted_variants": [
+            "しませんか"
+          ],
+          "rationale": "します chuyển thành しませんか. し không giữ lại đuôi ます cũ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:invitation:task:4",
+          "mode": "short_text",
+          "prompt": "Nhận lời một cách tích cực bằng đúng cụm ‘Hay đấy’ đã học. Chỉ ghép ba phần いい・です・ね, không thêm dấu câu.",
+          "accepted_variants": [
+            "いいですね"
+          ],
+          "rationale": "いいですね là lời hưởng ứng trong tình huống này. Đây là bài nhớ cụm cố định, không phải danh sách đầy đủ mọi cách nhận lời tự nhiên.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:reason",
+      "revision": 1,
+      "order": 14,
+      "level": "N5",
+      "title": "Nêu lý do bằng から",
+      "goal": "Nối lý do với hành động hoặc kết quả và phân biệt から chỉ nguyên nhân với から chỉ mốc bắt đầu.",
+      "prerequisites": [
+        "n5-teaching:v1:topic",
+        "n5-teaching:v1:polite-verbs",
+        "n5-teaching:v1:time-range"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "NK-96c295e713bb-1",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/52-kara",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        },
+        {
+          "chunk_id": "NK-96c295e713bb-2",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/52-kara",
+          "source_name": "Naoki",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Naoki [NK-96c295e713bb-1; NK-96c295e713bb-2] — phần giải thích nền về lý do; ví dụ và bài tập do AI biên soạn.",
+      "formula": "Mệnh đề lý do + から、hành động/kết quả。 Bài này dùng Vます／Vませんから、Nですから、tính từですから。",
+      "explanation": "から đặt sau mệnh đề nêu điều người nói dùng làm lý do; phần sau nêu hành động hoặc kết quả. Ví dụ trong một câu có 眠いですから、寝ます, buồn ngủ là lý do, đi ngủ là hành động tiếp theo. Bài này giữ lối nói lịch sự: danh từ và tính từ な nối bằng ですから, tính từ い có thể dùng dạng いですから, động từ giữ dạng ます・ません trước から. Ở thể thường, danh từ và tính từ な có dạng だから, còn tính từ い không thêm だ; không trộn thành だですから. Khi trả lời どうしてですか, có thể kết thúc ngay ở phần lý do＋から vì kết quả đã rõ. から không tự có nghĩa nguyên nhân trong mọi câu: 三時から chỉ ‘từ 3 giờ’, không phải ‘vì 3 giờ’.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:reason:example:0",
+          "context": "Phòng đang lạnh nên người nói quyết định đóng cửa sổ",
+          "jp": "寒いですから、窓を閉めます。",
+          "reading": "さむいですから、まどをしめます。",
+          "vi": "Vì lạnh nên tôi sẽ đóng cửa sổ.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:reason:example:1",
+          "context": "Người nói thấy quán đang đứng trước mặt yên tĩnh nên chọn học tại đó",
+          "jp": "この店は静かですから、ここで勉強します。",
+          "reading": "このみせはしずかですから、ここでべんきょうします。",
+          "vi": "Vì quán này yên tĩnh nên tôi sẽ học ở đây.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:reason:example:2",
+          "context": "Hôm nay là ngày nghỉ của người nói nên không đến công ty",
+          "jp": "今日は休みですから、会社へ行きません。",
+          "reading": "きょうはやすみですから、かいしゃへいきません。",
+          "vi": "Vì hôm nay là ngày nghỉ nên tôi không đến công ty.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:reason:example:3",
+          "context": "Đã ăn xong, giải thích vì sao không gọi thêm món",
+          "jp": "もうご飯を食べましたから、何も注文しません。",
+          "reading": "もうごはんをたべましたから、なにもちゅうもんしません。",
+          "vi": "Vì tôi đã ăn rồi nên tôi không gọi món gì nữa.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:reason:example:4",
+          "context": "Bạn hỏi tại sao không mua cuốn sách trên kệ; người nói không còn tiền dành cho việc mua sách",
+          "jp": "お金がありませんから。",
+          "reading": "おかねがありませんから。",
+          "vi": "Vì tôi không có tiền.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Muốn nói ‘Vì trời mưa nên tôi không ra ngoài’ nhưng viết 雨から、出かけません。",
+          "correction": "雨ですから、出かけません。",
+          "reason": "Trong mẫu lý do lịch sự này, 雨 cần です để tạo mệnh đề trước から. Không suy từ cấu trúc danh từ＋から chỉ nơi hoặc mốc xuất phát sang mọi câu nguyên nhân."
+        },
+        {
+          "problem": "静かなですから、ここで勉強します。",
+          "correction": "静かですから、ここで勉強します。",
+          "reason": "な nối tính từ な với danh từ, không đứng trước です. Ở đây lý do là mệnh đề 静かです rồi mới thêm から."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:reason:task:0",
+          "mode": "choice",
+          "prompt": "雨ですから、傘を持って行きます。Theo câu này, đâu là lý do mang ô?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Trời mưa."
+            },
+            {
+              "id": "option:1",
+              "text": "Chiếc ô làm trời mưa."
+            },
+            {
+              "id": "option:2",
+              "text": "Người nói đã quên ô."
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Phần đứng trước から là 雨です, nêu lý do. Câu không nói ô gây ra mưa hoặc bị bỏ quên.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:reason:task:1",
+          "mode": "choice",
+          "prompt": "Câu nào dùng から với nghĩa ‘vì’, không phải ‘từ’?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "駅から歩きます。"
+            },
+            {
+              "id": "option:1",
+              "text": "六時から働きます。"
+            },
+            {
+              "id": "option:2",
+              "text": "疲れましたから、休みます。"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "疲れました là mệnh đề ‘đã mệt’, dùng làm lý do nghỉ. 駅から nêu nơi xuất phát; 六時から nêu giờ bắt đầu.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:reason:task:2",
+          "mode": "choice",
+          "prompt": "Hôm nay bạn phải đi làm; vì bận nên không đi dã ngoại. Chọn câu giữ đúng lý do và hành động ấy.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "暇ですから、ピクニックに行きます。"
+            },
+            {
+              "id": "option:1",
+              "text": "忙しいですから、ピクニックに行きません。"
+            },
+            {
+              "id": "option:2",
+              "text": "忙しいですから、ピクニックに行きます。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Cần cả lý do 忙しいです và hành động phủ định 行きません. Câu cuối có thể có nghĩa trong ngữ cảnh khác nhưng trái với tình huống đã cho.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:reason:task:3",
+          "mode": "short_text",
+          "prompt": "Chỉ viết cụm ‘vì trời mưa’ theo mẫu lịch sự Nですから. Dùng 雨, không thêm vế kết quả hoặc dấu câu.",
+          "accepted_variants": [
+            "雨ですから",
+            "あめですから"
+          ],
+          "rationale": "Thêm ですから sau danh từ 雨. Bài yêu cầu đúng mẫu này; 雨だから là dạng thường khác, không phải lỗi tiếng Nhật nói chung.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:reason:task:4",
+          "mode": "short_text",
+          "prompt": "Bạn hỏi tại sao mình nghỉ. Ghép đúng mệnh đề đã cho 疲れました với から để trả lời ‘Vì tôi mệt rồi’. Chỉ viết câu trả lời ấy; có thể có hoặc không có dấu 。 cuối câu.",
+          "accepted_variants": [
+            "疲れましたから。",
+            "疲れましたから",
+            "つかれましたから。",
+            "つかれましたから"
+          ],
+          "rationale": "Giữ nguyên mệnh đề lịch sự 疲れました rồi thêm から. Có thể lược vế ‘tôi nghỉ’ vì câu hỏi đã xác định nội dung cần giải thích.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:want-action",
+      "revision": 1,
+      "order": 16,
+      "level": "N5",
+      "title": "Nói muốn làm bằng たい",
+      "goal": "Tạo dạng たい và dùng đúng người, ngữ cảnh, thể phủ định và trợ từ của điều muốn làm.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs",
+        "n5-teaching:v1:past-negative"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-faf17fe4f639-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/want.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-faf17fe4f639-1] — phần giải thích nền về たい・ほしい; các ví dụ, lưu ý và bài tập do AI biên soạn.",
+      "formula": "Vます → bỏ ます + たいです。 / V-たくないです。 / V-たかったです。",
+      "explanation": "たい diễn tả muốn thực hiện một hành động: 行きます→行きたいです, します→したいです. Trong hội thoại thông thường, câu khẳng định trực tiếp thường nói mong muốn của chính người nói; câu hỏi có thể hỏi người nghe muốn làm gì. Không tự khẳng định mong muốn chưa biết của người thứ ba. Khi thuật lại lời họ đã nói hoặc khi ngữ cảnh cho phép, có thể diễn đạt mong muốn của họ; đây không phải lệnh cấm dùng たい với mọi ngôi thứ ba. たい biến đổi như tính từ い: たくないです là không muốn, たかったです là đã muốn; mong muốn không chứng minh hành động đã xảy ra. Với các tân ngữ phù hợp như 水 trong 水を飲みたいです, cả を và が đều có thể tự nhiên: 水が飲みたいです cũng được. Không thay mọi trợ từ bằng が: nơi đến trong 京都へ行きたいです vẫn có thể dùng へ hoặc に. Các biến thể được ghi theo từng nhiệm vụ, không phải quy tắc chấm điểm tổng quát.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:want-action:example:0",
+          "context": "Người nói kể kế hoạch mình mong thực hiện trong kỳ nghỉ",
+          "jp": "休みに山に登りたいです。",
+          "reading": "やすみにやまにのぼりたいです。",
+          "vi": "Tôi muốn leo núi vào kỳ nghỉ.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-action:example:1",
+          "context": "Hỏi bạn thân muốn làm gì vào cuối tuần, chưa đề xuất một hoạt động cụ thể",
+          "jp": "週末は何をしたいですか。",
+          "reading": "しゅうまつはなにをしたいですか。",
+          "vi": "Cuối tuần bạn muốn làm gì?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-action:example:2",
+          "context": "Người nói đang khát và nói món đồ uống mình muốn uống",
+          "jp": "冷たいジュースが飲みたいです。",
+          "reading": "つめたいじゅーすがのみたいです。",
+          "vi": "Tôi muốn uống nước trái cây lạnh.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-action:example:3",
+          "context": "Người nói đã mệt nên hôm nay không muốn học thêm",
+          "jp": "今日はもう勉強したくないです。",
+          "reading": "きょうはもうべんきょうしたくないです。",
+          "vi": "Hôm nay tôi không muốn học nữa.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-action:example:4",
+          "context": "Kể lại mong muốn của bản thân hôm qua; chưa nói có thực sự xem phim hay không",
+          "jp": "昨日は映画を見たかったです。",
+          "reading": "きのうはえいがをみたかったです。",
+          "vi": "Hôm qua tôi đã muốn xem phim.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "京都へ行くたいです。",
+          "correction": "京都へ行きたいです。",
+          "reason": "Dùng phần còn lại sau khi bỏ ます của 行きます là 行き, không nối たい vào dạng từ điển 行く."
+        },
+        {
+          "problem": "Đánh dấu 水を飲みたいです là sai chỉ vì mong đáp án 水が飲みたいです.",
+          "correction": "Trong ngữ cảnh người nói muốn uống nước, chấp nhận cả 水を飲みたいです và 水が飲みたいです.",
+          "reason": "を giữ vai trò tân ngữ; が cũng có thể đánh dấu điều được mong muốn trong cấu trúc này. Không biến một đáp án tham khảo thành lệnh cấm biến thể hợp lệ."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:want-action:task:0",
+          "mode": "choice",
+          "prompt": "Bạn nói mong muốn của mình: ‘Tôi muốn về nhà’. Chọn phần đúng: 家に（　）です。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "帰るたい"
+            },
+            {
+              "id": "option:1",
+              "text": "帰りたい"
+            },
+            {
+              "id": "option:2",
+              "text": "帰りますたい"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "帰ります bỏ ます thành 帰り rồi thêm たい. Chủ thể mong muốn trong tình huống là người nói.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-action:task:1",
+          "mode": "choice",
+          "prompt": "今日は泳ぎたくないです。Chọn cách hiểu giữ đúng mong muốn được nói ra, không suy thêm hành động thực tế.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Hôm nay tôi chắc chắn đã đi bơi."
+            },
+            {
+              "id": "option:1",
+              "text": "Hôm nay tôi muốn đi bơi."
+            },
+            {
+              "id": "option:2",
+              "text": "Hôm nay tôi không muốn bơi."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "たくないです phủ định mong muốn. Câu không tự chứng minh người nói có thực sự đi bơi hay không.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-action:task:2",
+          "mode": "choice",
+          "prompt": "Tanaka vừa nói nguyên văn 「休みたいです」. Bạn thuật lại thông tin này, không suy đoán thêm. Cách diễn đạt tiếng Việt nào đúng?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Tanaka nói rằng mình muốn nghỉ."
+            },
+            {
+              "id": "option:1",
+              "text": "Tanaka nói rằng mình không muốn nghỉ."
+            },
+            {
+              "id": "option:2",
+              "text": "Tôi muốn Tanaka nghỉ, còn Tanaka muốn gì thì không được nói đến."
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "たい trong lời Tanaka tự nói diễn tả mong muốn của Tanaka. Khi thuật lại, cần giữ nguồn thông tin ấy, không đổi thành mong muốn của người thuật lại.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-action:task:3",
+          "mode": "short_text",
+          "prompt": "Đổi 食べたいです sang ‘không muốn ăn’, bắt buộc dùng đuôi くないです. Chỉ viết cụm vị ngữ, không thêm dấu câu.",
+          "accepted_variants": [
+            "食べたくないです",
+            "たべたくないです"
+          ],
+          "rationale": "たい đổi thành たくないです. 食べたくありません cũng là cách phủ định lịch sự, nhưng không phải đuôi được yêu cầu trong bài nhớ dạng này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-action:task:4",
+          "mode": "short_text",
+          "prompt": "Bạn đang khát và nói về mong muốn của chính mình: 水（　）飲みたいです。Chỉ điền một trợ từ; chấp nhận cả cách giữ tân ngữ và cách đánh dấu điều mong muốn.",
+          "accepted_variants": [
+            "を",
+            "が"
+          ],
+          "rationale": "水を飲みたいです và 水が飲みたいです đều phù hợp ở đây. Không áp dụng kết luận này cho mọi động từ hay mọi trợ từ chỉ nơi đến.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:want-object",
+      "revision": 1,
+      "order": 17,
+      "level": "N5",
+      "title": "Nói muốn có bằng がほしい",
+      "goal": "Phân biệt muốn có một thứ với muốn thực hiện hành động, và tạo dạng phủ định của ほしい.",
+      "prerequisites": [
+        "n5-teaching:v1:topic",
+        "n5-teaching:v1:want-action"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "FT-faf17fe4f639-1",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/want.html",
+          "source_name": "FreeTag",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: FreeTag [FT-faf17fe4f639-1] — phần giải thích nền về たい・ほしい; ví dụ và bài tập do AI biên soạn, không phải câu hỏi của nguồn.",
+      "formula": "Nがほしいです。 / Nはほしくないです。 / Nがほしかったです。",
+      "explanation": "Nがほしいです nói muốn có N, còn Vたいです nói muốn làm một việc. パソコンがほしいです không tự khẳng định người nói muốn mua máy tính bằng cách nào; パソコンを買いたいです nêu rõ hành động mua. Mẫu cơ bản dùng が với thứ muốn có, không chuyển quy tắc chấp nhận を／が của 飲みたい sang Nをほしいです. は có thể xuất hiện khi đưa thứ đó làm chủ đề hoặc đối chiếu, như 新しい時計はほしくないです. ほしい là tính từ い: phủ định ほしくないです, quá khứ ほしかったです. Tương tự たい, câu trực tiếp thường nói mong muốn của mình hoặc hỏi mong muốn người nghe; không đoán chắc nhu cầu của người thứ ba nếu chưa có thông tin. Bài này chỉ dạy ‘muốn có N’, không dạy mẫu nhờ người khác làm Vてほしい.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:want-object:example:0",
+          "context": "Máy tính cũ của người nói bị hỏng, nói thứ mình muốn có",
+          "jp": "新しいパソコンがほしいです。",
+          "reading": "あたらしいぱそこんがほしいです。",
+          "vi": "Tôi muốn có một chiếc máy tính mới.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-object:example:1",
+          "context": "Công việc quá nhiều, người nói mong có thêm thời gian nghỉ",
+          "jp": "休む時間がほしいです。",
+          "reading": "やすむじかんがほしいです。",
+          "vi": "Tôi muốn có thời gian để nghỉ ngơi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-object:example:2",
+          "context": "Bạn bè hỏi nhau món quà sinh nhật muốn nhận",
+          "jp": "誕生日に何がほしいですか。",
+          "reading": "たんじょうびになにがほしいですか。",
+          "vi": "Sinh nhật bạn muốn có món gì?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-object:example:3",
+          "context": "Đang cân nhắc các món quà; người nói đã có đồng hồ nên không muốn đồng hồ mới",
+          "jp": "新しい時計はほしくないです。",
+          "reading": "あたらしいとけいはほしくないです。",
+          "vi": "Đồng hồ mới thì tôi không muốn có.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:want-object:example:4",
+          "context": "Người nói nhớ mong muốn thời nhỏ; không khẳng định đã nuôi chó",
+          "jp": "子どものとき、犬がほしかったです。",
+          "reading": "こどものとき、いぬがほしかったです。",
+          "vi": "Hồi nhỏ, tôi đã muốn có một con chó.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "パソコンをほしいです。",
+          "correction": "パソコンがほしいです。",
+          "reason": "Trong mẫu muốn có một thứ đang luyện, dùng Nがほしいです. Nếu nói muốn mua thì đổi cả cấu trúc thành パソコンを買いたいです, không chỉ thay trợ từ tùy ý."
+        },
+        {
+          "problem": "新しい時計はほしいないです。",
+          "correction": "新しい時計はほしくないです。",
+          "reason": "ほしい chia phủ định như tính từ い: bỏ い, thêm くないです. は ở đây đặt đồng hồ làm chủ đề đối chiếu; không có nghĩa が bị cấm ở mọi câu phủ định."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:want-object:task:0",
+          "mode": "choice",
+          "prompt": "Điền trợ từ của mẫu cơ bản ‘Tôi muốn có một chiếc xe đạp’: 自転車（　）ほしいです。Không yêu cầu đưa 自転車 thành chủ đề đối chiếu.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "を"
+            },
+            {
+              "id": "option:1",
+              "text": "で"
+            },
+            {
+              "id": "option:2",
+              "text": "が"
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "が đánh dấu thứ muốn có trong Nがほしいです. を không thay thế が trước ほしい trong mẫu cơ bản này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-object:task:1",
+          "mode": "choice",
+          "prompt": "Bạn muốn có một chiếc máy ảnh nhưng chưa nói mua hay nhận quà. Chọn câu chỉ nêu mong muốn có máy ảnh, không thêm hành động mua.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "カメラがほしいです。"
+            },
+            {
+              "id": "option:1",
+              "text": "カメラを買いたいです。"
+            },
+            {
+              "id": "option:2",
+              "text": "カメラを売りたいです。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "ほしい nêu thứ muốn có. 買いたい nói muốn mua, còn 売りたい nói muốn bán; chúng thêm thông tin hành động không có trong yêu cầu.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-object:task:2",
+          "mode": "choice",
+          "prompt": "Bạn thân sắp sinh nhật. Bạn muốn hỏi chính người ấy muốn có gì làm quà, không tự đoán thay họ. Chọn câu phù hợp.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "誕生日に何を買いましたか。"
+            },
+            {
+              "id": "option:1",
+              "text": "誕生日に何がほしいですか。"
+            },
+            {
+              "id": "option:2",
+              "text": "私は誕生日に本がほしいです。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "何がほしいですか hỏi mong muốn của người nghe. Câu đầu hỏi đã mua gì; câu cuối kể mong muốn của người nói.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-object:task:3",
+          "mode": "short_text",
+          "prompt": "Đổi riêng ほしいです sang phủ định, bắt buộc dùng đuôi くないです. Không viết danh từ hoặc dấu câu.",
+          "accepted_variants": [
+            "ほしくないです",
+            "欲しくないです"
+          ],
+          "rationale": "ほしい→ほしくないです. Cách viết 欲しい có cùng nghĩa ở đây. ほしくありません là cách lịch sự khác, ngoài yêu cầu đuôi của bài này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:want-object:task:4",
+          "mode": "short_text",
+          "prompt": "Hoàn thành mong muốn thời thơ ấu: 子どものとき、犬が（　）。Dùng dạng quá khứ lịch sự của ほしい theo mẫu かったです; chỉ viết phần trong ngoặc, không viết dấu câu.",
+          "accepted_variants": [
+            "ほしかったです",
+            "欲しかったです"
+          ],
+          "rationale": "ほしい chia quá khứ thành ほしかったです. Câu chỉ nói từng muốn có chó, không chứng minh đã nuôi chó.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:demonstratives",
+      "revision": 1,
+      "order": 18,
+      "level": "N5",
+      "title": "Chỉ đồ vật bằng これ・それ・あれ",
+      "goal": "Chọn từ chỉ vật theo vị trí người nói và người nghe, rồi hỏi giá của vật đã xác định.",
+      "prerequisites": [
+        "n5-teaching:v1:topic",
+        "n5-teaching:v1:question"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "IR-912b416e4603-1",
+          "url": "https://jf.xcms.online/wp-content/uploads/2021/12/v1Grammar_NM_VN-1.pdf#page=50",
+          "source_name": "Irodori",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Irodori [IR-912b416e4603-1] — phần giải thích nền về vật chỉ định và hỏi giá; ví dụ và bài tập do AI biên soạn.",
+      "formula": "これ／それ／あれ は Nです。 / これ／それ／あれ は いくらですか。",
+      "explanation": "Trong các tình huống chỉ vật trước mặt của bài này, これ là vật gần người nói, それ là vật gần người nghe, あれ là vật xa cả hai. Phải xác định ai đang nói; cùng một vật có thể được hai người gọi khác nhau khi đổi lượt. これ・それ・あれ tự đứng như danh từ để chỉ vật; không ghép trực tiếp thành これ本. Vị trí gần người nghe không chứng minh vật thuộc sở hữu của người nghe. いくらですか hỏi giá, không hỏi giờ hay tuổi. Bài này chỉ luyện vị trí vật lý với người nói và người nghe ở hai vị trí rõ ràng; không dùng quy tắc giản lược này để chấm mọi cách chỉ định trong văn bản hoặc ký ức chung.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:demonstratives:example:0",
+          "context": "Người nói cầm một chiếc túi của mình; người nghe đứng phía bên kia bàn",
+          "jp": "これは私のかばんです。",
+          "reading": "これはわたしのかばんです。",
+          "vi": "Đây là túi của tôi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:example:1",
+          "context": "Một chiếc ô nằm cạnh chân người nghe, xa người nói; chưa biết chủ của ô là ai",
+          "jp": "それは誰の傘ですか。",
+          "reading": "それはだれのかさですか。",
+          "vi": "Chiếc ô đó là của ai?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:example:2",
+          "context": "Cả hai đứng ở cửa phòng; người nói chỉ chiếc đồng hồ trên bức tường phía xa",
+          "jp": "あれは新しい時計です。",
+          "reading": "あれはあたらしいとけいです。",
+          "vi": "Kia là chiếc đồng hồ mới.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:example:3",
+          "context": "Khách đang cầm một cuốn sổ ở quầy và hỏi giá người bán đứng đối diện",
+          "jp": "これはいくらですか。",
+          "reading": "これはいくらですか。",
+          "vi": "Cái này bao nhiêu tiền?",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:example:4",
+          "context": "Người nghe đang cầm một chiếc bút đỏ, người nói đứng cách xa và chỉ chiếc bút ấy",
+          "jp": "それは赤いペンですね。",
+          "reading": "それはあかいぺんですね。",
+          "vi": "Đó là chiếc bút đỏ nhỉ.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "これ本です。",
+          "correction": "これは本です。",
+          "reason": "Nếu muốn nói ‘Đây là sách’, これ đứng làm chủ đề và nối với thông tin 本です qua は; không dùng これ như từ bổ nghĩa trực tiếp cho 本."
+        },
+        {
+          "problem": "Thấy それは誰の傘ですか rồi kết luận chiếc ô chắc chắn thuộc người nghe.",
+          "correction": "それ chỉ chiếc ô gần người nghe trong tình huống này; câu vẫn đang hỏi chủ sở hữu.",
+          "reason": "Phân biệt vị trí để chỉ vật với quan hệ sở hữu. の hoặc ngữ cảnh sở hữu mới cho biết vật thuộc về ai."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:demonstratives:task:0",
+          "mode": "choice",
+          "prompt": "Bạn đứng ở một đầu bàn. Người nghe đứng đầu kia và cầm một chiếc cốc. Bạn chỉ chiếc cốc ấy: （　）はきれいなコップですね。Chọn từ theo vị trí đã cho.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "これ"
+            },
+            {
+              "id": "option:1",
+              "text": "それ"
+            },
+            {
+              "id": "option:2",
+              "text": "あれ"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Chiếc cốc ở gần người nghe, không gần bạn là người nói, nên dùng それ trong tình huống vật lý này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:task:1",
+          "mode": "choice",
+          "prompt": "Hai người đứng cạnh cửa, cùng nhìn một chiếc ghế ở tận cuối phòng. Một người chỉ ghế và nói あれは古い椅子です。あれ chỉ vật nào?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Chiếc túi người nói đang cầm."
+            },
+            {
+              "id": "option:1",
+              "text": "Chiếc điện thoại người nghe đang cầm."
+            },
+            {
+              "id": "option:2",
+              "text": "Chiếc ghế ở xa cả hai người."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "Ngữ cảnh đã xác định vật được chỉ là ghế ở cuối phòng, xa cả người nói lẫn người nghe.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:task:2",
+          "mode": "choice",
+          "prompt": "Khách cầm cuốn sổ có giá 800 yên và hỏi これはいくらですか。Người bán trả lời giá, không trả lời giờ hay tuổi. Chọn câu đúng.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "八百円です。"
+            },
+            {
+              "id": "option:1",
+              "text": "八時です。"
+            },
+            {
+              "id": "option:2",
+              "text": "八歳です。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "いくら hỏi giá tiền nên trả lời bằng 円. 時 chỉ giờ; 歳 chỉ tuổi.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:task:3",
+          "mode": "short_text",
+          "prompt": "Bạn đang cầm một quyển sách, còn người nghe đứng ở phía bên kia bàn. Chỉ điền từ chỉ vật: （　）は日本語の本です。Dùng một trong これ・それ・あれ.",
+          "accepted_variants": [
+            "これ"
+          ],
+          "rationale": "Quyển sách ở ngay trong tay người nói nên これ phù hợp. Câu không yêu cầu xác định quyển sách thuộc về ai.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:demonstratives:task:4",
+          "mode": "short_text",
+          "prompt": "A và B đứng ở hai đầu bàn dài. A cầm đồng hồ và nói これは時計です。B vẫn đứng xa A, chỉ đúng chiếc đồng hồ trong tay A và đáp （　）は新しいですね。Từ góc nhìn B, điền một trong これ・それ・あれ.",
+          "accepted_variants": [
+            "それ"
+          ],
+          "rationale": "Đổi lượt nói thì đổi điểm nhìn: đồng hồ gần A, là người nghe trong lượt của B, nên B dùng それ. Vật không hề đổi chỗ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:choice",
+      "revision": 1,
+      "order": 19,
+      "level": "N5",
+      "title": "Chốt lựa chọn bằng にします",
+      "goal": "Hỏi và nói lựa chọn đã quyết định trong tình huống gọi món hoặc chọn một phương án.",
+      "prerequisites": [
+        "n5-teaching:v1:polite-verbs",
+        "n5-teaching:v1:question"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "IR-3f7929f1cb57-1",
+          "url": "https://jf.xcms.online/wp-content/uploads/2021/12/v1Grammar_NM_VN-1.pdf#page=15",
+          "source_name": "Irodori",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Irodori [IR-3f7929f1cb57-1] — phần giải thích nền về quyết định chọn món; các ví dụ mở rộng và bài tập do AI biên soạn.",
+      "formula": "Nにします。 / 何にしますか。",
+      "explanation": "Trong ngữ cảnh có các phương án để chọn, Nにします nghĩa là quyết định chọn N: そばにします là ‘tôi chọn mì soba’. に đánh dấu phương án được chốt, còn します là dạng lịch sự của する. 何にしますか hỏi người nghe quyết định chọn gì. Không đồng nhất にします với ほしいです: muốn có một thứ chưa nhất thiết đã chốt chọn thứ đó. Cũng không coi mọi にします trong tiếng Nhật là gọi món; ngữ cảnh và các thành phần câu có thể tạo nghĩa khác. Bài này dùng món ăn, đồ uống, màu bút và lịch học làm các lựa chọn được xác định rõ. Câu chốt lựa chọn không tự chứng minh món đã được mang tới, đã thanh toán hoặc đã ăn.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:choice:example:0",
+          "context": "Quán có soba và udon; khách đã quyết định chọn soba",
+          "jp": "私はそばにします。",
+          "reading": "わたしはそばにします。",
+          "vi": "Tôi chọn mì soba.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:choice:example:1",
+          "context": "Chọn đồ uống giữa nước cam và trà; người nói quyết định lấy nước cam",
+          "jp": "飲み物はオレンジジュースにします。",
+          "reading": "のみものはおれんじじゅーすにします。",
+          "vi": "Đồ uống thì tôi chọn nước cam.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:choice:example:2",
+          "context": "Trên quầy có bút đỏ và bút xanh; khách quyết định chọn bút xanh",
+          "jp": "青いペンにします。",
+          "reading": "あおいぺんにします。",
+          "vi": "Tôi chọn bút xanh.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:choice:example:3",
+          "context": "Hai người đang chốt lịch buổi học tiếp theo giữa thứ Sáu và thứ Bảy",
+          "jp": "次の授業は土曜日にします。",
+          "reading": "つぎのじゅぎょうはどようびにします。",
+          "vi": "Buổi học tiếp theo thì tôi chọn vào thứ Bảy.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:choice:example:4",
+          "context": "Sau món chính, hỏi bạn chọn món tráng miệng nào trong thực đơn",
+          "jp": "デザートは何にしますか。",
+          "reading": "でざーとはなににしますか。",
+          "vi": "Món tráng miệng bạn chọn gì?",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "オレンジジュースにするます。",
+          "correction": "オレンジジュースにします。",
+          "reason": "する có dạng lịch sự します, không ghép nguyên する với ます."
+        },
+        {
+          "problem": "Hiểu そばにします là ‘đã ăn soba xong’ hoặc chỉ là ‘có lẽ muốn soba’.",
+          "correction": "Trong lúc gọi món, そばにします thông báo đã quyết định chọn soba; chưa nói việc ăn đã xảy ra.",
+          "reason": "Phân biệt quyết định lựa chọn với mong muốn còn để ngỏ và với hành động ăn thực tế."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:choice:task:0",
+          "mode": "choice",
+          "prompt": "Bạn đã chọn món cà ri trong thực đơn. Điền trợ từ của mẫu chốt lựa chọn: カレー（　）します。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "が"
+            },
+            {
+              "id": "option:1",
+              "text": "に"
+            },
+            {
+              "id": "option:2",
+              "text": "を"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Trong mẫu đang luyện, Nにします đánh dấu món được chọn. Không dùng を hoặc が để thay に trong cùng cấu trúc này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:choice:task:1",
+          "mode": "choice",
+          "prompt": "Trong lúc gọi món, khách nói うどんにします。Thông tin nào được câu này khẳng định?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Khách đã ăn udon xong."
+            },
+            {
+              "id": "option:1",
+              "text": "Khách chưa quyết định chọn món nào."
+            },
+            {
+              "id": "option:2",
+              "text": "Khách quyết định chọn udon."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "にします công bố quyết định chọn. Không thể suy từ đó rằng đã ăn hoặc đã thanh toán.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:choice:task:2",
+          "mode": "choice",
+          "prompt": "Soba đã hết. Bạn vẫn muốn ăn và đã quyết định chọn cà ri đang còn bán. Nhân viên hỏi 何にしますか。Chọn lời đáp giữ đúng quyết định ấy.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "カレーにします。"
+            },
+            {
+              "id": "option:1",
+              "text": "そばにします。"
+            },
+            {
+              "id": "option:2",
+              "text": "何も食べません。"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Tình huống đã chốt カレー; hai đáp án còn lại trái với món còn bán hoặc với ý định vẫn ăn của bạn. Chúng không bị coi là sai ngữ pháp trong mọi tình huống.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:choice:task:3",
+          "mode": "short_text",
+          "prompt": "Đổi riêng にする thành dạng lịch sự để nối sau tên món được chọn. Chỉ viết cụm ấy, không viết tên món hoặc dấu câu.",
+          "accepted_variants": [
+            "にします"
+          ],
+          "rationale": "する→します, giữ nguyên に đánh dấu lựa chọn. Không thêm です sau します.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:choice:task:4",
+          "mode": "short_text",
+          "prompt": "Hoàn thành câu hỏi ‘Đồ uống thì bạn chọn gì?’: 飲み物は（　）。Dùng 何 và đúng mẫu にしますか; chỉ viết phần trong ngoặc, không thêm dấu câu.",
+          "accepted_variants": [
+            "何にしますか",
+            "なににしますか",
+            "なんにしますか"
+          ],
+          "rationale": "何にしますか hỏi phương án người nghe quyết định chọn. 飲み物は đã nêu phạm vi là đồ uống, nên không cần lặp lại trong chỗ trống. 何に thường được đọc なにに; dạng なんに cũng được dùng. Hai cách viết kana này không làm thay đổi mẫu hỏi lựa chọn.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "n5-teaching:v1:after-action",
+      "revision": 1,
+      "order": 20,
+      "level": "N5",
+      "title": "Nói trình tự sau khi làm bằng てから",
+      "goal": "Nối hai hành động theo thứ tự rõ ràng và tạo đúng thể て trước から.",
+      "prerequisites": [
+        "n5-teaching:v1:te-form",
+        "n5-teaching:v1:polite-verbs"
+      ],
+      "authorship": "ai_authored",
+      "review": {
+        "status": "ai_reviewed",
+        "human_approved": false
+      },
+      "eligibility": {
+        "reference_display": true,
+        "provider_teaching": "advisory_only",
+        "scored_assessment": false,
+        "mastery_credit": false
+      },
+      "source_refs": [
+        {
+          "chunk_id": "TN-fde6fc451794-1",
+          "url": "https://www.tiengnhatdongian.com/ngu-phap-n5-tekara/",
+          "source_name": "Tiếng Nhật Đơn Giản",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn tham khảo: Tiếng Nhật Đơn Giản [TN-fde6fc451794-1] — phần giải thích nền về trình tự てから; ví dụ và bài tập do AI biên soạn, không chép đáp án của nguồn.",
+      "formula": "V1 thể て + から、V2。",
+      "explanation": "V1てから、V2 nói làm hoặc hoàn thành V1 trước, rồi mới thực hiện V2. Hành động trước nằm ở vế có てから; không đảo thứ tự khi dịch thành ‘sau khi’. Phải chia đúng thể て: 書く→書いてから, 読む→読んでから, する→してから. Động từ cuối câu thể hiện cách nhìn thời gian, như 帰ります hoặc 帰りました; vế trước vẫn dùng thể て. Mẫu nhấn trình tự nhưng không tự có nghĩa V2 xảy ra ngay lập tức hay V1 là nguyên nhân gây ra V2. Trong bài này hai hành động được đặt trong một lịch trình khả thi, thường cùng người thực hiện; không bắt người học ghép những thao tác trái với điều kiện đã nêu. てから cũng có thể mở đầu một khoảng ‘từ khi’, nhưng các bài tập ở đây chỉ luyện trình tự hai hành động.",
+      "examples": [
+        {
+          "id": "n5-teaching:v1:after-action:example:0",
+          "context": "Trước bữa ăn, người nói nêu thứ tự rửa tay rồi ăn",
+          "jp": "手を洗ってから、晩ご飯を食べます。",
+          "reading": "てをあらってから、ばんごはんをたべます。",
+          "vi": "Sau khi rửa tay, tôi ăn tối.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:after-action:example:1",
+          "context": "Phiếu đăng ký còn trống; cần ghi tên trước khi nộp cho giáo viên",
+          "jp": "名前を書いてから、紙を先生に渡します。",
+          "reading": "なまえをかいてから、かみをせんせいにわたします。",
+          "vi": "Sau khi viết tên, tôi đưa tờ giấy cho giáo viên.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:after-action:example:2",
+          "context": "Đang ở trước máy bán vé ngoài cổng soát vé; nói kế hoạch mua vé rồi lên tàu",
+          "jp": "切符を買ってから、電車に乗ります。",
+          "reading": "きっぷをかってから、でんしゃにのります。",
+          "vi": "Sau khi mua vé, tôi lên tàu.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:after-action:example:3",
+          "context": "Kể lịch hôm qua: làm xong bài tập rồi mới chơi trò chơi",
+          "jp": "昨日、宿題をしてから、ゲームをしました。",
+          "reading": "きのう、しゅくだいをしてから、げーむをしました。",
+          "vi": "Hôm qua, sau khi làm bài tập, tôi đã chơi trò chơi.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "n5-teaching:v1:after-action:example:4",
+          "context": "Nói thói quen buổi tối: tắm trước rồi mới đi ngủ",
+          "jp": "お風呂に入ってから、寝ます。",
+          "reading": "おふろにはいってから、ねます。",
+          "vi": "Sau khi tắm, tôi đi ngủ.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "本を読むから、図書館に返します được dùng để diễn đạt đúng mẫu ‘đọc xong rồi trả thư viện’.",
+          "correction": "本を読んでから、図書館に返します。",
+          "reason": "読むから có thể nêu lý do ‘vì đọc’; 読んでから mới là dạng trình tự được yêu cầu. Không bỏ bước chia thể て."
+        },
+        {
+          "problem": "Muốn nói mua vé trước rồi lên tàu nhưng viết 電車に乗ってから、切符を買います。",
+          "correction": "切符を買ってから、電車に乗ります。",
+          "reason": "Vế trước から xảy ra trước. Câu bị đảo trái lịch trình mua vé ngoài cổng đã cho; không cần kết luận mua vé trên tàu là bất khả thi ở mọi tuyến tàu."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "n5-teaching:v1:after-action:task:0",
+          "mode": "choice",
+          "prompt": "本を読んでから、友達に貸します。Theo thứ tự câu này, người nói làm gì trước?",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "Cho bạn mượn sách."
+            },
+            {
+              "id": "option:1",
+              "text": "Đọc và cho mượn cùng một lúc."
+            },
+            {
+              "id": "option:2",
+              "text": "Đọc sách."
+            }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "読む là hành động ở vế 読んでから nên diễn ra trước hành động 貸します. Câu không tự quy định khoảng cách thời gian giữa hai việc.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:after-action:task:1",
+          "mode": "choice",
+          "prompt": "Bạn sẽ uống thuốc rồi đi ngủ. Chọn phần đúng của 飲む trước から: 薬を（　）から、寝ます。",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "飲んで"
+            },
+            {
+              "id": "option:1",
+              "text": "飲みて"
+            },
+            {
+              "id": "option:2",
+              "text": "飲むて"
+            }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "飲む thuộc nhóm có đuôi む, đổi thành 飲んで ở thể て; sau đó mới thêm から.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:after-action:task:2",
+          "mode": "choice",
+          "prompt": "Bạn đang ở nhà. Kế hoạch đã chốt là ăn sáng xong mới ra khỏi nhà. Chọn câu giữ đúng thứ tự ấy.",
+          "options": [
+            {
+              "id": "option:0",
+              "text": "家を出てから、朝ご飯を食べます。"
+            },
+            {
+              "id": "option:1",
+              "text": "朝ご飯を食べてから、家を出ます。"
+            },
+            {
+              "id": "option:2",
+              "text": "朝ご飯を食べないで、家を出ます。"
+            }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Ăn sáng phải nằm trước てから. Câu đầu đảo thứ tự; câu cuối nói rời nhà mà không ăn sáng, trái kế hoạch. Những câu khác không bị gán là bất khả thi ngoài ngữ cảnh này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:after-action:task:3",
+          "mode": "short_text",
+          "prompt": "Hoàn thành ‘Rửa tay xong rồi ăn cơm’: 手を（　）、ご飯を食べます。Dùng 洗います chuyển sang thể て rồi thêm から. Chỉ viết phần trong ngoặc, không viết dấu câu.",
+          "accepted_variants": [
+            "洗ってから",
+            "あらってから"
+          ],
+          "rationale": "洗います→洗う→洗って, rồi thêm から. Việc rửa tay được hoàn thành trước việc ăn trong câu này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:after-action:task:4",
+          "mode": "short_text",
+          "prompt": "Ở thư viện, bạn sẽ trả sách rồi mới về nhà. Ghép thành một câu lịch sự bằng てから: 本を返します／家に帰ります. Giữ nguyên các chữ kanji và trợ từ đã cho, không thêm chủ đề; có thể dùng hoặc bỏ dấu 、 và dấu 。.",
+          "accepted_variants": [
+            "本を返してから、家に帰ります。",
+            "本を返してから家に帰ります。",
+            "本を返してから、家に帰ります",
+            "本を返してから家に帰ります"
+          ],
+          "rationale": "返します chuyển thành 返してから; giữ 帰ります làm vị ngữ cuối. Bài quy định cách viết để có đáp án tham khảo hữu hạn, không coi các cách viết kana tương đương là sai tiếng Nhật nói chung.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    }
+  ],
+  "editorial_reviews": [
+    {
+      "checkpoint": "three_pilots",
+      "reviewed_on": "2026-11-13",
+      "review_kind": "independent_ai_not_human",
+      "reviewers": ["PilotJapaneseReview", "PilotEvidenceReview"],
+      "scope": "All three explanations, fifteen examples/readings/translations, six common errors, fifteen complete tasks and four cited source chunks.",
+      "findings_resolved": [
+        "Neutral self-introduction uses 教師, not an uncontextualized 先生 self-title.",
+        "Comparison prompt distinguishes baseline B from the marking particle より.",
+        "Repeating an unheard utterance uses 言ってください; mixed-script reading-answer variants are explicit."
+      ],
+      "decision": "AI-reviewed exploratory staging only; no canonical consumer, scored eligibility or human approval.",
+      "human_approved": false
+    },
+    {
+      "checkpoint": "twenty_lessons",
+      "reviewed_on": "2026-11-14",
+      "review_kind": "independent_ai_not_human",
+      "reviewers": ["N5FoundationReview", "N5UsageReview"],
+      "scope": "Remaining seventeen lessons: all explanations, eighty-five contextual examples/readings/translations, thirty-four common errors, eighty-five complete tasks and all actual source/prerequisite bindings. The earlier three pilots have their own independent review record.",
+      "findings_resolved": [
+        "Time-range task states the から・まで restriction before answering; destination へ is not falsely declared ungrammatical.",
+        "Choice task includes both なにに and なんに kana readings in provisional references.",
+        "Polite-verb task requests a complete verb form, not just an ending; te-form explanation correctly names past versus non-past.",
+        "Reason example context explicitly states lack of available book money."
+      ],
+      "decision": "All twenty packages are AI-reviewed editorial content only. No human approval, exhaustive variant certification, canonical integration or scored/mastery eligibility.",
+      "human_approved": false
+    }
+  ]
+}

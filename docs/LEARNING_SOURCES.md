@@ -269,3 +269,248 @@ The recorded 62-test result combines unchanged successful targeted files and the
 successful repaired integration-file run; it is not a claim that the first combined
 command passed. Python retains the existing optional-plugin `asyncio_mode` warning;
 Node emits its experimental SQLite warning.
+
+## Six-source continuation
+
+The operator explicitly continued the process for the six accessible sources,
+excluding NHK. This batch permits at most four new selected teaching documents per
+source; it is not an instruction to mirror every page or manufacture a fixed quota.
+Raw captures, rejected candidates and reproducible selection manifests remain under
+the external `AIResearch/vls-six-source-expansion-20261113T152200Z/` directory.
+Only explicit admitted manifest records enter the public corpus, never all files
+matched by a directory glob. Earlier source documents must not be silently repaired
+or replaced while adding new material.
+
+### Acquisition and selection decisions
+
+- Irodori: the official Vietnam-office page links the Vietnamese grammar supplement
+  `v1Grammar_NM_VN-1.pdf`. The observed response is **3,425,445 bytes, 65 PDF pages**,
+  SHA-256 `c5256d4121ba78ede39043d7852346daa5b34431931f7b4828774a7de50b1f41`.
+  Four short explanatory sections use exact PDF page references 1, 15, 25 and 50:
+  noun predicates, choosing with `Nにします`, `あります・います`, and demonstratives/
+  prices. These are **four selected sections from one PDF**, not four PDFs or
+  four complete lessons. Furigana-interleaved dialogues and tables are excluded;
+  original selected Vietnamese paragraph text is not rewritten.
+- Saromalang: retain bounded sections on `Vながら`, past negatives, appearance/
+  potential change with `よう`, and concessive `ながらも` examples. Omit long
+  conjugation tables, unrelated opinion tangents and exercises. A separate
+  `Vていません・Vていない` candidate is excluded after the observed affirmative/
+  negative terminology mismatch and malformed `あっていない` table entry.
+- Mokumoku: visible public examples only, never reveal-more or hidden hydration.
+  The flattened `V-るV-た+ついでに` formula is omitted rather than silently fixed;
+  explanation and example spans retain their original text. The source's
+  approximate `50%` description of `かもしれない` remains an unreviewed heuristic,
+  not a calibrated probability. The malformed `V1 ます+ながら+V2` candidate is excluded.
+- Tieng Nhat Don Gian: five of six new candidates contain concrete language issues,
+  including Saturday translated as Sunday, incorrect readings, malformed Japanese
+  or conflicting rules. Retain only the bounded `てから` structure and examples
+  ①–④. The omitted advertising gap is documented as two exact ordered source
+  spans. Later examples contain observed reading/translation issues and are not
+  admitted. Stopping at one document is intentional, not a claim of source-wide
+  quality or failure.
+
+These are AI-assisted source/extraction checks, not human teacher approval or
+independent publisher-rights verification. Existing canonical lesson counts,
+question options, grading and progress are not changed by adding reference RAG
+passages. No paid generation, account/voice change or production deployment is
+authorized by this acquisition batch.
+
+### Final coverage for this continuation
+
+| Source | Candidate bodies inspected | New selected documents | Total selected documents |
+| --- | --- | --- | --- |
+| Naoki | 6 | 4 | 7 |
+| FreeTag | 4 | 4 | 7 |
+| Saromalang | 5 | 4 | 5 |
+| Mokumoku | 5 | 4 | 5 |
+| Tieng Nhat Don Gian | 6 | 1 | 4 |
+| Irodori | 1 grammar PDF, 65 pages; selected spans on four pages | 4 sections | 5 |
+| NHK | Not requested in this continuation | 0 | 0 |
+
+Final corpus: **33 selected documents/sections, 55 passages, 146,887 asset bytes**.
+The earlier **12 documents and 30 passage objects remain exactly unchanged**,
+including their hashes, source URLs, stable IDs and selected source text. This is
+a finite reference corpus, not 33 complete curated lessons or full-site coverage.
+
+Naoki additions cover time/place ranges with `から・まで`, action locations with
+`で`, invitations with `ませんか`, and causal `から`. Two candidates with an
+interrogative mismatch and `hizuka` romanization typo were excluded. The ambiguous
+causal formula is outside the admitted slice. FreeTag additions cover existence,
+requests, comparison and desires. Entire quick-check/answer panels and browser-
+voice widget text are excluded using exact ordered source-text spans. No generated
+replacement explanations or translations were introduced.
+
+### Exercised continuation checks
+
+- Existing importer: **9 Python tests passed**. Existing retrieval, provider-boundary
+  integration and source-loader regressions: **23 Node tests passed**. One existing
+  optional-plugin `asyncio_mode` warning and Node experimental SQLite warning remain.
+- Actual local source consumer verified all 33 document content/capture hashes,
+  exact lossless passage offsets, source-first headers and retained original objects.
+  All 33 document citation lookups resolved to their corresponding first passage.
+- Six natural-language queries returned the intended new source within the bounded
+  top three: time ranges, negative requests, past negatives, `ついでに`, `てから`,
+  and `あります・います`. Additional returned passages included tangential lexical
+  matches; this is not measured semantic relevance or proof of model use.
+- Actual isolated Edge loaded all **55 passages**, looked up one new ID from each
+  of the six sources, keyboard-opened disclosures and verified exact original URLs,
+  including the Irodori PDF page locator. Desktop and 390 CSS-pixel mobile screenshots
+  showed source-first text and no horizontal overflow. Existing 25 Erin lessons
+  and seven source references remained available; no JavaScript page errors occurred.
+- No implementation, canonical lesson catalog, answer, progress, provider or voice
+  file changed. No new build was necessary for this data/docs-only continuation;
+  the last implementation build remains the earlier successful Worker dry-run.
+- Provider responses in integration tests are synthetic. No real model, publisher
+  approval, human teacher approval, PR, main merge or production deployment is claimed.
+
+Regeneration used the existing importer, not a new crawler convention:
+
+```sh
+python -m scripts.build_learning_corpus --manifest "<external-expansion-directory>/expanded-manifest.json"
+python -m pytest --noconftest tests/test_learning_corpus.py -q
+node --test tests/learning-rag.test.mjs tests/learning-rag-integration.test.mjs tests/source-catalog.test.mjs
+```
+
+The external combined manifest names every exact saved capture and selected text
+file, preserves prior records and contains one explicit outcome per accessible
+source. Import records only; audit/rejected files must not become RAG passages.
+
+## N5 editorial lesson checkpoints
+
+`static/course/n5-teaching.json` is a separate **AI-authored editorial-staging
+asset**, not copied publisher text, a replacement corpus or canonical assessment
+truth. Background references retain exact existing source IDs and URLs. New
+explanations, contextual examples, common-error contrasts and task rationales are
+explicitly generated content. Source rights remain operator-asserted, not an
+independently verified publisher grant.
+
+The first checkpoint contains three complete pilots: topic `は`, requests
+`てください`, and comparison `より・ほうが`. Each has five contextual Japanese/
+Vietnamese examples with readings, two explained common errors, and five tasks
+with task-local option identities or provisional accepted variants.
+
+Two independent AI reviews inspected all three lessons, fifteen examples, six
+common errors, fifteen tasks and four source references. The Japanese review
+corrected neutral self-introduction to `教師` and clarified the distinction between
+the comparison baseline and `より`. The repeating-utterance example now uses
+`言ってください`; mixed-script answer variants are retained. The evidence review
+found no additional staging defect. This is **not qualified human approval**.
+
+Every lesson and task remains non-scored, with no mastery credit. Accepted variants
+are provisional task-specific references, not exhaustive judgments of grammatical
+possibility. The request pilot's `te-form` prerequisite is intentionally unresolved
+until the full twenty-topic content checkpoint; do not mistake this pilot for a
+complete independently navigable course.
+
+No canonical application consumer loads this staging asset yet. Active
+`feature/teaching-quality` owns the adapters, tutor, practice UI and progress
+cutover. Source acquisition must hand over committed content instead of editing
+that session's unfinished files or introducing another grading/runtime stack.
+Actual wrong-answer, hint, retry and persisted-progress acceptance remains blocked
+on that explicit canonical integration handoff. Runtime selected-API teaching and
+independent voice settings remain unchanged.
+
+### Canonical integration handoff boundary
+
+The content checkpoint's exact integration input is
+`static/course/n5-teaching.json`. `lessons[].id` and task-local `options[].id`
+are stable identities; use `lessons[].order` for sequence rather than assuming
+array position. The earlier three pilot objects stay at their published positions
+while new topic packages are appended. Prerequisites name lesson IDs, not indexes.
+
+Do not reinterpret `ai_reviewed` as qualified human approval or permission to
+award objective accuracy/mastery. Each lesson explicitly disables scored
+assessment and mastery credit. `accepted_variants` and `answer_option_id` are
+editorial references for the specified draft task, not an alternative server
+grading authority. Any canonical adapter must retain those limits across lesson
+display, teacher requests, task submission, progress and voice-provider requests.
+The active canonical owner must use its existing task contracts, not add a
+parallel application or a separate exact-string grader for this asset.
+
+Before closing `vls-n5-app-acceptance`, hand over one **committed** canonical
+implementation and resolve writer ownership explicitly. Then exercise an actual
+lesson with the staged content: open its complete context, submit a wrong
+response, receive a phase-safe hint, retry, and verify that persisted completion
+remains advisory/reference evidence rather than verified mastery. Separately
+held-out evaluation must not be fed back as lesson examples. Model output quality
+requires separately authorized, observed inference; synthetic responses prove
+request/state handling only. Nothing in this handoff authorizes deployment,
+production migrations, provider/account changes or paid generation.
+
+### Twenty-lesson content checkpoint
+
+The complete editorial-staging asset now contains **20 AI-reviewed N5 study-track
+packages, 100 contextual examples with readings and Vietnamese meanings, 40
+explained common errors and 100 provisional tasks**. Each lesson retains the
+explicit source-first background-reference header and separate AI authorship.
+All prerequisite IDs resolve within these twenty lessons, including the
+`te-form` prerequisite that was absent from the earlier three-pilot checkpoint.
+
+Study order and stable ID suffixes:
+
+1. `topic`: noun predicates and topic `は`.
+2. `also`: additive `も`, including a shared negative predicate.
+3. `possession`: `の`, ownership direction and other noun relations.
+4. `question`: polite `か`, yes/no versus information questions.
+5. `polite-verbs`: the four polite non-past/past and positive/negative forms.
+6. `past-negative`: `ませんでした・なかった`.
+7. `te-form`: verb groups, irregulars and meaningful connected actions.
+8. `request`: contextual `てください`.
+9. `negative-request`: `ないでください` and negative-form construction.
+10. `existence`: `あります・います`, location and the plant/object distinctions.
+11. `time-range`: starting and ending points with `から・まで`.
+12. `action-place`: action `で` versus existence `に`, with labeled event extension.
+13. `invitation`: contextual `ませんか`, acceptance and softened refusal.
+14. `reason`: causal `から` with correct predicate forms.
+15. `comparison`: `より・ほうが・いちばん`.
+16. `want-action`: `たい`, person/context limits and legitimate `を／が`.
+17. `want-object`: `がほしい` versus wanting to perform an action.
+18. `demonstratives`: `これ・それ・あれ`, speaker perspective and prices.
+19. `choice`: actual decisions with `にします`.
+20. `after-action`: constrained sequence with `てから`, not automatic causality.
+
+After the three-pilot review and checked commit, two independent AI reviewers
+read all remaining seventeen lessons: every explanation, **85 examples with
+readings/translations/contexts, 34 common errors and 85 complete tasks**, including
+all alternatives, keys, variant lists, rationales, prerequisites and actual
+source-topic bindings. They were reviewers, not those draft authors.
+
+Resolved findings are narrow and recorded in the asset: the journey-end question
+now states its `から・まで` restriction in the prompt rather than retroactively
+rejecting `へ`; the choice question includes both `なにに` and `なんに` kana
+references; polite-form instructions request the actual full verb form; the
+`て` explanation distinguishes past from non-past; and a money-related example
+has an unambiguous beginner context.
+
+All twenty lessons are **AI-reviewed only**, with `human_approved: false`,
+`scored_assessment: false`, `mastery_credit: false` and every task `scored: false`.
+No acquired source text, existing canonical answer/progress identity, provider
+selection or independent voice setting is changed. This content checkpoint is
+not evidence that the canonical application has loaded or taught these lessons.
+
+### Last exercised twenty-lesson verification
+
+An actual local Node data reader consumed the final asset and all referenced
+source records after the last content correction:
+
+- **20 packages / 100 examples / 40 common errors / 100 tasks** validated.
+  Tasks comprise **60 single-choice and 40 constrained short-text references**.
+- Source chunk IDs, exact URLs, source names and source-first headers resolve.
+  All lesson/example/task IDs and task-local option IDs are distinct within their
+  declared scope. Each choice key names one existing option; each short-text
+  reference list is nonempty and contains distinct strings.
+- Every prerequisite resolves to an earlier lesson, so no prerequisite cycle or
+  missing prerequisite remains. Study orders cover 1–20 without duplication.
+- All three earlier published pilot objects are exactly unchanged. The acquired
+  **33-document / 55-passage source corpus is also unchanged**.
+- All example Japanese fields contain Japanese script and no unintended Latin
+  characters. Every example has context, reading and Vietnamese meaning. These
+  mechanical checks supplement—not replace—the actual independent AI language
+  reviews recorded above.
+- The corrected range-particle restriction and both kana readings for the choice
+  question are present. All twenty lesson gates and all hundred task flags retain
+  non-scored, non-mastery and no-human-approval status.
+
+No application build or application-wide tests were rerun for an asset that has
+no canonical consumer yet. This result is content/data evidence only; it must not
+be substituted for the blocked actual lesson/tutor/progress acceptance.
