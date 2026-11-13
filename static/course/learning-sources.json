@@ -1,0 +1,373 @@
+{
+  "version": 1,
+  "scope": "External learning references only; no lesson, exercise, transcript, PDF or audio bodies.",
+  "capture_time_basis": "Local capture-file modification time; not the publisher publication date.",
+  "sources": [
+    {
+      "id": "naoki",
+      "name": "Naoki Nihongo",
+      "description_vi": "Ngữ pháp tiếng Việt kèm ví dụ Nhật–Việt, cách đọc và lỗi thường gặp. Đã đọc một bài mẫu về trợ từ は; chưa đánh giá toàn bộ giáo trình.",
+      "access_kind": "lesson_read",
+      "permission_status": "permission_required",
+      "permission_note_vi": "Trang ghi bảo lưu mọi quyền. Chưa có căn cứ cho phép sao chép bài, tạo RAG hoặc chuyển nội dung cho model. Chỉ mở liên kết tại website gốc.",
+      "assessed_at": "2026-11-13",
+      "links": [
+        {
+          "title": "Danh mục ngữ pháp",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap"
+        },
+        {
+          "title": "Bài mẫu: trợ từ は",
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/01-tro-tu-wa"
+        },
+        {
+          "title": "Liên hệ nhà xuất bản nội dung",
+          "url": "https://www.naoki.edu.vn/lien-he"
+        }
+      ],
+      "policy_evidence": [
+        {
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap",
+          "checked_at": "2026-11-13",
+          "finding": "The catalog footer reserves all rights. A readable sample lesson does not establish an app/corpus reuse grant."
+        },
+        {
+          "url": "https://www.naoki.edu.vn/bao-mat-thong-tin",
+          "checked_at": "2026-11-13",
+          "finding": "The inspected privacy policy addresses personal/student data, not a lesson-content license."
+        }
+      ],
+      "robots": {
+        "url": "https://www.naoki.edu.vn/robots.txt",
+        "status": "read",
+        "finding": "User-agent * allows /. This is an access directive, not copyright permission."
+      },
+      "corpus_allowed": false,
+      "captures": [
+        {
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "naoki.json",
+          "capture_sha256": "91cc94ac4ec6bb36a5eafb670739d6fae0a8381e42d83791c9d3dbe9623d69d6",
+          "capture_bytes": 38095,
+          "captured_at": "2026-11-13T14:21:40.522868+00:00"
+        },
+        {
+          "url": "https://www.naoki.edu.vn/thu-vien/nguphap/01-tro-tu-wa",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "naoki-wa.json",
+          "capture_sha256": "31ff555a60c3bba7f7683bd9ad1545495a93f64cc37a252258c1a7403ef83b96",
+          "capture_bytes": 2832,
+          "captured_at": "2026-11-13T14:22:38.910920+00:00"
+        }
+      ]
+    },
+    {
+      "id": "freetag",
+      "name": "FreeTag tiếng Việt",
+      "description_vi": "Danh mục ngữ pháp nền tảng và N5–N2, có phần giới thiệu cách dùng ví dụ, furigana và kiểm tra ngắn. Chưa thu thập các bài chi tiết.",
+      "access_kind": "index_read",
+      "permission_status": "permission_required",
+      "permission_note_vi": "Chính sách yêu cầu tuân theo giấy phép áp dụng hoặc có quyền cho phép khi tái sử dụng ngoài phạm vi luật định. Chưa xác lập giấy phép cho corpus ngữ pháp của app.",
+      "assessed_at": "2026-11-13",
+      "links": [
+        {
+          "title": "Danh mục ngữ pháp tiếng Việt",
+          "url": "https://freetag.jp/vi/jlpt/grammar/index.html"
+        },
+        {
+          "title": "Lộ trình N5 — liên kết từ danh mục",
+          "url": "https://freetag.jp/vi/jlpt/grammar/n5/index.html"
+        },
+        {
+          "title": "Phạm vi khóa học và nguồn tham khảo",
+          "url": "https://freetag.jp/vi/jlpt/grammar/sources.html"
+        }
+      ],
+      "policy_evidence": [
+        {
+          "url": "https://freetag.jp/vi/intro.html",
+          "checked_at": "2026-11-13",
+          "finding": "The copyright/reuse section requires an applicable license or rightsholder permission beyond legally permitted uses. It is not a blanket grammar-course reuse grant."
+        },
+        {
+          "url": "https://freetag.jp/vi/jlpt/grammar/sources.html",
+          "checked_at": "2026-11-13",
+          "finding": "Course notes describe authored static HTML content and estimated study levels, not official exhaustive JLPT coverage or an open-content license."
+        }
+      ],
+      "robots": {
+        "url": "https://freetag.jp/robots.txt",
+        "status": "http_404",
+        "finding": "No robots body retrieved. Neither an allow-all directive nor a content license was observed."
+      },
+      "corpus_allowed": false,
+      "captures": [
+        {
+          "url": "https://freetag.jp/vi/jlpt/grammar/index.html",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "freetag.json",
+          "capture_sha256": "4ed9c719b1378f9142981f8b4867368e9e4f66b6d0beecc39a6e04ae82b8b25a",
+          "capture_bytes": 4848,
+          "captured_at": "2026-11-13T14:21:21.203665+00:00"
+        },
+        {
+          "url": "https://freetag.jp/vi/jlpt/grammar/sources.html",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "freetag-sources.json",
+          "capture_sha256": "3fac0210e1940965836118578a24b68817120dcd5df30238af487e47b40dcbb3",
+          "capture_bytes": 6911,
+          "captured_at": "2026-11-13T14:22:26.163065+00:00"
+        }
+      ]
+    },
+    {
+      "id": "saromalang",
+      "name": "Saromalang",
+      "description_vi": "Bài tham khảo đối chiếu cách diễn đạt tiếng Việt với mẫu câu Nhật và ví dụ song ngữ. Đã đọc bài được liên kết; chưa kiểm duyệt ngôn ngữ hoặc độ phủ từng cấp JLPT.",
+      "access_kind": "lesson_read",
+      "permission_status": "unresolved",
+      "permission_note_vi": "Chưa tìm thấy quyền tái sử dụng trong bài và phần trang chủ đã kiểm tra. Không suy ra được phép sao chép từ việc trang đọc được công khai.",
+      "assessed_at": "2026-11-13",
+      "links": [
+        {
+          "title": "Các cách diễn đạt Việt–Nhật thường dùng",
+          "url": "https://www.saromalang.com/2011/08/cac-cach-noi-hay-dung-trong-tieng-nhat.html"
+        },
+        {
+          "title": "Trang chủ Saromalang",
+          "url": "https://www.saromalang.com/"
+        }
+      ],
+      "policy_evidence": [
+        {
+          "url": "https://www.saromalang.com/2011/08/cac-cach-noi-hay-dung-trong-tieng-nhat.html",
+          "checked_at": "2026-11-13",
+          "finding": "The inspected bilingual article provides no identified corpus/RAG redistribution grant. This is limited inspected coverage, not proof that no policy exists elsewhere."
+        },
+        {
+          "url": "https://www.saromalang.com/",
+          "checked_at": "2026-11-13",
+          "finding": "Inspected homepage navigation did not establish an applicable reuse license or verified rights-contact route."
+        }
+      ],
+      "robots": {
+        "url": "https://www.saromalang.com/robots.txt",
+        "status": "read",
+        "finding": "User-agent * allows / with /search and /share-widget disallowed. Those restricted paths were not requested."
+      },
+      "corpus_allowed": false,
+      "captures": [
+        {
+          "url": "https://www.saromalang.com/2011/08/cac-cach-noi-hay-dung-trong-tieng-nhat.html",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "saromalang.json",
+          "capture_sha256": "a4d31b0fe66d32041de69f2bc8a1931af74e629d5cd2d2c572dcea2335f30f0f",
+          "capture_bytes": 37296,
+          "captured_at": "2026-11-13T14:21:46.980323+00:00"
+        }
+      ]
+    },
+    {
+      "id": "mokumoku",
+      "name": "Mokumoku",
+      "description_vi": "Website giới thiệu tra cứu ngữ pháp, flashcard và lộ trình. Bản đọc hiện có chỉ chứa phần giới thiệu, chưa chứng minh trích xuất được bài học hoặc bộ câu hỏi.",
+      "access_kind": "shell_only",
+      "permission_status": "unresolved",
+      "permission_note_vi": "Chưa xác lập quyền corpus/RAG. Tuyên bố học miễn phí và tự biên soạn không phải giấy phép tái sử dụng; quyền đối với giáo trình tham khảo cũng cần làm rõ.",
+      "assessed_at": "2026-11-13",
+      "links": [
+        {
+          "title": "Trang học Mokumoku",
+          "url": "https://mokumoku.vn/"
+        },
+        {
+          "title": "Giới thiệu tác giả và dự án",
+          "url": "https://mokumoku.vn/ve-chung-minh"
+        }
+      ],
+      "policy_evidence": [
+        {
+          "url": "https://mokumoku.vn/ve-chung-minh",
+          "checked_at": "2026-11-13",
+          "finding": "The author describes independently compiled lessons based on standard textbooks. This authorship claim does not establish an open-content or underlying textbook license."
+        },
+        {
+          "url": "https://mokumoku.vn/",
+          "checked_at": "2026-11-13",
+          "finding": "Free-access advertising and the inspected homepage do not establish corpus/RAG/redistribution rights. No actual lesson body was verified."
+        }
+      ],
+      "robots": {
+        "url": "https://mokumoku.vn/robots.txt",
+        "status": "read",
+        "finding": "User-agent * allows / but disallows /tai-khoan and /admin. Restricted routes were not requested."
+      },
+      "corpus_allowed": false,
+      "captures": [
+        {
+          "url": "https://mokumoku.vn/",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "mokumoku.json",
+          "capture_sha256": "a624cc988cbfbcc4d955887dc47cc57056f40a4d117eddc8e1a61f7b73f269fe",
+          "capture_bytes": 1790,
+          "captured_at": "2026-11-13T14:21:28.581875+00:00"
+        }
+      ]
+    },
+    {
+      "id": "tiengnhatdongian",
+      "name": "Tiếng Nhật Đơn Giản",
+      "description_vi": "Danh mục ngữ pháp N5–N1 bằng tiếng Việt. Đã đọc trang danh mục; không thu thập bài ngữ pháp, giáo trình, đề hoặc media.",
+      "access_kind": "index_read",
+      "permission_status": "permission_required",
+      "permission_note_vi": "Website ghi rõ không được sao chép khi chưa có sự cho phép. Giữ liên kết tham khảo; không nhập nội dung vào app, RAG hoặc model.",
+      "assessed_at": "2026-11-13",
+      "links": [
+        {
+          "title": "Danh mục ngữ pháp N5–N1",
+          "url": "https://www.tiengnhatdongian.com/tong-hop-toan-bo-ngu-phap/"
+        },
+        {
+          "title": "Danh mục N5 — liên kết từ trang nguồn",
+          "url": "https://www.tiengnhatdongian.com/series/tong-hop-ngu-phap-n5/"
+        }
+      ],
+      "policy_evidence": [
+        {
+          "url": "https://www.tiengnhatdongian.com/tong-hop-toan-bo-ngu-phap/",
+          "checked_at": "2026-11-13",
+          "finding": "The visible rights notice explicitly requires permission before copying and reserves all rights. Allowing a crawler in robots does not override it."
+        }
+      ],
+      "robots": {
+        "url": "https://www.tiengnhatdongian.com/robots.txt",
+        "status": "read",
+        "finding": "User-agent * includes Allow / and restrictions on administration, searches and other paths; no restricted path was followed."
+      },
+      "corpus_allowed": false,
+      "captures": [
+        {
+          "url": "https://www.tiengnhatdongian.com/tong-hop-toan-bo-ngu-phap/",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "tiengnhatdongian.json",
+          "capture_sha256": "d86facb24381824c06fc7c0edceffe8d3bc81ba37c820174a7f5dabedf5ad25c",
+          "capture_bytes": 7568,
+          "captured_at": "2026-11-13T14:21:23.780144+00:00"
+        }
+      ]
+    },
+    {
+      "id": "nhk",
+      "name": "NHK — Cùng nhau học tiếng Nhật",
+      "description_vi": "Trang học giao tiếp tiếng Nhật chính thức có hướng dẫn tiếng Việt. Chỉ đọc trang giới thiệu đã lưu; chưa đọc các bài chi tiết, PDF hoặc audio.",
+      "access_kind": "index_read",
+      "permission_status": "restricted",
+      "permission_note_vi": "Robots của hai hostname chặn các crawler AI đã nêu. Đã dừng đọc nội dung tự động. Download cá nhân không phải quyền nhập vào RAG; chỉ giữ liên kết thông thường tới NHK.",
+      "assessed_at": "2026-11-13",
+      "links": [
+        {
+          "title": "Cùng nhau học tiếng Nhật — tiếng Việt",
+          "url": "https://www.nhk.or.jp/lesson/vi/"
+        },
+        {
+          "title": "Danh sách bài tại NHK — liên kết từ trang nguồn",
+          "url": "https://www3.nhk.or.jp/nhkworld/lesson/vi/lessons/"
+        }
+      ],
+      "policy_evidence": [
+        {
+          "url": "https://www3.nhk.or.jp/nhkworld/en/terms/",
+          "checked_at": "2026-11-13",
+          "finding": "Terms revised 2026-10-01 restrict secondary use subject to statutory exceptions, state access is not an intellectual-property license, and condition ordinary links. No project exception was established."
+        },
+        {
+          "url": "https://www.nhk.or.jp/robots.txt",
+          "checked_at": "2026-11-13",
+          "finding": "GPTBot, ChatGPT-User, OAI-SearchBot and other named AI agents are excluded with Disallow /. Further content requests stopped."
+        },
+        {
+          "url": "https://www3.nhk.or.jp/robots.txt",
+          "checked_at": "2026-11-13",
+          "finding": "The second service hostname also excludes the named AI agents. No backend switch or access bypass followed."
+        }
+      ],
+      "robots": {
+        "url": "https://www.nhk.or.jp/robots.txt",
+        "status": "ai_agents_disallowed",
+        "finding": "Both inspected NHK hosts exclude the named AI user agents. Existing capture metadata is retained; it is not permission to fetch further content."
+      },
+      "corpus_allowed": false,
+      "captures": [
+        {
+          "url": "https://www.nhk.or.jp/lesson/vi/",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "nhk.json",
+          "capture_sha256": "998081f7f36b38d6c47cf0fabf9dd30378558a863eeff238b2769fda666457db",
+          "capture_bytes": 19167,
+          "captured_at": "2026-11-13T14:21:32.017698+00:00"
+        }
+      ]
+    },
+    {
+      "id": "irodori",
+      "name": "Irodori — Japan Foundation",
+      "description_vi": "Đã xác minh trang giới thiệu phiên bản tiếng Việt của Japan Foundation tại Hà Nội. Danh mục Irodori hiện có của VJBot được giữ nguyên, không nhân đôi giáo trình hoặc âm thanh.",
+      "access_kind": "index_read",
+      "permission_status": "permission_required",
+      "permission_note_vi": "Có quyền sử dụng giáo dục theo điều kiện, kể cả một số lớp thu phí; không phải giấy phép corpus/RAG chung. Quyền app/AI chưa được xác lập, PowerPoint có hạn chế riêng. Chỉ mở tài liệu tại nhà xuất bản.",
+      "assessed_at": "2026-11-13",
+      "links": [
+        {
+          "title": "Irodori phiên bản tiếng Việt — Japan Foundation Hà Nội",
+          "url": "https://hn.jpf.go.jp/irodori"
+        },
+        {
+          "title": "Danh sách các phiên bản ngôn ngữ",
+          "url": "https://www.irodori.jpf.go.jp/editions.html"
+        }
+      ],
+      "policy_evidence": [
+        {
+          "url": "https://www.irodori.jpf.go.jp/privacy.html",
+          "checked_at": "2026-11-13",
+          "finding": "Copyright guidelines provide conditional educational/private use and worksheet permissions, not an established general-purpose app/RAG redistribution grant."
+        },
+        {
+          "url": "https://www.irodori.jpf.go.jp/faq.html",
+          "checked_at": "2026-11-13",
+          "finding": "FAQ permits specified school/private and online lessons, including fee-charging lessons, subject to material-specific conditions. This must not be mislabeled as universally noncommercial-only."
+        },
+        {
+          "url": "https://hn.jpf.go.jp/irodori",
+          "checked_at": "2026-11-13",
+          "finding": "The official Vietnamese listing was read. Its life/culture PowerPoint notice specifically restricts sale and redistribution, including modified versions."
+        }
+      ],
+      "robots": {
+        "url": "https://www.irodori.jpf.go.jp/robots.txt",
+        "status": "http_403",
+        "finding": "Robots retrieval returned HTTP 403, no directive body. No retry/bypass followed; neither allowance nor prohibition was inferred. Vietnam-office robots were not assessed."
+      },
+      "corpus_allowed": false,
+      "captures": [
+        {
+          "url": "https://www.irodori.jpf.go.jp/",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "irodori.json",
+          "capture_sha256": "93f8e63474b605b8334d17686cb25d4024221a20d81c72ee14721fd5e83363c3",
+          "capture_bytes": 14083,
+          "captured_at": "2026-11-13T14:21:35.546908+00:00"
+        },
+        {
+          "url": "https://www.irodori.jpf.go.jp/editions.html",
+          "method": "Agent Reach web/read (jina)",
+          "capture_file": "irodori-editions.json",
+          "capture_sha256": "26d2d2e442a77045cd524c10e3b406533e63aad853f64d6993a00bb257a4ac6d",
+          "capture_bytes": 14704,
+          "captured_at": "2026-11-13T14:22:42.551419+00:00"
+        }
+      ]
+    }
+  ]
+}

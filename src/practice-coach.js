@@ -1,6 +1,7 @@
 import {askAI} from './providers.js';
 import {catalogLesson, groundLesson, teacherCatalog, validLessonReference} from './tutor-context.js';
 import {studyTeacher} from './study-teacher.js';
+import {attributedReply, learningBoundary, learningQuery, retrieveLearning} from './learning-rag.js';
 
 const reply = (data, status = 200) => Response.json(data, {status, headers:{'Cache-Control':'no-store'}});
 const schema = {type:'object', additionalProperties:false, properties:{reply:{type:'string'}}, required:['reply']};
@@ -41,7 +42,9 @@ export async function practiceCoach(request, env) {
     examples:(grounded.focus.examples || []).map(example => ({jp:example.jp,vi:example.vi,furigana:example.furigana})),
     ...(body.action === 'feedback' ? {submission:question.opts[body.answer_index], correct,
       authored_answer:question.ans, authored_explanation:question.explanation} : {})};
-  const asked = await askAI(env,body.user_id, {system:boundary + '\n' + instructions[body.action],
+  const retrieval = await retrieveLearning(env, learningQuery(lesson,'',question), {assessment:body.action==='hint'});
+  evidence.learning_retrieval = retrieval;
+  const asked = await askAI(env,body.user_id, {system:boundary + '\n' + instructions[body.action] + '\n' + learningBoundary,
     schema,schemaName:'practice_coaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
   body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
   if (asked.response) return asked.response;
@@ -51,6 +54,8 @@ export async function practiceCoach(request, env) {
     || typeof result.reply !== 'string' || !result.reply.trim() || result.reply.length > 2000) {
     return reply({detail:'AI did not return a usable explanation. Your result is unchanged.'},503);
   }
-  return reply({reply:result.reply.trim(), action:body.action, item_id:question.item_id,
+  const attributed=attributedReply(result.reply.trim(),retrieval,2000);
+  if(!attributed)return reply({detail:'AI explanation with source attribution exceeded the reply limit. Your result is unchanged.'},503);
+  return reply({reply:attributed, action:body.action, item_id:question.item_id,
     ...(body.action === 'feedback' ? {correct,answer:question.ans} : {})});
 }

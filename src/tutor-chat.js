@@ -2,6 +2,7 @@ import {cleanScreen, learnerSnapshot, parseTutorReply, reversedPrompt, tutorSche
 import {askAI} from './providers.js';
 import {catalogLesson, chatEnvelope, conversationScope, groundLesson, teacherCatalog, validFocusReference, validLessonReference} from './tutor-context.js';
 import {claimTutorRequest, claimTutorScope, commitTutorTurn, nextTeachingState, releaseTutorClaim, renewTutorClaim, requestFingerprint, validTutorIntent} from './tutor-session.js';
+import {attributedReply, learningBoundary, learningQuery, retrieveLearning} from './learning-rag.js';
 
 const LEVELS = new Set(['N5', 'N4', 'N3', 'N2', 'N1']);
 const json = (value, status = 200) => Response.json(value, {status, headers: {'Cache-Control': 'no-store'}});
@@ -64,14 +65,21 @@ async function generateTurn(env, userId, request, session, token) {
   const learner = await learnerSnapshot(env, userId, request.level, request.catalog);
   const teaching = {intent: request.intent, state: previous,
     probe_source: previous?.probe ? 'unverified_model_output' : null};
+  const retrieval = await retrieveLearning(env, learningQuery(lesson, request.message), {
+    assessment:focus?.kind==='question' || request.intent==='hint' || !!previous?.probe
+  });
+  const envelope = JSON.parse(chatEnvelope(request.message, lesson, request.screen, learner, history, teaching));
+  envelope.reference.learning_retrieval = retrieval;
   const asked = await askAI(env, userId, {
-    system: reversedPrompt(request.level, history.length),
+    system: reversedPrompt(request.level, history.length) + '\n' + learningBoundary,
     schema: tutorSchema(request.intent), schemaName: 'tutor_reply',
-    turns: [{role: 'user', content: chatEnvelope(request.message, lesson, request.screen, learner, history, teaching)}]
+    turns: [{role: 'user', content: JSON.stringify(envelope)}]
   }, request.override, request.profileId, {beforeGeneration: () => renewTutorClaim(env, userId, request.scope, request.requestId, token)});
   if (asked.response) return {response: asked.response};
   const result = parseTutorReply(asked.text, {intent: request.intent, previous});
   if (!result) return {response: failure('The tutor returned an incomplete or invalid teaching response. Please retry.', 503)};
+  result.reply = attributedReply(result.reply, retrieval);
+  if(!result.reply)return {response:failure('The attributed teaching response exceeded the reply limit. Please retry.',503)};
   const state = nextTeachingState(previous, result, request.intent, request.lesson, focus);
   if (view === 'exam') state.view = view;
   return {result, historyAfter, state};

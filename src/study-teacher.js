@@ -1,5 +1,6 @@
 import {askAI} from './providers.js';
 import {catalogLesson, teacherCatalog, validFocusReference, validLessonReference} from './tutor-context.js';
+import {attributedReply, learningBoundary, learningQuery, retrieveLearning} from './learning-rag.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers:{'Cache-Control':'no-store'}});
 const exact = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
@@ -89,12 +90,17 @@ export async function studyTeacher(body, request, env) {
   if (evidence.fields.length > 64 || JSON.stringify(evidence).length > 48000) return json({detail:'Choose one word or example for a focused explanation.'},413);
   const schema = {type:'object',additionalProperties:false,properties:{reply:{type:'string'},fields:{type:'array',items:{type:'object',additionalProperties:false,
     properties:{key:{type:'string'},text:{type:'string'}},required:['key','text']}}},required:['reply','fields']};
-  const asked = await askAI(env,body.user_id,{system,schema,schemaName:'study_teaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
+  const target=focus?lesson[{word:'words',example:'examples',question:'questions'}[focus.kind]]?.[focus.index]:null;
+  const retrieval = await retrieveLearning(env, learningQuery(lesson,'',target), {assessment:focus?.kind==='question'});
+  evidence.learning_retrieval = retrieval;
+  const asked = await askAI(env,body.user_id,{system:system+'\n'+learningBoundary,schema,schemaName:'study_teaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
     body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
   if (asked.response) return asked.response;
   let parsed;
   try {parsed = JSON.parse(asked.text);} catch {return json({detail:'AI returned an unusable teaching response. Original content is unchanged.'},503);}
   const result = validateTeaching(parsed,evidence);
   if (!result) return json({detail:'AI changed source text or returned incomplete teaching. Original content is unchanged.'},503);
+  result.reply = attributedReply(result.reply, retrieval, 2000);
+  if(!result.reply)return json({detail:'AI teaching with source attribution exceeded the reply limit. Original content is unchanged.'},503);
   return json({action:'teach',lesson:{id:body.lesson.id,level:body.lesson.level},focus,view,...result});
 }
