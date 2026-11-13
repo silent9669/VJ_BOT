@@ -7,9 +7,11 @@ import {hashToken} from '../src/auth.js';
 import {resolveProvider, resolveSpeechProvider} from '../src/providers.js';
 import {deleteUserData, recordAdminLogin} from '../src/admin.js';
 import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
+import {kaiwaJudgment} from './fixtures/kaiwa-judgments.mjs';
 
 const teacherCatalogs = await buildTeacherCatalog();
 const kaiwaReference = {level: 'N5', scenario_id: Object.keys(teacherCatalogs.N5.scenarios)[0]};
+const kaiwaRubric = teacherCatalogs.N5.scenarios[kaiwaReference.scenario_id].rubrics[0];
 const teacherAssets = {fetch: async request => {
   const level = new URL(request.url).pathname.match(/^\/course\/teacher-(N[1-5])\.json$/)?.[1];
   return level ? Response.json(teacherCatalogs[level]) : new Response('Not found', {status: 404});
@@ -227,7 +229,7 @@ test('device overrides drive chat, Kaiwa, AI test and Google TTS transiently wit
     assert.equal(body.model, 'device-model');
     const content = body.response_format?.json_schema?.name === 'tutor_reply'
       ? {reply: '何時に始まりますか。', action: 'probe', open_probe: '何時に始まりますか。'}
-      : {score: 90, rating: 'Xuất sắc', feedback: 'Ổn', model_answer: 'はい'};
+      : kaiwaJudgment(kaiwaRubric, 'はい');
     return Response.json({choices: [{message: {content: JSON.stringify(content)}}]});
   };
   try {
@@ -235,7 +237,9 @@ test('device overrides drive chat, Kaiwa, AI test and Google TTS transiently wit
     assert.equal(chat.status, 200);
     assert.equal((await chat.json()).reply, '何時に始まりますか。');
     const kaiwa = await send('google:alice', '/api/kaiwa/evaluate', 'POST', {...kaiwaReference, user_speech: 'はい', api_connection});
-    assert.equal(kaiwa.status, 200); assert.equal((await kaiwa.json()).score, 90);
+    assert.equal(kaiwa.status, 200); const estimate = await kaiwa.json();
+    assert.equal(estimate.status, 'estimated'); assert.equal(estimate.estimated_score, 100);
+    assert.equal(estimate.score, null); assert.equal(estimate.rating, null);
     assert.equal((await send('google:alice', '/api/ai/test', 'POST', {api_connection})).status, 200);
     const tts = await send('google:alice', '/api/tts', 'POST', {text: 'こんにちは', api_connection: {protocol: 'gemini', base_url: '', model: 'gemini-test', api_key: 'ephemeral-google-key'}});
     assert.equal(tts.status, 200); assert.equal((await tts.json()).audioBase64, 'UklGRg==');
@@ -411,7 +415,7 @@ test('pinned server profiles survive another activation and fail closed after re
     assert.ok(url.startsWith('https://generativelanguage.googleapis.com/'));
     const content = JSON.parse(options.body).generationConfig?.responseJsonSchema?.properties?.reply
       ? {reply: '何時に始まりますか。', action: 'probe', open_probe: '何時に始まりますか。'}
-      : {score: 80, rating: 'Rất tốt', feedback: 'OK', model_answer: 'はい'};
+      : kaiwaJudgment(kaiwaRubric, 'はい');
     return Response.json({candidates:[{content:{parts:url.includes('-tts:')
       ?[{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]
       :[{text:JSON.stringify(content)}]}}]});

@@ -89,6 +89,8 @@ export async function buildTeacherCatalog() {
   await context.loadPracticalCourse();
   context.installCourseKaiwa();
   const catalogs = {};
+  const rubrics = JSON.parse(await readFile(new URL('course/kaiwa-rubrics.json', root), 'utf8'));
+  if (rubrics.version !== 1 || !rubrics.scenarios) throw new Error('Invalid Kaiwa rubric catalog');
   const {practicalCourse, practicalSources} = vm.runInContext('({practicalCourse, practicalSources})', context);
   for (const level of levels) {
     await context.ensureLessons(level);
@@ -110,8 +112,15 @@ export async function buildTeacherCatalog() {
     ]));
     const scenarios = Object.fromEntries(Object.entries(context.window.JLPT_DATA.kaiwaScenarios)
       .filter(([, scenario]) => scenario.level === level || scenario.level === 'ALL')
-      .map(([id, scenario]) => [id, {title: scenario.title, context: scenario.context || '',
-        prompts: scenario.prompts.map(prompt => prompt.jp || 'こんにちは。よろしくお願いします。')} ]));
+      .map(([id, scenario]) => {
+        const prompts = scenario.prompts.map(prompt => prompt.jp);
+        const authored = rubrics.scenarios[id];
+        if (!Array.isArray(authored) || authored.length !== prompts.length
+          || authored.some((rubric, index) => rubric.question !== prompts[index])) {
+          throw new Error(`Kaiwa rubric does not match canonical questions: ${id}`);
+        }
+        return [id, {title: scenario.title, context: scenario.context || '', prompts, rubrics: authored}];
+      }));
     catalogs[level] = {lessons, items, scenarios};
   }
   return catalogs;

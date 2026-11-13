@@ -134,6 +134,7 @@ test('successful recording binds actual plain replies to each sequential case an
       const recorded = retained.steps[stepIndex];
       assert.equal(request.channel, 'quick');
       assert.equal(request.screen.route, `/tutor-evaluation/${report.run_id}/${item.id}`);
+      assert.deepEqual(Object.keys(request.screen).sort(), ['level', 'route']);
       assert.deepEqual(request.lesson, item.lesson);
       assert.deepEqual(request.focus, item.focus);
       assert.equal(request.message, step.message);
