@@ -467,24 +467,25 @@
                 <p id="kaiwa-error" role="alert" hidden></p>
               </div>
 
-              <div id="kaiwa-completion"></div><!-- AI Evaluation Result Card -->
-              <div class="kaiwa-result-card" id="kaiwa-result-card" hidden>
+              <div id="kaiwa-completion"></div><!-- Model-assisted estimates, never official grades -->
+              <div class="kaiwa-result-card" id="kaiwa-result-card" aria-describedby="kaiwa-advisory-notice" hidden>
                 <div class="result-header">
-                  <span class="result-badge">Nhận xét nội dung câu trả lời</span>
+                  <span class="result-badge">ESTIMATED PRACTICE SCORE</span>
                   <div class="result-score-wrap">
-                    <span class="score-num" id="kaiwa-score-val">90</span>
-                    <span class="score-unit">/ 100 Điểm</span>
+                    <span id="kaiwa-score-val" role="status">Not graded</span>
                   </div>
                 </div>
                 <div class="result-body">
+                  <p id="kaiwa-advisory-notice">Estimated score from AI judgments — not an official grade. The server weights task fulfillment 50%, grammar 30%, and expression 20%. Missing requirements cannot pass. AI judgments and examples may still be wrong.</p>
                   <div class="result-feedback-section">
-                    <h4> Nhận xét của thầy Lâm</h4>
-                    <p id="kaiwa-feedback-text">Câu trả lời rất tự nhiên và chính xác!</p>
+                    <h4>Question criteria</h4>
+                    <p id="kaiwa-feedback-text" role="status" aria-live="polite"></p>
+                    <ul id="kaiwa-criteria" aria-label="Criterion assessments"></ul>
                   </div>
                   <div class="result-model-section">
-                    <h4> Câu trả lời gợi ý</h4>
+                    <h4>Unverified AI example</h4>
                     <div class="model-sentence-row">
-                      <p id="kaiwa-model-text">はい、お願いします。(Hai, onegaishimasu.)</p>
+                      <p id="kaiwa-model-text"></p>
                       <button type="button" class="card-audio-btn" id="btn-kaiwa-model-tts">Nghe</button>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import {cleanScreen, learnerSnapshot, parseTutorReply, reversedPrompt, TUTOR_SCHEMA} from './prompt.js';
+import {cleanScreen, learnerSnapshot, parseTutorReply, reversedPrompt, tutorSchema} from './prompt.js';
 import {askAI} from './providers.js';
 import {catalogLesson, chatEnvelope, conversationScope, groundLesson, teacherCatalog, validFocusReference, validLessonReference} from './tutor-context.js';
 import {claimTutorRequest, claimTutorScope, commitTutorTurn, nextTeachingState, releaseTutorClaim, renewTutorClaim, requestFingerprint, validTutorIntent} from './tutor-session.js';
@@ -20,6 +20,7 @@ async function resolveRequest(env, body) {
     || body.view === 'exam' && suppliedFocus?.kind !== 'question') return {response: failure('Invalid lesson view.')};
   const reference = suppliedLesson ? {id: suppliedLesson.id, level: suppliedLesson.level} : null;
   const focus = suppliedFocus ? {kind: suppliedFocus.kind, index: suppliedFocus.index} : null;
+  const focusSpecified = Object.hasOwn(body, 'focus');
   // An explicit item without a view remains an ordinary lesson check. A turn without
   // either selector may continue the canonical item and view already in this session.
   const view = body.view ?? (focus ? 'checks' : null);
@@ -35,24 +36,24 @@ async function resolveRequest(env, body) {
   if (reference && !lesson) return {response: failure('Unknown lesson reference.')};
   if (focus && !groundLesson(lesson, focus, view)) return {response: failure('The selected item does not belong to this lesson.')};
   const scope = conversationScope(channel, lesson, screen);
-  return {message, intent, requestId, reference, focus, view, screen, level, catalog, lesson, scope};
+  return {message, intent, requestId, reference, focus, focusSpecified, view, screen, level, catalog, lesson, scope};
 }
 
 function currentTeaching(session, request) {
   const prior = request.intent === 'restart' ? null : session.state;
   const sameLesson = prior?.lesson?.id === request.lesson?.id && prior?.lesson?.level === request.lesson?.level;
-  const focus = request.focus || (sameLesson ? prior?.focus : null) || null;
-  const view = request.view ?? (sameLesson ? prior?.view : null) ?? 'checks';
+  const focus = request.focusSpecified ? request.focus : (sameLesson ? prior?.focus : null) || null;
+  const view = request.view ?? (request.focusSpecified ? 'checks' : sameLesson ? prior?.view : null) ?? 'checks';
   const changed = prior && (!sameLesson || view !== (prior.view ?? 'checks')
-    || request.focus && (request.focus.kind !== prior.focus?.kind || request.focus.index !== prior.focus?.index));
+    || request.focusSpecified && (request.focus?.kind !== prior.focus?.kind || request.focus?.index !== prior.focus?.index));
   return {focus, view, previous: changed ? null : prior};
 }
 
 async function dialogue(env, userId, scope, session, restart) {
   const last = restart ? await env.DB.prepare('SELECT max(id) AS id FROM conversations WHERE user_id=? AND context_key=?').bind(userId, scope).first() : null;
   const historyAfter = restart ? last?.id || 0 : session.historyAfter;
-  const prior = restart ? {results: []} : await env.DB.prepare('SELECT role,content FROM conversations WHERE user_id=? AND context_key=? AND id>? ORDER BY id DESC LIMIT 12').bind(userId, scope, historyAfter).all();
-  return {historyAfter, history: [...prior.results].reverse().map(row => ({role: row.role === 'bot' ? 'assistant' : 'user', content: row.content}))};
+  const prior = restart ? {results: []} : await env.DB.prepare("SELECT role,content FROM conversations WHERE user_id=? AND context_key=? AND id>? AND role='user' ORDER BY id DESC LIMIT 12").bind(userId, scope, historyAfter).all();
+  return {historyAfter, history: [...prior.results].reverse().map(row => ({role: 'user', content: row.content}))};
 }
 
 async function generateTurn(env, userId, request, session, token) {
@@ -61,10 +62,11 @@ async function generateTurn(env, userId, request, session, token) {
   if (request.lesson && !lesson) return {response: failure('The lesson changed. Select the item again.', 409)};
   const {history, historyAfter} = await dialogue(env, userId, request.scope, session, request.intent === 'restart');
   const learner = await learnerSnapshot(env, userId, request.level, request.catalog);
-  const teaching = {intent: request.intent, state: previous};
+  const teaching = {intent: request.intent, state: previous,
+    probe_source: previous?.probe ? 'unverified_model_output' : null};
   const asked = await askAI(env, userId, {
-    system: reversedPrompt(request.level, history.filter(row => row.role === 'user').length),
-    schema: TUTOR_SCHEMA, schemaName: 'tutor_reply',
+    system: reversedPrompt(request.level, history.length),
+    schema: tutorSchema(request.intent), schemaName: 'tutor_reply',
     turns: [{role: 'user', content: chatEnvelope(request.message, lesson, request.screen, learner, history, teaching)}]
   }, request.override, request.profileId, {beforeGeneration: () => renewTutorClaim(env, userId, request.scope, request.requestId, token)});
   if (asked.response) return {response: asked.response};
@@ -81,13 +83,13 @@ export async function tutorChat(request, env) {
   if (!userId) return failure('user_id required');
   const resolved = await resolveRequest(env, body);
   if (resolved.response) return resolved.response;
-  const {scope, requestId, lesson, intent, message, reference, focus, view} = resolved;
+  const {scope, requestId, lesson, intent, message, reference, focus, focusSpecified, view} = resolved;
   // Bind retries to the explicit connection choice; only this digest reaches persistence.
   const selection = {profileId: profileId ?? null, device: body.api_connection === undefined ? null : {
     protocol: body.api_connection.protocol, base_url: body.api_connection.base_url,
     model: body.api_connection.model, api_key: body.api_connection.api_key
   }};
-  const fingerprint = await requestFingerprint({scope, message, intent, lesson: reference, focus, view, selection});
+  const fingerprint = await requestFingerprint({scope, message, intent, lesson: reference, focus, focusSpecified, view, selection});
   const claim = await claimTutorRequest(env, userId, scope, requestId, fingerprint);
   if (claim.error) return failure(claim.error, 409);
   if (claim.cached !== undefined) return json({reply: claim.cached, response: claim.cached});

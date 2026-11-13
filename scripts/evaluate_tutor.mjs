@@ -209,7 +209,7 @@ export async function runEvaluation(args, {fetchImpl = globalThis.fetch, env = p
         record.request_id = randomUUID();
         const body = {channel: 'quick', request_id: record.request_id, lesson: item.lesson, focus: item.focus,
           intent: step.intent, message: step.message,
-          screen: {...item.screen, route: retained.screen_route, level: item.level}};
+          screen: {route: retained.screen_route, level: item.level}};
         while (previousStart !== null && now() - previousStart < START_SPACING_MS) {
           await wait(START_SPACING_MS - (now() - previousStart));
         }

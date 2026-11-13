@@ -77,9 +77,9 @@ test('a pinned lesson cannot borrow focus from another remembered lesson',async(
   let body;
   const b=chat(async(path,options)=>{if(path.startsWith('/api/history'))return Response.json([]);body=JSON.parse(options.body);return Response.json({reply:'はい'});});
   await b.c.loadChatHistory();b.c.chatLessonContext={id:'pinned',level:'N4'};
-  b.c.teacherContext=()=>({lesson:{id:'different',level:'N3'},screen:{text:'unrelated'},focus:{kind:'question',index:0}});
+  b.c.teacherContext=()=>({lesson:{id:'different',level:'N3'},screen:{route:'curriculum/N3/lesson/grammar/different',level:'N3'},focus:{kind:'question',index:0}});
   await b.c.sendMessage('Tiếp tục',false,{focus:{kind:'word',index:0}});
-  assert.equal(body.focus,null);assert.equal(body.screen.text,'unrelated');assert.equal(body.lesson.id,'pinned');
+  assert.equal(body.focus,null);assert.deepEqual(body.screen,{route:'curriculum/N3/lesson/grammar/different',level:'N3'});assert.equal(body.lesson.id,'pinned');
 });
 test('an explicit restart sends a new turn and never deletes history',async()=>{
   const requests=[];

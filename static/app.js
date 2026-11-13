@@ -279,6 +279,7 @@ function switchTab(tabId, route={}) {
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
   stopSpeech();
   globalThis.stopJapaneseInputs?.();
+  globalThis.clearKaiwaFeedback?.();
   if(tabId!=='classroom')globalThis.stopLiveConversation?.();
   globalThis.cancelPracticeCoach?.();
   globalThis.rememberTeacherScreen?.();
@@ -862,7 +863,7 @@ async function renderKaiwaScenarios(){
 
 function loadKaiwaPrompt() {
   globalThis.stopSpeech?.();
-  document.getElementById('kaiwa-error').hidden = true;
+  globalThis.clearKaiwaFeedback?.();
   const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
   if (!s) return;
   globalThis.clearStudySurface?.('kaiwa');
@@ -872,7 +873,6 @@ function loadKaiwaPrompt() {
   const jp = document.getElementById("kaiwa-prompt-jp");
   const vi = document.getElementById("kaiwa-prompt-vi");
   const manualInput = document.getElementById("kaiwa-manual-input");
-  const resultCard = document.getElementById("kaiwa-result-card");
   const prompts = Array.isArray(s.prompts) ? s.prompts : [];
   const prompt = prompts[activeKaiwaPromptIdx % Math.max(prompts.length, 1)] || {};
 
@@ -883,7 +883,6 @@ function loadKaiwaPrompt() {
   if (vi) vi.textContent = prompt.vi || "Hãy trả lời bằng một câu tiếng Nhật tự nhiên.";
   if (manualInput) manualInput.value = "";
   document.getElementById("kaiwa-next-prompt").hidden=prompts.length<2;
-  if (resultCard) resultCard.hidden = true;
   const hint = document.getElementById("kaiwa-prompt-hint");
   if (hint) hint.textContent = prompt.hints?.[0] || "Gợi ý: dùng câu lịch sự với です / ます.";
   document.querySelectorAll('.kaiwa-prompt-card .lesson-disclosure').forEach(details=>{details.open=false;});
@@ -1571,22 +1570,48 @@ function setupEventListeners() {
   const kaiwaInput=document.getElementById('kaiwa-manual-input');
 
   // Kaiwa Evaluation submit
+  let kaiwaFeedbackVersion = 0;
+  function clearKaiwaFeedback() {
+    kaiwaFeedbackVersion++;
+    const card = document.getElementById("kaiwa-result-card");
+    if (card) card.hidden = true;
+    const criteria = document.getElementById("kaiwa-criteria");
+    if (criteria) criteria.replaceChildren();
+    for (const id of ["kaiwa-feedback-text", "kaiwa-model-text"]) {
+      const element = document.getElementById(id);
+      if (element) element.textContent = "";
+    }
+    const score = document.getElementById("kaiwa-score-val");
+    if (score) score.textContent = "Not graded";
+    const error = document.getElementById("kaiwa-error");
+    if (error) {error.textContent = "";error.hidden = true;}
+  }
+  globalThis.clearKaiwaFeedback = clearKaiwaFeedback;
+  kaiwaInput?.addEventListener("input", clearKaiwaFeedback);
   const btnEvalKaiwa = document.getElementById("btn-eval-kaiwa");
   if (btnEvalKaiwa && kaiwaInput) {
     btnEvalKaiwa.addEventListener("click", async () => {
+      if (btnEvalKaiwa.disabled) return;
+      clearKaiwaFeedback();
       const speech = kaiwaInput.value.trim();
       if (!speech) {
         const error = document.getElementById('kaiwa-error');
-        error.textContent = 'Nói hoặc nhập câu trả lời trước khi nhận xét.'; error.hidden = false;
+        error.textContent = 'Nói hoặc nhập câu trả lời trước khi nhận xét. Nothing has been graded.'; error.hidden = false;
         kaiwaInput.focus();
         return;
       }
 
-      if(btnEvalKaiwa.disabled)return;
       btnEvalKaiwa.disabled=true;
-      document.getElementById('kaiwa-error').hidden = true;
-      document.getElementById('kaiwa-result-card').hidden = true;
-      const evaluationKey=activeKaiwaKey,evaluationIndex=activeKaiwaPromptIdx,evaluationNavigation=navigationVersion;
+      const evaluationKey=activeKaiwaKey,evaluationIndex=activeKaiwaPromptIdx,evaluationLevel=activeKaiwaLevel,
+        evaluationNavigation=navigationVersion,evaluationVersion=kaiwaFeedbackVersion;
+      const stillCurrent = () => evaluationKey === activeKaiwaKey && evaluationIndex === activeKaiwaPromptIdx
+        && evaluationLevel === activeKaiwaLevel && evaluationNavigation === navigationVersion
+        && evaluationVersion === kaiwaFeedbackVersion && kaiwaInput.value.trim() === speech;
+      const resultCard = document.getElementById("kaiwa-result-card");
+      const scoreVal = document.getElementById("kaiwa-score-val");
+      const criteriaList = document.getElementById("kaiwa-criteria");
+      const feedbackText = document.getElementById("kaiwa-feedback-text");
+      const modelText = document.getElementById("kaiwa-model-text");
       btnEvalKaiwa.textContent = "Đang nhận xét…";
       const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
 
@@ -1602,28 +1627,41 @@ function setupEventListeners() {
           })
         });
 
-        if(evaluationKey!==activeKaiwaKey || evaluationIndex!==activeKaiwaPromptIdx || evaluationNavigation!==navigationVersion)return;
-        const resultCard = document.getElementById("kaiwa-result-card");
-        const scoreVal = document.getElementById("kaiwa-score-val");
-        const feedbackText = document.getElementById("kaiwa-feedback-text");
-        const modelText = document.getElementById("kaiwa-model-text");
-
-        if (resp.ok) {
-          const evalData = await resp.json();
-          if (scoreVal) scoreVal.textContent = evalData.score ?? "—";
-          if (feedbackText) feedbackText.textContent = evalData.feedback || "Phản xạ giao tiếp rất tốt!";
-          if (modelText) modelText.textContent = evalData.model_answer || "はい、わかりました。";
-          if (resultCard) resultCard.hidden = false;
-          soundEngine.playCheer();
+        const evalData = await resp.json();
+        if (!stillCurrent()) return;
+        const estimated = evalData?.status === 'estimated' && evalData.reason === 'model_judgment'
+          && Number.isInteger(evalData.estimated_score) && evalData.estimated_score >= 0 && evalData.estimated_score <= 100
+          && ['meets_requirements', 'incomplete', 'needs_practice', 'off_topic'].includes(evalData.conclusion);
+        const uncertain = evalData?.status === 'ungraded' && evalData.reason === 'insufficient_evidence'
+          && evalData.estimated_score === null && evalData.conclusion === 'uncertain';
+        const assessment = resp.ok && (estimated || uncertain) && evalData.score === null && evalData.rating === null
+          && evalData.user_text === speech && typeof evalData.feedback === 'string' && evalData.feedback.trim()
+          && typeof evalData.model_answer === 'string' && evalData.model_answer.trim() && evalData.model_answer.length <= 2000
+          && Array.isArray(evalData.criteria) && evalData.criteria.length >= 3 && evalData.criteria.length <= 10
+          && evalData.criteria.every(item => item && typeof item.label === 'string' && item.label.trim() && item.label.length <= 1000
+            && ['met', 'partial', 'not_met', 'uncertain'].includes(item.verdict)
+            && Array.isArray(item.evidence) && item.evidence.length <= 8
+            && (!['met', 'partial'].includes(item.verdict) || item.evidence.length > 0)
+            && item.evidence.every(span => typeof span === 'string' && span.trim() && span.length <= 1200 && speech.includes(span)));
+        if (assessment) {
+          if (scoreVal) scoreVal.textContent = estimated ? `${evalData.estimated_score}/100 (estimated)` : 'Not graded';
+          if (feedbackText) feedbackText.textContent = evalData.feedback;
+          if (modelText) modelText.textContent = evalData.model_answer;
+          const labels = {met: 'Met', partial: 'Partly met', not_met: 'Not met', uncertain: 'Uncertain'};
+          for (const item of evalData.criteria) {
+            const row = document.createElement('li');
+            row.textContent = `${item.label}: ${labels[item.verdict]}${item.evidence.length ? ' — ' + item.evidence.join(' / ') : ''}`;
+            criteriaList?.append(row);
+          }
         } else {
-          const failure=await resp.json();
-          const error = document.getElementById('kaiwa-error');
-          error.textContent = failure.detail || 'Chưa nhận xét được. Hãy thử lại.'; error.hidden = false;
+          if (feedbackText) feedbackText.textContent = !resp.ok && typeof evalData?.detail === 'string'
+            ? evalData.detail : "No verified assessment is available. Nothing has been graded.";
         }
+        if (resultCard) resultCard.hidden = false;
       } catch {
-        if (evaluationKey !== activeKaiwaKey || evaluationIndex !== activeKaiwaPromptIdx || evaluationNavigation !== navigationVersion) return;
-        const error = document.getElementById('kaiwa-error');
-        error.textContent = 'Chưa kết nối được. Câu trả lời vẫn ở đây, em thử lại nhé.'; error.hidden = false;
+        if (!stillCurrent()) return;
+        if (feedbackText) feedbackText.textContent = "Unable to retrieve AI advice. Nothing has been graded.";
+        if (resultCard) resultCard.hidden = false;
       } finally {
         btnEvalKaiwa.disabled=false;
         btnEvalKaiwa.textContent = "Nhờ thầy nhận xét";

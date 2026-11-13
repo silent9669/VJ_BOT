@@ -45,6 +45,15 @@ export function normalizeTurns(turns) {
   return out;
 }
 
+// Compatible endpoints reject top-level string length keywords. Runtime parsers retain these bounds.
+function wireSchema(schema) {
+  if (!schema.properties) return schema;
+  return {...schema, properties: Object.fromEntries(Object.entries(schema.properties).map(([name, field]) => {
+    const {minLength, maxLength, ...wireField} = field;
+    return [name, wireField];
+  }))};
+}
+
 function request(protocol, key, model, {system, turns, schema, schemaName, reasoningEffort}) {
   if (protocol === 'openai') {
     // No max_tokens or temperature: newer OpenAI models reject both. Reply length is bounded by the prompt.
@@ -89,6 +98,7 @@ function incomplete(protocol, data) {
 // Tries provider.models in order (fallback on 404/429/5xx) inside one budget below the browser's 35s timeout.
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
 export async function callLLM(provider, {system, turns, schema, schemaName}, {budgetMs = 28000, attemptMs = provider.reasoningEffort && provider.reasoningEffort!=='none' ? 27000 : 15000} = {}) {
+  schema = schema ? wireSchema(schema) : schema;
   const deadline = Date.now() + budgetMs, history = normalizeTurns(turns);
   let status = 503, retryAfterMs;
   for (const model of provider.models) {
