@@ -12,6 +12,7 @@ export default defineConfig({
     env: {
       OPENAI_API_KEY: bindings.secret(),
       GOOGLE_CLIENT_ID: bindings.secret(),
+      // Optional ANTIGRAVITY_* secrets are configured on the Worker only when a gateway is available.
       ADMIN_EMAILS: bindings.secret(),
       AI_KEY_SECRET: bindings.secret(),
       DB: bindings.d1({

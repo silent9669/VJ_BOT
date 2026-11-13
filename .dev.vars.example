@@ -8,3 +8,11 @@ OPENAI_MODEL=gpt-4.1-mini
 # Any long random string; encrypts learners' saved API keys
 AI_KEY_SECRET=
 GOOGLE_CLIENT_ID=
+
+# Antigravity chat uses a dedicated CLIProxyAPI v8 gateway, not a Google Cloud OAuth client.
+# Use HTTPS for a remote gateway. Keep these server-side keys out of browser storage and Git.
+ANTIGRAVITY_GATEWAY_URL=
+ANTIGRAVITY_MANAGEMENT_KEY=
+ANTIGRAVITY_API_KEY=
+# Local preview only; production must not enable loopback routing.
+ANTIGRAVITY_ALLOW_LOOPBACK=false

@@ -271,64 +271,14 @@ function initLoadingScreen() {
 }
 
 // ==========================================
-// 5. 1984 MACINTOSH CRT TYPEWRITER (ANATOMY FIGURES)
-// ==========================================
-// ==========================================
-// 6. GEMINI TTS (VOICE SYNTHESIS)
-// ==========================================
-let speechRequest = 0, speechAbort = null, speechAudio = null;
-function stopSpeechPlayback() {
-  speechRequest++;
-  speechAbort?.abort(); speechAudio?.pause(); speechAudio = null;
-  window.speechSynthesis?.cancel();
-  const player = document.getElementById('speech-player'); if (player) player.hidden = true;
-  mascotMgr.setState('idle');
-}
-async function playGeminiTTS(text) {
-  if (!text?.trim()) return;
-  stopSpeechPlayback();
-  const version = speechRequest, clean = text.replace(/<[^>]*>/g, '').replace(/[#*`_]/g, '').trim();
-  const player = document.getElementById('speech-player'), status = document.getElementById('speech-status');
-  player.hidden = false; status.textContent = 'Đang chuẩn bị giọng AI…';
-  speechAbort = new AbortController();
-  mascotMgr.setState('speaking');
-  const finish = () => { if (version === speechRequest) { player.hidden = true; mascotMgr.setState('idle'); } };
-  try {
-    const response = await apiFetch('/api/tts', {
-      method: 'POST', signal: AbortSignal.any([speechAbort.signal, AbortSignal.timeout(35000)]),
-      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text: clean.slice(0, 4000)})
-    });
-    if (version !== speechRequest) return;
-    if (response.ok) {
-      const data = await response.json();
-      if (version !== speechRequest) return;
-      if (data.audioBase64) {
-        const audio = speechAudio = new Audio(audioDataUrl(data));
-        audio.onended = finish; audio.onerror = finish;
-        await audio.play(); status.textContent = 'Đang đọc · Giọng AI'; return;
-      }
-    }
-  } catch { if (version !== speechRequest) return; }
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.lang = 'ja-JP'; utterance.rate = .9;
-    utterance.voice = window.speechSynthesis.getVoices().find(voice => voice.lang.startsWith('ja')) || null;
-    utterance.onend = finish; utterance.onerror = finish;
-    status.textContent = 'Đang đọc · Giọng trình duyệt'; window.speechSynthesis.speak(utterance);
-  } else {
-    status.textContent = 'Trình duyệt chưa hỗ trợ đọc tiếng Nhật.';
-    mascotMgr.setState('idle');
-  }
-}
-
-// ==========================================
 // 7. TAB SWITCHER & NAVIGATION
 // ==========================================
 function switchTab(tabId, route={}) {
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
-  globalThis.rememberTeacherScreen?.();
+  stopSpeech();
   globalThis.stopJapaneseInputs?.();
-  globalThis.stopSpeechPlayback?.();
+  globalThis.rememberTeacherScreen?.();
+  globalThis.invalidateTeacherQuery?.();
   featureVersion++;
   quizRequest++;fcRequest++;kaiwaRenderRequest++;
   clearInterval(simulationInterval);
@@ -404,6 +354,7 @@ function switchTab(tabId, route={}) {
     renderDailyKanji(activeCurriculumLevel);
   } else if (tabId === "settings" || tabId === "admin") {
     window.renderAiPanels?.(tabId);
+    if (tabId === 'settings') window.refreshSpeechModels?.();
   }
   return true;
 }
@@ -451,7 +402,11 @@ function renderBubble(role, content) {
   return row;
 }
 
-let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null;
+let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null,chatHistoryScope=null;
+function chatHistoryPath() {
+  const lesson=chatLessonContext || globalThis.teacherContext?.()?.lesson;
+  return lesson ? `/api/history?lesson_id=${encodeURIComponent(lesson.id)}&level=${encodeURIComponent(lesson.level)}` : '/api/history';
+}
 function chatError(message,retry) {
   const host=document.getElementById('chat-error');host.hidden=!message;
   document.getElementById('chat-error-text').textContent=message;
@@ -464,30 +419,44 @@ async function loadChatHistory() {
   chatHistoryLoading=true;chatHistoryReady=false;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Đang tải hội thoại…';
   try {
-    const response=await apiFetch('/api/history');
+    const path=chatHistoryPath();
+    const response=await apiFetch(path);
     if(!response.ok)throw new Error('history');
     const messages=await response.json();
     for(const row of document.querySelectorAll('#chat-messages .chat-bubble-row'))row.remove();
     document.getElementById('chat-welcome').style.display=messages.length?'none':'';
     for(const message of messages)renderBubble(message.role,message.content);
     chatHistoryReady=true;chatError('',null);
+    chatHistoryScope=path;
     globalThis.checkAiReady?.();
     document.getElementById('chat-connection-status').textContent='';
+    return messages.length;
   }catch{
     document.getElementById('chat-connection-status').textContent='';
     chatError('Chưa tải được hội thoại.',loadChatHistory);
   }finally{chatHistoryLoading=false;}
 }
-async function sendMessage(text,retry=false) {
+async function sendMessage(text,retry=false,options={}) {
   text=typeof text==='string'?text.trim():'';
   if(sendingMessage || clearingChat || globalThis.popoverBusy || !text)return;
   if(failedChatMessage && !retry){chatError('Tin trước chưa gửi xong. Thử lại hoặc bỏ qua.',()=>sendMessage(failedChatMessage.text,true));return;}
   if(!signedInUser){openAccount();return;}
   if(!chatHistoryReady){chatError('Đợi hội thoại tải xong trước khi gửi.',chatHistoryLoading?null:loadChatHistory);return;}
   if(text.length>6000){chatError('Tin nhắn tối đa 6.000 ký tự.',null);return;}
+  if(retry && !failedChatMessage)return;
+  if(retry)text=failedChatMessage.text;
+  if(!retry && chatHistoryScope!==chatHistoryPath()){
+    await loadChatHistory();
+    if(!chatHistoryReady || chatHistoryScope!==chatHistoryPath())return;
+  }
+  const context=globalThis.teacherContext?.();
   const requestId=retry?failedChatMessage.id:crypto.randomUUID();
-  const lesson=retry?failedChatMessage.lesson:chatLessonContext;
-  const screen=retry?failedChatMessage.screen:globalThis.teacherScreen?.();
+  const lesson=retry?failedChatMessage.lesson:chatLessonContext || context?.lesson || null;
+  const sameLesson=!lesson || (context?.lesson?.id===lesson.id && context?.lesson?.level===lesson.level);
+  const screen=retry?failedChatMessage.screen:context?.screen || null;
+  const focus=retry?failedChatMessage.focus:lesson && sameLesson?(Object.hasOwn(options,'focus')?options.focus:context?.focus || null):null;
+  const intent=retry?failedChatMessage.intent:options.intent || 'message';
+  const body=retry?failedChatMessage.body:JSON.stringify({message:text,lesson,screen,focus,intent,request_id:requestId});
   const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
   send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
@@ -496,7 +465,7 @@ async function sendMessage(text,retry=false) {
   if(!retry || input.value.trim()===text)input.value='';
   soundEngine.playSend();mascotMgr.setState('thinking');
   try {
-    const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,lesson,screen,request_id:requestId})});
+    const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body});
     const data=await response.json();
     if(!response.ok)throw new Error(data.detail || 'Chưa gửi được tin nhắn.');
     const reply=data.reply || data.response;
@@ -505,7 +474,7 @@ async function sendMessage(text,retry=false) {
     soundEngine.playReceive();mascotMgr.setState('speaking');
     setTimeout(()=>mascotMgr.setState('idle'),2000);
   }catch(error){
-    failedChatMessage={text,id:requestId,lesson,screen};
+    failedChatMessage={text,id:requestId,lesson,screen,focus,intent,body};
     chatError(error.name==='TimeoutError'?'Kết nối quá lâu. Hãy thử lại.':error.message==='Failed to fetch'?'Mất kết nối. Hãy thử lại.':error.message,()=>sendMessage(failedChatMessage.text,true));
     mascotMgr.setState('idle');
   }finally{
@@ -513,6 +482,9 @@ async function sendMessage(text,retry=false) {
     document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','false');
     document.getElementById('chat-connection-status').textContent='';
   }
+}
+function restartTutorConversation(){
+  return sendMessage('Thầy bắt đầu lại buổi học này nhé.',false,{intent:'restart'});
 }
 
 async function loadGreeting() {
@@ -667,14 +639,14 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
       <section class="lesson-section">
         <h3 class="lesson-section-title">Ví dụ</h3>
         <ol class="example-list">${item.examples.map((ex, index) => `
-          <li class="example-card">
+          <li class="example-card" data-teacher-example="${index}">
             <span class="example-index" aria-hidden="true">${index + 1}</span>
             <div class="example-text">
               <p class="example-jp" lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p>
               ${ex.ro ? `<p class="example-ro">${escapeHtml(ex.ro)}</p>` : ""}
               <p class="example-vi">${escapeHtml(ex.vi)}</p>${ex.source ? `<a class="example-source" href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>` : ""}
             </div>
-            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}">Nghe</button>
+            <button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.furigana || ex.jp)}">Nghe</button>
           </li>`).join("")}
         </ol>
       </section>
@@ -682,11 +654,11 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   }
 
   const vocabularyHtml = item.items?.length ? `
-    <div class="lesson-vocabulary-list">${item.items.map(word=>`
-      <details class="word-detail"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span>${escapeHtml(word.reading || word.ro || "")}</span><span>${escapeHtml(word.vi)}</span></summary>
-        <div class="word-detail-body"><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(word.jp)}">Nghe cách đọc</button>
+    <div class="lesson-vocabulary-list">${item.items.map((word,index)=>`
+      <details class="word-detail" data-teacher-word="${index}"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span>${escapeHtml(word.reading || word.ro || "")}</span><span>${escapeHtml(word.vi)}</span></summary>
+        <div class="word-detail-body"><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(speechReading(word.jp, word.reading))}">Nghe cách đọc</button>
         ${word.strokes ? `<dl class="kanji-facts"><div><dt>Số nét</dt><dd>${word.strokes}</dd></div><div><dt>Bộ thủ</dt><dd>${escapeHtml(word.radical)}</dd></div><div><dt>Âm On</dt><dd>${escapeHtml(word.onyomi.join(' · '))}</dd></div><div><dt>Âm Kun</dt><dd>${escapeHtml(word.kunyomi.join(' · '))}</dd></div></dl><p>${escapeHtml((word.words||[]).join(' · '))}</p>` : ''}
-        ${(word.examples||[]).map(ex=>`<div class="word-example"><p lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p><p>${escapeHtml(ex.vi)}</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.jp)}">Nghe câu</button>${ex.source?`<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}</div>`).join('')}
+        ${(word.examples||[]).map(ex=>`<div class="word-example"><p lang="ja">${furiganaHtml(ex.furigana || ex.jp)}</p><p>${escapeHtml(ex.vi)}</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(ex.furigana || ex.jp)}">Nghe câu</button>${ex.source?`<a href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}</div>`).join('')}
         </div></details>`).join('')}</div>` : "";
   const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${escapeHtml(item.passage)}</p><p>${escapeHtml(item.translation || "")}</p></div>` : "";
   const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-japanese-passage">${item.script_jp}</p><p>${item.script_vi || ""}</p></div>` : "";
@@ -725,6 +697,8 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     body.querySelector('#lesson-exercises').hidden=mode!=='practice';
     body.querySelector('#lesson-completion').hidden=mode==='practice' && !body.querySelector('.practice-result') && !item.production && !item.dictation;
     modes.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lessonMode===mode)));
+    const question=body.querySelector('.practice-session')?.dataset.teacherQuestion;
+    globalThis.setTeacherFocus?.(mode==='practice' && question!==undefined?{kind:'question',index:Number(question)}:null);
     body.scrollTop=0;
   };
   modes.querySelectorAll('button').forEach(b=>b.onclick=()=>selectMode(b.dataset.lessonMode));
@@ -734,9 +708,15 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     body.querySelector('#lesson-reference').append(start);
   }
   selectMode('read');
+  body.querySelectorAll('.word-detail').forEach(word=>word.addEventListener('toggle',()=>{
+    if(word.open && word.isConnected)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
+  }));
   mountCompletion(document.getElementById('lesson-completion'),{activity_id:activityId(item,level,skill),kind:owner==='quiz'?'test':owner==='kaiwa'?'kaiwa':'lesson',level,title:item.title || item.jp || 'Bài học'});
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
+      const word=btn.closest('[data-teacher-word]'),example=btn.closest('[data-teacher-example]');
+      if(word)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
+      else if(example)globalThis.setTeacherFocus?.({kind:'example',index:Number(example.dataset.teacherExample)});
       const text = decodeURIComponent(btn.dataset.text);
       playGeminiTTS(text);
     });
@@ -805,16 +785,17 @@ async function renderFlashcards(level = "N5",lessonId=null) {
   const reviewed=new Map((progress.items||[]).map(i=>[i.item_id,i]));
   fcDeck=deck.filter(i=>!reviewed.get(i.id)?.next_review || new Date(reviewed.get(i.id).next_review)<=new Date()).sort((a,b)=>Number(!reviewed.has(a.id))-Number(!reviewed.has(b.id))).slice(0,20);
   fcIdx = 0;
-  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.querySelector('.fc-controls-bar').hidden=true;return;}
+  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.querySelector('.fc-controls-bar').hidden=true;globalThis.setTeacherFocus?.(null);globalThis.invalidateTeacherQuery?.();return;}
   document.getElementById('flashcard-card').hidden=false;document.querySelector('.fc-controls-bar').hidden=false;
   displayFlashcard();
 }
 
 function displayFlashcard() {
   if (!fcDeck || fcDeck.length === 0) return;
+  const previousContext=globalThis.teacherContext?.();
   const item = fcDeck[fcIdx];
   const card = document.getElementById("flashcard-card");
-  if (card) card.classList.remove("flipped");
+  if (card) {card.classList.remove("flipped");card.dataset.teacherWordId=item.id || '';}
 
   const frontText = document.getElementById("fc-front-text");
   const readingText = document.getElementById("fc-reading-text");
@@ -833,15 +814,14 @@ function displayFlashcard() {
   if (exampleVi) exampleVi.textContent = item.exampleVi;
   if (badgeLvl) badgeLvl.textContent = `${item.level} Từ vựng`;
   if (counterEl) counterEl.textContent = `Thẻ ${fcIdx + 1} / ${fcDeck.length}`;
+  const context=globalThis.teacherContext?.();
+  if(JSON.stringify({lesson:previousContext?.lesson || null,focus:previousContext?.focus || null})!==JSON.stringify({lesson:context?.lesson || null,focus:context?.focus || null}))globalThis.invalidateTeacherQuery?.();
 }
 
 // ==========================================
 // 11. KAIWA SPEAKING LAB CONTROLLER
 // ==========================================
 let kaiwaRenderRequest=0;
-function installCourseKaiwa(){
-  for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:unit.production.prompt,hints:unit.production.criteria}]};}
-}
 function startCourseKaiwa(unit){
   installCourseKaiwa();activeKaiwaLevel=unit.level;activeKaiwaKey=unit.id;activeKaiwaPromptIdx=0;showLessonDetail(findFeatureLesson('kaiwa',unit.level,`kaiwa-lesson:${unit.level}:${unit.id}`),unit.level,'listening',false,'kaiwa');
 }
@@ -856,14 +836,14 @@ async function renderKaiwaScenarios(){
   container.replaceChildren();
   for(const [key,scenario] of scenarios){
     const button=document.createElement('button');button.type='button';button.className='kaiwa-scenario-card';button.classList.toggle('active',key===activeKaiwaKey);button.textContent=scenario.title;
-    button.onclick=()=>{activeKaiwaKey=key;activeKaiwaPromptIdx=0;container.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===button));loadKaiwaPrompt();};container.append(button);
+    button.onclick=()=>switchTab('kaiwa',{level:activeKaiwaLevel,view:'session',id:key});container.append(button);
   }
   loadKaiwaPrompt();
 }
 
 function loadKaiwaPrompt() {
   globalThis.stopJapaneseInputs?.();
-  globalThis.stopSpeechPlayback?.();
+  globalThis.stopSpeech?.();
   document.getElementById('kaiwa-error').hidden = true;
   const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
   if (!s) return;
@@ -969,6 +949,7 @@ function displayQuizQuestion() {
     finishExam();
     return;
   }
+  globalThis.setTeacherFocus?.({kind:'question',index:examQuestionIdx});
 
   const qNum = document.getElementById("quiz-q-num");
   const qType = document.getElementById("quiz-q-type");
@@ -1063,6 +1044,8 @@ function finishExam() {
 
   if (quizCard) quizCard.hidden = true;
   if (resultCard) resultCard.hidden = false;
+  globalThis.setTeacherFocus?.(null);
+  globalThis.invalidateTeacherQuery?.();
 
   const total = currentExamQuestions.length || 1;
   const pct = Math.round((examScore / total) * 100);
@@ -1124,73 +1107,88 @@ async function loadProgress() {
 // 14. FLOATING SENSEI DOCK (ANYWHERE SPAWNING)
 // ==========================================
 function setupFloatingSensei() {
-  const popover = document.getElementById('sensei-floating-popover');
-  const input = document.getElementById('popover-query-input'), send = document.getElementById('btn-popover-send');
-  const speech = document.getElementById('popover-speech-text'), summon = document.getElementById('btn-topbar-summon');
-  const settings = document.getElementById('popover-open-settings');
-  let pending = null, trigger = null, animation, open = false;
-  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function close(returnFocus = false) {
-    open = false;
-    animation?.cancel();
-    if (reduce()) { popover.hidden = true; }
-    else {
-      animation = popover.animate([{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.9)'}],{duration:150,easing:'cubic-bezier(.33,.17,.67,.5)'});
-      animation.onfinish = () => { popover.hidden = true; };
-    }
-    if (returnFocus) trigger?.focus();
-    summon.setAttribute('aria-expanded', 'false');
+  const popover=document.getElementById('sensei-floating-popover'),closeBtn=document.getElementById('btn-close-popover');
+  const sendBtn=document.getElementById('btn-popover-send'),inputEl=document.getElementById('popover-query-input');
+  const speechEl=document.getElementById('popover-speech-text'),ttsBtn=document.getElementById('btn-popover-tts');
+  const chips=Array.from(document.querySelectorAll('.quick-chip-btn'));
+  if(!popover || !sendBtn || !inputEl || !speechEl)return;
+  const retryBtn=document.createElement('button');retryBtn.type='button';retryBtn.className='stage-btn';retryBtn.textContent='Thử lại';retryBtn.hidden=true;
+  retryBtn.id='btn-popover-retry';speechEl.parentElement.append(retryBtn);speechEl.setAttribute('role','status');
+  if(ttsBtn)ttsBtn.disabled=true;
+  let generation=0,inFlight=null,failed=null;
+  const scope=()=>{
+    const context=globalThis.teacherContext?.() || null;
+    // Selected canonical items have stable identity even while a timer or progress label changes.
+    const identity=context?.focus?{lesson:context.lesson,focus:context.focus}:context;
+    return JSON.stringify({route:location.hash,context:identity});
+  };
+  const controls=busy=>{sendBtn.disabled=busy;retryBtn.disabled=busy;chips.forEach(chip=>chip.disabled=busy);};
+  function invalidate(){
+    generation++;inFlight?.controller.abort();inFlight=null;failed=null;retryBtn.hidden=true;controls(false);
+    mascotMgr.setState('idle');
+    speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';
+    if(ttsBtn)ttsBtn.disabled=true;
   }
-  function toggle() {
-    if (!signedInUser) { openAccount(); return; }
-    if (open && !popover.hidden) { close(); return; }
-    animation?.cancel(); trigger = document.activeElement;
-    open = true; popover.hidden = false; summon.setAttribute('aria-expanded', 'true');
-    animation = popover.animate(reduce() ? [{opacity:0},{opacity:1}] : [{opacity:0,transform:'translateY(16px) scale(.9)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:220,easing:'cubic-bezier(.215,.61,.355,1)'});
-    input.focus();
+  globalThis.invalidateTeacherQuery=invalidate;
+  globalThis.closeTeacherQuery=()=>{invalidate();popover.hidden=true;};
+  function togglePopover(){
+    soundEngine.playBlip();
+    const opening=popover.hidden;invalidate();popover.hidden=!opening;
+    if(opening){speechEl.textContent='Thầy đây. Em muốn hỏi gì?';inputEl.focus();}
   }
-  summon.setAttribute('aria-controls', popover.id); summon.setAttribute('aria-expanded', 'false');
-  summon.addEventListener('click', toggle);
-  document.getElementById('btn-close-popover').addEventListener('click', () => close(true));
-  settings.onclick = () => { close(); switchTab('settings'); };
-  window.addEventListener('keydown', event => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); toggle(); }
-    if (event.key === 'Escape' && !popover.hidden) { event.preventDefault(); close(true); }
+  document.getElementById('btn-topbar-summon')?.addEventListener('click',togglePopover);
+  closeBtn?.addEventListener('click',globalThis.closeTeacherQuery);
+  window.addEventListener('hashchange',invalidate);
+  window.addEventListener('keydown',event=>{
+    if((event.metaKey || event.ctrlKey) && event.key.toLowerCase()==='k'){event.preventDefault();togglePopover();}
+    else if(event.key==='Escape' && !popover.hidden)globalThis.closeTeacherQuery();
   });
-  document.addEventListener('pointerdown', event => {
-    if (!popover.hidden && !popover.contains(event.target) && !summon.contains(event.target) && !event.target.closest('#lam-walker')) close();
-  });
-  async function ask(query) {
-    query = query.trim();
-    if (!query || globalThis.popoverBusy) return;
-    if (sendingMessage || clearingChat) { speech.textContent = 'Thầy đang trả lời trong hội thoại. Em đợi một chút nhé.'; return; }
-    if (query.length > 6000) { speech.textContent = 'Câu hỏi tối đa 6.000 ký tự.'; return; }
-    if (!pending || pending.text !== query) pending = {text:query,id:crypto.randomUUID(),screen:globalThis.teacherScreen?.()};
-    globalThis.popoverBusy = true; send.disabled = true;
-    speech.textContent = 'Thầy đang suy nghĩ…'; settings.hidden = true; mascotMgr.setState('thinking');
-    try {
-      const response = await apiFetch('/api/chat', {
-        method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({message:query,request_id:pending.id,screen:pending.screen})
-      });
-      const data = await response.json();
-      if (!response.ok) { settings.hidden = !['no_ai','rekey'].includes(data.code); throw new Error(data.detail || 'Chưa gửi được. Em thử lại nhé.'); }
-      const reply = data.reply || data.response;
-      if (typeof reply !== 'string' || !reply.trim()) throw new Error('Chưa có câu trả lời. Em thử lại nhé.');
-      speech.textContent = reply; pending = null; input.value = ''; chatHistoryReady = false;
-      mascotMgr.setState('speaking'); soundEngine.playReceive();
-    } catch (error) {
-      speech.textContent = error.name === 'TimeoutError' ? 'Kết nối quá lâu. Câu hỏi vẫn ở đây, em thử lại nhé.' : error.message;
-      input.value = query;
-    } finally {
-      globalThis.popoverBusy = false; send.disabled = false; mascotMgr.setState('idle');
-      if (document.body.dataset.page === 'classroom') loadChatHistory();
+  async function handlePopoverQuery(query,retry=false){
+    query=typeof query==='string'?query.trim():'';
+    if(inFlight || popover.hidden || (!query && !retry))return;
+    if(failed && !retry){speechEl.textContent='Câu trước chưa gửi xong. Bấm Thử lại hoặc đóng để bỏ qua.';return;}
+    if(retry && !failed)return;
+    if(query.length>6000){speechEl.textContent='Tin nhắn tối đa 6.000 ký tự.';return;}
+    if(!signedInUser){openAccount();return;}
+    const context=globalThis.teacherContext?.();
+    const request=retry?failed:{body:{message:query,channel:'quick',screen:context?.screen || null,lesson:context?.lesson || null,focus:context?.focus || null,intent:'message',request_id:crypto.randomUUID()},scope:scope()};
+    if(request.scope!==scope()){invalidate();speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';return;}
+    if(!retry)request.serializedBody=JSON.stringify(request.body);
+    const owner={generation,controller:new AbortController()};inFlight=owner;controls(true);retryBtn.hidden=true;
+    const current=()=>inFlight===owner && owner.generation===generation && !popover.hidden && scope()===request.scope;
+    speechEl.textContent='Thầy đang suy nghĩ…';mascotMgr.setState('thinking');
+    if(ttsBtn)ttsBtn.disabled=true;
+    if(!retry)inputEl.value='';
+    const timeout=setTimeout(()=>owner.controller.abort(),35000);
+    try{
+      const response=await apiFetch('/api/chat',{method:'POST',signal:owner.controller.signal,headers:{'Content-Type':'application/json'},body:request.serializedBody});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.detail || 'Chưa gửi được câu hỏi.');
+      const reply=data.reply || data.response;
+      if(typeof reply!=='string' || !reply.trim())throw new Error('Thầy chưa trả lời. Hãy thử lại.');
+      if(!current())return;
+      speechEl.textContent=reply;failed=null;mascotMgr.setState('speaking');soundEngine.playReceive();
+      if(ttsBtn)ttsBtn.disabled=false;
+    }catch(error){
+      if(!current())return;
+      failed=request;retryBtn.hidden=false;
+      speechEl.textContent=error.name==='AbortError' || error.name==='TimeoutError'?'Kết nối quá lâu. Bấm Thử lại.':error.message==='Failed to fetch'?'Mất kết nối. Bấm Thử lại.':error.message;
+      mascotMgr.setState('idle');
+    }finally{
+      clearTimeout(timeout);
+      if(inFlight===owner){
+        const stale=!current();inFlight=null;controls(false);
+        if(stale){failed=null;retryBtn.hidden=true;speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';mascotMgr.setState('idle');}
+      }
     }
   }
-  send.addEventListener('click', () => ask(input.value));
-  input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); ask(input.value); } });
-  document.querySelectorAll('.quick-chip-btn').forEach(chip => chip.addEventListener('click', () => { if (!globalThis.popoverBusy) { input.value = chip.dataset.ask; ask(input.value); } }));
-  document.getElementById('btn-popover-tts').addEventListener('click', () => playGeminiTTS(speech.textContent));
+  sendBtn.addEventListener('click',()=>handlePopoverQuery(inputEl.value));
+  inputEl.addEventListener('keydown',event=>{
+    if(event.key==='Enter' && !event.isComposing){event.preventDefault();handlePopoverQuery(inputEl.value);}
+  });
+  retryBtn.onclick=()=>handlePopoverQuery(failed?.body.message,true);
+  ttsBtn?.addEventListener('click',()=>{if(!inFlight && !failed)playGeminiTTS(speechEl.textContent);});
+  chips.forEach(chip=>chip.addEventListener('click',()=>handlePopoverQuery(chip.dataset.ask)));
 }
 
 // ==========================================
@@ -1232,6 +1230,7 @@ function setupSettings() {
           body: JSON.stringify({ user_id: userId })
         });
         if (resp.ok) {
+          if (window.VJProfiles) await VJProfiles.clear(signedInUser.user_id);
           for (const key of Object.keys(localStorage)) if(key.startsWith("vjbot_")) localStorage.removeItem(key);
           alert("Đã xóa tài khoản và dữ liệu.");
           window.location.reload();
@@ -1283,7 +1282,7 @@ function setupEventListeners() {
   if (btnDailyKanjiTts) {
     btnDailyKanjiTts.addEventListener("click", () => {
       const data = DAILY_KANJI_DATA[activeCurriculumLevel] || DAILY_KANJI_DATA.N5;
-      playGeminiTTS(data.char + "。" + data.sample);
+      playGeminiTTS(data.sample, {japaneseOnly:true});
     });
   }
 
@@ -1340,16 +1339,18 @@ function setupEventListeners() {
 
   // Classroom prompt chips
   const btnAskHint = document.getElementById("btn-ask-hint");
-  if (btnAskHint) btnAskHint.addEventListener("click", () => sendMessage("Thầy gợi ý cho em từng bước nhỏ, chưa đưa đáp án vội nhé."));
+  if (btnAskHint) btnAskHint.addEventListener("click", () => sendMessage("Thầy gợi ý cho em từng bước nhỏ, chưa đưa đáp án vội nhé.",false,{intent:'hint'}));
 
   const btnAskExplain = document.getElementById("btn-ask-explain");
-  if (btnAskExplain) btnAskExplain.addEventListener("click", () => sendMessage("Em muốn tự giải thích mẫu câu này bằng lời của em. Thầy hỏi em rồi nhận xét nhé."));
+  if (btnAskExplain) btnAskExplain.addEventListener("click", () => sendMessage("Em muốn tự giải thích mẫu câu này bằng lời của em. Thầy hỏi em rồi nhận xét nhé.",false,{intent:'explain'}));
 
   const btnAskExample = document.getElementById("btn-ask-example");
-  if (btnAskExample) btnAskExample.addEventListener("click", () => sendMessage("Thầy cho em một tình huống mới để em tự vận dụng nhé."));
+  if (btnAskExample) btnAskExample.addEventListener("click", () => sendMessage("Thầy cho em một tình huống mới để em tự vận dụng nhé.",false,{intent:'situation'}));
 
   const btnAskCheck = document.getElementById("btn-ask-check");
-  if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Thầy kiểm tra câu em vừa viết: đúng ngữ pháp và tự nhiên chưa, sửa giúp em nhé."));
+  if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Thầy kiểm tra câu em vừa viết: đúng ngữ pháp và tự nhiên chưa, sửa giúp em nhé.",false,{intent:'check'}));
+  const restartChat=document.createElement('button');restartChat.type='button';restartChat.className='prompt-chip';restartChat.textContent='Bắt đầu lại buổi học';restartChat.id='btn-restart-chat';
+  restartChat.addEventListener('click',restartTutorConversation);document.getElementById('chat-prompt-chips')?.append(restartChat);
 
   // Classroom form submit
   const chatForm = document.getElementById("chat-form");
@@ -1370,10 +1371,10 @@ function setupEventListeners() {
   if (btnClearChat) {
     btnClearChat.addEventListener("click", async () => {
       if(sendingMessage || clearingChat || !chatHistoryReady)return;
-      if (confirm("Bạn có muốn xóa toàn bộ lịch sử tin nhắn trong phòng học không?")) {
+      if (confirm("Xóa tin nhắn trong cuộc trò chuyện này? Các bài học khác và lịch sử lưu trữ vẫn được giữ lại.")) {
         clearingChat=true;btnClearChat.disabled=true;document.getElementById("btn-send-message").disabled=true;chatError("",null);
         try {
-          const response=await apiFetch(`/api/history?user_id=${encodeURIComponent(userId)}`, { method: "DELETE" });
+          const response=await apiFetch(chatHistoryPath(), { method: "DELETE" });
           if(!response.ok)throw new Error('delete');
           const messages = document.getElementById("chat-messages");
           if(messages)for(const row of messages.querySelectorAll('.chat-bubble-row'))row.remove();
@@ -1436,7 +1437,7 @@ function setupEventListeners() {
   // Flashcards Level Picker
   document.querySelectorAll("#fc-level-picker .fc-lvl-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      renderFlashcards(btn.dataset.lvl);
+      switchTab('flashcards',{level:btn.dataset.lvl});
     });
   });
 
@@ -1456,7 +1457,7 @@ function setupEventListeners() {
     btnFcAudioFront.addEventListener("click", (e) => {
       e.stopPropagation();
       const txt = document.getElementById("fc-front-text")?.textContent;
-      if (txt) playGeminiTTS(txt);
+      if (txt) playGeminiTTS(txt, {reading:fcDeck[fcIdx]?.reading || ''});
     });
   }
 
@@ -1562,9 +1563,8 @@ function setupEventListeners() {
           method: "POST", signal: AbortSignal.timeout(35000),
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            scenario_title: s?.title || activeKaiwaKey,
-            context: s?.context || "",
-            prompt_jp: document.getElementById("kaiwa-prompt-jp")?.textContent || "",
+            scenario_id: activeKaiwaKey,
+            prompt_index: activeKaiwaPromptIdx % Math.max(s?.prompts?.length || 0, 1),
             user_speech: speech,
             level: activeKaiwaLevel
           })
@@ -1619,7 +1619,7 @@ function setupEventListeners() {
   // Quiz Level Picker buttons
   document.querySelectorAll("#quiz-level-picker .quiz-lvl-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      renderQuiz(btn.dataset.lvl, 0);
+      switchTab('quiz',{level:btn.dataset.lvl});
     });
   });
 
@@ -1694,12 +1694,19 @@ if (typeof window !== "undefined") {
   window.renderQuiz = renderQuiz;
 }
 
-function startReversedLesson(item,level,skill,owner=null){
+async function startReversedLesson(item,level,skill,owner=null){
+  if(sendingMessage || clearingChat || chatHistoryLoading || failedChatMessage){
+    chatError('Gửi xong hoặc bỏ tin nhắn hiện tại trước khi mở bài học khác.',null);return;
+  }
   chatLessonContext=buildLessonContext(item,level,skill);
-  updateHeroTopic({display:chatLessonContext.title,meaning:chatLessonContext.goal,jlpt_level:level});
+  updateHeroTopic({display:item.title || item.jp,meaning:item.roleplay?.goal || item.summary || item.meaning_vi || '',jlpt_level:level});
   const host=document.getElementById('chat-lesson-context');host.hidden=false;host.replaceChildren();
-  const title=document.createElement('strong');title.textContent=`${level} · ${chatLessonContext.title}`;
+  const title=document.createElement('strong');title.textContent=`${level} · ${item.title || item.jp}`;
   const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill,false,owner);
-  const control=document.createElement('div');host.append(title,back,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${chatLessonContext.title}`});
-  sendMessage('Thầy hỏi em về bài này nhé.');
+  const general=document.createElement('button');general.className='stage-btn';general.textContent='Chat chung';
+  general.onclick=async()=>{if(sendingMessage || clearingChat || chatHistoryLoading || failedChatMessage)return;chatLessonContext=null;globalThis.clearTeacherContext?.();host.hidden=true;await loadChatHistory();};
+  const restart=document.createElement('button');restart.type='button';restart.className='stage-btn';restart.textContent='Bắt đầu lại buổi học';restart.onclick=restartTutorConversation;
+  const control=document.createElement('div');host.append(title,back,general,restart,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${item.title || item.jp}`});
+  const count=await loadChatHistory();
+  if(chatHistoryReady && count===0)await sendMessage('Thầy hỏi em về bài này nhé.',false,{intent:'start'});
 }

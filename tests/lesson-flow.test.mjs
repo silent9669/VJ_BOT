@@ -5,7 +5,6 @@ import vm from 'node:vm';
 async function context(){
   const c=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(fs.readFileSync('static/'+path,'utf8'))})});
   for(const file of ['jlpt-data.js','vi-labels.js','learning.js','lesson-checks.js','study-plan.js','workspace.js','completion.js'])vm.runInContext(fs.readFileSync('static/'+file,'utf8'),c);
-  const app=fs.readFileSync('static/app.js','utf8');vm.runInContext(app.slice(app.indexOf('function installCourseKaiwa(){'),app.indexOf('function startCourseKaiwa')),c);
   await c.loadPracticalCourse();return c;
 }
 test('every in-app curriculum and feature lesson has five distinct answerable source-based checks',async()=>{
@@ -38,6 +37,20 @@ test('feature lessons restore their own route and canonical completion identity'
   const unit=units.find(u=>u.type==='situation');const kaiwa=c.featureLessons('kaiwa','N5').find(l=>l.lessonKey===unit.id);assert.equal(c.activityId(kaiwa),`kaiwa:${unit.id}`);
   const quiz=c.featureLessons('quiz','N5')[unit.examIndex];assert.equal(c.activityId(quiz),`test:N5:${unit.exam.id}`);
 });
+test('quiz descriptors retain every raw exam position while lesson checks remain five',async()=>{
+  const c=await context();await c.ensureLessons('N5');
+  const lessons=c.featureLessons('quiz','N5');
+  assert.ok(lessons.some(item=>item.drills.length>5),'fixture includes a multi-question exam');
+  for(const item of lessons){
+    const raw=c.window.JLPT_DATA.exams.N5[item.examIndex].questions;
+    assert.equal(item.drills.length,raw.length);assert.equal(item.examples.length,raw.length);
+    assert.equal(c.lessonQuestions(item,'N5','reading').length,5);
+    for(let i=0;i<raw.length;i++){
+      assert.equal(item.drills[i].item_id,c.quizProgressId('N5',item.examIndex,raw[i],i));
+      assert.equal(item.drills[i].ans,raw[i].options[raw[i].answer]);
+    }
+  }
+});
 test('speaking completion and lesson completion share identity for built-in and practical scenarios',async()=>{
   const c=await context();await c.ensureLessons('N5');
   const app=fs.readFileSync('static/app.js','utf8');
@@ -55,15 +68,17 @@ test('returning from lesson chat preserves feature route for reload',async()=>{
   const c=await context();await c.ensureLessons('N5');c.TAB_TITLES={landing:'Home'};
   vm.runInContext(fs.readFileSync('static/navigation.js','utf8'),c);
   const app=fs.readFileSync('static/app.js','utf8');
-  vm.runInContext(app.slice(app.indexOf('function startReversedLesson(')),c);
+  vm.runInContext(app.slice(app.indexOf('async function startReversedLesson(')),c);
   const host={replaceChildren(){},append(...children){this.children=children;}};
   c.document={getElementById:()=>host,createElement:()=>({})};
-  c.mountCompletion=()=>{};c.sendMessage=()=>{};c.updateHeroTopic=()=>{};c.buildLessonContext=item=>item;
+  c.mountCompletion=()=>{};c.sendMessage=()=>{};c.restartTutorConversation=()=>{};c.updateHeroTopic=()=>{};
+  c.sendingMessage=false;c.clearingChat=false;c.chatHistoryLoading=false;c.failedChatMessage=null;c.chatHistoryReady=true;
+  c.loadChatHistory=async()=>{};
   let destination;
   c.showLessonDetail=(item,level,skill,fromHistory,owner)=>{destination=c.appRouteHash('lesson',{id:item.id,level,skill,owner});};
   for(const owner of ['flashcards','kaiwa','quiz']){
     const item=c.featureLessons(owner,'N5')[0];
-    c.startReversedLesson(item,'N5','listening',owner);host.children[1].onclick();
+    await c.startReversedLesson(item,'N5','listening',owner);host.children[1].onclick();
     const route=c.parseAppRoute(destination);
     assert.equal(route.owner,owner);assert.equal(c.findFeatureLesson(owner,route.level,route.id).id,item.id);
   }

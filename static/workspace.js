@@ -119,7 +119,7 @@ function featureLessons(feature,level){
   if(feature==='quiz'){
     createStudyPlan(level);addPracticeSets(level);
     return window.JLPT_DATA.exams[level].map((exam,index)=>{
-      const questions=exam.questions.slice(0,5);
+      const questions=exam.questions;
       return {id:`quiz-lesson:${level}:${exam.id ?? index}`,completionId:`test:${examIdentity(level,index)}`,title:exam.title || `Bộ luyện ${index+1}`,summary:exam.source || 'VJBot · bài luyện',sourceLabel:exam.source || 'VJBot',examIndex:index,examples:questions.map(q=>({jp:(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,''),vi:q.explain || q.explanation || q.options[q.answer]})),drills:questions.map((q,i)=>({q:[q.instruction?.replace('chữ Hán được gạch chân', '「'+q.target+'」'),q.passage,(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,'')].filter(Boolean).join('\n'),opts:q.options,ans:q.options[q.answer],explanation:q.explain || q.explanation,item_id:quizProgressId(level,index,q,i)}))};
     });
   }

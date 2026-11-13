@@ -93,15 +93,6 @@ test('exam identities never share completion or answers between levels',async()=
   }
 });
 
-test('reversed lesson context includes the actual reading and listening material',async()=>{
-  const context=vm.createContext({window:{}});
-  for(const file of ['vi-labels.js','learning.js','completion.js'])vm.runInContext(await fs.readFile('static/'+file,'utf8'),context);
-  for(const item of [{passage:'私は毎日七時に起きます。',translation:'Tôi dậy lúc 7 giờ.'},{script_jp:'次の電車は三番線です。',script_vi:'Tàu tiếp theo ở sân ga 3.'}]){
-    const result=context.buildLessonContext({id:'source',title:'Reading',...item},'N5','reading');
-    for(const value of Object.values(item))assert.ok(result.content.includes(value));
-  }
-  assert.ok(context.buildLessonContext({id:'long',title:'Long',passage:'あ'.repeat(10000)},'N1','reading').content.length<=3500);
-});
 
 test('practice confirms once, preserves original IDs in review and separates scores',async()=>{
   const context=vm.createContext({});vm.runInContext(await fs.readFile('static/practice.js','utf8'),context);

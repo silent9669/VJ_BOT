@@ -20,6 +20,8 @@ function renderPracticeSession(container,item,level,skill,record){
   function show(focus=false){
     section.replaceChildren();
     if(round.index===round.indices.length){
+      delete section.dataset.teacherQuestion;
+      globalThis.setTeacherFocus?.(null);
       section.innerHTML=`<div class="practice-result"><img src="assets/lam/teacher.svg" alt="Thầy Lâm" width="76" height="96"><h3 tabindex="-1">${review?'Đã ôn xong':'Kết quả luyện tập'}</h3><p class="practice-score">${round.correct}<span> / ${round.indices.length} câu đúng${review?' khi ôn':' lần đầu'}</span></p><div class="practice-result-actions"></div></div>`;
       const actions=section.querySelector('.practice-result-actions');
       if(round.missed.length){
@@ -33,6 +35,8 @@ function renderPracticeSession(container,item,level,skill,record){
     }
     completion.hidden=true;
     const originalIndex=round.indices[round.index],q=questions[originalIndex];
+    section.dataset.teacherQuestion=String(originalIndex);
+    if(!container.hidden)globalThis.setTeacherFocus?.({kind:'question',index:originalIndex});
     section.innerHTML=`<div class="practice-meter"><span>${review?'Ôn câu sai':'Luyện tập'}</span><span>${round.index+1} / ${round.indices.length}</span><progress value="${round.index}" max="${round.indices.length}" aria-label="Câu đã làm"></progress></div><fieldset><legend tabindex="-1">${escapeHtml(q.q)}</legend><div class="practice-options"></div></fieldset><div class="practice-feedback" role="status" hidden></div><div class="practice-actions"><button type="button" class="practice-primary" disabled>Kiểm tra</button></div>`;
     const options=section.querySelector('.practice-options'),action=section.querySelector('.practice-primary'),feedback=section.querySelector('.practice-feedback');
     let selected=null,pending=null;
@@ -41,7 +45,9 @@ function renderPracticeSession(container,item,level,skill,record){
       const input=document.createElement('input');input.type='radio';input.name='practice-answer';input.value=String(i);
       const number=document.createElement('span');number.className='practice-option-number';number.textContent=String(i+1);
       const text=document.createElement('span');text.textContent=option;
-      input.onchange=()=>{selected=option;action.disabled=false;};label.append(input,number,text);options.append(label);
+      const selectFocus=()=>globalThis.setTeacherFocus?.({kind:'question',index:originalIndex});
+      input.addEventListener('focus',selectFocus);
+      input.onchange=()=>{selectFocus();selected=option;action.disabled=false;};label.append(input,number,text);options.append(label);
     }
     async function save(){
       action.disabled=true;action.textContent='Đang lưu…';

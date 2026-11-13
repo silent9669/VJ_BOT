@@ -735,23 +735,123 @@
                 <div class="account-row"><span class="account-initial" id="settings-initial" aria-hidden="true"></span><div class="account-who"><strong id="settings-name"></strong><span id="settings-email"></span></div><span class="status-pill" id="settings-kind"></span></div>
                 <div class="card-actions"><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button><button type="button" class="stage-btn" id="settings-logout">Đăng xuất</button></div>
               </section>
-              <section class="settings-card" id="ai-card">
-                <header class="card-head"><h2 class="card-title">API AI</h2><span class="status-pill" id="ai-pill" data-state="none">Chưa kết nối</span></header>
+              <section class="settings-card ai-settings-card" id="ai-card" lang="en">
+                <header class="card-head"><div><p class="ai-eyebrow">Your AI workspace</p><h2 class="card-title">Accounts &amp; models</h2><p class="ai-intro">Your saved accounts, ready when you return.</p></div></header>
                 <p id="ai-source" class="ai-source" role="status"></p>
                 <div id="ai-platform" class="ai-platform" hidden><div><strong>OpenAI cho quản trị viên</strong><span id="ai-platform-model"></span></div><button type="button" class="stage-btn" id="ai-platform-test">Kiểm tra kết nối</button></div>
-                <details id="ai-own"><summary>API riêng</summary>
+                <section class="ai-current" aria-label="Current chat setup">
+                  <div class="ai-current-heading"><span class="ai-current-dot" aria-hidden="true"></span><span class="status-pill" id="ai-pill" data-state="none">No account selected</span></div>
+                  <strong id="ai-current-model">Choose an account to get started</strong>
+                  <p class="ai-field-hint" id="ai-current-hint">Your saved chat model will appear here.</p>
+                  <button type="button" class="public-cta" id="ai-chat" hidden>Chat with Thay Lam <span aria-hidden="true">↗</span></button>
+                </section>
+                <div class="ai-saved-connections">
+                  <div class="ai-section-heading"><label for="ai-profile-list">My account</label><button type="button" class="stage-btn" id="ai-add-connection">+ Add account</button></div>
+                  <select id="ai-profile-list" aria-describedby="ai-profile-hint"><option value="">Choose a saved account</option></select>
+                  <p class="ai-field-hint" id="ai-profile-hint">Switch accounts without entering your key again.</p>
+                  <p id="ai-connection-status" role="status" aria-live="polite"></p>
+                </div>
+                <section id="ai-oauth-panel" class="ai-form" aria-label="Antigravity account" hidden>
+                  <p id="ai-oauth-status" role="status" aria-live="polite"></p>
+                  <div id="ai-oauth-pending" class="ai-form" hidden>
+                    <div class="ai-actions"><a id="ai-oauth-continue" class="public-cta" target="_blank" rel="noopener noreferrer">Continue with Google</a><button type="button" class="stage-btn" id="ai-oauth-cancel">Cancel sign-in</button></div>
+                    <p class="ai-field-hint">Review Google's account permissions yourself. This third-party gateway connection does not grant Gemini API or TTS access.</p>
+                    <details><summary>Callback did not open?</summary><p class="ai-field-hint">For a remote gateway, paste the final localhost callback address after Google sign-in. Do not paste account passwords or API keys.</p><label>Callback URL<input type="url" id="ai-oauth-callback-url" autocomplete="off" spellcheck="false"></label><button type="button" class="stage-btn" id="ai-oauth-callback-submit">Submit callback</button></details>
+                  </div>
+                  <div id="ai-oauth-selection" class="ai-form" hidden>
+                    <label><span class="ai-section-label">Choose a different model</span><select id="ai-oauth-model" aria-describedby="ai-oauth-model-hint"></select></label>
+                    <p class="ai-field-hint" id="ai-oauth-model-hint">The model above is saved for this account. Change it here when needed.</p>
+                    <div class="ai-actions ai-model-apply"><button type="button" class="public-cta" id="ai-oauth-use" disabled>Test &amp; save this model</button><button type="button" class="stage-btn" id="ai-oauth-refresh">Reload model list</button></div>
+                    <p class="ai-field-hint" id="ai-oauth-test-hint" hidden>Testing sends one request. Quota or charges may apply. Your current model stays active if the test fails.</p>
+                  </div>
+                  <section id="ai-oauth-usage" class="ai-usage" aria-labelledby="ai-oauth-usage-title" hidden>
+                    <div class="ai-actions"><h3 id="ai-oauth-usage-title">Account usage</h3><button type="button" class="stage-btn" id="ai-oauth-usage-refresh">Update usage</button></div>
+                    <p id="ai-oauth-usage-overview" class="ai-quota-overview">Loading quota…</p>
+                    <meter id="ai-oauth-usage-meter" class="ai-quota-meter" min="0" max="1" value="0" aria-label="Lowest reported model quota remaining" aria-describedby="ai-quota-bar-hint" hidden></meter>
+                    <p class="ai-field-hint ai-quota-scope" id="ai-quota-bar-hint">Lowest model quota · not a shared balance</p>
+                    <p id="ai-oauth-usage-status" class="ai-field-hint" role="status" aria-live="polite"></p>
+                    <details class="ai-quota-details"><summary>See usage for each model</summary><ul id="ai-oauth-usage-models" class="ai-usage-models" tabindex="0" aria-label="Per-model remaining usage"></ul>
+                    <p class="ai-field-hint">Provider model IDs may differ from chat aliases. Unknown is not zero. Refreshing does not generate text.</p></details>
+                  </section>
+                  <details id="ai-oauth-manage" class="ai-disclosure"><summary>Account settings</summary>
+                  <div id="ai-oauth-add-fields" hidden><p class="ai-step-description">Add a Google / Antigravity account</p><label>Account label (optional)<input id="ai-oauth-name" maxlength="80" autocomplete="off" placeholder="Personal or study account"></label></div>
+                  <div class="ai-actions"><button type="button" class="public-cta" id="ai-oauth-connect">Sign in with Google</button><button type="button" class="stage-btn" id="ai-oauth-status-refresh">Reload accounts</button><button type="button" class="stage-btn" id="ai-oauth-disconnect" hidden>Remove this account</button></div>
+                  </details>
+                  <details id="ai-oauth-setup" hidden><summary>Gateway setup</summary><p id="ai-oauth-missing"></p><p>The server needs a dedicated CLIProxyAPI v8 gateway with force-model-prefix enabled. Gateway keys stay on the server. Cloudflare needs a reachable HTTPS gateway; it cannot run the gateway binary or access this laptop's localhost.</p></details>
+                  <button type="button" class="stage-btn" id="ai-oauth-back" hidden>Back to my saved account</button>
+                </section>
                 <form id="ai-form" class="ai-form" autocomplete="off">
-                  <select id="ai-protocol" hidden><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select>
-                  <div class="segmented" role="group" aria-label="Loại API" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
-                  <label class="field-wide">URL API<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false"></label>
-                  <label>Model<input id="ai-model" required maxlength="100" spellcheck="false"></label>
-                  <div class="model-chips" id="ai-models" aria-label="Gợi ý model"></div>
-                  <label>API key<span class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Hiện API key">Hiện</button></span></label>
-                  <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save">Lưu và kiểm tra</button><button type="button" class="stage-btn" id="ai-remove" hidden>Xóa API riêng</button></div>
+                  <fieldset class="ai-step">
+                    <legend>Choose a different model</legend>
+                    <label id="ai-models" hidden>Previously checked models<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
+                    <input id="ai-model" type="hidden" maxlength="100">
+                    <p class="ai-field-hint" id="ai-selection-hint">Only tested models are listed. Availability can change.</p>
+                    <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save" disabled>Save model for this account</button></div>
+                    <p id="ai-status" role="status"></p>
+                  </fieldset>
+                  <details id="ai-api-manage" class="ai-disclosure"><summary>Connection settings</summary>
+                  <fieldset class="ai-step ai-profile-step">
+                    <legend id="ai-api-editor-title">API-key connection</legend>
+                    <div id="ai-profile-edit">
+                    <div class="ai-profile-fields">
+                      <label>Account label<input id="ai-profile-name" maxlength="80" autocomplete="off" placeholder="My Gemini or Groq"></label>
+                      <label>Save location<select id="ai-profile-storage" aria-describedby="ai-profile-storage-hint"><option value="local">This device only</option><option value="server">My account on the server</option></select></label>
+                    </div>
+                    <details class="ai-storage-note"><summary>Storage &amp; privacy</summary><p class="ai-field-hint" id="ai-profile-storage-hint">Device keys are encrypted in this browser profile, not synced. The backend receives the key only while making AI requests. A compromised browser can still access it.</p></details>
+                    </div>
+                  </fieldset>
+                  <fieldset class="ai-step">
+                    <legend>Provider details</legend>
+                    <div id="ai-credentials">
+                    <select id="ai-protocol" hidden><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select>
+                    <div class="segmented" role="group" aria-label="API type" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
+                    <label>Base URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false" aria-describedby="ai-url-hint"></label>
+                    <p class="ai-field-hint" id="ai-url-hint">Use your provider's API base URL, not its website or chat page.</p>
+                    <div class="ai-field"><label for="ai-key">API key</label><div class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="ai-key-hint"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Show API key">Show</button></div></div>
+                    <p class="ai-field-hint" id="ai-key-hint">Stored encrypted on the server. Never paste your key into chat.</p>
+                    </div>
+                  </fieldset>
+                  <div class="ai-actions"><button type="button" class="public-cta" id="ai-profile-save">Save connection</button><button type="button" class="stage-btn" id="ai-api-back" hidden>Cancel</button></div>
+                  <div class="ai-connection-footer"><span>Editing credentials clears model results.</span><button type="button" class="stage-btn" id="ai-remove" hidden>Delete this profile</button></div>
+                  </details>
+                  <details id="ai-api-scan" class="ai-disclosure"><summary>Find models for this account</summary>
+                  <fieldset class="ai-step">
+                    <legend>Models</legend>
+                    <p class="ai-step-description">Tests use quota and may incur charges.</p>
+                    <details><summary>Scan options &amp; resume</summary>
+                    <label class="ai-field-hint ai-recheck"><input type="checkbox" id="ai-recheck-all"> Recheck all models (uses quota again)</label>
+                    <p class="ai-field-hint" id="ai-resume-hint" role="status">Continue only models never sent for this API connection. Interrupted requests are not retried automatically.</p>
+                    </details>
+                    <div class="ai-actions"><button type="button" class="stage-btn ai-load-button" id="ai-fetch-models">Find usable models</button><button type="button" class="stage-btn" id="ai-stop-models" hidden>Stop</button></div>
+                    <progress id="ai-load-progress" aria-label="Model verification progress" hidden></progress>
+                    <p id="ai-model-status" role="status" aria-live="polite"></p>
+                  </fieldset>
+                  </details>
                 </form>
-                </details>
-                <p id="ai-status" role="status"></p>
-                <button type="button" class="stage-btn" id="ai-chat" hidden>Mở hội thoại ↗</button>
+                <dialog id="ai-confirm-dialog" class="ai-confirm-dialog" aria-labelledby="ai-confirm-title" aria-describedby="ai-confirm-description ai-confirm-warning">
+                  <form method="dialog">
+                    <header><p class="ai-confirm-eyebrow">API connection</p><h2 id="ai-confirm-title">Find models you can use</h2></header>
+                    <p class="ai-confirm-count"><strong id="ai-confirm-count"></strong><span>models to check</span></p>
+                    <p id="ai-confirm-description">One short test per model. Only models that respond will appear in your list.</p>
+                    <p id="ai-confirm-warning" class="ai-confirm-warning">Tests use your quota and may charge your provider account, including paid models. Stopping cannot reverse requests already sent.</p>
+                    <p id="ai-confirm-partial" hidden>The provider returned a partial catalog. Other models will not be checked.</p>
+                    <footer><button type="submit" class="stage-btn" value="cancel" autofocus>Cancel</button><button type="submit" class="public-cta" id="ai-confirm-start" value="start">Start checks</button></footer>
+                  </form>
+                </dialog>
+                <dialog id="ai-add-dialog" class="ai-add-dialog" aria-labelledby="ai-add-title" aria-describedby="ai-add-description">
+                  <div class="ai-add-heading"><div><p class="ai-eyebrow">Add an account</p><h2 id="ai-add-title">How would you like to connect?</h2></div><button type="button" class="stage-btn" id="ai-add-close" aria-label="Close add account">Close</button></div>
+                  <p id="ai-add-description">Keep your saved accounts. Choose how to add the next one.</p>
+                  <div class="ai-connect-options">
+                    <button type="button" id="ai-profile-new"><span class="ai-connect-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4.5"></circle><path d="m11.2 11.2 9.3 9.3M17 17l3-3M14 14l3-3"></path></svg></span><strong>Use an API key</strong><span>Paste your provider's URL and key.</span><small>OpenAI-compatible · Gemini · Claude</small><b aria-hidden="true">→</b></button>
+                    <button type="button" id="ai-method-oauth"><span class="ai-connect-icon" aria-hidden="true">G</span><strong>Sign in with Google</strong><span>Connect your Antigravity account.</span><small>OAuth · No API key to paste</small><b aria-hidden="true">→</b></button>
+                  </div>
+                </dialog>
+                <details class="ai-disclosure ai-voice-disclosure"><summary>Voice &amp; read-aloud <span>Separate from chat</span></summary><div class="ai-voice-controls">
+                  <p class="ai-field-hint" id="ai-oauth-voice-hint">Read-aloud keeps its selected API-key profile when chat uses OAuth.</p>
+                  <label for="speech-model">Read-aloud voice<select id="speech-model" aria-describedby="speech-model-status"><option value="gemini-3.8-flash-tts">gemini-3.8-flash-tts</option></select></label>
+                  <button type="button" class="stage-btn" id="speech-model-refresh">Refresh voice models</button>
+                  <p id="speech-model-status" class="ai-field-hint" role="status">Uses the active OpenAI or Gemini API-key connection. Antigravity chat is separate. Voice access is checked when you press Listen.</p>
+                </div></details>
               </section>
               <section class="settings-card" id="settings-sound-card">
                 <header class="card-head"><h2 class="card-title">Âm thanh</h2></header>
@@ -911,18 +1011,23 @@
       <p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button>
     </div>
   </dialog>
+  <aside id="speech-notice" class="speech-notice speech-player" aria-label="Read-aloud" hidden><p id="speech-status" role="status" aria-live="polite"></p><button type="button" id="speech-stop">Stop</button></aside>
+  <script src="speech.js"></script>
+  <script src="speech-models.js"></script>
   <script src="practice.js"></script>
   <script src="vi-labels.js"></script>
   <script src="learning.js"></script>
   <script src="lesson-checks.js"></script><script src="study-plan.js"></script>
+  <script src="api-profiles.js"></script>
   <script src="account.js"></script>
+  <script src="antigravity-oauth.js"></script>
+  <script src="model-scan.js"></script>
   <script src="ai-settings.js"></script>
   <script src="admin-users.js"></script>
   <script src="teacher-context.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="speech-input.js"></script><script src="app.js"></script>
-  <div id="speech-player" class="speech-player" hidden><span id="speech-status" role="status">Đang chuẩn bị giọng AI…</span><button type="button" id="speech-stop">Dừng đọc</button></div>
   <script src="mascot.js"></script>
   <script src="refinements.js"></script>
 

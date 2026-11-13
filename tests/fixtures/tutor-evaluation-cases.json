@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "authorship": "VJBot evaluation scenarios authored for human review; not historical learner sessions or approved model outputs.",
+  "review_status": "HUMAN_REVIEW_REQUIRED",
+  "rubric_scale": "A human reviewer marks each criterion met, not_met or uncertain, quotes reply evidence, and explains the decision. No recorded reply has been human-approved by this fixture.",
+  "cases": [
+    {
+      "id": "first-hint",
+      "title": "First hint for the topic particle",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:situation", "level": "N5"},
+      "focus": {"kind": "question", "index": 1},
+      "screen": {"title": "Gặp đồng nghiệp lần đầu", "text": "Điền câu giới thiệu: 私（　）アンです。"},
+      "expected_behavior": ["Keep the existing particle-completion question open.", "The first hint only suggests the function or topic category, without naming は, listing options, or providing the completed sentence."],
+      "rubric": ["Does the hint help an N5 learner identify the particle without giving the answer?", "Do not grade a request for help as an incorrect attempted answer.", "Use natural Vietnamese and accurate Japanese; stop so the learner can try."],
+      "steps": [
+        {"id": "open", "intent": "start", "message": "Thầy hỏi em đúng câu 私（　）アンです。 nhé, chưa cho đáp án.", "expected_behavior": ["Present only the selected question and wait for the learner's answer."]},
+        {"id": "hint", "intent": "hint", "message": "Em chưa biết điền gì. Thầy gợi ý một chút, chưa đưa đáp án nhé.", "expected_behavior": ["Explain the blank's function without naming the missing particle."]}
+      ]
+    },
+    {
+      "id": "repeated-hints",
+      "title": "Repeated hints do not unlock the answer",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:situation", "level": "N5"},
+      "focus": {"kind": "question", "index": 1},
+      "screen": {"title": "Fill in the particle", "text": "私（　）アンです。"},
+      "expected_behavior": ["Preserve the same particle-completion task across three hint requests.", "After the first hint, a short frame with a blank is acceptable; further hints must not fill it in or switch tasks."],
+      "rubric": ["Across turns, does support increase appropriately without revealing は?", "The frame must leave work for the learner; do not list answer options.", "Do not claim the learner has attempted or answered correctly when they have only requested hints."],
+      "steps": [
+        {"id": "open", "intent": "start", "message": "Cho em điền trợ từ trong 私（　）アンです。 và đợi em nhé.", "expected_behavior": ["Open the exact question without its answer."]},
+        {"id": "hint-one", "intent": "hint", "message": "Em cần một gợi ý nhỏ, không đáp án.", "expected_behavior": ["Suggest the topic-marking function without naming the particle."]},
+        {"id": "hint-two", "intent": "hint", "message": "Em vẫn chưa hiểu, gợi ý thêm một bước thôi, đừng điền hộ.", "expected_behavior": ["Provide a sentence frame with a blank, preserving the same target."]},
+        {"id": "hint-three", "intent": "hint", "message": "Vẫn khó quá. Xin gợi ý tiếp nhưng chưa đưa đáp án nhé.", "expected_behavior": ["Simplify the same part and invite an attempt without solving the whole task."]}
+      ]
+    },
+    {
+      "id": "no-answer-after-attempt",
+      "title": "An attempt does not override a request to withhold the answer",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:situation", "level": "N5"},
+      "focus": {"kind": "question", "index": 1},
+      "screen": {"title": "Self-correct the particle", "text": "私（　）アンです。"},
+      "expected_behavior": ["Recognize 私をアンです。 as a genuine attempt.", "The request to withhold the answer remains effective after an attempt: diagnose the function of を without replacing it with は or writing the complete correction."],
+      "rubric": ["Does feedback identify the actual particle error without inventing other errors?", "Do not reveal the answer through a correction, a nearly identical solved example, or answer options.", "Use respectful feedback that leaves the learner an opportunity to self-correct."],
+      "steps": [
+        {"id": "open", "intent": "start", "message": "Thầy hỏi em câu 私（　）アンです。 nhé.", "expected_behavior": ["Ask and wait without solving the question."]},
+        {"id": "attempt", "intent": "check", "message": "Em thử: 私をアンです。 Thầy chỉ giúp em nhận ra lỗi, chưa đưa đáp án hay câu sửa hoàn chỉnh nhé.", "expected_behavior": ["Explain that を commonly marks an action's object and suggest thinking about the topic; keep the answer hidden."]}
+      ]
+    },
+    {
+      "id": "correct-variant",
+      "title": "Accept a correct introduction that differs from the model answer",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:production", "level": "N5"},
+      "focus": null,
+      "screen": {"title": "Self-introduction", "text": "Nêu tên, quê quán, nghề nghiệp và lời chào."},
+      "expected_behavior": ["Assess the production criteria rather than requiring an exact match to the model using the name リン and occupation 学生.", "Accept omission of 私 and the greeting どうぞよろしくお願いします。; do not require changing the name ラン or occupation 会社員."],
+      "rubric": ["Is the Japanese natural and does it include the name, origin, occupation, and greeting?", "Distinguish correct variants from errors; do not require 私は merely because the model contains it.", "Do not invent errors or information the learner has not supplied."],
+      "steps": [
+        {"id": "variant", "intent": "check", "message": "Em viết: はじめまして。ランです。ベトナムから来ました。会社員です。どうぞよろしくお願いします。 Thầy kiểm tra xem có đạt mục tiêu bài không; em không muốn chép nguyên câu mẫu.", "expected_behavior": ["Recognize that the content meets the criteria without replacing correct variants with the model answer."]}
+      ]
+    },
+    {
+      "id": "partial-subgoal",
+      "title": "Assess a partial answer against the current subgoal",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:production", "level": "N5"},
+      "focus": null,
+      "screen": {"title": "Self-introduction in small parts", "text": "Bài đầy đủ có tên, quê quán và nghề; hiện tại chỉ luyện tên."},
+      "expected_behavior": ["Limit the first question to the learner's name as requested.", "Assess アンです。 as correct for a name question, without treating the absent origin or occupation as an error; one small next subgoal is acceptable."],
+      "rubric": ["Does feedback assess the question just asked rather than grade the entire production task?", "Accept the natural short answer アンです。", "If extending the task, introduce only one next step rather than the whole model answer."],
+      "steps": [
+        {"id": "name-only", "intent": "start", "message": "Em muốn làm từng phần. Bây giờ chỉ hỏi tên em, chưa hỏi quê quán hay nghề.", "expected_behavior": ["Ask only for the name and wait."]},
+        {"id": "answer-name", "intent": "message", "message": "アンです。", "expected_behavior": ["Accept the name answer without penalizing omissions of information not yet requested."]}
+      ]
+    },
+    {
+      "id": "direct-explanation",
+      "title": "A direct explanation request is not the learner teach-back action",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:situation", "level": "N5"},
+      "focus": {"kind": "example", "index": 0},
+      "screen": {"title": "Place of origin", "text": "ベトナムから来ました。"},
+      "expected_behavior": ["Directly explain in Vietnamese the function of から and meaning of 来ました in the introduction.", "Do not confuse the direct question with the explain intent, which requests learner teach-back; do not impose a new exercise."],
+      "rubric": ["Are the meaning of coming from Vietnam and the polite past form explained correctly?", "Keep the explanation brief and appropriate for N5; do not claim that から always marks a cause.", "Do not ignore the question by merely asking it back or opening a new test."],
+      "steps": [
+        {"id": "ask-why", "intent": "message", "message": "Thầy giải thích trực tiếp giúp em vì sao nói ベトナムから来ました。: から và 来ました nghĩa là gì? Em chỉ cần hiểu câu này, chưa làm bài mới.", "expected_behavior": ["Answer the meaning and structure question accurately without adding a new exercise."]}
+      ]
+    },
+    {
+      "id": "ambiguous-context",
+      "title": "Clarify when the referenced sentence is missing",
+      "level": "N5",
+      "lesson": null,
+      "focus": null,
+      "screen": {"title": "Empty chat panel", "text": ""},
+      "expected_behavior": ["Ask the learner to send the sentence or identify the part needing correction.", "Do not invent a Japanese sentence, error, lesson, or previous answer."],
+      "rubric": ["Is there exactly one useful clarification request?", "Do not claim to have seen the referenced sentence or grade it before it is supplied.", "Do not introduce an unrelated practice task."],
+      "steps": [
+        {"id": "missing-sentence", "intent": "message", "message": "Câu này em làm vậy có đúng không thầy?", "expected_behavior": ["Ask for the complete sentence or answer without inferring its content."]}
+      ]
+    },
+    {
+      "id": "new-situation",
+      "title": "A new situation preserves the same learning target",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:situation", "level": "N5"},
+      "focus": null,
+      "screen": {"title": "Gặp đồng nghiệp lần đầu", "text": "Tự giới thiệu tên, quê quán và công việc."},
+      "expected_behavior": ["When switching to a Japanese classroom, create a genuinely new situation rather than repeat the coworker setting.", "Preserve the self-introduction target and N5 difficulty without providing a complete solution."],
+      "rubric": ["Does the setting change meaningfully from the first turn?", "Give only one actionable Japanese production request, not a list of exercises.", "Do not introduce advanced honorifics or N3 grammar without reason."],
+      "steps": [
+        {"id": "coworker", "intent": "start", "message": "Cho em luyện giới thiệu mình khi lần đầu gặp đồng nghiệp, thầy hỏi rồi đợi em nhé.", "expected_behavior": ["Present one workplace introduction situation without solving it."]},
+        {"id": "classroom", "intent": "situation", "message": "Cho em tình huống mới ở lớp tiếng Nhật thay vì công ty, vẫn luyện giới thiệu tên và quê quán; đừng cho câu mẫu sẵn.", "expected_behavior": ["Switch to a classroom setting, ask one question, and wait."]}
+      ]
+    },
+    {
+      "id": "summary-no-exercise",
+      "title": "End with an evidence-based summary and no new exercise",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:production", "level": "N5"},
+      "focus": null,
+      "screen": {"title": "End the introduction session", "text": "Tự giới thiệu tên, quê quán và nghề nghiệp."},
+      "expected_behavior": ["Summarize strengths and practice needs actually observed in the two attempts.", "Do not end with a question or new exercise; acknowledge insufficient evidence for two weaknesses rather than invent errors."],
+      "rubric": ["Trace every assessment to the learner's written sentences; do not assess pronunciation from text.", "Recognize the correction from 来ましたです to 来ました rather than treating the old error as still present in the revision.", "Suggest future practice rather than requiring immediate work; end without a question."],
+      "steps": [
+        {"id": "first-attempt", "intent": "check", "message": "Em thử: はじめまして。アンです。ベトナムから来ましたです。学生です。よろしくお願いします。", "expected_behavior": ["Identify the extra です after 来ました and recognize the correct parts."]},
+        {"id": "revision", "intent": "check", "message": "Em sửa: はじめまして。アンです。ベトナムから来ました。学生です。よろしくお願いします。", "expected_behavior": ["Recognize that the error has been corrected rather than repeat it as a current error."]},
+        {"id": "end", "intent": "summary", "message": "Kết thúc ở đây nhé thầy. Tóm tắt điều em làm tốt và điều cần luyện dựa trên các câu vừa rồi, không hỏi thêm hay ra bài mới.", "expected_behavior": ["Give an evidence-based summary and brief future practice guidance without a new exercise or question."]}
+      ]
+    },
+    {
+      "id": "n3-repair-context",
+      "title": "Distinguish observation and inference in an N3 repair request",
+      "level": "N3",
+      "lesson": {"id": "practical:v1:N3:repair:production", "level": "N3"},
+      "focus": null,
+      "screen": {"title": "Báo hỏng và thu xếp sửa chữa", "text": "Báo máy giặt không chạy, hẹn sau 6 giờ và yêu cầu gọi trước khi đến."},
+      "expected_behavior": ["Assess the N3 context: specific observable symptoms, inference with ようです, appointment timing, and advance contact.", "Accept correct wording that differs from the model; do not assert which component has failed before inspection."],
+      "rubric": ["Are ようです / 以降 / いただけますか and the sentence's politeness accurate and natural?", "Do not interpret 六時以降 as only exactly six or before six.", "Do not turn language practice into technical advice asserting the cause of the fault."],
+      "steps": [
+        {"id": "repair-message", "intent": "check", "message": "Em viết cho quản lý: 洗濯機の電源を入れても動きません。故障しているようです。午後六時以降なら家にいます。来る前に電話していただけますか。 Thầy xem câu này có đúng và lịch sự trong tình huống bài không?", "expected_behavior": ["Assess all practical goals; accept 電話 instead of 連絡 and separate sentences for the appointment and contact request."]}
+      ]
+    },
+    {
+      "id": "corpus-difficulty",
+      "title": "An N5 vocabulary-linked corpus example is not sentence-level certification",
+      "level": "N5",
+      "lesson": {"id": "listening:N5:1", "level": "N5"},
+      "focus": {"kind": "example", "index": 9},
+      "screen": {"title": "Listening example linked to N5 vocabulary", "text": "赤いものもあれば白いのもある。"},
+      "expected_behavior": ["Explain accessibly that some things are red and others are white.", "Distinguish the N5 vocabulary label from whole-sentence difficulty; do not immediately require a beginner to produce もあれば…もある.", "If discussing provenance, correctly identify the Tatoeba/OpenJLPT corpus rather than an official JLPT exam."],
+      "rubric": ["Are 赤いもの / 白いの and their enumerative relationship translated correctly?", "Do not certify the sentence's grammar as N5 merely because the lesson is N5.", "Preserve https://tatoeba.org/sentences/show/142281 when discussing the source; do not invent authorship or human quality approval."],
+      "steps": [
+        {"id": "difficulty", "intent": "message", "message": "Em mới N5, câu 赤いものもあれば白いのもある。 khó quá. Câu này có chắc toàn bộ là N5 và từ đề JLPT chính thức không? Giải nghĩa đơn giản giúp em thôi, chưa bắt em dùng mẫu khó này.", "expected_behavior": ["State that whole-sentence difficulty is not certified; explain only what is needed without requiring the advanced pattern at N5."]}
+      ]
+    },
+    {
+      "id": "authored-provenance",
+      "title": "Distinguish VJBot-authored material from external references",
+      "level": "N5",
+      "lesson": {"id": "practical:v1:N5:introductions:situation", "level": "N5"},
+      "focus": {"kind": "example", "index": 0},
+      "screen": {"title": "Source of the introduction", "text": "はじめまして。私はアンです。ベトナムから来ました。"},
+      "expected_behavior": ["Distinguish VJBot-authored dialogue from the external reference to Japan Foundation's Irodori Starter Lesson 3.", "Do not claim that the sentence about アン is quoted verbatim or approved by the publisher."],
+      "rubric": ["Does the provenance statement match canonical metadata without inferring permissions or approval?", "Do not confuse the JLPT level-summary link with the verbatim source of the dialogue.", "Answer the provenance question briefly in Vietnamese without dumping internal metadata or assigning a new exercise."],
+      "steps": [
+        {"id": "source", "intent": "message", "message": "Câu はじめまして。私はアンです。ベトナムから来ました。 này là VJBot viết hay trích nguyên văn Irodori? Em hỏi nguồn của đúng câu này, không cần bài tập mới.", "expected_behavior": ["Identify VJBot authorship and Irodori as a reference, without claiming a verbatim quotation."]}
+      ]
+    }
+  ]
+}

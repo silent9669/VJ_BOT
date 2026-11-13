@@ -1,7 +1,42 @@
 let signedInUser=null,accountUnavailable=true,preparingSignIn=false;
+function usesAntigravityOAuth(owner) {
+  if (!owner) return false;
+  const key='vjbot_ai_method:'+owner, saved=localStorage.getItem(key);
+  if(saved==='google'){localStorage.setItem(key,'antigravity');return true;}
+  return saved==='antigravity';
+}
+function antigravityConnectionId(owner) {
+  const value=owner&&localStorage.getItem('vjbot_ai_oauth:'+owner);
+  return typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value)?value:null;
+}
 async function apiFetch(path,options={}) {
   if(signedInUser) {
-    const response=await fetch(path,options);
+    const owner=signedInUser.user_id;
+    const inference=['/api/chat','/api/kaiwa/evaluate','/api/tts','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
+    let oauth,connectionId,method;
+    try {
+      method=inference&&path!=='/api/tts'?usesAntigravityOAuth(owner):false;
+      oauth=inference&&path!=='/api/tts'&&method;
+      connectionId=oauth?antigravityConnectionId(owner):null;
+      if(oauth&&!connectionId)return Response.json({detail:'Choose a saved Antigravity connection in Settings.',code:'api_profile_unavailable'},{status:409});
+    } catch { return Response.json({detail:'Connection preference storage is unavailable. Restore browser storage before using AI.',code:'api_profile_unavailable'},{status:409}); }
+    if(inference&&!oauth&&!window.VJProfiles)return Response.json({detail:'API profile support did not load. Reload before using AI.',code:'api_profile_unavailable'},{status:503});
+    let prepared=options;
+    try {
+      if(oauth) {
+        const headers=new Headers(options.headers);
+        headers.set('X-VJBot-Profile','antigravity_oauth:'+connectionId);
+        prepared={...options,headers};
+      } else if(window.VJProfiles)prepared=await VJProfiles.prepareRequest(path,options,owner);
+    } catch { return Response.json({detail:'The selected API profile is unavailable. Open Settings to choose or repair it.',code:'api_profile_unavailable'},{status:409}); }
+    if(signedInUser?.user_id!==owner)return Response.json({detail:'The signed-in account changed.'},{status:401});
+    try {
+      if(inference&&path!=='/api/tts'&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
+        return Response.json({detail:'The selected AI connection changed. Send the request again.',code:'api_profile_unavailable'},{status:409});
+    } catch { return Response.json({detail:'Connection preference storage is unavailable.',code:'api_profile_unavailable'},{status:409}); }
+    const headers=new Headers(prepared.headers);
+    headers.set('X-VJBot-Account',owner);
+    const response=await fetch(path,{...prepared,headers});
     if(response.status===401){signedInUser=null;accountUnavailable=true;renderAccount();window.handleSessionExpired?.();openAccount('Phiên đăng nhập đã hết hạn. Đăng nhập lại để lưu tiến độ.');}
     return response;
   }
@@ -115,6 +150,7 @@ async function setupAccount() {
     const response=await fetch('/api/auth/session');
     if(!response.ok)throw new Error('session');
     const session=await response.json();signedInUser=session.user;accountUnavailable=false;renderAccount();
+    window.dispatchEvent?.(new Event('vjbot-account-ready'));
   }catch{await openAccount('Không kiểm tra được tài khoản. Tải lại trang hoặc đăng nhập lại.');}
 }
 window.apiFetch=apiFetch;

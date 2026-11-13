@@ -1,0 +1,111 @@
+// Read-aloud owns one request and one audio element. Provider errors never change voices.
+let speechPlayback = null;
+
+function speechReading(text, reading = '') {
+  const kana = reading.replace(/[（(][^）)]*[）)]/g, '').trim();
+  return /^[\p{Script=Hiragana}\p{Script=Katakana}ー]+$/u.test(kana) ? kana : text;
+}
+
+function speechText(text, {reading = '', japaneseOnly = false} = {}) {
+  let clean = speechReading(String(text || ''), reading)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\{([^{}|]+)\|([^{}|]+)\}/g, '$2')
+    .replace(/([\p{Script=Han}々]+[\p{Script=Hiragana}ー]*)\s*[（(]([\p{Script=Hiragana}\p{Script=Katakana}ー]+)[）)]/gu, '$2')
+    .replace(/([\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}。！？])\s*[（(][A-Za-zāīūēōĀĪŪĒŌ][A-Za-zāīūēōĀĪŪĒŌ0-9\s'.,!?-]*[）)]/gu, '$1')
+    .replace(/[#*`_]/g, '').trim();
+  if (japaneseOnly) {
+    const japanese = clean.replace(/\p{Script=Latin}[\p{Script=Latin}\p{M}\d-]*/gu, word => /^[A-Z][A-Z0-9-]*$/.test(word) ? word : '\n');
+    const spans = japanese.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々〆ヵヶA-Z0-9０-９。、！？!?「」『』（）()・：:〜～….,%％ \t]+/gu) || [];
+    clean = spans.filter(span => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(span))
+      .map(span => span.replace(/^[\s。、！？!?：:.,]+/u, '').trim()).join('\n');
+  }
+  return clean;
+}
+
+function audioDataUrl(data) {
+  const mime = data.mimeType || 'audio/wav';
+  if (!/^audio\/l16(?:;|$)/i.test(mime)) {
+    if (!/^audio\/(?:wav|x-wav|mpeg|mp3|ogg)(?:;|$)/i.test(mime)) throw new Error('Unsupported speech audio format.');
+    return `data:${mime};base64,${data.audioBase64}`;
+  }
+  const rate = Number(mime.match(/;\s*rate=(\d+)(?:;|$)/i)?.[1] || 24000);
+  const channels = Number(mime.match(/;\s*channels=(\d+)(?:;|$)/i)?.[1] || 1);
+  const pcm = Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0));
+  if (rate < 8000 || rate > 192000 || ![1, 2].includes(channels) || pcm.length % (2 * channels)) throw new Error('Invalid speech PCM format.');
+  const wav = new Uint8Array(44 + pcm.length), view = new DataView(wav.buffer);
+  const write = (offset, text) => [...text].forEach((c, i) => {wav[offset + i] = c.charCodeAt(0);});
+  write(0, 'RIFF'); view.setUint32(4, 36 + pcm.length, true); write(8, 'WAVE'); write(12, 'fmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, channels, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * channels * 2, true);
+  view.setUint16(32, channels * 2, true); view.setUint16(34, 16, true);
+  write(36, 'data'); view.setUint32(40, pcm.length, true); wav.set(pcm, 44);
+  let binary = '';
+  for (let i = 0; i < wav.length; i += 8192) binary += String.fromCharCode(...wav.subarray(i, i + 8192));
+  return 'data:audio/wav;base64,' + btoa(binary);
+}
+
+function speechStatus(message, active = false) {
+  document.getElementById('speech-notice').hidden = !message;
+  document.getElementById('speech-status').textContent = message;
+  document.getElementById('speech-stop').textContent = active ? 'Stop' : 'Dismiss';
+}
+
+function stopSpeech() {
+  const previous = speechPlayback;
+  speechPlayback = null;
+  previous?.controller.abort();
+  if (previous?.audio) {
+    previous.audio.pause();
+    previous.audio.removeAttribute('src');
+    previous.audio.load();
+  }
+  if (previous) mascotMgr.setState('idle');
+  speechStatus('');
+}
+
+async function playGeminiTTS(text, options = {}) {
+  stopSpeech();
+  window.refreshSpeechModels?.();
+  window.speechSynthesis?.cancel();
+  const clean = speechText(text, options);
+  if (!/\p{L}/u.test(clean)) {
+    speechStatus('No text to read.');
+    return;
+  }
+  const controller = new AbortController();
+  const current = () => speechPlayback?.controller === controller;
+  speechPlayback = {controller, audio: null};
+  speechStatus('Preparing Vietnamese–Japanese audio…', true);
+  try {
+    const response = await apiFetch('/api/tts', {
+      method: 'POST', signal: controller.signal,
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text: clean, speech_model:window.selectedSpeechModel?.() || 'gemini-3.8-flash-tts'})
+    });
+    if (!current()) return;
+    const data = await response.json();
+    if (!current()) return;
+    if (!response.ok) throw new Error(data.detail || 'Speech is unavailable. Please try again.');
+    if (typeof data.audioBase64 !== 'string' || !data.audioBase64) throw new Error('No speech audio was returned.');
+    const audio = new Audio(audioDataUrl(data));
+    speechPlayback = {controller, audio};
+    audio.onended = () => {if (current()) stopSpeech();};
+    audio.onerror = () => {
+      if (!current()) return;
+      stopSpeech();
+      speechStatus('Unable to play speech audio. Please try again.');
+    };
+    await audio.play();
+    if (!current()) {audio.pause(); return;}
+    mascotMgr.setState('speaking');
+    speechStatus(`Reading Vietnamese–Japanese · Charon${data.model ? ' · ' + data.model : ''}`, true);
+  } catch (error) {
+    if (!current()) return;
+    stopSpeech();
+    speechStatus(error.name === 'NotAllowedError' ? 'Audio playback was blocked. Press Listen again.' : error.message || 'Speech is unavailable. Please try again.');
+  }
+}
+
+document.getElementById('speech-stop').addEventListener('click', stopSpeech);
+window.addEventListener('pagehide', stopSpeech);
+window.addEventListener('hashchange', stopSpeech);
+window.addEventListener('popstate', stopSpeech);
