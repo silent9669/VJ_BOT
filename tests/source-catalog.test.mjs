@@ -17,16 +17,18 @@ class Element{
 }
 
 async function page(learningData=structuredClone(catalog)){
+  const corpus={version:1,authorization:{basis:'user_asserted_rights'},chunks:[{id:'NK-123456789abc-1',source_id:'naoki',source_name:'Naoki',url:'https://www.naoki.edu.vn/thu-vien/nguphap/01-tro-tu-wa',title:'Trợ từ は',text:'は nêu chủ đề. 私は学生です。'}]};
   const ids=['source-book','source-search','source-list','source-count','source-retry','source-date',
-    'learning-source-list','learning-source-count','learning-source-retry'];
+    'learning-source-list','learning-source-count','learning-source-retry','corpus-search','corpus-list','corpus-count','corpus-retry'];
   const elements=Object.fromEntries(ids.map(id=>[id,new Element()]));
   elements['source-book'].value='erin';
-  let failLearning=false;
+  let failLearning=false,failCorpus=false;
   const context=vm.createContext({
     URL,Date,console,
     document:{getElementById:id=>elements[id],createElement:tag=>new Element(tag)},
     fetch:async path=>{
       if(path==='course/learning-sources.json')return {ok:!failLearning,json:async()=>learningData};
+      if(path==='course/learning-corpus.json')return {ok:!failCorpus,json:async()=>corpus};
       if(path==='course/sources.json')return {ok:true,json:async()=>({retrieved_at:'2026-11-01',lessons:[]})};
       if(path==='course/erin-resources.json')return {ok:true,json:async()=>({lessons:[{
         book:'erin',title:'Official lesson',number:1,resources:[{title:'Publisher page',url:'https://www.erin.jpf.go.jp/en/lesson01/'}]
@@ -36,7 +38,7 @@ async function page(learningData=structuredClone(catalog)){
   });
   vm.runInContext(script,context);
   await new Promise(resolve=>setImmediate(resolve));
-  return {elements,failLearning(value){failLearning=value;}};
+  return {elements,failLearning(value){failLearning=value;},failCorpus(value){failCorpus=value;}};
 }
 
 function descendants(element){return element.children.flatMap(child=>[child,...descendants(child)]);}
@@ -80,4 +82,27 @@ test('the reference page does not present a granted corpus right from a changed 
   const {elements}=await page(data);
   assert.equal(elements['learning-source-list'].children.length,0);
   assert.equal(elements['learning-source-retry'].hidden,false);
+});
+
+test('source-first passage IDs can be looked up without replacing linked official materials',async()=>{
+  const {elements}=await page();
+  assert.match(elements['corpus-list'].children[0].children[0].textContent,/^Nguồn: Naoki \[NK-123456789abc-1\]/);
+  elements['corpus-search'].value='NK-123456789abc-1';
+  elements['corpus-search'].oninput();
+  assert.match(elements['corpus-list'].textContent,/私は学生です/);
+  elements['corpus-search'].value='nonexistent-code';
+  elements['corpus-search'].oninput();
+  assert.equal(elements['corpus-list'].children.length,0);
+  assert.equal(elements['source-list'].children[0].children[0].textContent,'Official lesson');
+});
+
+test('corpus failures remain visible and retry independently of reference and official catalogs',async()=>{
+  const app=await page();
+  app.failCorpus(true);await app.elements['corpus-retry'].onclick();
+  assert.equal(app.elements['corpus-retry'].hidden,false);
+  assert.equal(app.elements['corpus-list'].children.length,0);
+  assert.equal(app.elements['learning-source-list'].children.length,7);
+  app.failCorpus(false);await app.elements['corpus-retry'].onclick();
+  assert.match(app.elements['corpus-list'].textContent,/Nguồn: Naoki/);
+  assert.equal(app.elements['corpus-retry'].hidden,true);
 });

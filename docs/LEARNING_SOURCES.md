@@ -19,12 +19,13 @@ voice and study workstreams remain independent.
 | App acceptance | Open lesson, answer incorrectly, receive a hint, retry and persist progress in the actual UI | Resolve ownership of existing lesson/tutor consumers first; no voice/provider changes |
 | Publication | Checked owned checkpoint on the task branch | No main push, merge, deployment or publisher contact |
 
-The twenty-lesson and tutor-integration phases are **blocked**, not complete:
-none of these seven sources has an established app/RAG content-admission basis,
-and the editorial pilot has not received human approval. External reference links
-do not add new lesson bodies or establish pedagogical improvement. Existing
-OpenJLPT/TALPCo/Tatoeba material is a separate possible content path, not an
-unannounced substitute for these seven sources.
+The twenty-lesson editorial and tutor-learning acceptance phases are **not complete**.
+After the initial reference-only checkpoint, the operator explicitly asserted full
+crawl/RAG rights for all seven sources and requested short source-first attribution.
+The implementation records this as `user_asserted_rights`, not independently verified
+publisher permission. Publicly accessible selected lesson passages may enter the
+separate attributed corpus under that assertion. NHK access remains blocked, and no
+three-lesson or twenty-lesson human editorial approval has been supplied.
 
 ## Findings, 2026-11-13
 
@@ -63,8 +64,8 @@ to selected AI providers remain unapproved for this project.
   captures from an explicitly supplied external directory. It does **not** crawl
   the network, follow discovered links, log in, run an LLM or obtain permissions.
 - Manual policy/access assessments are preserved separately from capture metadata.
-  The importer rejects any attempt to use this reference-only path to set
-  `corpus_allowed: true`. A future content-admission path requires explicit review.
+  The reference importer rejects `corpus_allowed: true`. Actual lesson admission
+  under the later operator assertion is handled separately by `build_learning_corpus.py`.
 - Capture hashes identify the exact saved Agent Reach JSON, not the publisher's
   original HTTP bytes. Capture times are explicitly local file modification times,
   not asserted publication dates or exact upstream request times. Policy assessment
@@ -149,3 +150,122 @@ These checks establish catalog behavior, not lesson/RAG/real-model quality.
   applicable browser evidence. The importer does not infer content rights.
 - No application-wide suite, deployment, new lesson corpus, paid model invocation,
   real-model teaching evaluation or human editorial approval was performed.
+
+## Operator-authorized attributed RAG extension
+
+The operator reaffirmed: “tôi đc toàn quyền crawl mmấycias đó, nhưng mà nhớ ghi lại
+nguồn để dễ truy vấn là dc ghi gọn nguồn chỗ tôi ghi ấy”. This is stored verbatim as
+an operator rights assertion with `publisher_permission_independently_verified: false`.
+The earlier policy findings remain evidence, not retroactively rewritten approvals.
+It does not authorize defeating robots exclusions, authentication, CAPTCHA or rate
+limits. NHK receives no further automated requests and contributes no lesson passages.
+
+### Acquisition and provenance
+
+Bounded acquisition selects actual public teaching bodies, not marketing shells or
+AI-authored replacements. Naoki, FreeTag, Saromalang, Mokumoku and Tieng Nhat Don Gian
+use observed reader/HTML selections. Irodori uses the separately linked official
+Vietnam-office route and allowed PDF CDN, not a retry of the blocked main host.
+One Vietnamese lesson PDF was observed at 25,295,751 bytes; the initial 8 MB local
+budget stopped before download, then a finite 30 MB budget admitted that one file.
+Only its original cultural/greeting teaching on PDF pages 17–18 enters the corpus.
+No audio, illustrations, full-course mirror or worksheet answer keys are published.
+
+`scripts/build_learning_corpus.py` projects local acquisition manifests into
+`static/course/learning-corpus.json`. Every source has a coverage outcome, including
+blocked/failed sources with zero documents. Captures are hashed on actual local
+bytes. Some captures are selected reader transcriptions, not original HTTP bodies;
+their extraction notes explicitly say so. The PDF has a separate binary hash and
+is retained outside the repository. Source level labels remain claims, not certified
+JLPT classifications. All passages remain pedagogically `unreviewed`.
+
+Stable IDs bind publisher code, source URL, selected content and passage position:
+`NK-…-1`, `FT-…-1`, `SR-…-1`, `MK-…-1`, `TN-…-1`, `IR-…-1`.
+Each stored passage starts with a `header` containing its short ID, source name
+and exact URL. `/sources.html` provides text/ID lookup and puts this attribution
+first in each disclosure. It does not present acquired passages as reviewed lessons.
+
+### Retrieval and teaching boundary
+
+`src/learning-rag.js` loads one public asset, validates known publisher HTTPS
+origins and passage limits, and performs local lexical retrieval with Vietnamese
+accent folding and Japanese token/bigram matching. No embedding service, new API
+key, vector database or paid model call is added. At most three 1,400-character
+passages enter a generation. The short citation ID itself is also addressable.
+This is lexical RAG, not a measured semantic/vector-search quality claim.
+
+`tutor-chat.js`, `study-teacher.js` and `practice-coach.js` attach retrieved passages
+as quoted lower-trust evidence to the already selected chat provider. A trusted
+policy keeps source instructions, source errors and source level claims from becoming
+system rules or grading authority. Canonical exercise answers/options and progress
+logic stay unchanged; the independent voice connection is not modified.
+
+Unsubmitted question teaching and hints withhold external passages to avoid adding
+answer-bearing context. Submitted practice feedback may retrieve background teaching,
+but correctness still comes from the canonical exercise. No-match, unavailable and
+withheld states are explicit in provider evidence, rather than claiming a source was
+read. Source labels are added deterministically at the start of valid replies, after
+provider-schema validation, and persist with chat retries/history. They identify the
+supplied evidence, not a guarantee that the model used every passage correctly.
+
+The source-page corpus loader has its own error/retry state and never erases official
+Irodori/Erin/JLPT links when corpus loading fails. It renders source text with
+`textContent`, not executable markup. Remote URLs are allowlisted, not followed by
+the retrieval runtime. Raw capture bodies and the binary PDF stay outside Git.
+
+Regenerate the attributed asset after an authorized finite acquisition:
+
+```sh
+python -m scripts.build_learning_corpus --manifest \"<core-manifest.json>\" --manifest \"<additional-manifest.json>\"
+```
+
+An actual live model answer and pedagogical reliability require separately observed
+inference and editorial review. Synthetic provider-boundary tests establish wiring,
+canonical grading preservation, citation persistence and request isolation only.
+
+### Attributed extension: last exercised result
+
+- Actual bounded coverage: **12 documents, 30 passages** after the word-boundary
+  repair. Naoki 3, FreeTag 3, Saromalang 1 selected section, Mokumoku 1,
+  Tieng Nhat Don Gian 3, Irodori 1 selected PDF section; **NHK 0, blocked**.
+  The initial 31-passage build was superseded by lossless contiguous slicing.
+  Passage `source_start`/`source_end` offsets reconstruct the selected text exactly.
+- Final applicable targeted evidence: **28 Python tests and 62 Node tests passed**.
+  The initial provider tests could not import missing worktree dependencies;
+  an ignored junction reused already installed `@noble/hashes` 2.4.0 and `jose`
+  6.2.14 without installation or lockfile change. Two new synthetic-provider
+  fixture failures were corrected to follow the existing native schema-name
+  contract; the affected five integration tests then passed. Existing study,
+  tutor-session and context-boundary regressions passed without weakening them.
+- `npm run build` regenerated canonical catalogs and completed the Worker
+  dry-run successfully. No deployment or production migration occurred.
+- Actual isolated Edge rendered the final 30-passage corpus, searched the exact
+  `MK-985141fee879-1` ID, keyboard-opened its source-first disclosure and retained
+  the correct Mokumoku source URL. Desktop/mobile screenshots showed no horizontal
+  overflow. Injected corpus HTTP 503 left seven source references and 25 official
+  Erin lessons available; retry recovered. No JavaScript page errors occurred.
+- Static reviews found and corrected direct regressions in word-boundary splitting,
+  body-vs-title ranking, exact citation matching, focused-target queries, overview
+  hint/probe withholding and final attributed reply limits. An oversized attributed
+  reply fails visibly instead of returning content the existing UI would reject.
+- Selected source wording and apparent mistakes remain unedited and `unreviewed`.
+  Reader-concatenated FreeTag options, PDF reading-layout artifacts and source-level
+  inconsistencies require editorial review; no learner-facing exercise keys were
+  created from these passages. Lexical relevance is not semantic correctness.
+- Real provider traffic was synthetic at the upstream boundary. No paid inference,
+  live-model security/pedagogical acceptance, hardware microphone test, publisher
+  contact, NHK access-route resolution, PR, merge or deployment is claimed.
+
+Commands exercised for the attributed extension:
+
+```sh
+python -m scripts.build_learning_corpus --manifest \"<core-manifest.json>\" --manifest \"<additional-manifest.json>\"
+python -m pytest --noconftest tests/test_learning_sources.py tests/test_learning_corpus.py tests/test_resource_crawlers.py -q
+node --test tests/learning-rag.test.mjs tests/learning-rag-integration.test.mjs tests/source-catalog.test.mjs tests/study-teacher.test.mjs tests/tutor-session.test.mjs tests/tutor-context-boundary.test.mjs
+npm run build
+```
+
+The recorded 62-test result combines unchanged successful targeted files and the
+successful repaired integration-file run; it is not a claim that the first combined
+command passed. Python retains the existing optional-plugin `asyncio_mode` warning;
+Node emits its experimental SQLite warning.

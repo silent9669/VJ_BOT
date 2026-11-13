@@ -38,7 +38,7 @@ const learningSourceRetry=document.getElementById('learning-source-retry');
 const learningSourceHosts={
   naoki:['www.naoki.edu.vn'],freetag:['freetag.jp'],saromalang:['www.saromalang.com'],
   mokumoku:['mokumoku.vn'],tiengnhatdongian:['www.tiengnhatdongian.com'],
-  nhk:['www.nhk.or.jp','www3.nhk.or.jp'],irodori:['www.irodori.jpf.go.jp','hn.jpf.go.jp']
+  nhk:['www.nhk.or.jp','www3.nhk.or.jp'],irodori:['www.irodori.jpf.go.jp','hn.jpf.go.jp','jf.xcms.online']
 };
 const learningSourcePermissions={
   permission_required:'Cần xác nhận quyền tái sử dụng',unresolved:'Chưa xác minh quyền tái sử dụng',
@@ -63,7 +63,7 @@ function renderLearningSources(data){
     const title=document.createElement('summary');title.textContent=source.name;
     const description=document.createElement('p');description.textContent=source.description_vi;
     const status=document.createElement('p');status.textContent=`${learningSourcePermissions[source.permission_status]} · ${learningSourceAccess[source.access_kind]}.`;
-    const note=document.createElement('p');note.textContent=source.permission_note_vi;
+    const note=document.createElement('p');note.textContent=`Đánh giá điều khoản trước xác nhận của chủ ứng dụng: ${source.permission_note_vi}`;
     const links=document.createElement('ul');
     for(const item of source.links){
       const entry=document.createElement('li');entry.append(learningSourceLink(item.title,item.url,hosts));links.append(entry);
@@ -75,7 +75,7 @@ function renderLearningSources(data){
     row.append(title,description,status,note,links,policies);rows.push(row);
   }
   learningSourceList.replaceChildren(...rows);
-  learningSourceCount.textContent='7 nguồn tham khảo · 0 nguồn được xác nhận quyền nhập nội dung vào RAG.';
+  learningSourceCount.textContent='7 nguồn đã khảo sát. Corpus bên dưới ghi riêng phạm vi thu thập và quyền do chủ ứng dụng xác nhận.';
 }
 async function loadLearningSources(){
   learningSourceRetry.hidden=true;learningSourceCount.textContent='Đang tải nguồn học Nhật–Việt…';
@@ -91,3 +91,48 @@ async function loadLearningSources(){
 }
 learningSourceRetry.onclick=loadLearningSources;
 loadLearningSources();
+
+const corpusSearch=document.getElementById('corpus-search');
+const corpusList=document.getElementById('corpus-list');
+const corpusCount=document.getElementById('corpus-count');
+const corpusRetry=document.getElementById('corpus-retry');
+let learningPassages=[];
+function renderLearningPassages(){
+  const query=corpusSearch.value.normalize('NFKC').toLowerCase().trim();
+  const found=learningPassages.filter(passage=>`${passage.id} ${passage.source_name} ${passage.title} ${passage.text}`.normalize('NFKC').toLowerCase().includes(query));
+  const rows=found.slice(0,20).map(passage=>{
+    const row=document.createElement('details');row.className='source-notes';
+    const title=document.createElement('summary');title.textContent=`Nguồn: ${passage.source_name} [${passage.id}] · ${passage.title}`;
+    const link=learningSourceLink('Mở tài liệu gốc',passage.url,learningSourceHosts[passage.source_id]);
+    const text=document.createElement('p');text.textContent=passage.text;
+    row.append(title,link,text);return row;
+  });
+  corpusList.replaceChildren(...rows);
+  corpusCount.textContent=`${found.length} đoạn khớp · hiển thị ${rows.length}. Mã nguồn ở đầu mỗi đoạn và câu trả lời RAG; nội dung chưa được duyệt sư phạm.`;
+}
+async function loadLearningCorpus(){
+  corpusRetry.hidden=true;corpusCount.textContent='Đang tải corpus có ghi nguồn…';
+  try{
+    const response=await fetch('course/learning-corpus.json');
+    if(!response.ok)throw new Error('corpus unavailable');
+    const data=await response.json();
+    if(data.version!==1 || data.authorization?.basis!=='user_asserted_rights' || !Array.isArray(data.chunks) || !data.chunks.length || data.chunks.length>1500)throw new Error('invalid corpus');
+    const ids=new Set();
+    for(const passage of data.chunks){
+      const hosts=learningSourceHosts[passage.source_id];
+      if(!hosts || passage.source_id==='nhk' || typeof passage.id!=='string' || !/^[A-Z]{2}-[a-f0-9]{12}-[1-9]\d*$/.test(passage.id)
+        || ids.has(passage.id) || typeof passage.title!=='string' || typeof passage.source_name!=='string'
+        || typeof passage.text!=='string' || passage.text.length>1400)throw new Error('invalid passage');
+      learningSourceLink('',passage.url,hosts);ids.add(passage.id);
+    }
+    learningPassages=data.chunks;
+    renderLearningPassages();
+  }catch{
+    learningPassages=[];corpusList.replaceChildren();
+    corpusCount.textContent='Chưa tải được corpus RAG. Không coi lỗi tải là corpus rỗng; danh mục liên kết vẫn hoạt động riêng.';
+    corpusRetry.hidden=false;
+  }
+}
+corpusSearch.oninput=renderLearningPassages;
+corpusRetry.onclick=loadLearningCorpus;
+loadLearningCorpus();

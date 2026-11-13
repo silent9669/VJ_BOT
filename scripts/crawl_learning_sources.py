@@ -42,6 +42,7 @@ def publisher_url(value: object, host: str) -> str:
         allowed_hosts.add('www3.nhk.or.jp')
     if host == 'www.irodori.jpf.go.jp':
         allowed_hosts.add('hn.jpf.go.jp')
+        allowed_hosts.add('jf.xcms.online')
     if (parsed.scheme != 'https' or parsed.hostname not in allowed_hosts
             or parsed.username or parsed.password or parsed.port not in (None, 443)):
         raise ValueError(f'Unexpected publisher URL: {value}')
