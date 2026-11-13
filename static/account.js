@@ -14,8 +14,8 @@ function antigravityConnectionId(owner) {
 async function apiFetch(path,options={}) {
   if(signedInUser) {
     const owner=signedInUser.user_id;
-    const inference=['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
-    const speech=inference&&path==='/api/tts', revision=voiceRevision;
+    const inference=['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/stt','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
+    const speech=inference&&path==='/api/tts', voice=speech||path==='/api/stt', revision=voiceRevision;
     const managed=inference&&signedInUser.is_admin===true;
     let oauth,connectionId,method,voiceChoice,prepared=options;
     if(managed) {
@@ -24,7 +24,7 @@ async function apiFetch(path,options={}) {
       prepared={...options,headers};
     } else {
       try {
-        method=inference&&!speech?usesAntigravityOAuth(owner):false;
+        method=inference&&!voice?usesAntigravityOAuth(owner):false;
         oauth=Boolean(method);
         connectionId=oauth?antigravityConnectionId(owner):null;
         if(oauth&&!connectionId)return Response.json({detail:'Choose a saved Antigravity connection in Settings.',code:'api_profile_unavailable'},{status:409});
@@ -47,7 +47,7 @@ async function apiFetch(path,options={}) {
       try {
         if(speech&&(revision!==voiceRevision||voiceChoice!==JSON.stringify(VJProfiles.voice(owner))))
           return Response.json({detail:'The voice connection changed. Press Listen again.',code:'api_profile_unavailable'},{status:409});
-        if(inference&&!speech&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
+        if(inference&&!voice&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
           return Response.json({detail:'The selected AI connection changed. Send the request again.',code:'api_profile_unavailable'},{status:409});
       } catch { return Response.json({detail:'Connection preference storage is unavailable.',code:'api_profile_unavailable'},{status:409}); }
     }
@@ -77,9 +77,11 @@ function renderAccount(){
   document.getElementById('google-signin').hidden=!!signedInUser;
   document.getElementById('auth-logout').hidden=!signedInUser;
   document.getElementById('tab-btn-admin').hidden=!signedInUser?.is_admin;
-  const live=document.getElementById('chat-live-toggle'),adminNav=document.getElementById('settings-admin-nav');
-  if(live)live.hidden=!signedInUser?.is_admin;
+  for(const [id,value] of [['sidebar-account-name',signedInUser?.name || 'Đăng nhập'],['sidebar-account-role',signedInUser?.is_admin?'Quản trị viên':'Học viên'],['sidebar-account-initial',(signedInUser?.name || '?').charAt(0).toUpperCase()]]){const node=document.getElementById(id);if(node)node.textContent=value;}
+  const adminNav=document.getElementById('settings-admin-nav');
+  const voice=document.getElementById('btn-voice-input');if(voice)voice.hidden=!signedInUser?.is_admin;
   if(adminNav)adminNav.hidden=!signedInUser?.is_admin;
+  globalThis.checkLiveAccount?.();
 }
 async function openAccount(message=''){
   const dialog=document.getElementById('auth-dialog');
@@ -141,6 +143,7 @@ function setAuthMode(register) {
 }
 async function setupAccount() {
   document.getElementById('btn-topbar-account').addEventListener('click',()=>openAccount());
+  document.getElementById('sidebar-account')?.addEventListener('click',()=>{window.closeAppSidebar?.();openAccount();});
   document.getElementById('auth-close').addEventListener('click',()=>document.getElementById('auth-dialog').close());
   const dialog=document.getElementById('auth-dialog'),password=document.getElementById('auth-password'),toggle=document.getElementById('auth-password-toggle'),meter=document.getElementById('auth-meter');
   password.addEventListener('input',()=>{

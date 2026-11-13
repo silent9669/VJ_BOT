@@ -50,7 +50,7 @@ function request(protocol, key, model, {system, turns, schema, schemaName, reaso
     // No max_tokens or temperature: newer OpenAI models reject both. Reply length is bounded by the prompt.
     return {headers: {Authorization: `Bearer ${key}`}, body: {model, messages: [...(system ? [{role: 'system', content: system}] : []), ...turns],
       ...(reasoningEffort ? {reasoning_effort:reasoningEffort} : {}),
-      ...(schema ? {response_format: {type: 'json_schema', json_schema: {name: schemaName === 'tutor_reply' ? 'tutor_reply' : 'kaiwa_evaluation', strict: true, schema}}} : {})}};
+      ...(schema ? {response_format: {type: 'json_schema', json_schema: {name: ['tutor_reply','voice_translation'].includes(schemaName) ? schemaName : 'kaiwa_evaluation', strict: true, schema}}} : {})}};
   }
   if (protocol === 'anthropic') {
     return {headers: {'x-api-key': key, 'anthropic-version': '2023-06-01'}, body: {model, max_tokens: 1024, ...(system ? {system} : {}), messages: turns,
@@ -88,7 +88,7 @@ function incomplete(protocol, data) {
 
 // Tries provider.models in order (fallback on 404/429/5xx) inside one budget below the browser's 35s timeout.
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
-export async function callLLM(provider, {system, turns, schema, schemaName}, {budgetMs = 28000, attemptMs = 15000} = {}) {
+export async function callLLM(provider, {system, turns, schema, schemaName}, {budgetMs = 28000, attemptMs = provider.reasoningEffort && provider.reasoningEffort!=='none' ? 27000 : 15000} = {}) {
   const deadline = Date.now() + budgetMs, history = normalizeTurns(turns);
   let status = 503, retryAfterMs;
   for (const model of provider.models) {

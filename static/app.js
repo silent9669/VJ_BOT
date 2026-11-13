@@ -394,7 +394,7 @@ function renderBubble(role, content) {
     </div>
     <div class="bubble-speech-card ${role}">
       <div class="bubble-header-meta">
-        <span class="bubble-name">${role === "user" ? "Bạn" : currentMascot.name}</span>
+        <span class="bubble-name">${role === "user" ? "Em" : currentMascot.name}</span>
         ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe Sensei đọc tiếng Nhật">Nghe</button>` : ""}
       </div>
       <div class="bubble-body-text">${formattedContent}</div>
@@ -474,7 +474,7 @@ async function sendMessage(text,retry=false,options={}) {
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
   document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','true');
   if(!retry)renderBubble('user',text);
-  if(!retry || input.value.trim()===text)input.value='';
+  if(!retry || input.value.trim()===text){input.value='';input.style.height='44px';}
   soundEngine.playSend();mascotMgr.setState('thinking');
   try {
     const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body});
@@ -1273,7 +1273,6 @@ function singleSpeechReading(value){
 }
 function setupMicrophoneControls(){
   const el=id=>document.getElementById(id);
-  createJapaneseInput({button:el('btn-voice-input'),input:el('chat-input'),onError:message=>chatError(message,null)});
   createJapaneseInput({button:el('btn-kaiwa-mic'),input:el('kaiwa-manual-input'),
     status:el('kaiwa-mic-status'),playbackButton:el('btn-kaiwa-play-user')});
 }
@@ -1285,6 +1284,8 @@ function setupEventListeners() {
   document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
   setupMicrophoneControls();
+  const voiceButton=document.getElementById('btn-voice-input');
+  voiceButton.addEventListener('click',()=>window.openLiveConversation?.());
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
   document.getElementById('kaiwa-level').onchange=e=>switchTab('kaiwa',{level:e.target.value});
@@ -1383,13 +1384,14 @@ function setupEventListeners() {
 
   const btnAskCheck = document.getElementById("btn-ask-check");
   if (btnAskCheck) btnAskCheck.addEventListener("click", () => sendMessage("Thầy kiểm tra câu em vừa viết: đúng ngữ pháp và tự nhiên chưa, sửa giúp em nhé.",false,{intent:'check'}));
-  const restartChat=document.createElement('button');restartChat.type='button';restartChat.className='prompt-chip';restartChat.textContent='Bắt đầu lại buổi học';restartChat.id='btn-restart-chat';
+  const restartChat=document.createElement('button');restartChat.type='button';restartChat.className='prompt-chip';restartChat.textContent='Học lại';restartChat.title='Bắt đầu lại buổi học';restartChat.id='btn-restart-chat';
   restartChat.addEventListener('click',restartTutorConversation);document.getElementById('chat-prompt-chips')?.append(restartChat);
 
   // Classroom form submit
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   if (chatForm && chatInput) {
+    chatInput.addEventListener('input',()=>{chatInput.style.height='44px';chatInput.style.height=Math.min(chatInput.scrollHeight+2,120)+'px';});
     chatInput.addEventListener('keydown',event=>{
       if(event.key==='Enter' && !event.shiftKey && !event.isComposing){event.preventDefault();chatForm.requestSubmit();}
     });
@@ -1454,7 +1456,7 @@ function setupEventListeners() {
         });
         if(!response.ok)throw new Error("save");
         activeCurriculumLevel = lvl;
-        document.getElementById("level-chip-text").textContent = `Trình độ: ${lvl}`;
+        document.getElementById("level-chip-text").textContent = `JLPT ${lvl}`;
         status.textContent="";
         if (levelPicker) levelPicker.hidden = true;
         if(location.hash.startsWith('#curriculum/'))openLevelCourse(lvl);else restoreAppRoute();
@@ -1693,7 +1695,7 @@ function setupEventListeners() {
       const prof = await res.json();
       const chipText = document.getElementById("level-chip-text");
       if (chipText && prof.level) {
-        chipText.textContent = `Trình độ: ${prof.level}`;
+        chipText.textContent = `JLPT ${prof.level}`;
         activeCurriculumLevel = prof.level;
       }
     }

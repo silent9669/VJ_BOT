@@ -16,7 +16,7 @@
     return area;
   };
   const option=(value,label=value)=>{const node=document.createElement('option');node.value=value;node.textContent=label;return node;};
-  const efforts={'':'Không áp dụng',none:'Tắt',low:'Thấp · nhanh',medium:'Vừa',high:'Cao',xhigh:'Rất cao'};
+  const efforts={'':'Không áp dụng',none:'Tắt',low:'Thấp · nhanh',medium:'Vừa',high:'Cao',xhigh:'Rất cao',max:'Tối đa'};
   function reasoning(value='') {
     const available=models.find(model=>model.id===el('admin-text-model').value)?.efforts || [];
     el('admin-reasoning').replaceChildren(...(available.length?available:['']).map(effort=>option(effort,efforts[effort])));
@@ -42,7 +42,7 @@
       if(!current())return;
       if(!response.ok)throw new Error(data.detail);
       models=data.models;
-      el('admin-text-model').replaceChildren(...models.map(model=>option(model.id)));
+      el('admin-text-model').replaceChildren(...models.map(model=>option(model.id,model.label || model.id)));
       el('admin-live-voice').replaceChildren(...data.voices.map(voice=>option(voice,{shida:'Shida · Nam · Nhật',harema:'Harema · Nữ · Nhật',marin:'Marin',cedar:'Cedar'}[voice])));
       el('admin-text-model').value=data.settings.model;
       el('admin-live-voice').value=data.settings.live_voice;

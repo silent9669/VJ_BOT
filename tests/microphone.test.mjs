@@ -7,9 +7,9 @@ const source=readFileSync('static/app.js','utf8');
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
 function fixture(options={}) {
   const elements=new Map(),events=new Map(),recorders=[],recognizers=[],audios=[],blobs=[],revoked=[],errors=[],tts=[];
-  let permissions=0,stoppedSpeech=0;
+  let permissions=0,stoppedSpeech=0,liveStarts=0;
   const element=id=>{
-    if(!elements.has(id))elements.set(id,{value:'',textContent:'',style:{},dataset:{},hidden:false,disabled:false,events:{},attributes:{},inputEvents:0,dispatchEvent(event){if(event.type==='input')this.inputEvents++;},classList:{toggle(){},remove(){}},append(){},setAttribute(k,v){this.attributes[k]=v;},addEventListener(k,fn){this.events[k]=fn;},click(){return this.events.click?.({stopPropagation(){}}) ?? this.onclick?.();}});
+    if(!elements.has(id))elements.set(id,{value:'',textContent:'',style:{},dataset:{},hidden:false,disabled:false,events:{},listeners:{},attributes:{},inputEvents:0,dispatchEvent(event){if(event.type==='input')this.inputEvents++;},classList:{toggle(){},remove(){}},append(){},setAttribute(k,v){this.attributes[k]=v;},addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);this.events[k]=fn;},click(){return this.events.click?.({stopPropagation(){}}) ?? this.onclick?.();}});
     return elements.get(id);
   };
   class Recognition {
@@ -43,11 +43,12 @@ function fixture(options={}) {
   c.restartTutorConversation=()=>{};
   c.addEventListener=(name,fn)=>{if(!events.has(name))events.set(name,[]);events.get(name).push(fn);};
   vm.runInContext(readFileSync('static/speech-input.js','utf8'),c);
+  c.openLiveConversation=()=>{liveStarts++;c.stopJapaneseInputs();};
   vm.runInContext(source.slice(source.indexOf('function singleSpeechReading('),source.indexOf('function setupEventListeners(')),c);
   vm.runInContext(source.slice(source.indexOf('function setupEventListeners()'),source.indexOf('// 17. BOOTSTRAP INITIALIZATION')),c);
   c.setupEventListeners();
   const emit=name=>{for(const fn of events.get(name)||[])fn();};
-  return {c,element,emit,stream,defaultStream,recorders,recognizers,audios,blobs,revoked,errors,tts,get permissions(){return permissions;},get stoppedSpeech(){return stoppedSpeech;},status:()=>element('kaiwa-mic-status').textContent,start:()=>element('btn-kaiwa-mic').click(),replay:()=>element('btn-kaiwa-play-user').click()};
+  return {c,element,emit,stream,defaultStream,recorders,recognizers,audios,blobs,revoked,errors,tts,get permissions(){return permissions;},get stoppedSpeech(){return stoppedSpeech;},get liveStarts(){return liveStarts;},status:()=>element('kaiwa-mic-status').textContent,start:()=>element('btn-kaiwa-mic').click(),replay:()=>element('btn-kaiwa-play-user').click()};
 }
 
 test('permission rejection is visible and manual entry remains available',async()=>{
@@ -119,21 +120,27 @@ for(const unavailable of ['noRecorder','noCapture'])test(`${unavailable} is visi
   const f=fixture({[unavailable]:true,noRecognition:true});await f.start();
   assert.equal(f.permissions,0);assert.match(f.status(),/unavailable|unsupported/i);assert.equal(f.element('kaiwa-manual-input').disabled,false);
 });
-test('chat input stops explicitly and account changes discard delayed recognition',async()=>{
-  const f=fixture();f.element('btn-voice-input').click();const first=f.recognizers[0];
-  f.element('btn-voice-input').click();assert.equal(first.stopped,true);first.result('私です');first.end();assert.equal(f.element('chat-input').value,'私です');
-  f.element('btn-voice-input').click();const next=f.recognizers[1];f.c.signedInUser={user_id:'other'};f.emit('vjbot-voice-changed');next.result('private');next.end();
-  assert.equal(next.aborted,true);assert.equal(f.element('chat-input').value,'私です');assert.equal(f.element('btn-voice-input').attributes['aria-pressed'],'false');
+test('explicit browser controller stops and account changes discard delayed recognition',async()=>{
+  const f=fixture(),controller=f.c.createBrowserJapaneseInput({button:f.element('manual-mic'),input:f.element('chat-input'),bindButton:false});
+  await controller.toggle();const first=f.recognizers[0];
+  await controller.toggle();assert.equal(first.stopped,true);first.result('私です');first.end();assert.equal(f.element('chat-input').value,'私です');
+  await controller.toggle();const next=f.recognizers[1];f.c.signedInUser={user_id:'other'};next.result('private');next.end();
+  assert.equal(f.element('chat-input').value,'私です');controller.reset();
+  assert.equal(next.aborted,true);assert.equal(controller.active,false);assert.equal(f.element('manual-mic').attributes['aria-pressed'],'false');
 });
-test('chat permission and recognition setup errors remain visible',()=>{
-  const f=fixture();f.element('btn-voice-input').click();f.recognizers[0].onerror({error:'not-allowed'});f.recognizers[0].end();
-  assert.match(f.errors.at(-1),/permission|denied/i);
-  const g=fixture({recognitionFailure:true});g.element('btn-voice-input').click();assert.match(g.errors.at(-1),/recognition setup failed/);
+test('browser permission and recognition setup errors remain visible',async()=>{
+  const f=fixture({noRecorder:true});await f.start();f.recognizers[0].onerror({error:'not-allowed'});f.recognizers[0].end();
+  assert.match(f.status(),/permission|denied/i);
+  const g=fixture({recognitionFailure:true});await g.start();assert.match(g.status(),/recognition setup failed/);
 });
-test('starting chat capture replaces Kaiwa capture and replay with one owner',async()=>{
-  const f=fixture();await f.start();const recorder=f.recorders[0];f.element('btn-voice-input').click();
-  assert.equal(recorder.stopped,true);assert.equal(f.defaultStream.track.stops,1);recorder.data();recorder.finish();assert.equal(f.blobs.length,0);
-  assert.ok(f.stoppedSpeech>=2);
+test('one chat Voice action opens continuous Live without legacy capture or dictation',async()=>{
+  const f=fixture(),voice=f.element('btn-voice-input');
+  assert.equal(voice.listeners.click.length,1);assert.equal(f.element('btn-kaiwa-mic').listeners.click.length,1);
+  voice.click();assert.equal(f.liveStarts,1);assert.equal(f.permissions,0);assert.equal(f.recognizers.length,0);assert.equal(f.recorders.length,0);
+  await f.start();const recorder=f.recorders[0];voice.click();
+  assert.equal(f.liveStarts,2);assert.equal(recorder.stopped,true);assert.equal(f.defaultStream.track.stops,1);
+  recorder.data();recorder.finish();assert.equal(f.blobs.length,0);assert.equal(f.recognizers.length,1);
+  assert.equal(f.element('chat-input').value,'');
 });
 test('non-chat Japanese buttons use Japanese-only mode and only canonical single readings',()=>{
   const f=fixture();f.element('fc-front-text').textContent='学生';f.element('fc-example-jp').textContent='学生です。';f.element('kaiwa-prompt-jp').textContent='こんにちは';f.element('kaiwa-model-text').textContent='はい。';
@@ -173,11 +180,11 @@ test('late replay callbacks cannot overwrite new recording state',async()=>{
   assert.equal(f.status(),status);assert.equal(f.audios[0].paused,true);
 });
 
-test('one controller retains typed prefixes, renders interim results and emits input for both consumers',async()=>{
-  for(const kind of ['kaiwa','chat']){
+test('explicit controllers retain typed prefixes, render interim results and emit input',async()=>{
+  for(const kind of ['kaiwa','manual']){
     const f=fixture(),input=f.element(kind==='kaiwa'?'kaiwa-manual-input':'chat-input');
     input.value='先に入力';
-    if(kind==='kaiwa')await f.start();else f.element('btn-voice-input').click();
+    if(kind==='kaiwa')await f.start();else await f.c.createBrowserJapaneseInput({button:f.element('manual-mic'),input,bindButton:false}).toggle();
     assert.equal(f.recognizers.length,1);
     const recognition=f.recognizers[0];
     assert.equal(recognition.interimResults,true);
@@ -191,5 +198,13 @@ test('one controller retains typed prefixes, renders interim results and emits i
       assert.equal(f.element('btn-kaiwa-play-user').hidden,false);
       f.emit('pagehide');assert.equal(f.element('btn-kaiwa-play-user').hidden,true);
     }
+  }
+});
+
+test('completed browser replay cannot cross owner or route without lifecycle events',async()=>{
+  for(const change of [f=>{f.c.signedInUser={user_id:'other'};},f=>{f.c.location.hash='#dashboard';}]){
+    const f=fixture();await f.start();await f.start();f.recorders[0].data();f.recorders[0].finish();
+    change(f);await f.replay();assert.equal(f.audios.length,0);assert.deepEqual(f.revoked,['blob:1']);
+    assert.equal(f.element('btn-kaiwa-play-user').hidden,true);
   }
 });

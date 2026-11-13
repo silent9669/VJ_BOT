@@ -115,7 +115,15 @@ async function renderExamCatalog(route){
       if(!examConfig.papers.some(p=>p.level===route.level && p.year===route.id))throw new Error('paper');
       host.hidden=true;simulation.hidden=false;return renderSimulation(route.level,route.id);
     }
-    host.innerHTML=`<header class="workspace-heading"><h1>JLPT ${route.level}</h1></header><h2>Mô phỏng kỳ thi</h2><p class="exam-source-note">Đề luyện chính thức, đồng hồ theo từng phần. Điểm tự đối chiếu, không quy đổi sang thang điểm JLPT.</p><div class="exam-grid">${examConfig.papers.filter(p=>p.level===route.level).map(p=>`<a class="exam-set official" href="#quiz/${route.level}/simulation/${p.year}"><span>Japan Foundation · JEES</span><h3>Đề luyện chính thức ${p.year}</h3><p>${p.sections.reduce((n,s)=>n+s.minutes,0)} phút · ${p.sections.length} phần</p><strong>Chuẩn bị thi ↗</strong></a>`).join('')}</div><h2>Bộ luyện theo chủ đề</h2><div class="exam-grid">${featureLessons('quiz',route.level).map(e=>`<a class="exam-set" href="#quiz/${route.level}/lesson/${encodeURIComponent(e.id)}"><h3>${escapeHtml(e.title)}</h3><p>${completionRecords.has(activityId(e,route.level,'quiz'))?'Đã hoàn thành':'5 câu'}</p><span>${escapeHtml(e.summary)}</span></a>`).join('')}</div>`;
+    const timed=route.view==='catalog' && route.id==='simulation';
+    host.innerHTML=`<header class="workspace-heading"><h1>Bài luyện JLPT ${route.level}</h1></header><nav class="exam-catalog-nav" aria-label="Loại bài luyện"><a href="#quiz/${route.level}" ${timed?'':'aria-current="page"'}>Luyện theo bài</a><a href="#quiz/${route.level}/catalog/simulation" ${timed?'aria-current="page"':''}>Thi thử có giờ</a></nav>`;
+    if(timed){
+      host.innerHTML+=`<p class="exam-source-note">Đề chính thức của Japan Foundation · JEES. Tự đối chiếu đáp án sau mỗi phần; kết quả không quy đổi sang thang điểm JLPT.</p><div class="exam-grid">${examConfig.papers.filter(p=>p.level===route.level).map((p,i)=>`<a class="exam-set official" href="#quiz/${route.level}/simulation/${p.year}"><span class="exam-set-index">${String(i+1).padStart(2,'0')}</span><div class="exam-set-copy"><h2>Đề chính thức ${p.year}</h2><p>${p.sections.reduce((n,s)=>n+s.minutes,0)} phút · ${p.sections.length} phần</p></div><span class="exam-set-action">Chuẩn bị ↗</span></a>`).join('')}</div>`;
+    }else{
+      const lessons=featureLessons('quiz',route.level);
+      host.innerHTML+=`<div class="exam-grid">${lessons.map((e,i)=>`<a class="exam-set" href="#quiz/${route.level}/lesson/${encodeURIComponent(e.id)}"><span class="exam-set-index">${String(i+1).padStart(2,'0')}</span><div class="exam-set-copy"><h2>${escapeHtml(e.title)}</h2><p>${lessonQuestions(e,route.level,'reading').length} câu · ${escapeHtml(e.summary)}</p></div><span class="exam-set-action">${completionRecords.has(activityId(e,route.level,'quiz'))?'Ôn lại':'Luyện bài'} ↗</span></a>`).join('')}</div>`;
+      setupLessonFilter(host,lessons,'.exam-set',lessons.map(e=>completionRecords.has(activityId(e,route.level,'quiz'))));
+    }
   }catch{host.hidden=false;host.textContent='Chưa mở được bộ đề. ';const b=document.createElement('button');b.textContent='Thử lại';b.onclick=()=>renderExamCatalog({...route,view:undefined});host.append(b);}
 }
 function featureLessons(feature,level){

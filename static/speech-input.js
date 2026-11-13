@@ -1,17 +1,21 @@
 // One shared capture owner for chat and Kaiwa; AI feedback evaluates text, not acoustics.
 const japaneseInputs = [];
 function stopJapaneseInputs() { japaneseInputs.forEach(input => input.reset()); }
-function createJapaneseInput({button, input, status, playbackButton, onError}) {
+function createJapaneseInput(options) {
+  return window.MediaRecorder && navigator.mediaDevices?.getUserMedia && typeof apiFetch==='function'
+    ? createRecordedJapaneseInput(options) : createBrowserJapaneseInput(options);
+}
+function createBrowserJapaneseInput({button, input, status, playbackButton, onError, bindButton=true}) {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const Recorder = window.MediaRecorder;
   const canRecord = Boolean(playbackButton && typeof Recorder === 'function' && navigator.mediaDevices?.getUserMedia);
   const label = button.querySelector?.('span:last-child') || button, idleLabel = label.textContent;
   const owner = () => typeof signedInUser === 'undefined' ? '' : signedInUser?.user_id || '';
   const route = () => globalThis.location?.hash || '';
-  let active = null, audioUrl = null, playback = null;
+  let active = null, audioUrl = null, audioOwner = null, playback = null;
   const owns = session => active === session && session.owner === owner() && session.route === route();
   const playbackOwns = entry => playback === entry && entry.owner === owner() && entry.route === route();
-  const announce = text => { if (status) status.textContent = text; };
+  const announce = text => { if (status) { status.textContent = text; status.hidden = !text || text === 'Micro sẵn sàng'; } };
   const draw = () => {
     const recording = Boolean(active && !active.stopped);
     button.setAttribute('aria-pressed', String(recording));
@@ -39,6 +43,7 @@ function createJapaneseInput({button, input, status, playbackButton, onError}) {
   const discard = () => {
     pauseReplay();
     if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
+    audioOwner = null;
     if (playbackButton) { playbackButton.hidden = true; playbackButton.style.display = 'none'; }
   };
   const cancel = () => {
@@ -87,10 +92,12 @@ function createJapaneseInput({button, input, status, playbackButton, onError}) {
     };
     recognition.start();
   };
-  button.addEventListener('click', async () => {
+  const toggle = async () => {
     if (active && !active.stopped) { stop(active, true); return; }
     if (!Recognition && !canRecord) { announce('Recording and browser transcription are unavailable. Nhập câu trả lời bằng bàn phím.'); return; }
-    stopJapaneseInputs(); globalThis.stopSpeech?.();
+    if (bindButton) stopJapaneseInputs();
+    else { cancel(); discard(); }
+    globalThis.stopSpeech?.();
     const session = {owner:owner(), route:route(), prefix:input.value.trim(), stopped:false,
       recognitionEnded:false, stream:null, recorder:null};
     active = session; draw();
@@ -111,7 +118,7 @@ function createJapaneseInput({button, input, status, playbackButton, onError}) {
           try {
             const mimeType = recorder.mimeType || chunks.find(chunk => chunk.type)?.type;
             const blob = new Blob(chunks, mimeType ? {type:mimeType} : {});
-            discard(); audioUrl = URL.createObjectURL(blob);
+            discard(); audioUrl = URL.createObjectURL(blob); audioOwner = {owner:session.owner, route:session.route};
             playbackButton.hidden = false; playbackButton.style.display = 'inline-flex';
           } catch (error) { fail(session, `Recording could not be saved: ${describe(error)}`); }
         };
@@ -124,9 +131,11 @@ function createJapaneseInput({button, input, status, playbackButton, onError}) {
       : 'Recording is unavailable; browser transcription only. You can also type your answer.');
     if (Recognition) try { recognize(session); } catch (error) { fail(session, `Browser transcription failed: ${describe(error)}`); }
     if (owns(session) && !session.stopped) session.timer = setTimeout(() => stop(session, true), 60000);
-  });
-  playbackButton?.addEventListener('click', async () => {
+  };
+  if (bindButton) button.addEventListener('click', toggle);
+  const replay = async () => {
     if (!audioUrl) return;
+    if (audioOwner?.owner !== owner() || audioOwner?.route !== route()) { cancel(); discard(); return; }
     cancel(); pauseReplay(); globalThis.stopSpeech?.();
     const entry = {audio:null, owner:owner(), route:route()}; playback = entry;
     try {
@@ -136,18 +145,21 @@ function createJapaneseInput({button, input, status, playbackButton, onError}) {
       announce('Playing your recording.');
       await entry.audio.play();
     } catch (error) { if (playbackOwns(entry)) { pauseReplay(); announce(`Recorded audio playback failed: ${describe(error)}`); } }
-  });
-  const controller = {reset() {
-    cancel(); discard(); announce('Microphone stopped. AI feedback evaluates text, not acoustic pronunciation.');
+  };
+  if (bindButton) playbackButton?.addEventListener('click', replay);
+  const controller = {toggle, replay, get active() { return Boolean(active && !active.stopped); }, reset() {
+    cancel(); discard(); announce('Micro sẵn sàng');
   }};
-  japaneseInputs.push(controller);
+  if (bindButton) japaneseInputs.push(controller);
   if (status) { status.setAttribute?.('role','status'); status.setAttribute?.('aria-live','polite'); }
-  button.disabled = !Recognition && !canRecord;
-  if (!Recognition && !canRecord) announce('Recording and browser transcription are unavailable. Nhập câu trả lời bằng bàn phím.');
-  else if (!Recognition) announce('Browser transcription is unavailable. You can record for replay or type your answer; AI feedback evaluates text only.');
-  else if (!canRecord) announce('Recording is unavailable. Browser transcription or manual text remains available.');
-  else announce('Microphone ready. AI feedback evaluates text, not acoustic pronunciation.');
-  draw();
+  if (bindButton) {
+    button.disabled = !Recognition && !canRecord;
+    if (!Recognition && !canRecord) announce('Recording and browser transcription are unavailable. Nhập câu trả lời bằng bàn phím.');
+    else if (!Recognition) announce('Browser transcription is unavailable. You can record for replay or type your answer; AI feedback evaluates text only.');
+    else if (!canRecord) announce('Recording is unavailable. Browser transcription or manual text remains available.');
+    else announce('Microphone ready. AI feedback evaluates text, not acoustic pronunciation.');
+    draw();
+  }
   return controller;
 }
 for (const event of ['hashchange','popstate','pagehide','vjbot-account-ready','vjbot-voice-changed']) addEventListener(event, stopJapaneseInputs);

@@ -107,9 +107,11 @@ test('OAuth inference pins the chosen opaque connection while read-aloud keeps i
   await b.context.apiFetch('/api/chat',{method:'POST',body:'{}'});
   await b.context.apiFetch('/api/kaiwa/evaluate',{method:'POST',body:'{}'});
   await b.context.apiFetch('/api/tts',{method:'POST',body:'{}'});
+  await b.context.apiFetch('/api/stt',{method:'POST',body:'{}'});
   assert.equal(new Headers(requests[1].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
   assert.equal(new Headers(requests[2].options.headers).get('X-VJBot-Profile'),'antigravity_oauth:opaque-first');
   assert.equal(new Headers(requests[3].options.headers).get('X-VJBot-Profile'),'voice-profile');
+  assert.equal(new Headers(requests[4].options.headers).get('X-VJBot-Profile'),'voice-profile');
 });
 
 test('missing, cleared and malformed OAuth choices fail closed instead of borrowing server active', async () => {
@@ -245,7 +247,7 @@ test('administrators send managed AI requests without reading private API, OAuth
     prepareRequest(){throw new Error('Managed AI must not read credentials');},
     voice(){throw new Error('Managed voice must not read saved voice');}
   };
-  for(const path of ['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/ai/test']){
+  for(const path of ['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/stt','/api/ai/test']){
     const body=JSON.stringify({message:'こんにちは',text:'こんにちは'});
     assert.equal((await b.context.apiFetch(path,{method:'POST',body})).status,200);
     const sent=calls.at(-1),headers=new Headers(sent.options.headers);
@@ -253,7 +255,7 @@ test('administrators send managed AI requests without reading private API, OAuth
     assert.equal(headers.get('X-VJBot-Account'),'alice');
     assert.equal(headers.get('X-VJBot-Profile'),'platform_openai');
   }
-  assert.equal(calls.length,5);assert.deepEqual([...b.storage],before);
+  assert.equal(calls.length,6);assert.deepEqual([...b.storage],before);
 });
 
 test('a role change while private credentials load blocks the stale request before dispatch',async()=>{

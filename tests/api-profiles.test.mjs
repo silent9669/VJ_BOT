@@ -211,7 +211,7 @@ test('only exact intended same-origin inference POST paths receive an immutable 
   const b = browser(), profile = await b.api.save(owner, draft());
   b.api.setActive(owner, {scope: 'local', id: profile.id});
   const options = Object.freeze({method: 'POST', headers: Object.freeze({'X-CSRF-Token': 'synthetic-csrf'}), body: JSON.stringify({message: 'Hello'})});
-  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/ai/test', 'https://tutor.example/api/chat']) {
+  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/stt', '/api/ai/test', 'https://tutor.example/api/chat']) {
     const prepared = await b.api.prepareRequest(path, options, owner), body = JSON.parse(prepared.body);
     assert.notEqual(prepared, options);
     assert.equal(body.api_connection.api_key, draft().api_key);
@@ -315,6 +315,20 @@ test('voice references persist per owner independently of chat and inject only a
   assert.equal(JSON.parse((await b.api.prepareRequest('/api/tts', options, owner)).body).api_connection.api_key, 'synthetic-voice-key');
   assert.equal(JSON.stringify([...b.storage]).includes('synthetic-voice-key'), false);
   await assert.rejects(b.api.prepareRequest('/api/chat', {method:'POST',body:'{}'}, owner), /No API profile/i);
+});
+
+test('recorded transcription keeps the active OpenAI key while read-aloud uses its independent Gemini key', async () => {
+  const b = browser(), options = {method:'POST',body:'{}'};
+  const chat = await b.api.save(owner, {...draft(),base_url:'https://api.openai.com/v1',api_key:'synthetic-openai-transcription-key'});
+  const voice = await b.api.save(owner, {...draft(),protocol:'gemini',base_url:'https://generativelanguage.googleapis.com',model:'',api_key:'synthetic-gemini-read-aloud-key'});
+  b.api.setActive(owner, {scope:'local',id:chat.id});
+  b.api.setVoice(owner, {scope:'local',id:voice.id});
+  const transcription = JSON.parse((await b.api.prepareRequest('/api/stt', options, owner)).body).api_connection;
+  const speech = JSON.parse((await b.api.prepareRequest('/api/tts', options, owner)).body).api_connection;
+  assert.equal(transcription.api_key,'synthetic-openai-transcription-key');
+  assert.equal(transcription.base_url,'https://api.openai.com/v1');
+  assert.equal(speech.api_key,'synthetic-gemini-read-aloud-key');
+  assert.equal(speech.protocol,'gemini');
 });
 
 test('missing, corrupt, deleted, unsupported and inaccessible voice choices never borrow chat', async () => {

@@ -84,3 +84,9 @@ Dùng version Worker trong dashboard hoặc `cf workers deployments`. Ghi lại 
 Các secret `ANTIGRAVITY_GATEWAY_URL`, `ANTIGRAVITY_MANAGEMENT_KEY`, `ANTIGRAVITY_API_KEY` chỉ cấu hình trên Worker khi đã có gateway riêng. Chúng không bắt buộc để dùng OpenAI hoặc API riêng. Không đưa giá trị secret vào repo public.
 
 `LOCAL_TEST_ADMIN_PASSWORD` chỉ dành cho Vite dev localhost trong `.dev.vars`; không thêm vào danh sách secret hay binding production. Migration 0021 lưu model, mức suy luận và giọng GPT-Live theo từng admin; không lưu khóa OpenAI. GPT-Live cần quyền truy cập `gpt-live-1` và hạn mức OpenAI đang hoạt động.
+
+## Voice và chép lời
+
+Voice dùng secret `OPENAI_API_KEY` hiện có để mở `gpt-live-1`; Kaiwa chép bản ghi bằng `gpt-transcribe` với API OpenAI đã chọn. Không cần secret mới hoặc migration mới cho đợt cập nhật sidebar/Voice. Giữ nguyên `AI_KEY_SECRET` khi deploy để API cá nhân đã mã hóa vẫn đọc được. Quyền truy cập model và hạn mức OpenAI phải còn hiệu lực.
+
+Sau deploy: đối chiếu asset `workbench.css`, `live.js`, `recorded-input.js` và HTML; kiểm tra `/api/stt`, `/api/live`, `/api/admin/ai` trả 401 khi chưa đăng nhập, `/api/auth/config` có `local_admin:false`, và tài khoản `admin` kiểm thử không đăng nhập được trên public host. Xác minh deployment đang phục vụ commit vừa merge trước khi báo hoàn tất.

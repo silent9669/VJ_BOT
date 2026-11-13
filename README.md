@@ -2,8 +2,9 @@
 
 [VJBot](https://vjbot.dangphuc.me/) giúp người Việt luyện JLPT N5–N1 theo lớp học đảo ngược: người học đọc bài trước, thầy Lâm hỏi, em tự nói và viết, thầy chỉ chấm và sửa. Giao diện chỉ dùng tiếng Việt và tiếng Nhật.
 
-- **Learners bring their own API or OAuth connection.** Administrators automatically use server OpenAI for chat, read-aloud and GPT-Live, without entering a personal key. Saved personal connections remain intact; missing server configuration never falls back to them. The server key is never sent to the browser.
-- **AI quản trị**: đổi model văn bản, mức suy luận và giọng GPT-Live trong Cài đặt > Model quản trị. Vào Thầy Lâm > Nói trực tiếp để hội thoại bằng micro.
+- **Learners bring their own API or OAuth connection.** Administrators automatically use server OpenAI for chat, read-aloud, recorded transcription and GPT-Live, without entering a personal key. Saved personal connections remain intact; missing server configuration never falls back to them. The server key is never sent to the browser.
+- **Administrator AI**: choose text models, reasoning and GPT-Live voice in Settings > Managed models. In Thầy Lâm, press **Voice** beside the composer for continuous speech, original captions and Vietnamese translations in a timestamped timeline.
+- **Practice**: grouped study/practice navigation, searchable lessons with completion filters, and separate timed official-paper simulations.
 - **Quản trị**: chủ sở hữu đăng nhập Google với email trong `ADMIN_EMAILS`; chủ sở hữu và admin có thể cấp/thu hồi quyền admin cho tài khoản đã đăng ký.
 - Chạy trên Cloudflare Worker + D1; giao diện HTML/CSS/JS thuần.
 
