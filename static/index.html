@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="practice.css">
   <link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="workspace.css"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="surfaces.css"><link rel="stylesheet" href="motion.css"><link rel="stylesheet" href="mascot.css">
   <link rel="stylesheet" href="refinements.css">
-  <link rel="stylesheet" href="compact.css">
+  <link rel="stylesheet" href="compact.css"><link rel="stylesheet" href="workbench.css">
 </head>
 <body data-page="landing">
   <a href="#main-content" class="skip-link">Đến nội dung chính</a>
@@ -46,107 +46,15 @@
 
     <!-- 1. LEFT SIDEBAR NAVIGATION (Apple Liquid Glass / Sketch Hybrid) -->
     <aside class="app-sidebar" id="app-sidebar" aria-label="Điều hướng">
-      <button type="button" id="sidebar-toggle" aria-label="Mở menu" aria-controls="app-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v14H4zM9 5v14M13 9l3 3-3 3"/></svg></button>
-      <button type="button" id="sidebar-close" aria-label="Đóng menu">×</button>
-
-      <!-- Sidebar Header (Contains ONLY 8-bit VJ Logo & VJBot Brand Name) -->
-      <div class="sidebar-header">
-        <div class="sidebar-brand">
-          <div class="vj-8bit-logo-wrap" title="VJBot 8-bit Logo">
-            <img src="favicon.svg?v=3" alt="Logo VJBot" class="vj-8bit-logo-img">
-          </div>
-          <div class="brand-text">
-            <div class="brand-title-row">
-              <span class="brand-name">VJBot</span>
-
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Student Profile Mini Chip in Sidebar -->
-        <div class="sidebar-user-card">
-          <button id="level-chip" type="button" class="sketch-chip chip-level" aria-label="Đổi trình độ" title="Nhấn để đổi trình độ JLPT">
-            <span class="chip-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
-            <span id="level-chip-text">Trình độ: N5</span>
-          </button>
-          <div class="sketch-chip chip-streak" title="Chuỗi ngày luyện tập">
-            <span class="chip-icon"></span>
-            <span id="streak-counter">0 ngày</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Navigation Menu Items -->
-      <nav class="sidebar-nav" aria-label="Điều hướng chính">
-
-        <div class="sidebar-nav-section">
-
-          <button type="button" class="sidebar-nav-item active sketch-tab" data-tab="dashboard" id="tab-btn-dashboard">
-
-            <span class="nav-label">Học tập</span>
-
-          </button>
-        </div>
-
-        <div class="sidebar-nav-section">
-
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom">
-
-            <span class="nav-label">Thầy Lâm</span>
-
-          </button>
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum">
-
-            <span class="nav-label">Lộ trình JLPT</span>
-
-          </button>
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Kanji</span></button>
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards">
-
-            <span class="nav-label">Thẻ nhớ</span>
-
-          </button>
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa">
-
-            <span class="nav-label">Luyện nói</span>
-
-          </button>
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz">
-
-            <span class="nav-label">Bài luyện JLPT</span>
-
-          </button>
-        </div>
-
-        <div class="sidebar-nav-section">
-
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery">
-
-            <span class="nav-label">Tiến độ</span>
-          </button>
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden>
-            <span class="nav-label">Quản trị</span>
-          </button>
-
-          <button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings">
-
-            <span class="nav-label">Cài đặt</span>
-          </button>
-        </div>
-
-      </nav>
-
-      <!-- Clean bottom status without bloated footer -->
-      <a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn bài học ↗</a>
-
+      <header class="sidebar-header">
+        <a class="sidebar-brand" href="#dashboard"><img src="favicon.svg?v=3" width="32" height="32" alt=""><span class="brand-text brand-name">VJBot</span></a>
+        <button type="button" id="sidebar-toggle" aria-label="Thu gọn menu" aria-controls="app-sidebar" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v14H4zM9 5v14M15 9l-3 3 3 3"/></svg></button>
+        <button type="button" id="sidebar-close" aria-label="Đóng menu">×</button>
+      </header>
+      <div class="sidebar-user-card"><button id="level-chip" type="button" aria-label="Đổi trình độ JLPT"><span id="level-chip-text">JLPT N5</span><span aria-hidden="true">⌄</span></button><span id="streak-counter" class="sidebar-streak">0 ngày</span></div>
+      <nav class="sidebar-nav" aria-label="Điều hướng chính"><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Học tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="dashboard" id="tab-btn-dashboard"><span class="nav-label">Tổng quan</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum"><span class="nav-label">Khóa học JLPT</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom"><span class="nav-label">Thầy Lâm</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery"><span class="nav-label">Tiến độ</span></button></section><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Luyện tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards"><span class="nav-label">Thẻ nhớ</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Kanji</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa"><span class="nav-label">Luyện nói</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz"><span class="nav-label">Bài luyện JLPT</span></button></section></nav>
+      <div class="sidebar-companion" id="sidebar-companion"></div>
+      <footer class="sidebar-footer"><div class="sidebar-utilities"><button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden><span class="nav-label">Quản trị</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings"><span class="nav-label">Cài đặt</span></button></div><a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn học liệu ↗</a><button type="button" class="sidebar-account" id="sidebar-account"><span class="sidebar-account-initial" id="sidebar-account-initial" aria-hidden="true">A</span><span class="sidebar-account-copy"><strong id="sidebar-account-name">Tài khoản</strong><span id="sidebar-account-role"></span></span></button></footer>
     </aside>
 
     <!-- Mobile Drawer Overlay -->
@@ -227,7 +135,7 @@
           <div id="chat-lesson-context" hidden></div><div class="classroom-layout">
 
             <!-- SENSEI STAGE (MASCOT PODIUM) -->
-            <aside class="sensei-stage-card" data-od-id="sensei-podium">
+            <aside class="sensei-stage-card" data-od-id="sensei-podium" hidden>
               <div class="tape-strip tape-top-center"></div>
 
               <div class="sensei-podium-header">
@@ -311,7 +219,6 @@
                   </div>
                 </div>
                 <div class="chat-header-actions">
-                  <div class="chat-mode-switch" role="group" aria-label="Kiểu hội thoại"><button type="button" data-chat-mode="text" aria-pressed="true">Nhắn tin</button><button type="button" data-chat-mode="live" id="chat-live-toggle" aria-pressed="false" hidden>Nói trực tiếp</button></div>
 
                   <button type="button" class="sketch-icon-btn" id="btn-clear-chat-history" title="Xóa lịch sử hội thoại">
                     Xóa
@@ -320,11 +227,11 @@
               </div>
 
               <section id="classroom-voice" class="classroom-voice" hidden aria-label="Trò chuyện trực tiếp với thầy Lâm">
-                <div id="live-stage" class="live-stage" data-active="false"><img src="assets/lam/pixel/display/south.png" width="88" height="156" alt="Thầy Lâm"><div><h2>Trò chuyện cùng thầy</h2><p id="live-model-name">GPT-Live · Tiếng Nhật</p><span id="live-duration">00:00</span></div></div>
-                <div class="live-captions"><section><h3>Thầy Lâm</h3><p id="live-teacher-caption" lang="ja"></p></section><section><h3>Em</h3><p id="live-user-caption" lang="ja"></p></section></div>
-                <audio id="live-audio" autoplay controls aria-label="Giọng nói AI của thầy Lâm"></audio>
+                <header class="live-heading"><button type="button" class="stage-btn" data-chat-mode="text">← Về nhắn tin</button><span>Hội thoại trực tiếp</span></header><div id="live-stage" class="live-stage" data-active="false"><img src="assets/lam/pixel/display/south.png" width="88" height="156" alt="Thầy Lâm"><div><h2>Trò chuyện cùng thầy</h2><p id="live-model-name">GPT-Live · Tiếng Nhật</p><span id="live-duration">00:00</span></div></div>
+                <canvas id="live-wave" width="640" height="96" role="img" aria-label="Mức âm thanh micro và giọng thầy"></canvas><div class="live-captions"><section><h3>Thầy Lâm</h3><p id="live-teacher-caption" lang="ja"></p></section><section><h3>Em</h3><p id="live-user-caption" lang="ja"></p></section></div>
+                <audio id="live-audio" autoplay playsinline aria-label="Giọng nói AI của thầy Lâm"></audio>
                 <p id="live-status" role="status">Giọng nói AI · Micro chỉ bật khi em bắt đầu.</p>
-                <div class="live-controls"><button type="button" class="public-cta" id="live-start">Bắt đầu nói</button><button type="button" class="stage-btn" id="live-mute" aria-pressed="false" disabled>Tắt micro</button><button type="button" class="stage-btn" id="live-end" disabled>Kết thúc</button></div>
+                <div class="live-controls"><button type="button" class="public-cta" id="live-start">Bắt đầu nói</button><button type="button" class="stage-btn" id="live-play-audio" hidden>Bật âm thanh</button><button type="button" class="stage-btn" id="live-mute" aria-pressed="false" hidden disabled>Tắt micro</button><button type="button" class="stage-btn" id="live-end" hidden disabled>Kết thúc</button></div>
               </section>
               <div id="classroom-text" class="classroom-text">
               <!-- Messages Scroll Stage -->
@@ -363,12 +270,13 @@
               </div>
 
               <div id="chat-error" role="alert" hidden><span id="chat-error-text"></span><div><button type="button" id="chat-open-settings" hidden>Cài đặt API</button><button type="button" id="chat-retry">Thử lại</button><button type="button" id="chat-discard" hidden>Bỏ qua</button></div></div>
+
               <!-- Chat Input Bar -->
               <form class="chat-input-bar" id="chat-form" onsubmit="return false;">
-                <button type="button" class="chat-audio-btn" id="btn-voice-input" title="Nói tiếng Nhật (Nhận diện giọng nói)">
-                  <span id="mic-icon">Nói</span>
+                <button type="button" class="chat-audio-btn" id="btn-voice-input" aria-label="Voice · Trò chuyện trực tiếp" title="Trò chuyện liên tục bằng giọng nói">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3v18M7 7v10M17 7v10M3 10v4M21 10v4"/></svg><span id="mic-icon">Voice</span>
                 </button>
-                <textarea id="chat-input" class="sketch-input chat-text-input" rows="2" maxlength="6000" placeholder="Viết tiếng Nhật hoặc tiếng Việt…" aria-label="Tin nhắn cho thầy Lâm"></textarea>
+                <textarea id="chat-input" class="sketch-input chat-text-input" rows="1" maxlength="6000" placeholder="Nhắn cho thầy Lâm…" aria-label="Tin nhắn cho thầy Lâm"></textarea>
                 <button type="submit" id="btn-send-message" class="sketch-btn-cta chat-send-btn">
                   <span>Gửi</span>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -1050,7 +958,7 @@
   <script src="teacher-context.js"></script>
   <script src="completion.js"></script>
   <script src="navigation.js"></script>
-  <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="speech-input.js"></script><script src="app.js"></script>
+  <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="recorded-input.js"></script><script src="speech-input.js"></script><script src="app.js"></script>
   <script src="mascot.js"></script>
   <script src="refinements.js"></script>
   <script src="admin-ai.js"></script>

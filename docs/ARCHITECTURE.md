@@ -29,16 +29,19 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 | `src/tutor-chat.js`, `tutor-session.js`, `tutor-context.js` | Canonical item selection, quoted request envelopes, durable teaching state and database-fenced generation ownership |
 | `src/exams.js` | Lưu và kiểm tra trạng thái bài thi thử |
 | `cloudflare.config.ts` | Worker `vjbot`, D1, secrets, placement `gcp:us-east4` |
-| `migrations/` | D1 schema (0001–0019). Never change applied migrations; add a new file |
+| `migrations/` | D1 schema (0001–0021). Never change applied migrations; add a new file |
 | `static/index.html` | Toàn bộ khung trang, dialog đăng nhập, panel các tab |
 | `static/app.js` | Điều hướng tab, chat, thẻ nhớ, Kaiwa, quiz, tiến độ, âm thanh |
 | `static/account.js`, `ai-settings.js`, `admin-users.js` | Phiên, đăng nhập, `apiFetch`; thẻ API AI trong Cài đặt, panel Quản trị, cổng chat; danh sách và hộp thoại quản lý người dùng |
 | `static/teacher-context.js` | `teacherContext()` returns visible screen evidence plus canonical lesson/focus references. It remembers the learning context for 30 minutes when entering chat, derives level from the current route, and excludes hidden sessions, generated feedback and learner inputs |
-| `static/mascot.js`, `mascot.css` | Thầy Lâm pixel: đi dạo ngang trang, phản ứng khi rê chuột (câu chào theo màn hình đang xem), bấm để mở ô hỏi, kéo thả đi bất kỳ đâu (vị trí lưu trong `localStorage`), nhấp đúp để về sàn. Ảnh trong `static/assets/lam/pixel/` (4 hướng + 4 khung thở). Giảm chuyển động: đứng yên. Màn hình hẹp: đỗ góc phải trên thanh dưới |
+| `static/mascot.js`, `mascot.css` | Nhân vật pixel trong sidebar; bấm mở ô hỏi, hoạt ảnh nghỉ, giảm chuyển động. Không kéo đè lên nội dung |
 | `static/learning.js`, `study-plan.js`, `lesson-checks.js`, `completion.js`, `practice.js` | Dựng bài học từ dữ liệu, lộ trình, 5 câu kiểm tra, đánh dấu hoàn thành, luyện tập |
-| `static/navigation.js`, `workspace.js` | Route theo hash, sidebar, dashboard, level hub |
+| `static/navigation.js`, `workspace.js` | Route theo hash, sidebar, dashboard, level hub và catalog luyện/thi thử |
+| `src/transcription.js`, `static/recorded-input.js`, `speech-input.js` | Kaiwa: bản ghi giới hạn, chép lời OpenAI và nhận diện trình duyệt dự phòng, hủy khi rời bài |
+| `src/live.js`, `static/live.js` | Admin Voice liên tục: SDP qua Worker, media WebRTC trực tiếp OpenAI, waveform Web Audio, phụ đề tạm thời |
+| `src/admin-ai.js`, `static/admin-ai.js` | Catalog model/suy luận hợp lệ, tùy chọn từng admin |
 | `static/vi-labels.js` | Nhãn và công thức ngữ pháp tiếng Việt, nạp từ điển dịch |
-| `static/*.css` | Nhiều lớp CSS chồng lên nhau, xem [ROADMAP](ROADMAP.md). `surfaces.css` (nạp trước `motion.css`) là hệ thống bề mặt dùng chung: thẻ, pill trạng thái, hộp thoại/popover/overlay, khối bài học, bố cục Cài đặt hai cột. `motion.css` nạp cuối cùng: token chuyển động (`--ease-out`, `--dur-1..3`) và độ nổi (`--elev-1..3`), hiệu ứng vào trang, so le, hover, hộp thoại; chỉ chạy khi không bật giảm chuyển động |
+| `static/*.css` | Nhiều lớp CSS chồng lên nhau, xem [ROADMAP](ROADMAP.md). `surfaces.css` (nạp trước `motion.css`) là hệ thống bề mặt dùng chung: thẻ, pill trạng thái, hộp thoại/popover/overlay, khối bài học, bố cục Cài đặt hai cột. `workbench.css` nạp cuối, điều chỉnh sidebar/chat/catalog; `motion.css` cung cấp token chuyển động (`--ease-out`, `--dur-1..3`) và độ nổi (`--elev-1..3`), hiệu ứng vào trang, so le, hover, hộp thoại; chỉ chạy khi không bật giảm chuyển động |
 | `static/course/` | `chapters.json` (40 chương), `practical.json` (20 tình huống), `exams.json`, `*-resources.json`, `vi-grammar.json`, `vi-dict.json` (tùy chọn) |
 | `static/openjlpt/` | Dữ liệu OpenJLPT cố định phiên bản (CC BY-SA 4.0) |
 | `scripts/` | Python: crawl nguồn, import dữ liệu, `translate_corpus.py` |

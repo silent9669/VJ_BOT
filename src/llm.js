@@ -88,7 +88,7 @@ function incomplete(protocol, data) {
 
 // Tries provider.models in order (fallback on 404/429/5xx) inside one budget below the browser's 35s timeout.
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
-export async function callLLM(provider, {system, turns, schema, schemaName}, {budgetMs = 28000, attemptMs = 15000} = {}) {
+export async function callLLM(provider, {system, turns, schema, schemaName}, {budgetMs = 28000, attemptMs = provider.reasoningEffort && provider.reasoningEffort!=='none' ? 27000 : 15000} = {}) {
   const deadline = Date.now() + budgetMs, history = normalizeTurns(turns);
   let status = 503, retryAfterMs;
   for (const model of provider.models) {

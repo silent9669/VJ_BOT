@@ -470,7 +470,7 @@ async function sendMessage(text,retry=false,options={}) {
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
   document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','true');
   if(!retry)renderBubble('user',text);
-  if(!retry || input.value.trim()===text)input.value='';
+  if(!retry || input.value.trim()===text){input.value='';input.style.height='44px';}
   soundEngine.playSend();mascotMgr.setState('thinking');
   try {
     const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body});
@@ -1247,7 +1247,7 @@ function setupEventListeners() {
   document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
   const voiceButton=document.getElementById('btn-voice-input');
-  createJapaneseInput({button:voiceButton,input:document.getElementById('chat-input'),onError:message=>chatError(message,null)});
+  voiceButton.addEventListener('click',()=>window.openLiveConversation?.());
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
   document.getElementById('kaiwa-level').onchange=e=>switchTab('kaiwa',{level:e.target.value});
@@ -1353,6 +1353,7 @@ function setupEventListeners() {
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   if (chatForm && chatInput) {
+    chatInput.addEventListener('input',()=>{chatInput.style.height='44px';chatInput.style.height=Math.min(chatInput.scrollHeight+2,120)+'px';});
     chatInput.addEventListener('keydown',event=>{
       if(event.key==='Enter' && !event.shiftKey && !event.isComposing){event.preventDefault();chatForm.requestSubmit();}
     });
@@ -1417,7 +1418,7 @@ function setupEventListeners() {
         });
         if(!response.ok)throw new Error("save");
         activeCurriculumLevel = lvl;
-        document.getElementById("level-chip-text").textContent = `Trình độ: ${lvl}`;
+        document.getElementById("level-chip-text").textContent = `JLPT ${lvl}`;
         status.textContent="";
         if (levelPicker) levelPicker.hidden = true;
         if(location.hash.startsWith('#curriculum/'))openLevelCourse(lvl);else restoreAppRoute();
@@ -1659,7 +1660,7 @@ function setupEventListeners() {
       const prof = await res.json();
       const chipText = document.getElementById("level-chip-text");
       if (chipText && prof.level) {
-        chipText.textContent = `Trình độ: ${prof.level}`;
+        chipText.textContent = `JLPT ${prof.level}`;
         activeCurriculumLevel = prof.level;
       }
     }

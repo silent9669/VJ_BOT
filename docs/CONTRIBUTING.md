@@ -14,7 +14,7 @@ npm run dev                      # http://localhost:8787
 - Đăng nhập Google cục bộ cần origin `http://localhost:8787` trong Google OAuth. Cách nhanh để thử giao diện: đăng ký tài khoản email (mật khẩu 12+ ký tự) ngay trên trang.
 - Muốn thử quyền admin cục bộ, điền `LOCAL_TEST_ADMIN_PASSWORD` trong `.dev.vars`, rồi đăng nhập `admin` với mật khẩu đó. Chỉ dev localhost chấp nhận tài khoản này; không khai báo secret kiểm thử trong Cloudflare production.
 - Admin dùng `OPENAI_API_KEY` phía máy chủ. Tài khoản miễn phí thêm kết nối API riêng trong Cài đặt > Kết nối AI.
-- Kiểm tra model/suy luận trong Cài đặt > Model quản trị; kiểm tra GPT-Live ở Thầy Lâm > Nói trực tiếp. Micro cần HTTPS hoặc localhost.
+- Kiểm tra model/suy luận trong Cài đặt > Model quản trị; kiểm tra GPT-Live ở Thầy Lâm > Voice. Micro cần HTTPS hoặc localhost.
 
 ## Quy trình
 
@@ -31,11 +31,11 @@ npm run build
 git diff --check
 ```
 
-`npm run test:python` chỉ cho `scripts/` và `app/` cũ. Test Node dùng DOM giả: với thay đổi giao diện hãy mở trang thật, kiểm tra bàn phím, 375 px và 1280 px, console, `prefers-reduced-motion`. Với thay đổi lưu dữ liệu, thử tải lại và hai tài khoản khác nhau. Đừng báo "đã xác nhận" Google login, giọng đọc hay chat khi chưa chạy thật; phân biệt rõ test cục bộ, CI và production.
+`npm run test:python` chỉ cho `scripts/` và `app/` cũ. Test Node dùng DOM giả: với thay đổi giao diện hãy mở trang thật, kiểm tra bàn phím, 390, 768, 1024 và 1440 px, console, `prefers-reduced-motion`. Với thay đổi lưu dữ liệu, thử tải lại và hai tài khoản khác nhau. Đừng báo "đã xác nhận" Google login, giọng đọc hay chat khi chưa chạy thật; phân biệt rõ test cục bộ, CI và production.
 
 ## Quy ước
 
-- **Ngôn ngữ giao diện**: chỉ tiếng Việt và tiếng Nhật. Không thêm chuỗi tiếng Anh vào giao diện, `title`, `aria-label`, `alt`. Dữ liệu nguồn tiếng Anh đi qua `vi-labels.js`/`vi-dict.json`.
+- **Ngôn ngữ giao diện**: chỉ tiếng Việt và tiếng Nhật. Không thêm chuỗi tiếng Anh vào giao diện, `title`, `aria-label`, `alt`, ngoại trừ tên model/thương hiệu và nút Voice được yêu cầu. Dữ liệu nguồn tiếng Anh đi qua `vi-labels.js`/`vi-dict.json`.
 - **Giữ stack hiện tại**: HTML/CSS/JS thuần. Không chuyển React nếu chưa thống nhất. Tránh thêm `!important` mới; xem [ROADMAP](ROADMAP.md) về việc gộp CSS.
 - **Văn bản ngắn**: bỏ khẩu hiệu, nhãn phụ, chữ trợ giúp. Nếu màn hình cần chúng mới hiểu được thì sửa bố cục.
 - **Trợ năng**: giữ điều hướng bàn phím, `dialog` gốc, mục chạm tối thiểu 44 px trên điện thoại, giảm chuyển động.
@@ -48,3 +48,10 @@ git diff --check
 ## Thay đổi prompt của thầy Lâm
 
 `src/prompt.js` quyết định chất lượng dạy. Sau khi sửa: chạy `npm test`, rồi chạy tay một hội thoại 5 lượt (sai, gợi ý, đúng, tự giải thích, kết thúc) ở N5 và N3, và dán kết quả vào PR.
+
+## Kiểm thử giọng nói và điều hướng
+
+- Voice: một lần nhấn mở và kết nối; hai lượt nói liên tiếp, phụ đề hai vai, âm thanh đầu ra và waveform. Thử mute/unmute, về nhắn tin, rời route, từ chối micro và đổi tài khoản trong lúc kết nối; không còn track hoạt động sau khi đóng.
+- Kaiwa: ghi/dừng/chép, sửa văn bản trước gửi, nghe lại. Rời bài khi đang xin quyền hoặc đang chép không được ghi đáp án trễ vào bài mới. Thử API cá nhân, admin mặc định và nhà cung cấp không hỗ trợ chép lời.
+- Tablet phải hiện rail và không làm nội dung `inert`. Điện thoại phải giữ focus trong drawer, Escape trả focus, chọn trang đóng menu. Kiểm tra sidebar ngắn bằng cuộn và giảm chuyển động.
+- Kiểm thử model mới bằng yêu cầu chat thực, giữ lựa chọn admin trước/sau kiểm thử. Danh sách model là catalog hỗ trợ, không đảm bảo mọi khóa đều có quyền/hạn mức.

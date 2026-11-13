@@ -1,0 +1,148 @@
+/* Navigation is persistent from 740px; only the phone drawer covers content. */
+.app-shell #app-sidebar {justify-content:flex-start;box-shadow:none;overflow:auto;visibility:visible;overscroll-behavior:contain;border-right:1px solid var(--line)!important}
+#app-sidebar .sidebar-header {flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px!important;min-height:64px;flex-shrink:0}
+#app-sidebar .sidebar-brand {padding:0;text-decoration:none;color:var(--ink);gap:10px}
+#app-sidebar .brand-name {font:600 20px var(--font-sans);margin:0;letter-spacing:-.05em}
+#app-sidebar #sidebar-toggle {display:flex;width:32px;min-height:32px;height:32px;margin:0!important;border:0;background:none;flex-shrink:0}
+#app-sidebar #sidebar-toggle svg {width:18px;height:18px}
+#app-sidebar .sidebar-user-card {display:flex!important;align-items:center;justify-content:space-between;gap:8px;margin:0 14px 8px!important;padding:6px 0!important;background:none;border:0;flex-shrink:0}
+#level-chip {display:flex;gap:16px;align-items:center;border:1px solid var(--line);border-radius:5px;background:var(--sheet);color:var(--ink);font:500 12px var(--font-sans);padding:6px 10px;min-height:32px;cursor:pointer}
+.sidebar-streak {font-size:11px;color:var(--muted);white-space:nowrap}
+#app-sidebar .sidebar-nav {flex:0 0 auto;margin:0;padding:0 10px!important;gap:8px}
+#app-sidebar .sidebar-nav-section {display:flex;flex-direction:column;gap:2px;margin:0 0 8px!important}
+.sidebar-group-label {font-size:11px;font-weight:500;color:var(--muted);padding:8px 12px 4px;margin:0}
+#app-sidebar .sidebar-nav-item {height:38px;min-height:38px;min-width:0;padding:8px 12px;gap:12px;border-radius:5px;font-size:13px;font-weight:400;line-height:1.3;justify-content:flex-start;flex-shrink:0}
+#app-sidebar .sidebar-nav-item .nav-label {font-size:inherit}
+#app-sidebar .rail-icon {width:18px;height:18px;min-width:18px}
+#app-sidebar .sidebar-nav-item.active {color:var(--ink)!important;font-weight:600;background:var(--raised)!important}
+#app-sidebar .sidebar-companion {flex:1;min-height:12px;display:flex;align-items:flex-end;justify-content:center;padding:8px 12px}
+#app-sidebar #lam-walker {position:relative;inset:auto!important;display:flex!important;width:100%;height:100px;max-width:196px;min-height:44px;flex-direction:row;justify-content:center;align-items:flex-end;gap:10px;touch-action:auto;transform:none!important;border-bottom:1px solid var(--line);border-radius:0;padding:0 0 8px}
+#app-sidebar #lam-walker img {width:48px;height:88px;object-fit:contain}
+#app-sidebar #lam-walker .lam-label {font:500 12px var(--font-sans);background:none;padding:8px 0;border:0;box-shadow:none;white-space:nowrap;color:var(--muted);margin:0}
+#app-sidebar .lam-speech {display:none!important}
+#app-sidebar .sidebar-footer {flex-shrink:0;border:0;padding:0 10px 12px;gap:4px;margin:0}
+.sidebar-utilities {display:flex;flex-direction:column;gap:2px}
+#app-sidebar .sidebar-sources {font-size:11px;padding:8px 12px;margin:0;line-height:1.5;color:var(--muted)}
+.sidebar-account {display:flex;align-items:center;gap:10px;width:100%;border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 8px 0;margin-top:4px;background:none;text-align:left;color:var(--ink);cursor:pointer;min-height:44px;font:inherit}
+.sidebar-account-initial {display:grid;place-content:center;width:30px;height:30px;background:var(--raised);border-radius:50%;font-size:12px;flex-shrink:0}
+.sidebar-account-copy {display:flex;flex-direction:column;min-width:0;font-size:11px;color:var(--muted)}
+.sidebar-account-copy strong {font-size:12px;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:145px}
+@media(min-width:740px) {
+  .app-shell #app-sidebar {position:sticky;top:0;height:100dvh;transform:none!important;width:72px!important;min-width:72px!important;max-width:72px;z-index:50}
+  body.sidebar-expanded .app-shell #app-sidebar {width:232px!important;min-width:232px!important;max-width:232px}
+  .sidebar-backdrop {display:none!important}.app-main #btn-mobile-sidebar {display:none!important}#sidebar-close {display:none!important}
+  .mobile-bottom-bar {display:none!important}
+  body:not(.sidebar-expanded) #app-sidebar .sidebar-header {flex-direction:column;padding:14px 8px 8px!important;gap:8px}
+  body:not(.sidebar-expanded) #app-sidebar :is(.brand-text,.nav-label,.sidebar-user-card,.sidebar-group-label,.sidebar-sources,.sidebar-account-copy) {display:none!important}
+  body:not(.sidebar-expanded) #app-sidebar .sidebar-nav-item {justify-content:center;padding:10px 0;height:42px;min-height:42px}
+  body:not(.sidebar-expanded) #app-sidebar .sidebar-nav {padding:0 10px!important;gap:8px}
+  body:not(.sidebar-expanded) #app-sidebar .sidebar-nav-section+.sidebar-nav-section {border-top:1px solid var(--line);padding-top:8px}
+  body:not(.sidebar-expanded) #app-sidebar #lam-walker {height:72px;padding-bottom:4px}
+  body:not(.sidebar-expanded) #app-sidebar #lam-walker img {width:32px;height:58px}
+  body:not(.sidebar-expanded) #app-sidebar #lam-walker .lam-label {display:none}
+  body:not(.sidebar-expanded) #app-sidebar .sidebar-account {justify-content:center;padding:12px 0 0}
+}
+@media(max-width:739px) {
+  .app-shell #app-sidebar {position:fixed;inset:0 auto 0 0;width:276px!important;min-width:276px!important;max-width:calc(100vw - 48px);height:100dvh;transform:translateX(-100%);z-index:1100}
+  .app-shell #app-sidebar.open {transform:translateX(0)}
+  .app-shell #app-sidebar .sidebar-header {padding:12px 16px!important}
+  #app-sidebar #sidebar-toggle {display:none}#sidebar-close {display:grid;place-content:center;border:0;background:none;font-size:24px;width:44px;height:44px;color:var(--ink)}
+  #app-sidebar .sidebar-nav-item {min-height:44px;height:44px}
+  #app-sidebar .sidebar-sources {min-height:44px;display:flex!important;align-items:center}
+  #app-sidebar .sidebar-account {min-height:52px}
+  #app-sidebar .sidebar-companion {min-height:0;padding:0 12px}
+  #app-sidebar #lam-walker {height:80px}
+  #app-sidebar #lam-walker img {height:72px;width:40px}
+  .sidebar-backdrop.active {display:block;position:fixed;inset:0;background:#20272052;z-index:1090}
+  .app-main #btn-mobile-sidebar {display:inline-flex!important}
+}
+/* The conversation owns one readable column and a stable composer. */
+#panel-classroom {max-width:960px}
+#panel-classroom .classroom-layout {display:block}
+#panel-classroom .classroom-chat-window {width:100%;margin:0;min-height:480px;height:calc(100dvh - 104px);max-height:1100px;overflow:hidden}
+#panel-classroom .chat-header {flex-shrink:0;min-height:64px}
+#panel-classroom .chat-title {font-size:16px!important;line-height:1.5}
+#panel-classroom .chat-messages-stage {padding:24px 28px}
+#panel-classroom .chat-bubble-row {margin-bottom:24px}
+#panel-classroom .bubble-speech-card {max-width:85%;flex:0 1 auto;width:auto!important}
+#panel-classroom .bubble-speech-card:not(.user) {flex:1;max-width:calc(100% - 36px)}
+#panel-classroom .bubble-header-meta {display:flex;align-items:center;gap:16px;justify-content:space-between}
+#panel-classroom .bubble-tts-btn {margin:0 0 0 auto;min-height:32px;min-width:44px;border:0;padding:4px 8px;text-decoration:none;color:var(--muted);white-space:nowrap}
+#panel-classroom .chat-chips-bar {flex-wrap:nowrap!important;overflow:auto!important;scrollbar-width:thin;padding:4px 16px;gap:4px;flex-shrink:0}
+#panel-classroom .chat-chips-bar .prompt-chip {min-height:36px;font-size:12px;padding:6px 8px;background:none;border:0;flex:none}
+#panel-classroom .chat-input-bar {border-top:1px solid var(--line);padding:12px 16px!important;flex-shrink:0;align-items:end}
+#panel-classroom .chat-audio-btn {display:flex;align-items:center;justify-content:center;gap:6px;min-width:82px;background:var(--surface-2);border:1px solid transparent;border-radius:6px;color:var(--ink)}
+#panel-classroom .chat-text-input {resize:none;min-height:44px;max-height:120px;height:44px}
+#chat-error {font-size:12px;padding:10px 16px;gap:8px}
+.live-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
+.live-heading .stage-btn {border:0;background:none;padding:4px 0}
+#panel-classroom .classroom-voice {padding:16px 24px;gap:12px}
+#panel-classroom .live-stage {background:none;min-height:128px;gap:20px}
+#panel-classroom .live-stage>img {height:112px;width:62px}
+#panel-classroom .live-stage h2 {font-size:20px;font-weight:500}
+#live-wave {display:block;width:100%;height:64px;max-width:640px;align-self:center;color:var(--accent);flex-shrink:0}
+.live-stage:not([data-active=true])+#live-wave {opacity:.35}
+#panel-classroom .live-captions {gap:24px;min-height:100px}
+#panel-classroom .live-captions p {margin-top:10px;min-height:24px;max-height:220px;font-size:15px}
+#panel-classroom .live-captions p:empty::after {content:'…';color:var(--muted)}
+#panel-classroom .live-controls {justify-content:center;flex-shrink:0;padding-top:8px}
+#live-start:disabled {display:none}
+#live-status {text-align:center}
+#live-audio {display:none}
+/* Short practice and timed papers share a compact list, with distinct entry points. */
+.exam-catalog-nav {display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;padding-bottom:8px}
+.exam-catalog-nav a {display:flex;align-items:center;min-height:36px;padding:6px 12px;font-size:13px;text-decoration:none;color:var(--muted);border-radius:4px}
+.exam-catalog-nav a[aria-current] {background:var(--raised);color:var(--ink);font-weight:500}
+#exam-catalog .exam-grid {display:block}
+#exam-catalog .exam-set {display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:16px;padding:16px 8px;border:0;border-bottom:1px solid var(--line);background:none;box-shadow:none;border-radius:0;min-height:72px}
+#exam-catalog .exam-set h2 {font-size:14px;font-weight:500;line-height:1.5;margin:0}
+.exam-set-copy {display:flex;flex-direction:column;gap:4px;min-width:0}
+.exam-set-copy p {margin:0;font-size:12px;color:var(--muted)}
+.exam-set-index,.exam-set-action {font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+#exam-catalog .exam-source-note {font-size:12px;color:var(--muted);margin-bottom:16px;max-width:680px;line-height:1.7}
+#panel-quiz .quiz-container {max-width:840px;margin:auto}
+#panel-quiz .quiz-question-area {padding:24px!important;background:var(--sheet);border:1px solid var(--line);border-radius:8px;box-shadow:none}
+#panel-quiz .quiz-option-btn {padding:14px 16px;min-height:52px;box-shadow:none;border-radius:6px;border:1px solid var(--line)}
+#panel-quiz .quiz-navigation {position:static;padding:16px 0;border:0;background:none}
+#simulation-workspace {max-width:960px;margin:auto}
+@media(hover:hover) and (pointer:fine) {
+  :is(.sidebar-account,#app-sidebar #sidebar-toggle,.exam-set):hover {background:var(--surface-2)}
+  #panel-classroom .chat-audio-btn:hover {border-color:var(--border-dark);background:var(--raised)}
+}
+@media(max-width:739px) {
+  #panel-classroom .classroom-chat-window {height:calc(100dvh - 136px);min-height:420px;width:calc(100% + 32px);margin:-4px -16px 0;border:0;border-radius:0}
+  #panel-classroom .chat-header {min-height:56px;flex-wrap:nowrap}
+  #panel-classroom .chat-messages-stage {padding:16px}
+  #panel-classroom .bubble-speech-card:not(.user) {max-width:100%}
+  #panel-classroom .bubble-speech-card {max-width:94%}
+  #panel-classroom .chat-input-bar {padding:10px 12px!important;gap:8px}
+  #panel-classroom .chat-chips-bar .prompt-chip {min-height:44px}
+  #panel-classroom .chat-audio-btn {min-width:44px;padding:8px}
+  #panel-classroom .chat-audio-btn span {display:none}
+  #panel-classroom .chat-text-input {font-size:16px}
+  #panel-classroom .classroom-voice {padding:12px 16px;gap:10px}
+  #panel-classroom .live-stage {min-height:100px;gap:16px}
+  #panel-classroom .live-stage>img {height:92px;width:50px}
+  #panel-classroom .live-stage h2 {font-size:18px}
+  #panel-classroom .live-captions {grid-template-columns:1fr;gap:12px;flex:1}
+  #panel-classroom .live-captions p {max-height:120px;margin-top:6px}
+  #live-wave {height:48px}.live-heading>span {display:none}
+  #exam-catalog .exam-set {grid-template-columns:24px minmax(0,1fr) auto;gap:8px;padding:12px 0}
+  .exam-catalog-nav a {min-height:44px}.exam-set-action {font-size:11px}
+  #panel-quiz .quiz-question-area {padding:16px!important}
+}
+@media(prefers-reduced-motion:reduce) {#app-sidebar,#app-sidebar * {animation:none!important;transition:none!important}}
+/* Practice uses the same control scale as the surrounding lesson. */
+:root {--practice-line:var(--line);--practice-green:var(--accent)}
+.lesson-mode-switch {margin-bottom:20px}
+.lesson-mode-switch button {padding:8px 12px;min-height:36px;font-size:13px;font-weight:500}
+.practice-meter {margin-bottom:20px;font-size:12px}.practice-meter progress {height:4px;border-radius:0}
+.practice-option {min-height:52px;border-radius:6px;border-color:var(--border-dark);background:var(--sheet);padding:12px 14px}
+.practice-option-number {width:24px;height:24px;border-radius:4px}
+.practice-primary {min-height:44px;padding:10px 18px!important;border-radius:6px!important;font-size:13px;font-weight:500}
+.practice-actions {margin-top:20px}
+@media(max-width:739px) {.lesson-mode-switch button {min-height:44px}.practice-option {min-height:56px}}
+.lesson-page .practice-actions {position:static;padding:0;background:none}
+.lesson-page-header {padding:16px 20px}
+.lesson-page-header h1 {font-size:24px;line-height:1.4}
+@media(max-width:739px) {.lesson-page-header h1 {font-size:22px}.lesson-page .practice-session legend {font-size:20px}}
