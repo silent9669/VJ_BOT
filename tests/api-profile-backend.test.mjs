@@ -71,6 +71,7 @@ test('0014 migrates the encrypted single connection byte-for-byte and preserves 
   await DB.prepare('INSERT INTO ai_providers VALUES(?,?,?,?,?,?,?)').bind('google:alice', 'openai', 'https://legacy.example.com/v1', 'legacy-model', encrypted, '1234', '2026-01-01T00:00:00.000Z').run();
   DB.sqlite.exec(readFileSync('migrations/0014_api_profiles.sql', 'utf8'));
   DB.sqlite.exec(readFileSync('migrations/0020_admin_grants.sql', 'utf8'));
+  DB.sqlite.exec(readFileSync('migrations/0021_admin_ai_preferences.sql', 'utf8'));
   const rows = await DB.prepare('SELECT * FROM ai_providers').all();
   assert.equal(rows.results.length, 1);
   assert.equal(rows.results[0].key_enc, encrypted);

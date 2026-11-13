@@ -22,7 +22,7 @@
     const list = el('ai-profile-list'), owner = signedInUser?.user_id;
     list.replaceChildren();
     const empty = document.createElement('option');
-    empty.value = ''; empty.textContent = 'Choose a saved account'; list.append(empty);
+    empty.value = ''; empty.textContent = 'Chọn API đã lưu'; list.append(empty);
     for (const [label, scope] of [['API key · This device', 'local'], ['API key · Server', 'server'], ['Antigravity OAuth', 'oauth']]) {
       const rows = scope === 'oauth' ? window.savedOAuthConnections?.() || [] : profilesOwner === owner ? profileRows.filter(row => row.scope === scope) : [];
       if (!rows.length) continue;
@@ -48,10 +48,10 @@
       ? (window.savedOAuthConnections?.() || []).find(row => 'oauth:' + row.id === choice)
       : profilesOwner === owner && profileRows.find(row => profileChoice(row) === choice);
     const shared = sharedProvider && !choice && !window.usesAntigravityOAuth?.(owner);
-    el('ai-current-model').textContent = currentProfile?.model || (shared ? sharedProvider.model : 'Choose a model to start chatting');
+    el('ai-current-model').textContent = currentProfile?.model || (shared ? sharedProvider.model : 'Chưa chọn kết nối');
     el('ai-current-hint').textContent = currentProfile
       ? `${currentProfile.name} · Saved setup. Live availability can change.`
-      : shared ? 'OpenAI của máy chủ · Quản trị viên' : 'Choose a saved account below, or add a new one.';
+      : shared ? 'OpenAI của máy chủ · Quản trị viên' : 'Chọn API đã lưu hoặc thêm kết nối.';
     el('ai-card').dataset.connected = String(Boolean(currentProfile?.model || shared));
     el('ai-chat').hidden = !currentProfile?.model && !shared;
     const apiProfile = profilesOwner === owner && profileRows.find(row => profileChoice(row) === profileChoice(VJProfiles.active(owner)));
@@ -72,7 +72,7 @@
     selectedProfile = profile;
     savedConnection = Boolean(profile);
     el('ai-form').dataset.draft = String(!profile);
-    el('ai-api-editor-title').textContent = profile ? 'Edit API-key connection' : 'Add an API-key account';
+    el('ai-api-editor-title').textContent = profile ? 'Edit API-key connection' : 'Thêm kết nối API';
     el('ai-api-back').hidden = Boolean(profile);
     el('ai-api-manage').open = !profile;
     el('ai-api-scan').open = Boolean(profile && !profile.model);
@@ -462,8 +462,9 @@
     el('settings-initial').textContent = (user.name || '?').trim().charAt(0).toUpperCase();
     el('settings-name').textContent = user.name || 'Học viên';
     el('settings-email').textContent = user.email || '';
-    el('settings-kind').textContent = user.user_id.startsWith('google:') ? KIND.google : KIND.email;
+    el('settings-kind').textContent = user.is_admin ? 'Quản trị viên' : user.user_id.startsWith('google:') ? KIND.google : KIND.email;
   }
+  window.renderAccountSettings = renderAccountCard;
 
   async function renderSettings() {
     if (testing) return;
@@ -508,16 +509,17 @@
       scanHint();
       if (!window.usesAntigravityOAuth?.(owner)) {
         el('ai-source').hidden = Boolean(profile);
-        el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Save a connection once, then switch profiles without entering keys again. Provider usage is unavailable for API-key connections.';
-        pill(profile ? 'saved' : 'none', profile ? `Using ${profile.name}` : 'No profile selected');
+        el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'The selected API profile is unavailable. Choose another profile; no fallback is used.' : 'Thêm API của em để sử dụng thầy Lâm.';
+        pill(profile ? 'saved' : 'none', profile ? `Đang dùng ${profile.name}` : 'Chưa chọn API');
       }
       const shared = sharedProvider && !choice && !profile && !window.usesAntigravityOAuth?.(owner);
       if (el('ai-platform')) { el('ai-platform').hidden=!shared; el('ai-platform-model').textContent=sharedProvider?.model || ''; }
       if (shared) {
         el('ai-form').hidden=true;
-        el('ai-source').hidden=false;el('ai-source').textContent='API dùng chung đã sẵn sàng cho tài khoản quản trị.';
+        el('ai-source').hidden=true;el('ai-source').textContent='';
         pill('saved','OpenAI đã sẵn sàng');
       }
+      if (!profile && !pending) el('ai-form').hidden=true;
       if (deviceError) status.textContent = deviceError;
     } catch (error) {
       if (version === rendering && signedInUser?.user_id === owner) { resetModels(); status.textContent = error.message; }
@@ -547,7 +549,7 @@
   }
 
   el('ai-platform-test')?.addEventListener('click', async () => {
-    const button=el('ai-platform-test');button.disabled=true;
+    const button=el('ai-platform-test');button.disabled=true;el('ai-source').hidden=false;
     try { await send('/api/ai/test','POST',{});el('ai-source').textContent='Kết nối OpenAI thành công.'; }
     catch(error){el('ai-source').textContent=error.message;}
     finally {button.disabled=false;}
@@ -558,7 +560,7 @@
 
   // There is no built-in AI: chat stays closed (with one clear next step) until the learner saves an API.
   const openAiSettings = () => {
-    switchTab('settings');
+    switchTab('settings',{view:'api'});
     setTimeout(() => { el('ai-card').scrollIntoView({block: 'start'}); el('ai-profile-list').focus({preventScroll: true}); }, 250);
   };
   async function aiSource() {
@@ -659,9 +661,7 @@
   });
   el('settings-logout').addEventListener('click', () => el('auth-logout').click());
   document.querySelectorAll('.settings-nav button').forEach(button => button.addEventListener('click', () => {
-    document.querySelectorAll('.settings-nav button').forEach(b => b.removeAttribute('aria-current'));
-    button.setAttribute('aria-current', 'true');
-    el(button.dataset.target).scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+    switchTab('settings',{view:button.dataset.settings});
   }));
   el('ai-profile-storage').addEventListener('change', () => { storageHint(); publishModels(); });
   el('ai-profile-new').addEventListener('click', () => {

@@ -19,7 +19,7 @@ const migrations = [
   '0010_chat_requests.sql', '0011_ai_providers.sql', '0012_profile_identity.sql',
   '0013_identity_backfill.sql', '0014_api_profiles.sql', '0015_conversation_scope.sql',
   '0016_google_ai_oauth.sql', '0017_antigravity_oauth.sql', '0018_antigravity_accounts.sql',
-  '0019_tutor_sessions.sql','0020_admin_grants.sql'
+  '0019_tutor_sessions.sql','0020_admin_grants.sql','0021_admin_ai_preferences.sql'
 ];
 
 function database(t) {

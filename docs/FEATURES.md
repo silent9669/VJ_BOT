@@ -62,3 +62,12 @@ OpenJLPT, bản `0d1d3410bec90bd4098a7c72de820543cb4f707c` (`evanclan/OpenJLPT`)
 Ô hỏi nhanh ⌘K dùng cùng lịch sử hội thoại, chặn gửi trùng và giữ nguyên mã yêu cầu khi thử lại. Ghi âm tiếng Nhật có nút dừng, giữ lỗi micro để sửa và giải phóng thiết bị khi chuyển màn hình. Có thể nhập câu trả lời trên trình duyệt không hỗ trợ nhận diện; Kaiwa chỉ nhận xét nội dung bản chép lời. Giọng AI dùng OpenAI chính thức hoặc Gemini-Google và có giọng trình duyệt dự phòng; nút Dừng đọc hủy cả yêu cầu đang tải.
 
 Mascot lớn ở góc màn hình máy tính; kéo hoặc dùng phím mũi tên để di chuyển, Home để trở về góc. Trên điện thoại, mascot nằm trong nút Hỏi thầy Lâm trên thanh đầu để không che nội dung. Favicon là khuôn mặt từ cùng sprite. Chuyển màn hình, hộp thoại và phản hồi bấm dùng cùng nhịp chuyển động; tắt chuyển động khi người dùng chọn giảm chuyển động.
+
+## Compact workspace and GPT-Live
+
+- Dashboard: next lesson, actual completion/review/streak counts, a compact chapter index and practice shortcuts. No mock progress figures.
+- Lesson library and practice lists: search, completion filters and 24-row pagination. Roadmap: search and grammar/situation/supplement filters.
+- Settings: independent account, AI connections, admin models, sound and data views, each with its own hash route. Opening account settings does not scan AI connections or fetch voice catalogs.
+- Admin text models: GPT-4.1 mini, GPT-5 mini, GPT-5.4 mini and GPT-5.4; reasoning options are restricted by model. Each admin keeps their own choices.
+- Live teacher: admin-only GPT-Live with microphone, live Japanese captions, mute/end controls, AI voice selection, connection failure cleanup and a ten-minute client session limit. Audio is sent to OpenAI; captions are not persisted.
+- The mascot portrait is shared by the sidebar, SVG/ICO favicon and touch icon. The larger companion stays in the desktop navigation area; mobile keeps the accessible topbar button. Reduced motion keeps all controls usable.

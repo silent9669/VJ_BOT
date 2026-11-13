@@ -103,10 +103,10 @@ async function renderStudyPlan(level){
     const done=required.filter(unitDone).length;
     const upcomingUnit=required.find(u=>!unitDone(u));
     const upcoming=upcomingUnit?.steps.find(s=>!marked(s));
-    host.innerHTML=`<div class="plan-overview"><div><h3>Bài học ${level}</h3><p>${done} / ${required.length} chương hoàn thành</p>${upcomingUnit?`<p class="plan-current-title">${escapeHtml(upcomingUnit.title)}</p>`:''}</div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${required.length}" aria-label="Chương hoàn thành"></progress></div><div class="plan-units"></div>`;
+    host.innerHTML=`<div class="plan-overview"><div><h3>Bài học ${level}</h3><p>${done} / ${required.length} chương hoàn thành</p>${upcomingUnit?`<p class="plan-current-title">${escapeHtml(upcomingUnit.title)}</p>`:''}</div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${required.length}" aria-label="Chương hoàn thành"></progress></div><div class="lesson-toolbar plan-toolbar"><label class="lesson-search">Tìm chương<input type="search" id="plan-search" placeholder="Tên chương hoặc chủ đề"></label><label class="lesson-status">Nhóm bài<select id="plan-category"><option value="all">Tất cả</option><option value="grammar">Ngữ pháp</option><option value="practical">Tình huống</option><option value="optional">Bổ trợ</option></select></label></div><p id="plan-count" class="lesson-count" role="status"></p><div class="plan-units"></div>`;
     host.querySelector('.plan-continue').onclick=()=>openStudyStep(upcoming || required[0].steps[0],level);
     for(const [index,unit] of units.entries()){
-      const detail=document.createElement('details');detail.className='plan-unit';detail.dataset.unit=unit.id;detail.open=units.some(u=>expanded.includes(u.id))?expanded.includes(unit.id):unit===upcomingUnit;detail.dataset.current=String(unit===upcomingUnit);detail.dataset.done=String(unitDone(unit));
+      const detail=document.createElement('details');detail.className='plan-unit';detail.dataset.unit=unit.id;detail.open=units.some(u=>expanded.includes(u.id))?expanded.includes(unit.id):unit===upcomingUnit;detail.dataset.current=String(unit===upcomingUnit);detail.dataset.done=String(unitDone(unit));detail.dataset.category=unit.optional?'optional':unit.type==='grammar'?'grammar':'practical';detail.dataset.search=[unit.title,unit.goal,...unit.steps.map(step=>step.lesson.title)].join(' ').normalize('NFKC').toLocaleLowerCase();
       const count=unit.steps.filter(marked).length;
       detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?' · tùy chọn':''}</strong><span>${unitDone(unit)?'Hoàn thành':`${count}/${unit.steps.length}`}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal)} <span>${unit.type==='grammar'?'Ngữ pháp · OpenJLPT':unit.optional?'Kana':'Tình huống · tiếng Việt'} · khoảng ${unit.minutes} phút</span></p></div>`;
       const list=detail.querySelector('.plan-steps');
@@ -121,6 +121,13 @@ async function renderStudyPlan(level){
       detail.addEventListener('toggle',()=>{if(detail.open)for(const other of host.querySelectorAll('.plan-unit'))if(other!==detail)other.open=false;});
       host.querySelector('.plan-units').append(detail);
     }
+    const filter=()=>{
+      const query=host.querySelector('#plan-search').value.trim().normalize('NFKC').toLocaleLowerCase(),category=host.querySelector('#plan-category').value;
+      let visible=0;
+      for(const unit of host.querySelectorAll('.plan-unit')){unit.hidden=!unit.dataset.search.includes(query) || (category!=='all' && category!==unit.dataset.category);if(!unit.hidden)visible++;}
+      host.querySelector('#plan-count').textContent=visible?`${visible} / ${units.length} chương`:'Không tìm thấy chương.';
+    };
+    host.querySelector('#plan-search').oninput=filter;host.querySelector('#plan-category').onchange=filter;filter();
 
   }catch{if(request!==studyPlanRequest)return;host.textContent='Chưa tải được lộ trình. ';const retry=document.createElement('button');retry.type='button';retry.textContent='Thử lại';retry.onclick=()=>renderStudyPlan(level);host.append(retry);}
 }

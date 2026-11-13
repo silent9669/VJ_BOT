@@ -4,6 +4,7 @@ import { callLLM, cleanBaseUrl, DEFAULT_BASES, failureMessage, listModels, probe
 import {seal, unseal} from './ai-secrets.js';
 import {antigravityProvider, ANTIGRAVITY_PROFILE, connectionIdOk} from './antigravity-gateway.js';
 import {rateLimited} from './ai-usage.js';
+import {ADMIN_MODELS, LIVE_VOICES, adminAISettings, saveAdminAISettings} from './admin-ai.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'no-store'}});
 const text = new TextEncoder();
@@ -11,8 +12,7 @@ const b64 = bytes => btoa(String.fromCharCode(...bytes));
 
 
 
-export const platformModel = env => env.OPENAI_MODEL || 'gpt-4.1-mini';
-const platformInfo = (env, admin) => admin ? {configured:Boolean(env.OPENAI_API_KEY), model:platformModel(env)} : null;
+const platformInfo = async (env, admin, userId) => admin ? {configured:Boolean(env.OPENAI_API_KEY), ...await adminAISettings(env,userId)} : null;
 
 const activeProfile = (env, userId) => env.DB.prepare(`SELECT p.* FROM ai_providers p
   JOIN ai_active_profiles a ON a.user_id=p.user_id AND a.profile_id=p.id WHERE p.user_id=?`).bind(userId).first();
@@ -40,8 +40,10 @@ export async function resolveProvider(env, userId, override, profileId) {
   const own = profileId !== undefined ? await ownedProfile(env, userId, profileId) : await activeProfile(env, userId);
   if (!own) {
     if (profileId !== undefined) return {error:'profile_changed'};
-    return env.OPENAI_API_KEY && await isAdmin(env, userId)
-      ? {source:'platform',protocol:'openai',baseUrl:DEFAULT_BASES.openai,apiKey:env.OPENAI_API_KEY,models:[platformModel(env)]} : null;
+    if (!env.OPENAI_API_KEY || !await isAdmin(env, userId)) return null;
+    const settings = await adminAISettings(env, userId);
+    return {source:'platform',protocol:'openai',baseUrl:DEFAULT_BASES.openai,apiKey:env.OPENAI_API_KEY,
+      models:[settings.model], reasoningEffort:settings.reasoning_effort};
   }
   if (!modelOk(own.model)) return {error: 'no_model'};
   const apiKey = await unseal(env, userId, own.key_enc);
@@ -92,12 +94,12 @@ async function body(request, limit = 4096) {
 const modelOk = value => typeof value === 'string' && value.length <= 100 && /^~?[\w.:\/-]+$/.test(value);
 const keyOk = value => typeof value === 'string' && /^[\x21-\x7e]{8,512}$/.test(value);
 
-async function overview(env) {
+async function overview(env, userId) {
   const since = days => new Date(Date.now() - days * 86400000).toISOString();
   const count = async (sql, ...p) => (await env.DB.prepare(sql).bind(...p).first()).n;
   const top = await env.DB.prepare(`SELECT c.user_id, count(*) n, (SELECT name FROM sessions s WHERE s.user_id=c.user_id LIMIT 1) name FROM conversations c WHERE c.role='user' AND c.timestamp>=? GROUP BY c.user_id ORDER BY n DESC LIMIT 8`).bind(since(7)).all();
   return {
-    shared_ai: {configured:Boolean(env.OPENAI_API_KEY),model:platformModel(env)},
+    shared_ai: {configured:Boolean(env.OPENAI_API_KEY),...await adminAISettings(env,userId)},
     users: await count('SELECT count(*) n FROM profiles'),
     active_7d: await count("SELECT count(DISTINCT user_id) n FROM conversations WHERE timestamp>=?", since(7)),
     messages_24h: await count("SELECT count(*) n FROM conversations WHERE role='user' AND timestamp>=?", since(1)),
@@ -191,11 +193,23 @@ export async function aiRoute(request, env, url) {
   if (expectedAccount !== null && expectedAccount !== user.user_id) return json({detail: 'The signed-in account changed. Reload before using API profiles.', code: 'account_changed'}, 409);
   const path = url.pathname, method = request.method, admin = await isAdmin(env, user.user_id);
 
+  if (path === '/api/admin/ai') {
+    if (!admin) return json({detail:'Chỉ quản trị viên được dùng cài đặt này.'},403);
+    if (method === 'GET') return json({settings:await adminAISettings(env,user.user_id),
+      configured:Boolean(env.OPENAI_API_KEY), models:ADMIN_MODELS, voices:LIVE_VOICES});
+    if (method === 'PUT') {
+      const data = await body(request);
+      if (!data || !await saveAdminAISettings(env,user.user_id,data)) return json({detail:'Model, mức suy luận hoặc giọng nói không hợp lệ.'},400);
+      return json({ok:true,settings:await adminAISettings(env,user.user_id)});
+    }
+    return json({detail:'Method not allowed'},405);
+  }
+
   if (path === '/api/ai/profiles' && method === 'GET') {
     const rows = await env.DB.prepare('SELECT * FROM ai_providers WHERE user_id=? ORDER BY name,id').bind(user.user_id).all();
     const active = await activeProfile(env, user.user_id);
     return json({profiles: await Promise.all(rows.results.map(row => publicProfile(env, user.user_id, row))),
-      active_id: active?.id || null, is_admin:admin, platform:platformInfo(env,admin), can_store: Boolean(env.AI_KEY_SECRET)});
+      active_id: active?.id || null, is_admin:admin, platform:await platformInfo(env,admin,user.user_id), can_store: Boolean(env.AI_KEY_SECRET)});
   }
   const profilePath = path.match(/^\/api\/ai\/profiles\/([^/]+)(\/activate)?$/);
   if ((path === '/api/ai/profiles' && method === 'POST') || (profilePath && method === 'PUT' && !profilePath[2])) {
@@ -219,7 +233,7 @@ export async function aiRoute(request, env, url) {
   if (path === '/api/ai/settings' && method === 'GET') {
     const row = await activeProfile(env, user.user_id);
     const own = row ? await publicProfile(env, user.user_id, row) : null;
-    const platform = platformInfo(env,admin);
+    const platform = await platformInfo(env,admin,user.user_id);
     return json({source:own?'own':platform?.configured?'platform':'none',is_admin:admin,own,platform,bases:DEFAULT_BASES,can_store:Boolean(env.AI_KEY_SECRET)});
   }
   if (path === '/api/ai/settings' && method === 'PUT') {
@@ -304,7 +318,7 @@ export async function aiRoute(request, env, url) {
 
   if (path.startsWith('/api/admin/')) {
     if (!admin) return json({detail: 'Không có quyền.'}, 403);
-    if (path === '/api/admin/overview' && method === 'GET') return json(await overview(env));
+    if (path === '/api/admin/overview' && method === 'GET') return json(await overview(env,user.user_id));
     if (path === '/api/admin/users' && method === 'GET') return json(await listUsers(env, url));
     if (path === '/api/admin/user' && method === 'GET') {
       const detail = await userDetail(env, url.searchParams.get('id') || '');

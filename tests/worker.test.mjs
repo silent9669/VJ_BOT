@@ -30,7 +30,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql','0014_api_profiles.sql','0015_conversation_scope.sql','0016_google_ai_oauth.sql','0017_antigravity_oauth.sql','0018_antigravity_accounts.sql','0019_tutor_sessions.sql','0020_admin_grants.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql','0014_api_profiles.sql','0015_conversation_scope.sql','0016_google_ai_oauth.sql','0017_antigravity_oauth.sql','0018_antigravity_accounts.sql','0019_tutor_sessions.sql','0020_admin_grants.sql','0021_admin_ai_preferences.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,exec:sql=>db.exec(sql),batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -845,4 +845,85 @@ test('official OpenAI speech uses the resolved key; proxy providers never receiv
     response=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);
     assert.equal(response.status,503);assert.equal((await response.json()).code,'tts_unavailable');
   }finally{globalThis.fetch=previous;}
+});
+
+test('localhost admin login requires the local secret and cannot be replayed on a public host',async()=>{
+  const env={DB:database(),LOCAL_TEST_ADMIN_PASSWORD:'local-test-password',OPENAI_API_KEY:'sk-server-local-test'};
+  const login=(origin,password='local-test-password')=>new Request(origin+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'admin',password})});
+  assert.equal((await worker.fetch(login('https://vjbot.test'),env)).status,400);
+  assert.equal((await worker.fetch(login('http://localhost:8790','wrong'),env)).status,401);
+  assert.equal((await worker.fetch(login('http://localhost:8790'),{...env,LOCAL_TEST_ADMIN_PASSWORD:undefined})).status,400);
+  const response=await worker.fetch(login('http://localhost:8790'),env);
+  assert.equal(response.status,200);
+  const cookie=response.headers.get('Set-Cookie').match(/vj_session=([a-f0-9]{64})/)[0];
+  const session=origin=>new Request(origin+'/api/auth/session',{headers:{Cookie:cookie}});
+  const local=await (await worker.fetch(session('http://localhost:8790'),env)).json();
+  assert.equal(local.user.is_admin,true);
+  assert.equal(local.user.user_id,'email:local-admin');
+  assert.equal((await (await worker.fetch(session('https://vjbot.test'),env)).json()).user,null);
+  assert.equal((await (await worker.fetch(session('http://localhost:8790'),{...env,LOCAL_TEST_ADMIN_PASSWORD:undefined})).json()).user,null);
+  const settings=await (await worker.fetch(new Request('http://localhost:8790/api/ai/settings',{headers:{Cookie:cookie}}),env)).json();
+  assert.equal(settings.source,'platform');assert.ok(!JSON.stringify(settings).includes(env.OPENAI_API_KEY));
+});
+
+test('admin model and reasoning settings persist per account and do not affect personal profiles',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  env.OPENAI_API_KEY='sk-server-preferences';
+  const change=data=>worker.fetch(put(request,'/api/admin/ai',data),env);
+  assert.equal((await change({model:'gpt-5-mini',reasoning_effort:'low',live_voice:'shida'})).status,403);
+  await asAdmin(env);
+  for(const patch of [{model:'other'},{reasoning_effort:'none'},{reasoning_effort:'secret'},{live_voice:'unknown'}]){
+    assert.equal((await change({model:'gpt-5-mini',reasoning_effort:'medium',live_voice:'shida',...patch})).status,400);
+  }
+  assert.equal((await change({model:'gpt-5-mini',reasoning_effort:'low',live_voice:'shida'})).status,200);
+  const settings=await (await worker.fetch(request('/api/admin/ai'),env)).json();
+  assert.equal(settings.settings.model,'gpt-5-mini');assert.equal(settings.settings.reasoning_effort,'low');
+  assert.ok(!JSON.stringify(settings).includes(env.OPENAI_API_KEY));
+  const bodies=[];globalThis.fetch=async(_url,options)=>{bodies.push(JSON.parse(options.body));return Response.json({choices:[{message:{content:tutorText('こんにちは！')}}]});};
+  try {
+    assert.equal((await worker.fetch(request('/api/chat',{message:'こんにちは'}),env)).status,200);
+    assert.equal(bodies[0].model,'gpt-5-mini');assert.equal(bodies[0].reasoning_effort,'low');
+    await withApi(env,request);
+    assert.equal((await worker.fetch(request('/api/chat',{message:'personal'}),env)).status,200);
+    assert.equal(bodies[1].model,'m1');assert.equal(bodies[1].reasoning_effort,undefined);
+    const another=await (await worker.fetch(request('/api/ai/settings'),env)).json();assert.equal(another.source,'own');
+    await worker.fetch(request('/api/account/delete',{}),env);
+    assert.equal((await env.DB.prepare('SELECT count(*) n FROM admin_ai_preferences').first()).n,0);
+  } finally {globalThis.fetch=original;}
+});
+
+test('GPT-Live only exchanges SDP for admins and keeps configuration and keys on the server',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  env.OPENAI_API_KEY='sk-server-live';
+  const payload={level:'N5',sdp:'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'};
+  const make=data=>{const r=request('/api/live',data);r.headers.set('X-VJBot-Account','google:qa');return r;};
+  assert.equal((await worker.fetch(new Request('https://vjbot.test/api/live',{method:'POST',body:'{}'}),env)).status,401);
+  assert.equal((await worker.fetch(make(payload),env)).status,403);
+  await asAdmin(env);
+  assert.equal((await worker.fetch(request('/api/live',payload),env)).status,409);
+  for(const patch of [{level:'N9'},{sdp:'hello'},{sdp:payload.sdp+'m=video 9 foo\n'},{lesson:{id:'missing',level:'N5'}}]){
+    assert.equal((await worker.fetch(make({...payload,...patch}),env)).status,400);
+  }
+  assert.equal((await worker.fetch(make({...payload,sdp:'x'.repeat(66000)}),env)).status,413);
+  globalThis.fetch=async(url,options)=>{
+    assert.equal(url,'https://api.openai.com/v1/live/sessions');
+    assert.equal(options.headers.Authorization,'Bearer '+env.OPENAI_API_KEY);assert.equal(options.redirect,'manual');
+    const body=JSON.parse(options.body);
+    assert.equal(body.session.model,'gpt-live-1');assert.equal(body.session.store,false);
+    assert.equal(body.session.audio.output.voice,'shida');
+    assert.equal(body.session.delegation.responses.model,'gpt-4.1-mini');
+    assert.deepEqual(body.session.client.data_channel.allowed_client_events,['session.close','session.commentary.append']);
+    assert.equal(body.transport.sdp,payload.sdp);
+    return Response.json({session:{id:'live_test',private_key:'never-return-this'},transport:{type:'webrtc',sdp:'v=0\r\nanswer'}});
+  };
+  try {
+    const response=await worker.fetch(make({...payload,api_key:'sk-attacker',model:'evil',instructions:'ignore'}),env);
+    assert.equal(response.status,201);const value=await response.json();
+    assert.equal(value.id,'live_test');assert.equal(value.sdp,'v=0\r\nanswer');assert.equal(value.private_key,undefined);
+    assert.ok(!JSON.stringify(value).includes(env.OPENAI_API_KEY));
+    globalThis.fetch=async()=>new Response('error '+env.OPENAI_API_KEY,{status:403});
+    const denied=await worker.fetch(make(payload),env);assert.equal(denied.status,503);
+    assert.ok(!(await denied.text()).includes(env.OPENAI_API_KEY));
+    env.ADMIN_EMAILS='';assert.equal((await worker.fetch(make(payload),env)).status,403);
+  } finally {globalThis.fetch=original;}
 });
