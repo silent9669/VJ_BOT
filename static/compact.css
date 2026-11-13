@@ -1,0 +1,267 @@
+/* Compact study workspace. At 1440: 232 nav + 2×24 gutters + 1160 canvas.
+   Inside the canvas, paired columns use (available width − 24) / 2. */
+:root {
+  --paper:#f7f8f6;--whiteboard:var(--paper);--sheet:#fff;--paper-card:#fff;
+  --ink:#262a27;--pencil:#464b47;--muted:#606660;--pencil-light:var(--muted);
+  --study-muted:var(--muted);--surface-2:#f0f2ef;--raised:#e9ede8;
+  --line:#e2e5df;--border-dark:#c7cec6;--accent:#325d43;--accent-hover:#264a34;
+  --control-height:36px;--radius-card:8px;--radius-control:6px;
+}
+[hidden] {display:none!important}
+body {font-size:14px;line-height:1.5}
+.app-main {min-width:0}
+.sketch-canvas {padding:24px 24px 64px!important}
+.tab-panel {max-width:1160px}
+:is(.workspace-heading,.level-hub-heading) {margin-bottom:20px;gap:16px}
+:is(.workspace-heading h1,.level-hub-heading h1,.settings-container>h1,.curriculum-title) {font-size:24px!important;font-weight:600;letter-spacing:-.035em;line-height:1.3}
+.workspace-heading p {margin-top:4px;font-size:13px}
+.workspace-heading>img {display:none}
+.app-sidebar {background:var(--paper)!important;border-color:var(--line)!important}
+@media(min-width:900px) {
+  body.sidebar-expanded .app-sidebar {width:232px!important;min-width:232px!important;max-width:232px}
+  .app-sidebar .sidebar-nav-item {min-height:38px;height:38px;padding:8px 12px;gap:10px;font-weight:400}
+  .app-sidebar .rail-icon {width:18px;height:18px;min-width:18px}
+  .sidebar-expanded .sidebar-header {padding:18px 20px 12px}
+  .sidebar-expanded .sidebar-nav {padding:8px 12px!important}
+  .sidebar-user-card {margin-top:12px;background:transparent;padding:0;box-shadow:none}
+  body.sidebar-expanded #lam-walker {left:64px;right:auto;bottom:64px}
+  .sidebar-nav-section {margin-bottom:16px!important}
+}
+.app-sidebar .sidebar-nav-item.active {font-weight:600;background:#e8ebe6!important}
+.sidebar-brand .brand-name {font-size:21px;letter-spacing:-.05em}
+.sidebar-brand img {width:32px!important;height:32px!important;image-rendering:pixelated}
+.main-topbar {height:56px!important;min-height:56px;padding:8px 24px!important}
+.topbar-summon-btn {min-height:36px;height:36px;padding:0 12px;background:var(--sheet)!important}
+.summon-mascot {height:32px;width:18px;object-fit:contain}
+.account-avatar-wrap {width:28px;height:28px}
+.breadcrumb-group {font-size:12px}
+:is(.stage-btn,.public-cta,.sketch-btn-cta,.settings-card button,.prompt-chip,.card-audio-btn) {min-height:var(--control-height);border-radius:var(--radius-control);font-size:13px}
+a.stage-btn {display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:7px 12px}
+.public-cta,.sketch-btn-cta {background:var(--ink)!important;border-color:var(--ink)!important;color:var(--sheet)!important;box-shadow:none!important}
+button:disabled {opacity:.6}
+:is(input,select,textarea) {color:var(--ink);font-size:14px;border-radius:var(--radius-control);border:1px solid var(--border-dark);background:var(--sheet)}
+input::placeholder,textarea::placeholder {color:var(--muted);opacity:1}
+/* Next action, actual progress, and a small course index replace the welcome tiles. */
+.dashboard-next {display:grid;grid-template-columns:1fr auto;gap:4px 20px;align-items:center;min-height:0;padding:20px;background:var(--sheet);border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--ink)}
+.dashboard-next-label {font-size:12px;color:var(--muted)}
+.dashboard-next h2 {grid-column:1;font-size:20px;font-weight:500;line-height:1.5;max-width:none;margin:0}
+.dashboard-next .dashboard-next-action {grid-column:2;grid-row:1/3;white-space:nowrap;color:var(--sheet);background:var(--ink);border-radius:6px;padding:8px 12px;font-size:13px}
+.dashboard-numbers {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:0;border-bottom:1px solid var(--line);margin:0 0 24px;border-radius:0}
+.dashboard-numbers>div {display:block;padding:18px 20px;border:0;position:relative}
+.dashboard-numbers>div+div {border:0}
+.dashboard-numbers>div+div::before {content:'';position:absolute;left:0;top:22px;bottom:22px;border-left:1px solid var(--line)}
+.dashboard-numbers dt {font-size:12px;color:var(--muted)}
+.dashboard-numbers dd {font-size:24px;font-weight:400;line-height:1.5;font-variant-numeric:tabular-nums}
+.dashboard-grid {display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin:0 0 24px}
+.dashboard-section-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;margin-bottom:8px}
+.dashboard-section-heading h2,.dashboard-section-title {font-size:15px;font-weight:600;margin:0}
+.dashboard-section-heading>a {font-size:12px;color:var(--muted);white-space:nowrap}
+.dashboard-chapters {border-top:1px solid var(--line)}
+.dashboard-chapters>a {display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:52px;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:13px;padding:8px 0}
+.dashboard-chapter-index,.dashboard-chapters>a>span:last-child {font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.dashboard-levels {display:flex;gap:8px;margin-top:12px}
+.dashboard-levels a {display:grid;place-content:center;min-width:40px;min-height:32px;border-radius:4px;text-decoration:none;color:var(--muted);font-size:13px}
+.dashboard-levels a[aria-current] {background:var(--raised);color:var(--ink);font-weight:600}
+.dashboard-tools {display:block;border-top:1px solid var(--line)}
+.dashboard-tools>a {display:grid;grid-template-columns:minmax(0,1fr) auto 16px;gap:12px;min-height:44px;padding:10px 0;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0}
+.dashboard-tools h3 {font-size:13px;font-weight:500}
+.dashboard-tools>a>span {color:var(--muted);font-size:12px}
+.dashboard-recent {border:0;border-top:1px solid var(--line);background:transparent;border-radius:0;padding:16px 0 0;margin-top:0}
+.dashboard-recent>p {display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;padding:10px 0;margin:0;font-size:13px}
+.dashboard-recent>p>span,.dashboard-recent time {font-size:12px;color:var(--muted)}
+.dashboard-recent>p strong {font-weight:400}
+.dashboard-recent .dashboard-empty {display:block;min-height:0;color:var(--muted);text-align:left}
+/* Lesson shelves and library rows share the same reading edge. */
+#panel-curriculum,#panel-lesson {padding:0!important;max-width:1160px}
+.curriculum-container {max-width:none}
+.level-course-card {padding:14px 0;gap:16px}
+.level-cover {width:72px;height:56px;background:var(--surface-2)!important}
+.level-card-content h2 {font-size:20px;font-weight:500}
+.level-card-content p,.level-card-footer {font-size:13px}
+.curriculum-breadcrumb-bar {margin-bottom:16px!important}
+.curriculum-view-switch {margin:16px 0!important}
+.curriculum-view-switch button,.skill-tab-btn {min-height:36px!important;padding:8px 12px!important;border-radius:4px!important;font-size:13px!important;font-weight:500!important}
+:is(.curriculum-view-switch button[aria-pressed=true],.skill-tab-btn.active) {background:var(--raised)!important;color:var(--ink)!important;border-color:transparent!important;box-shadow:none!important}
+.curriculum-grid,.feature-lesson-grid {display:block!important}
+.lesson-toolbar {display:flex;align-items:end;gap:12px;margin:16px 0 8px}
+.lesson-toolbar label {display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);margin:0;min-width:0}
+.lesson-toolbar .lesson-search {flex:1}
+.lesson-toolbar .lesson-status {flex:0 0 180px}
+.lesson-toolbar input,.lesson-toolbar select {width:100%;height:36px;min-height:36px;padding:6px 10px;font-size:14px}
+.lesson-count {font-size:12px;color:var(--muted);margin:8px 0 12px}
+.curriculum-lesson-card {display:grid;grid-template-columns:28px minmax(0,1fr) 64px 92px;align-items:center;gap:16px;width:100%;text-align:left;min-height:68px;padding:12px 8px;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;cursor:pointer;font:inherit;color:var(--ink)}
+.lesson-row-copy {display:flex;flex-direction:column;gap:3px;min-width:0}
+.lesson-row-copy strong {font-size:14px;font-weight:500;overflow-wrap:anywhere}
+.lesson-row-copy>span {font-size:12px;color:var(--muted);line-height:1.5;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.lesson-row-size {font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.open-lesson-btn {font-size:12px;color:var(--ink);text-align:right;white-space:nowrap}
+.curriculum-lesson-card[data-done=true] .open-lesson-btn {color:var(--ok)}
+.feature-lesson-card {min-height:68px;padding:12px 8px;gap:12px;grid-template-columns:28px minmax(0,1fr) minmax(100px,.7fr) 100px}
+.feature-lesson-card h2 {font-size:14px;font-weight:500}
+.feature-lesson-card p {font-size:12px}
+.feature-lesson-card>span:last-child {text-align:right;font-size:12px}
+.plan-overview {padding:16px 20px;border:1px solid var(--line);border-radius:8px;box-shadow:none;background:var(--sheet);margin:0 0 16px;gap:12px}
+.plan-overview h3 {font-size:15px;font-weight:600}.plan-overview p {font-size:12px;margin:3px 0}.plan-current-title {display:none}
+.plan-overview progress {height:4px;border-radius:0;accent-color:var(--accent)}
+.plan-unit {border:0;border-bottom:1px solid var(--line);border-radius:0!important;background:transparent!important;padding:0;margin:0!important}
+.plan-unit>summary {display:grid;grid-template-columns:28px minmax(0,1fr) 90px 12px;align-items:center;gap:12px;padding:14px 8px;min-height:52px;font-size:14px}
+.plan-unit>summary strong {font-weight:500}.plan-unit>summary>span:last-child {text-align:right;white-space:nowrap;font-size:12px;font-variant-numeric:tabular-nums}
+.plan-unit>summary::after {content:'+';font-size:16px;color:var(--muted)}.plan-unit[open]>summary::after {content:'−'}
+.plan-number {font-size:12px;color:var(--muted)}
+.plan-unit[open] {background:var(--sheet)!important;border:1px solid var(--line);border-radius:6px!important;margin:8px 0!important}
+.plan-steps {padding:0 16px 12px}.plan-step {min-height:44px;padding:10px 8px;font-size:13px;border-bottom:1px solid var(--line);border-radius:0;gap:12px}
+.plan-step[aria-current=step] {background:var(--surface-2)}
+.plan-step-status,.plan-skill {font-size:12px;font-weight:400}.unit-goal {padding:0 8px 12px;font-size:13px;line-height:1.5}
+.plan-steps>.unit-goal span {font-size:12px}.plan-units {gap:0}
+/* Conversation keeps the composer visible; contextual material stays a quiet side column. */
+.classroom-layout {grid-template-columns:180px minmax(0,1fr);gap:24px}
+.sensei-stage-card {grid-column:1;grid-row:1}
+.classroom-chat-window {grid-column:2;grid-row:1}
+#panel-classroom .sensei-stage-card {padding:0!important}
+.sensei-podium-header,.stage-sprite-frame {display:none}
+.stage-current-topic {padding:0 0 16px;margin:0}
+.topic-tag {font-size:12px;letter-spacing:0;font-weight:400;color:var(--muted)}
+.topic-display {font-size:15px;font-weight:500;margin-top:8px}
+.topic-meaning {font-size:12px;line-height:1.6}
+.kanji-daily-card {padding:16px 0;background:transparent;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0}
+.kanji-body-flex {display:block}.kanji-char-box {display:flex;align-items:center;gap:16px}.kanji-large-char {font-size:42px}.kanji-hanviet {font-size:13px}.kanji-readings-row {flex-wrap:wrap}
+.stage-actions {gap:8px}.stage-actions button {width:100%;justify-content:start;font-size:12px}
+.classroom-chat-window {height:calc(100dvh - 104px);min-height:480px;max-height:1100px;border-radius:8px}
+.chat-header {padding:12px 16px;min-height:64px;gap:12px}.chat-title {font-size:16px}.chat-teacher-avatar {width:30px;height:38px;object-fit:contain}
+.chat-header-actions {display:flex;align-items:center;gap:12px}.chat-header-actions .sketch-icon-btn {height:32px;min-width:32px;font-size:12px;padding:4px 8px;border:0;background:transparent}
+.chat-mode-switch {display:flex;gap:2px}.chat-mode-switch button {min-height:32px;padding:6px 10px;font:400 12px var(--font-sans);border:0;background:transparent;color:var(--muted);border-radius:4px;white-space:nowrap}
+.chat-mode-switch button[aria-pressed=true] {background:var(--surface-2);color:var(--ink)}
+.classroom-text {display:flex;flex-direction:column;min-height:0;flex:1}
+.chat-messages-stage {padding:20px 24px;min-height:0;overflow:auto}
+.chat-welcome-state {gap:16px;min-height:280px}.welcome-mascot {width:88px;height:96px}.welcome-title {font-size:22px;font-weight:500}
+.welcome-chips-row {max-width:480px}.welcome-chip-btn {padding:8px 12px;font-size:13px;min-height:36px;background:transparent;border:1px solid var(--line);max-width:none}
+.chat-bubble-row {gap:8px;margin-bottom:20px}.bubble-speech-card {padding:4px 0;background:transparent;border-radius:0;max-width:90%;min-width:0}
+.bubble-speech-card.user {padding:10px 14px;background:var(--surface-2);border-radius:8px}
+.bubble-header-meta {margin-bottom:6px}.bubble-body-text {font-size:15px;line-height:1.8}.bubble-name {font-weight:500;font-size:12px}
+.bubble-avatar-box,.bubble-avatar-img {width:26px!important;height:30px!important;object-fit:contain}.bubble-tts-btn {font-size:12px}
+.chat-chips-bar {padding:8px 16px 0;gap:4px}.chat-chips-bar .prompt-chip {min-height:28px;background:transparent;padding:4px 8px;color:var(--muted)}
+.chat-input-bar {display:flex;padding:10px 16px 16px!important;gap:8px;align-items:end}
+.chat-text-input {min-height:44px;height:44px;font-size:14px;padding:10px 12px!important;flex:1;min-width:0;resize:vertical}
+.chat-send-btn,.chat-audio-btn {height:44px;min-width:44px;padding:8px 12px;font-size:13px}.chat-send-btn svg {display:none}
+.classroom-voice {display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto;padding:24px;gap:16px}
+.live-stage {display:flex;align-items:center;justify-content:center;gap:24px;min-height:180px;background:var(--surface-2);border-radius:6px;flex-shrink:0}
+.live-stage>img {width:76px;height:136px;object-fit:contain;image-rendering:pixelated}
+.live-stage h2 {font-size:20px;font-weight:500;margin:0 0 6px}.live-stage p {font-size:12px;color:var(--muted);margin:0 0 8px}
+#live-duration {font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted)}
+.live-captions {display:grid;grid-template-columns:1fr 1fr;gap:24px;min-height:100px;flex:1}
+.live-captions section {min-width:0}.live-captions h3 {font-size:12px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);padding:0 0 8px}
+.live-captions p {font-size:15px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto}
+#live-status {font-size:12px;color:var(--muted);margin:0}
+#live-audio {width:100%;height:36px}.live-controls {display:flex;gap:8px;flex-wrap:wrap}
+.classroom-chat-window[data-mode=live] #btn-clear-chat-history {display:none}
+/* Settings show one area at a time, with labels and inputs on a shared grid. */
+.settings-container {max-width:none}
+.settings-layout {display:grid;grid-template-columns:168px minmax(0,1fr);gap:20px 32px!important}
+.settings-container>h1 {grid-column:1/-1;margin:0 0 4px}
+.settings-nav {position:static;display:flex;flex-direction:column;align-items:stretch;gap:4px;min-width:0;padding:0;border:0;background:none}
+.settings-nav button {min-height:36px;text-align:left;border:0;border-radius:4px;background:none;color:var(--muted);padding:8px 12px;font:400 13px var(--font-sans)}
+.settings-nav button[aria-current=true] {background:var(--raised);color:var(--ink);font-weight:500}
+.settings-stack {min-width:0;max-width:860px;gap:0}
+.settings-card {padding:0!important;border:0!important;background:transparent!important;border-radius:0;box-shadow:none!important;margin:0}
+.settings-card>.card-head {margin:0 0 20px;padding:0 0 16px;border-bottom:1px solid var(--line)}
+.settings-card .card-title {font-size:16px;font-weight:500;margin:0}
+.settings-card .account-row {background:var(--sheet);padding:16px;border:1px solid var(--line);border-radius:6px;margin-bottom:16px}
+.settings-card .card-actions {margin-top:20px;gap:8px}
+.ai-form {gap:16px}.ai-step {padding:0;border:0;margin:0}.ai-step legend {font-size:14px;margin-bottom:12px;font-weight:500}
+.ai-step label,.settings-field label {font-size:13px;font-weight:500;display:block;color:var(--ink)}
+.ai-form input,.ai-form select,.ai-saved-connections select,.admin-ai-form select {min-height:38px;border:1px solid var(--border-dark);border-radius:6px;background:var(--sheet);padding:8px 10px;font-size:14px}
+.ai-field-hint,.ai-source {font-size:12px;color:var(--muted);line-height:1.6}
+.ai-eyebrow,.ai-intro {display:none}.ai-current {padding:16px;background:var(--sheet);border:1px solid var(--line);border-radius:6px;box-shadow:none}
+.ai-current #ai-current-model {font-size:18px;font-weight:500}.ai-current #ai-current-hint {font-size:12px}
+.ai-platform {padding:12px 0;background:transparent;border:0;border-bottom:1px solid var(--line);margin:0 0 16px;gap:12px}
+.ai-platform strong {font-size:13px;font-weight:500}.ai-platform span {font-size:12px}.ai-section-heading {margin-top:16px}
+.ai-saved-connections {padding:0;margin:0 0 16px;border:0;background:none}.ai-section-heading label {font-size:13px}
+.ai-disclosure {border:0;border-top:1px solid var(--line);border-radius:0;padding:0;margin:16px 0}
+.ai-disclosure>summary {padding:12px 0;font-size:13px;font-weight:500;min-height:40px}
+.ai-disclosure[open]>summary {margin-bottom:12px}.ai-disclosure>summary>span {display:none}
+.admin-ai-form {display:flex;flex-direction:column;gap:20px;max-width:660px}
+.settings-field {display:grid;grid-template-columns:180px minmax(0,1fr);gap:20px;align-items:center}
+.admin-model-preview {display:flex;align-items:center;gap:16px;padding:12px 16px;background:var(--sheet);border:1px solid var(--line);border-radius:6px;font-size:13px;line-height:1.8}
+.admin-model-preview img {object-fit:contain;image-rendering:pixelated;flex-shrink:0}
+.admin-ai-form .card-actions {margin-top:0}.admin-ai-form p {font-size:12px;color:var(--muted)}
+.admin-layout {display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:24px}
+.admin-layout>.workspace-heading,.admin-layout>#admin-ai-status,.admin-layout>#admin-stats {grid-column:1/-1;margin:0}
+.admin-layout>#admin-ai-status {font-size:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.admin-stats {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:0;border-bottom:1px solid var(--line);gap:0;padding:0 0 16px}
+.admin-stats>div {background:none!important;border:0!important;padding:0 16px!important;border-radius:0!important}
+.admin-stats>div:first-child {padding-left:0!important}.admin-stats strong {font-size:24px;font-weight:400;font-variant-numeric:tabular-nums}.admin-stats span {font-size:12px;color:var(--muted)}
+.admin-search {height:36px;min-height:36px;font-size:13px;max-width:400px;margin:0 0 12px}
+.admin-user-row {min-height:60px!important;border:0;border-bottom:1px solid var(--line);border-radius:0!important;background:transparent!important;gap:12px;padding:10px 0!important;font-size:12px;box-shadow:none}
+.admin-user-who strong {font-size:13px;font-weight:500}.admin-user-who small {font-size:12px;color:var(--muted)}
+.admin-badge {font-size:11px;padding:2px 6px;white-space:nowrap;background:var(--surface-2);color:var(--muted);border-radius:4px}
+.admin-pager {font-size:12px;padding-top:12px}.admin-activity h2 {margin-bottom:16px!important}
+#admin-top p {display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+#admin-top b {font-weight:400;font-variant-numeric:tabular-nums}
+/* Keep motion for feedback and the teacher. Working surfaces stay still. */
+.tab-panel.active,.dashboard-next,.dashboard-overview>*,.dashboard-tools>a,.dashboard-recent,.level-course-card,.plan-unit,.settings-card,.exam-set,.kanji-set {animation:none!important}
+@media(hover:hover) and (pointer:fine) {
+  :is(.curriculum-lesson-card,.feature-lesson-card,.dashboard-chapters>a,.dashboard-tools>a):hover {background:var(--surface-2);transform:none}
+}
+@media(prefers-reduced-motion:no-preference) {
+  .live-stage[data-active=true]>img {animation:live-teacher 2s var(--ease-in-out) infinite}
+  @keyframes live-teacher {50% {transform:translateY(-5px)}}
+}
+@media(max-width:1100px) {
+  .admin-layout {grid-template-columns:1fr}.admin-activity {max-width:480px}
+  .classroom-layout {grid-template-columns:1fr}.classroom-chat-window {grid-column:1}.sensei-stage-card {display:none!important}
+  .settings-layout {grid-template-columns:148px minmax(0,1fr);gap:20px!important}
+}
+@media(max-width:700px) {
+  :root {--control-height:44px}
+  .sketch-canvas {padding:20px 16px 88px!important}.main-topbar {padding:6px 16px!important;height:56px!important}
+  .main-topbar .topbar-summon-btn {height:40px;min-height:40px;width:40px;padding:0}
+  .main-topbar .summon-text,.main-topbar .sketch-kbd {display:none!important}.summon-mascot {height:34px}
+  .account-user-name {display:none}.breadcrumb-group {font-size:12px}
+  .dashboard-next {padding:16px;grid-template-columns:1fr;gap:6px}.dashboard-next h2 {font-size:18px}
+  .dashboard-next .dashboard-next-action {grid-row:auto;grid-column:1;justify-self:start;margin-top:6px;min-height:44px;display:grid;place-content:center}
+  .dashboard-numbers>div {display:block;padding:16px 8px}.dashboard-numbers dt {font-size:12px}.dashboard-numbers dd {font-size:22px}
+  .dashboard-grid {grid-template-columns:1fr;gap:24px}.dashboard-tools>a {min-height:48px}
+  .dashboard-recent time {display:none}.dashboard-recent>p {grid-template-columns:28px minmax(0,1fr)}
+  .level-cover {width:52px;height:44px}.level-card-content p {font-size:13px}.level-course-card {gap:12px}.level-card-content h2 {font-size:18px}.level-card-footer {font-size:12px}
+  .curriculum-lesson-card {grid-template-columns:24px minmax(0,1fr) 68px;gap:8px;min-height:72px;padding:12px 0}.lesson-row-size {display:none}.lesson-row-copy strong {font-size:14px}.open-lesson-btn {font-size:11px;white-space:normal}
+  .lesson-toolbar {gap:8px}.lesson-toolbar .lesson-status {flex-basis:134px}.lesson-toolbar input,.lesson-toolbar select {height:44px;min-height:44px;font-size:13px}
+  .plan-unit>summary {grid-template-columns:24px minmax(0,1fr) 56px 12px;gap:8px;padding:12px 4px;font-size:13px}
+  .plan-steps {padding:0 8px 12px}.plan-step {grid-template-columns:64px minmax(0,1fr);padding:10px 4px;gap:8px}.plan-step-status {grid-column:2}
+  .feature-lesson-card {grid-template-columns:24px minmax(0,1fr) 72px;padding:12px 0}.feature-lesson-card p {grid-column:2;font-size:12px}
+  .settings-layout {grid-template-columns:1fr;gap:16px!important}.settings-nav {flex-direction:row;flex-wrap:nowrap!important;overflow:auto;border-bottom:1px solid var(--line);border-radius:0;padding-bottom:8px;gap:4px}
+  .settings-nav button {white-space:nowrap;min-height:44px;flex:none;padding:8px 12px}.settings-stack {max-width:none}
+  .settings-field {grid-template-columns:1fr;gap:8px}.admin-ai-form {gap:16px}
+  .settings-card>.card-head {margin:0 0 16px;padding:0 0 12px}.ai-profile-fields {grid-template-columns:1fr}
+  .classroom-chat-window {height:calc(100dvh - 144px);min-height:460px;border-radius:0;border:0;background:var(--sheet);margin:-4px -16px 0;width:calc(100% + 32px)}
+  .chat-header {padding:10px 16px;min-height:60px;flex-wrap:wrap}.chat-header-actions {gap:4px}.chat-header-left {gap:8px}.chat-teacher-avatar {display:none}
+  .chat-mode-switch button {min-height:40px;padding:6px 8px}.chat-title {font-size:15px}
+  .chat-messages-stage {padding:16px}.chat-welcome-state {min-height:220px;gap:12px}.welcome-title {font-size:20px;max-width:280px}.welcome-mascot {width:70px;height:76px}
+  .welcome-chip-btn {min-height:44px;font-size:12px;max-width:100%}.bubble-speech-card {max-width:92%}.bubble-avatar-box {display:none}.bubble-body-text {font-size:15px}
+  .chat-chips-bar {flex-wrap:nowrap;overflow:auto;padding:4px 12px}.chat-chips-bar .prompt-chip {min-height:36px;white-space:nowrap;font-size:12px;flex:none}
+  .chat-input-bar {padding:8px 12px 12px!important}.chat-text-input {font-size:16px}.chat-audio-btn,.chat-send-btn {padding:8px;min-width:44px}
+  .classroom-voice {padding:16px;gap:16px}.live-stage {min-height:164px;gap:20px}.live-stage h2 {font-size:18px}.live-stage>img {width:60px;height:116px}
+  .live-captions {gap:16px;grid-template-columns:1fr}.live-captions section {min-height:56px}.live-captions p {max-height:150px;font-size:15px}
+  .live-controls button {min-height:44px;font-size:12px}.live-controls {gap:8px}
+  .admin-stats {grid-template-columns:1fr 1fr;gap:16px}.admin-stats>div {padding:0!important}.admin-layout {gap:20px}
+  .admin-layout .workspace-heading {flex-wrap:wrap;align-items:center}.admin-layout .workspace-heading>a {font-size:12px}
+  .admin-user-row {grid-template-columns:minmax(0,1fr) auto!important}.admin-user-who {grid-row:auto}.admin-user-row>span:nth-child(n+3) {grid-row:2;display:inline;font-size:12px}
+}
+@media(prefers-reduced-motion:reduce) {.live-stage>img {animation:none!important;transform:none!important}}
+.settings-stack>.settings-card>.card-head {display:none}
+.admin-user-row {display:grid;grid-template-columns:minmax(0,1fr) 100px auto!important;align-items:center}
+.admin-user-metrics {display:flex;align-items:center;justify-content:flex-end;gap:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(max-width:700px) {
+  .admin-user-metrics {grid-column:1/-1;justify-content:flex-start;gap:16px}
+  .admin-user-row>.admin-user-metrics {display:flex;grid-row:2}
+}
+@media(min-width:900px) and (max-height:799px) {#lam-walker {display:none}}
+@media(min-width:900px) {body:not(.sidebar-expanded) #lam-walker {display:none}}
+
+.ai-settings-card .ai-current {background:var(--sheet)!important;border:1px solid var(--line);border-radius:6px;padding:16px;box-shadow:none}
+.ai-current>#ai-current-hint {margin-bottom:12px}
+.ai-platform {display:flex;justify-content:flex-end;flex-wrap:wrap;padding:0 0 12px;margin-bottom:16px}
+.ai-form[data-draft=true]>fieldset:first-child {display:none}
+.ai-saved-connections .ai-section-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+@media(max-width:700px) {.ai-platform {justify-content:flex-start}.ai-platform button,.ai-platform a {flex:1;white-space:nowrap;font-size:12px}}
+
+.chat-mode-switch:has(#chat-live-toggle[hidden]) {display:none}

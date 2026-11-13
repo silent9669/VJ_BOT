@@ -3,6 +3,7 @@
 [VJBot](https://vjbot.dangphuc.me/) giúp người Việt luyện JLPT N5–N1 theo lớp học đảo ngược: người học đọc bài trước, thầy Lâm hỏi, em tự nói và viết, thầy chỉ chấm và sửa. Giao diện chỉ dùng tiếng Việt và tiếng Nhật.
 
 - **Tài khoản miễn phí dùng API riêng.** Kết nối OpenAI-compatible, Claude hoặc Gemini trong Cài đặt. Quản trị viên tự dùng OpenAI của máy chủ khi chưa gắn API riêng; khóa không bao giờ được gửi xuống trình duyệt.
+- **AI quản trị**: đổi model văn bản, mức suy luận và giọng GPT-Live trong Cài đặt > Model quản trị. Vào Thầy Lâm > Nói trực tiếp để hội thoại bằng micro.
 - **Quản trị**: chủ sở hữu đăng nhập Google với email trong `ADMIN_EMAILS`; chủ sở hữu và admin có thể cấp/thu hồi quyền admin cho tài khoản đã đăng ký.
 - Chạy trên Cloudflare Worker + D1; giao diện HTML/CSS/JS thuần.
 
@@ -16,6 +17,8 @@ npm run migrate -- --local
 npm run dev      # http://localhost:8787
 npm test
 ```
+
+Để dùng tài khoản kiểm thử cục bộ, đặt `LOCAL_TEST_ADMIN_PASSWORD` trong `.dev.vars`, rồi đăng nhập với tên `admin` và mật khẩu đó. Tài khoản tự dùng `OPENAI_API_KEY` phía máy chủ. Luồng này chỉ hoạt động trên localhost trong dev; không đặt secret kiểm thử trên Worker công khai.
 
 ## Triển khai
 

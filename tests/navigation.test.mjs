@@ -88,3 +88,11 @@ test('reloading a 2012 resource route restores that workbook instead of the 2018
   c.showLessonDetail=lesson=>{opened=lesson;};
   await c.restoreAppRoute();assert.equal(opened.id,'jlpt:2012:N3:L');
 });
+
+test('settings areas have stable routes and browser back can restore each view',async()=>{
+  const c=await navigation();
+  for(const view of ['account','api','admin','sound','data']){
+    const route=c.parseAppRoute(c.appRouteHash('settings',{view}));assert.equal(route.tab,'settings');assert.equal(route.view,view);
+  }
+  assert.equal(c.parseAppRoute('#settings/missing').view,'account');
+});

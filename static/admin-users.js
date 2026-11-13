@@ -35,8 +35,10 @@
         const row = node('button', undefined, 'admin-user-row'), who = node('span', undefined, 'admin-user-who');
         row.type = 'button';
         who.append(node('strong', user.name || 'Học viên ' + user.user_id.slice(-4)), node('small', user.email || user.user_id));
-        row.append(who, node('span', ROLE[user.role] || KIND[user.kind], 'admin-badge'), node('span', user.level), node('span', user.messages + ' tin'), node('span', day(user.last_login || user.last_chat)));
-        if (user.api) row.append(node('span', 'API', 'admin-badge admin-badge-on'));
+        const metrics=node('span',undefined,'admin-user-metrics');
+        metrics.append(node('span',user.level),node('span',user.messages+' tin'),node('time',day(user.last_login || user.last_chat)));
+        if(user.api)metrics.append(node('span','API','admin-badge admin-badge-on'));
+        row.append(who, node('span', ROLE[user.role] || KIND[user.kind], 'admin-badge'), metrics);
         row.onclick = () => openUser(user.user_id);
         return row;
       }));

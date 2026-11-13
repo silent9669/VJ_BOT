@@ -29,7 +29,7 @@ let examSecondsRemaining = 1500; // 25 mins
 
 const TAB_TITLES = {
   landing: "VJBot",
-  dashboard: "Góc học tập",
+  dashboard: "Học tập",
   kanji: "Kanji",
   classroom: "Thầy Lâm",
   curriculum: "Khóa học",
@@ -277,6 +277,7 @@ function switchTab(tabId, route={}) {
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
   stopSpeech();
   globalThis.stopJapaneseInputs?.();
+  if(tabId!=='classroom')globalThis.stopLiveConversation?.();
   globalThis.rememberTeacherScreen?.();
   globalThis.invalidateTeacherQuery?.();
   featureVersion++;
@@ -353,8 +354,15 @@ function switchTab(tabId, route={}) {
     globalThis.checkAiReady?.();
     renderDailyKanji(activeCurriculumLevel);
   } else if (tabId === "settings" || tabId === "admin") {
-    window.renderAiPanels?.(tabId);
-    if (tabId === 'settings') window.refreshSpeechModels?.();
+    if(tabId==='admin')window.renderAiPanels?.('admin');
+    else {
+      const area=route.view || 'account';
+      window.showSettingsArea?.(area);
+      window.renderAccountSettings?.();
+      if(area==='api')window.renderAiPanels?.('settings');
+      if(area==='sound')window.refreshSpeechModels?.();
+      if(area==='admin')window.renderAdminAISettings?.();
+    }
   }
   return true;
 }
@@ -411,7 +419,7 @@ function chatError(message,retry) {
   const host=document.getElementById('chat-error');host.hidden=!message;
   document.getElementById('chat-error-text').textContent=message;
   const button=document.getElementById('chat-retry');button.hidden=!retry;button.onclick=retry;
-  const open=document.getElementById('chat-open-settings');open.hidden=!/Cài đặt/.test(message||'');open.onclick=()=>switchTab('settings');
+  const open=document.getElementById('chat-open-settings');open.hidden=!/Cài đặt/.test(message||'');open.onclick=()=>switchTab('settings',{view:'api'});
   const discard=document.getElementById('chat-discard');discard.hidden=!failedChatMessage;discard.onclick=()=>{failedChatMessage=null;loadChatHistory();};
 }
 async function loadChatHistory() {
@@ -523,8 +531,8 @@ function updateHeroTopic(topic) {
 let curriculumRequest=0,lessonVisibleLimit=24;
 function filterCurriculum(reset=true){
   if(reset)lessonVisibleLimit=24;
-  const query=document.getElementById('lesson-search').value.trim().toLowerCase();let matched=0;
-  document.querySelectorAll('.curriculum-lesson-card').forEach(card=>{const match=card.dataset.search.includes(query);card.hidden=!match||matched>=lessonVisibleLimit;if(match)matched++;});
+  const query=document.getElementById('lesson-search').value.trim().normalize('NFKC').toLowerCase(),status=document.getElementById('lesson-status')?.value || 'all';let matched=0;
+  document.querySelectorAll('.curriculum-lesson-card').forEach(card=>{const match=card.dataset.search.includes(query) && (status==='all' || card.dataset.done===String(status==='done'));card.hidden=!match||matched>=lessonVisibleLimit;if(match)matched++;});
   document.getElementById('lesson-count').textContent=matched?`${Math.min(matched,lessonVisibleLimit)} / ${matched} bài · ${activeCurriculumLevel}`:'Không tìm thấy bài học.';
   document.getElementById('lesson-load-more').hidden=matched<=lessonVisibleLimit;
 }
@@ -587,25 +595,14 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
   }
 
   document.getElementById("lesson-count").textContent=`${data.length} bài · ${level}`;
-  listEl.innerHTML = data.map((item, idx) => `
-    <div class="curriculum-lesson-card" tabindex="0" role="button" data-idx="${idx}" style="background: #ffffff; border: 2px solid var(--border-dark); border-radius: 14px; padding: 18px; box-shadow: 2px 3px 0px rgba(0,0,0,0.08); transition: transform 0.15s ease; cursor: pointer;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span style="background: #eff6ff; color: #2563eb; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">Bài ${item.lesson || (idx + 1)} • ${level}</span>
-        <span style="font-size: 12px; color: #16a34a; font-weight: 700;">${item.items?.length || item.examples?.length || 1} mục</span>
-      </div>
-      <h3 style="font-family: var(--font-sans); font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 4px;">${escapeHtml(item.title || item.jp || "Bài học")}</h3>
-      <p style="font-family: var(--font-sans); font-size: 13px; color: #475569; margin-bottom: 12px; line-height: 1.4;">${escapeHtml(item.meaning_vi || item.vi || item.translation || item.summary || item.script_vi || "")}</p>
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-        <span style="font-size: 12px; color: #64748b; font-family: var(--font-mono);">${item.source ? "OpenJLPT" : item.reading || item.ro || (item.items ? `${item.items.length} mục` : "")}</span>
-        <span class="open-lesson-btn" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">${completionRecords.has(activityId(item,level,skill))?'Hoàn thành':'Học bài →'}</span>
-      </div>
-    </div>
-  `).join("");
+  listEl.innerHTML = data.map((item, idx) => {
+    const done=completionRecords.has(activityId(item,level,skill));
+    return `<button type="button" class="curriculum-lesson-card" data-idx="${idx}" data-done="${done}"><span class="lesson-list-number">${String(idx+1).padStart(2,'0')}</span><span class="lesson-row-copy"><strong>${escapeHtml(item.title || item.jp || 'Bài học')}</strong><span>${escapeHtml(item.meaning_vi || item.vi || item.translation || item.summary || item.script_vi || '')}</span></span><span class="lesson-row-size">${item.items?.length || item.examples?.length || 1} mục</span><span class="open-lesson-btn">${done?'Hoàn thành':'Học →'}</span></button>`;
+  }).join('');
 
   listEl.querySelectorAll(".curriculum-lesson-card").forEach(card => {
-    card.dataset.search=JSON.stringify({...data[Number(card.dataset.idx)],drills:undefined}).toLowerCase();
+    card.dataset.search=JSON.stringify({...data[Number(card.dataset.idx)],drills:undefined}).normalize('NFKC').toLowerCase();
     card.hidden=!card.dataset.search.includes(document.getElementById("lesson-search").value.toLowerCase());
-    card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();card.click();}});
     card.addEventListener("click", () => {
       const idx = parseInt(card.dataset.idx, 10);
       showLessonDetail(data[idx], level, skill);
@@ -1209,7 +1206,6 @@ function setupSettings() {
 
   // Mascots Selection Grid
   document.querySelectorAll(".mascot-choice").forEach(card => {
-    card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();card.click();}});
     card.addEventListener("click", () => {
       soundEngine.playBlip();
       mascotMgr.setMascot(card.dataset.mascot);
@@ -1260,6 +1256,7 @@ function setupEventListeners() {
   document.getElementById("settings-account").addEventListener("click",openAccount);
   document.querySelectorAll('[data-curriculum-view]').forEach(b=>b.onclick=()=>setCurriculumView(b.dataset.curriculumView));
   document.getElementById("lesson-search").addEventListener("input",()=>filterCurriculum());
+  document.getElementById("lesson-status").addEventListener("change",()=>filterCurriculum());
   document.getElementById('lesson-load-more').addEventListener('click',()=>{lessonVisibleLimit+=24;filterCurriculum(false);});
   document.getElementById("kaiwa-next-prompt").addEventListener("click",()=>{activeKaiwaPromptIdx=(activeKaiwaPromptIdx+1)%Math.max(1,window.JLPT_DATA.kaiwaScenarios[activeKaiwaKey]?.prompts?.length || 1);loadKaiwaPrompt();});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.getElementById("level-picker").hidden=true;}});

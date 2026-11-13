@@ -46,7 +46,7 @@ async function renderFeaturePage(feature,route){
   document.getElementById('kanji-back').onclick=()=>switchTab('kanji');
   const host=document.getElementById('kanji-library');
   try{
-    await ensureLessons(route.level);if(version!==featureVersion)return;
+    await Promise.all([ensureLessons(route.level),loadCompletions()]);if(version!==featureVersion)return;
     host.replaceChildren();
     const lessons=window.JLPT_DATA.curriculum[route.level].skills.kanji;
     for(const lesson of lessons){
@@ -55,10 +55,11 @@ async function renderFeaturePage(feature,route){
       chars.lang='ja';chars.textContent=lesson.items.slice(0,6).map(i=>i.jp).join(' ');label.textContent=`Bộ ${lesson.lesson} · ${lesson.items.length} chữ`;
       button.append(chars,label);button.onclick=()=>{showLessonDetail(lesson,route.level,'kanji');currentLesson.returnTab='kanji';};host.append(button);
     }
-    setupLessonFilter(work,lessons,'.kanji-set');
+    setupLessonFilter(work,lessons,'.kanji-set',lessons.map(lesson=>completionRecords.has(activityId(lesson,route.level,'kanji'))));
   }catch{host.textContent='Chưa tải được Kanji. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeaturePage(feature,route);host.append(retry);}
 }
 async function renderDashboard(){
+  const version=featureVersion;
   const host=document.getElementById('dashboard-content');
   document.getElementById('dashboard-greeting').textContent=`${signedInUser?.name || 'Học viên'} · ${activeCurriculumLevel}`;
   host.textContent='Đang tải tiến độ…';
@@ -67,11 +68,22 @@ async function renderDashboard(){
     const [progress,completed]=await Promise.all([response.json(),loadCompletions()]);
     const due=(progress.items || []).filter(i=>i.next_review && new Date(i.next_review)<=new Date()).length;
     await Promise.all([ensureLessons(activeCurriculumLevel),loadPracticalCourse()]);
+    if(version!==featureVersion)return;
     const units=createStudyPlan(activeCurriculumLevel);
     const next=units.filter(u=>!u.optional && !completed.has(u.id)).flatMap(u=>u.steps).find(step=>!completed.has(activityId(step.lesson,activeCurriculumLevel,step.skill)));
     const nextTitle=next?.lesson.title || 'Ôn lại bài học';
     const nextHref=next?appRouteHash('lesson',{level:activeCurriculumLevel,skill:next.skill,id:activityId(next.lesson,activeCurriculumLevel,next.skill)}):`#curriculum/${activeCurriculumLevel}`;
-    host.innerHTML=`<div class="dashboard-overview"><a class="dashboard-next" href="${escapeHtml(nextHref)}"><div><span>${activeCurriculumLevel} · Học tiếp</span><h2>${escapeHtml(nextTitle)}</h2><strong>Mở bài học ↗</strong></div><img src="assets/courses/${activeCurriculumLevel.toLowerCase()}.svg" alt="" width="180" height="120"></a><dl class="dashboard-numbers"><div><dt>Hoàn thành</dt><dd>${completed.size}</dd></div><div><dt>Đến hạn ôn</dt><dd>${due}</dd></div><div><dt>Ngày liên tiếp</dt><dd>${Number(progress.streak_days)||0}</dd></div></dl></div><div class="dashboard-grid"><section><h2 class="dashboard-section-title">Luyện tập</h2><div class="dashboard-tools"><a href="#classroom"><span class="dashboard-tool-symbol" aria-hidden="true">↔</span><h3>Lớp học đảo ngược</h3><span aria-hidden="true">↗</span></a>${Object.entries(featureNames).map(([key,name],index)=>`<a href="#${key}/${activeCurriculumLevel}"><span class="dashboard-tool-symbol" aria-hidden="true">${['あ','話','字','問'][index]}</span><h3>${name}</h3><span aria-hidden="true">↗</span></a>`).join('')}<a href="#curriculum"><span class="dashboard-tool-symbol" aria-hidden="true">本</span><h3>Lộ trình N5–N1</h3><span aria-hidden="true">↗</span></a></div></section><section class="dashboard-recent"><h2 class="dashboard-section-title">Vừa hoàn thành</h2>${[...completed.values()].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,5).map(i=>`<p><span>${escapeHtml(i.level)}</span>${escapeHtml(i.title)}</p>`).join('') || '<div class="dashboard-empty"><p>Chưa có bài hoàn thành.</p></div>'}</section></div>`;
+    const required=units.filter(unit=>!unit.optional);
+    const chapterDone=unit=>completed.has(unit.id) || unit.steps.every(step=>completed.has(activityId(step.lesson,activeCurriculumLevel,step.skill)));
+    const courseRows=required.slice(0,4);
+    const recent=[...completed.values()].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,4);
+    host.innerHTML=`<a class="dashboard-next" href="${escapeHtml(nextHref)}"><span class="dashboard-next-label">Học tiếp · ${activeCurriculumLevel}</span><h2>${escapeHtml(nextTitle)}</h2><span class="dashboard-next-action">Mở bài học ↗</span></a>
+      <dl class="dashboard-numbers"><div><dt>Bài hoàn thành</dt><dd>${completed.size}</dd></div><div><dt>Đến hạn ôn</dt><dd>${due}</dd></div><div><dt>Ngày liên tiếp</dt><dd>${Number(progress.streak_days)||0}</dd></div></dl>
+      <div class="dashboard-grid"><section class="dashboard-course"><header class="dashboard-section-heading"><h2>Lộ trình ${activeCurriculumLevel}</h2><a href="#curriculum/${activeCurriculumLevel}">Tất cả ↗</a></header>
+        <div class="dashboard-chapters">${courseRows.map((unit,index)=>`<a href="#curriculum/${activeCurriculumLevel}"><span class="dashboard-chapter-index">${String(index+1).padStart(2,'0')}</span><span>${escapeHtml(unit.title)}</span><span>${chapterDone(unit)?'Hoàn thành':unit.steps.filter(step=>completed.has(activityId(step.lesson,activeCurriculumLevel,step.skill))).length+'/'+unit.steps.length}</span></a>`).join('')}</div>
+        <nav class="dashboard-levels" aria-label="Khóa học JLPT">${learningLevels.map(level=>`<a href="#curriculum/${level}" ${level===activeCurriculumLevel?'aria-current="true"':''}>${level}</a>`).join('')}</nav></section>
+      <section class="dashboard-practice"><header class="dashboard-section-heading"><h2>Luyện tập</h2></header><div class="dashboard-tools"><a href="#classroom"><h3>Thầy Lâm</h3><span>Hỏi &amp; luyện phản xạ</span><span aria-hidden="true">↗</span></a>${Object.entries(featureNames).map(([key,name],index)=>`<a href="#${key}/${activeCurriculumLevel}"><h3>${name}</h3><span>${['Ghi nhớ từ','Hội thoại tình huống','Chữ & cách đọc','Bộ đề theo cấp độ'][index]}</span><span aria-hidden="true">↗</span></a>`).join('')}</div></section></div>
+      <section class="dashboard-recent"><header class="dashboard-section-heading"><h2>Vừa hoàn thành</h2><a href="#mastery">Tiến độ ↗</a></header>${recent.map(item=>`<p><span>${escapeHtml(item.level)}</span><strong>${escapeHtml(item.title)}</strong><time>${item.completed_at?new Date(item.completed_at).toLocaleDateString('vi-VN'):''}</time></p>`).join('') || '<p class="dashboard-empty">Chưa có bài hoàn thành.</p>'}</section>`;
     globalThis.mountAiBanner?.(host);
   }catch{host.textContent='Chưa tải được tiến độ. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=renderDashboard;host.append(retry);}
 }
@@ -134,7 +146,7 @@ async function renderFeatureLessonList(feature,level){
     await Promise.all([ensureLessons(level),loadPracticalCourse(),loadCompletions()]);if(version!==featureVersion)return;
     const lessons=featureLessons(feature,level);
     host.innerHTML=`<header class="workspace-heading"><h1>${featureNames[feature]} ${level}</h1><span>${lessons.length} bài</span></header><div class="feature-lesson-grid">${lessons.map((l,i)=>`<a class="feature-lesson-card" href="#${feature}/${level}/lesson/${encodeURIComponent(l.id)}"><span class="lesson-list-number">${String(i+1).padStart(2,'0')}</span><h2>${escapeHtml(l.title)}</h2><p>${escapeHtml(l.items?.slice(0,4).map(w=>w.jp).join(' · ') || l.summary || '')}</p><span>${completionRecords.has(activityId(l,level,feature))?'Đã hoàn thành':''} ↗</span></a>`).join('')}</div>`;
-    setupLessonFilter(host,lessons,'.feature-lesson-card');
+    setupLessonFilter(host,lessons,'.feature-lesson-card',lessons.map(lesson=>completionRecords.has(activityId(lesson,level,feature))));
   }catch{if(version!==featureVersion)return;host.textContent='Chưa tải được bài học. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeatureLessonList(feature,level);host.append(retry);}
 }
 function addFeatureLessonAction(item,level,owner){
@@ -151,14 +163,25 @@ function addFeatureLessonAction(item,level,owner){
 function lessonSearchText(lesson){
   return [lesson.title,lesson.summary,...(lesson.items || []).flatMap(item=>[item.jp,item.reading,item.ro,item.vi,item.en])].filter(Boolean).join(' ').normalize('NFKC').toLocaleLowerCase();
 }
-function setupLessonFilter(host,lessons,selector){
+function setupLessonFilter(host,lessons,selector,done=lessons.map(()=>false)){
   const cards=[...host.querySelectorAll(selector)],texts=lessons.map(lessonSearchText);
   const filter=document.createElement('label');filter.className='lesson-search';filter.textContent='Tìm bài';
   const input=document.createElement('input');input.type='search';input.placeholder='Tên bài, từ hoặc chữ Hán';filter.append(input);
-  const empty=document.createElement('p');empty.className='lesson-filter-empty';empty.hidden=true;empty.setAttribute('role','status');empty.textContent='Không tìm thấy bài.';
-  cards[0]?.parentElement.before(filter);host.append(empty);
-  input.oninput=()=>{
-    const query=input.value.trim().normalize('NFKC').toLocaleLowerCase();let visible=0;
-    cards.forEach((card,i)=>{card.hidden=!texts[i].includes(query);if(!card.hidden)visible++;});empty.hidden=visible>0;
+  const statusLabel=document.createElement('label');statusLabel.className='lesson-status';statusLabel.textContent='Tiến độ';
+  const status=document.createElement('select');
+  for(const [value,text] of [['all','Tất cả'],['todo','Chưa hoàn thành'],['done','Đã hoàn thành']]){const option=document.createElement('option');option.value=value;option.textContent=text;status.append(option);}
+  statusLabel.append(status);
+  const toolbar=document.createElement('div');toolbar.className='lesson-toolbar';toolbar.append(filter,statusLabel);
+  const count=document.createElement('p');count.className='lesson-count';count.setAttribute('role','status');
+  const empty=document.createElement('p');empty.className='lesson-filter-empty';empty.hidden=true;empty.textContent='Không tìm thấy bài.';
+  const more=document.createElement('button');more.type='button';more.className='stage-btn';more.textContent='Xem thêm 24 bài';
+  cards[0]?.parentElement.before(toolbar,count);host.append(empty,more);
+  let limit=24;
+  const apply=(reset=true)=>{
+    if(reset)limit=24;
+    const query=input.value.trim().normalize('NFKC').toLocaleLowerCase();let matched=0;
+    cards.forEach((card,i)=>{const match=texts[i].includes(query) && (status.value==='all' || done[i]=== (status.value==='done'));card.hidden=!match || matched>=limit;if(match)matched++;});
+    empty.hidden=matched>0;count.textContent=`${Math.min(limit,matched)} / ${matched} bài`;more.hidden=matched<=limit;
   };
+  input.oninput=()=>apply();status.onchange=()=>apply();more.onclick=()=>{limit+=24;apply(false);};apply();
 }

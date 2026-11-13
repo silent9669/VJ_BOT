@@ -6,13 +6,15 @@ Cần Node 22.13+ (test dùng `node:sqlite`).
 
 ```sh
 npm ci
-cp .dev.vars.example .dev.vars   # điền ADMIN_EMAILS, AI_KEY_SECRET, GOOGLE_CLIENT_ID
+cp .dev.vars.example .dev.vars   # điền OPENAI_API_KEY, ADMIN_EMAILS, AI_KEY_SECRET, GOOGLE_CLIENT_ID
 npm run dev                      # http://localhost:8787
 ```
 
 - D1 cục bộ nằm trong `.cloudflare/state`. Áp migration mới vào đó trước khi thử (ví dụ `sqlite3 <file>.sqlite < migrations/00NN_*.sql`, với file nằm dưới `.cloudflare/state/v3/d1/`).
 - Đăng nhập Google cục bộ cần origin `http://localhost:8787` trong Google OAuth. Cách nhanh để thử giao diện: đăng ký tài khoản email (mật khẩu 12+ ký tự) ngay trên trang.
-- Muốn thử chat, vào Cài đặt > API AI và dùng API của bạn. Không có khóa hệ thống.
+- Muốn thử quyền admin cục bộ, điền `LOCAL_TEST_ADMIN_PASSWORD` trong `.dev.vars`, rồi đăng nhập `admin` với mật khẩu đó. Chỉ dev localhost chấp nhận tài khoản này; không khai báo secret kiểm thử trong Cloudflare production.
+- Admin dùng `OPENAI_API_KEY` phía máy chủ. Tài khoản miễn phí thêm kết nối API riêng trong Cài đặt > Kết nối AI.
+- Kiểm tra model/suy luận trong Cài đặt > Model quản trị; kiểm tra GPT-Live ở Thầy Lâm > Nói trực tiếp. Micro cần HTTPS hoặc localhost.
 
 ## Quy trình
 
