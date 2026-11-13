@@ -470,7 +470,7 @@ async function sendMessage(text,retry=false,options={}) {
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
   document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','true');
   if(!retry)renderBubble('user',text);
-  if(!retry || input.value.trim()===text)input.value='';
+  if(!retry || input.value.trim()===text){input.value='';input.style.height='44px';}
   soundEngine.playSend();mascotMgr.setState('thinking');
   try {
     const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},body});
@@ -1353,6 +1353,7 @@ function setupEventListeners() {
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   if (chatForm && chatInput) {
+    chatInput.addEventListener('input',()=>{chatInput.style.height='44px';chatInput.style.height=Math.min(chatInput.scrollHeight+2,120)+'px';});
     chatInput.addEventListener('keydown',event=>{
       if(event.key==='Enter' && !event.shiftKey && !event.isComposing){event.preventDefault();chatForm.requestSubmit();}
     });
