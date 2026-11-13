@@ -37,7 +37,7 @@ Chat, Kaiwa và giọng đọc dùng API người dùng đã lưu; hạn mức 2
 | `POST /api/chat` | `{message ≤ 6000 ký tự, lesson?: {id,title,level,goal,content ≤ 4000}, screen?: {route, title, level?, text ≤ 3500}, request_id?}`. `screen` là chữ hiển thị trên màn hình người học đang xem (sai định dạng: 400) → `{reply, updated_topic}`. `request_id` (UUID) bảo đảm gửi lại không tạo thêm lượt |
 | `POST /api/chat/greeting` | Lời chào cố định theo cấp độ |
 | `POST /api/kaiwa/evaluate` | `{scenario_title, context, prompt_jp, user_speech, level}` → `{score, rating, feedback, model_answer}` |
-| `POST /api/tts` | `{text}` → `{audioBase64, ...}`; `403 {code:'no_tts'}` nếu API đã lưu không phải Gemini-Google (client dùng giọng trình duyệt) |
+| `POST /api/tts` | `{text}` → `{audioBase64, ...}`; OpenAI chính thức hoặc Gemini-Google; `403 {code:'no_tts'}` với API khác (client dùng giọng trình duyệt) |
 
 Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` không giải mã được khóa; `429` hết lượt; `503` nhà cung cấp lỗi (thông báo tiếng Việt, không lộ nội dung lỗi gốc).
 
@@ -45,14 +45,14 @@ Mã lỗi AI chung: `403 {code:'no_ai'}` chưa lưu API; `409 {code:'rekey'}` kh
 
 | Route | Mô tả |
 | --- | --- |
-| `GET /api/ai/settings` | `{source: 'own'\|'none', is_admin, own: {protocol, base_url, model, key_last4}, bases, can_store}`; không bao giờ trả khóa |
+| `GET /api/ai/settings` | `{source: 'own'\|'platform'\|'none', is_admin, platform: {configured, model} hoặc null, own: {protocol, base_url, model, key_last4}, bases, can_store}`; không bao giờ trả khóa |
 | `PUT /api/ai/settings` | `{protocol: 'openai'\|'anthropic'\|'gemini', base_url (bỏ trống = mặc định), model, api_key?}`; bỏ `api_key` để giữ khóa cũ. `503` nếu thiếu `AI_KEY_SECRET` |
-| `DELETE /api/ai/settings` | Xóa API đã lưu |
-| `POST /api/ai/test` | Gửi một yêu cầu thử qua API đã lưu |
-| `GET /api/admin/overview` | Chỉ admin (`403` nếu không): `{users, active_7d, messages_24h, messages_7d, own_api_users, top[]}` |
-| `GET /api/admin/users?q=&offset=` | Danh sách 25 người dùng mỗi trang, tìm theo tên/email/ID: `{users[], total, offset, guests}`; mỗi người có `kind` (`google`\|`email`\|`guest`), `level`, `messages`, `items`, `completed`, `sessions`, `api`, `last_login`, `admin` |
+| `DELETE /api/ai/settings` | Xóa API đã lưu; admin trở về OpenAI của máy chủ |
+| `POST /api/ai/test` | Gửi một yêu cầu thử qua API đang dùng (riêng hoặc OpenAI quản trị) |
+| `GET /api/admin/overview` | Chỉ admin (`403` nếu không): `{users, active_7d, messages_24h, messages_7d, own_api_users, top[], shared_ai: {configured, model}}` |
+| `GET /api/admin/users?q=&offset=` | Danh sách 25 người dùng mỗi trang, tìm theo tên/email/ID: `{users[], total, offset, guests}`; mỗi người có `kind` (`google`\|`email`\|`guest`), `level`, `messages`, `items`, `completed`, `sessions`, `api`, `last_login`, `admin`, `role` (`owner`\|`admin`\|`free`) |
 | `POST /api/admin/purge-guests` | Xóa các hồ sơ khách cũ (không phải Google hay email) cùng dữ liệu: `{removed}` |
 | `GET /api/admin/user?id=` | Chi tiết một người dùng (cùng trường như trên); `404` nếu không có |
-| `POST /api/admin/user` | `{id, action, level?}` với `action` là `set_level` (cần `level` N5–N1), `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. Không thể `delete` chính tài khoản đang dùng |
+| `POST /api/admin/user` | `{id, action, level?, role?}` với `action` là `set_level` (cần `level` N5–N1), `clear_chat`, `reset_progress`, `remove_api`, `revoke_sessions` hoặc `delete`. `set_role` nhận `role: admin` hoặc `free`, chỉ áp dụng cho Google/email đã đăng ký. Không thể sửa quyền bản thân hay chủ sở hữu; không thể xóa chủ sở hữu hay chính tài khoản đang dùng |
 
 Các route `/api/ai/*` và `/api/admin/*` do `src/providers.js` xử lý riêng, tự kiểm tra phiên và giới hạn body 4 KB.

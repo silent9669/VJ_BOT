@@ -276,43 +276,48 @@ function initLoadingScreen() {
 // ==========================================
 // 6. GEMINI TTS (VOICE SYNTHESIS)
 // ==========================================
-async function playGeminiTTS(text, voice = "Charon") {
-  if (!text || !text.trim()) return;
-  const clean = text.replace(/<[^>]*>/g, "").replace(/[#*`_]/g, "").trim();
-
+let speechRequest = 0, speechAbort = null, speechAudio = null;
+function stopSpeechPlayback() {
+  speechRequest++;
+  speechAbort?.abort(); speechAudio?.pause(); speechAudio = null;
   window.speechSynthesis?.cancel();
-  soundEngine.playBlip();
-  mascotMgr.setState("speaking");
-
+  const player = document.getElementById('speech-player'); if (player) player.hidden = true;
+  mascotMgr.setState('idle');
+}
+async function playGeminiTTS(text) {
+  if (!text?.trim()) return;
+  stopSpeechPlayback();
+  const version = speechRequest, clean = text.replace(/<[^>]*>/g, '').replace(/[#*`_]/g, '').trim();
+  const player = document.getElementById('speech-player'), status = document.getElementById('speech-status');
+  player.hidden = false; status.textContent = 'Đang chuẩn bị giọng AI…';
+  speechAbort = new AbortController();
+  mascotMgr.setState('speaking');
+  const finish = () => { if (version === speechRequest) { player.hidden = true; mascotMgr.setState('idle'); } };
   try {
-    const resp = await apiFetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: clean, voice })
+    const response = await apiFetch('/api/tts', {
+      method: 'POST', signal: AbortSignal.any([speechAbort.signal, AbortSignal.timeout(35000)]),
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text: clean.slice(0, 4000)})
     });
-
-    if (resp.ok) {
-      const data = await resp.json();
+    if (version !== speechRequest) return;
+    if (response.ok) {
+      const data = await response.json();
+      if (version !== speechRequest) return;
       if (data.audioBase64) {
-        const audio = new Audio(audioDataUrl(data));
-        audio.onended = () => mascotMgr.setState("idle");
-        await audio.play();
-        return;
+        const audio = speechAudio = new Audio(audioDataUrl(data));
+        audio.onended = finish; audio.onerror = finish;
+        await audio.play(); status.textContent = 'Đang đọc · Giọng AI'; return;
       }
     }
-  } catch (err) {
-    console.warn("Gemini TTS fallback to Web Speech:", err);
-  }
-
-  // Fallback to Browser Native Japanese SpeechSynthesis
-  if ("speechSynthesis" in window) {
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = "ja-JP";
-    u.rate = 0.95;
-    u.onend = () => mascotMgr.setState("idle");
-    window.speechSynthesis.speak(u);
+  } catch { if (version !== speechRequest) return; }
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'ja-JP'; utterance.rate = .9;
+    utterance.voice = window.speechSynthesis.getVoices().find(voice => voice.lang.startsWith('ja')) || null;
+    utterance.onend = finish; utterance.onerror = finish;
+    status.textContent = 'Đang đọc · Giọng trình duyệt'; window.speechSynthesis.speak(utterance);
   } else {
-    mascotMgr.setState("idle");
+    status.textContent = 'Trình duyệt chưa hỗ trợ đọc tiếng Nhật.';
+    mascotMgr.setState('idle');
   }
 }
 
@@ -322,6 +327,8 @@ async function playGeminiTTS(text, voice = "Charon") {
 function switchTab(tabId, route={}) {
   if(!authorizePage(tabId,route) || !confirmWorkspaceNavigation(tabId,route))return false;
   globalThis.rememberTeacherScreen?.();
+  globalThis.stopJapaneseInputs?.();
+  globalThis.stopSpeechPlayback?.();
   featureVersion++;
   quizRequest++;fcRequest++;kaiwaRenderRequest++;
   clearInterval(simulationInterval);
@@ -352,6 +359,10 @@ function switchTab(tabId, route={}) {
     panel.hidden = !isTarget;
     panel.classList.toggle("active", isTarget);
   });
+
+  // Keep the active view first in the document's reading order.
+  const activePanel = document.getElementById(`panel-${tabId}`);
+  activePanel?.parentElement?.prepend?.(activePanel);
 
   // Update topbar title
   const topbarTitle = document.getElementById("topbar-view-title");
@@ -388,6 +399,8 @@ function switchTab(tabId, route={}) {
     loadProgress();
     renderBookmarks();
   } else if (tabId === "classroom") {
+    if (!chatHistoryReady) globalThis.loadChatHistory?.();
+    globalThis.checkAiReady?.();
     renderDailyKanji(activeCurriculumLevel);
   } else if (tabId === "settings" || tabId === "admin") {
     window.renderAiPanels?.(tabId);
@@ -467,7 +480,7 @@ async function loadChatHistory() {
 }
 async function sendMessage(text,retry=false) {
   text=typeof text==='string'?text.trim():'';
-  if(sendingMessage || clearingChat || !text)return;
+  if(sendingMessage || clearingChat || globalThis.popoverBusy || !text)return;
   if(failedChatMessage && !retry){chatError('Tin trước chưa gửi xong. Thử lại hoặc bỏ qua.',()=>sendMessage(failedChatMessage.text,true));return;}
   if(!signedInUser){openAccount();return;}
   if(!chatHistoryReady){chatError('Đợi hội thoại tải xong trước khi gửi.',chatHistoryLoading?null:loadChatHistory);return;}
@@ -478,6 +491,7 @@ async function sendMessage(text,retry=false) {
   const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
   send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
   document.getElementById('chat-connection-status').textContent='Thầy đang trả lời…';
+  document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','true');
   if(!retry)renderBubble('user',text);
   if(!retry || input.value.trim()===text)input.value='';
   soundEngine.playSend();mascotMgr.setState('thinking');
@@ -496,6 +510,7 @@ async function sendMessage(text,retry=false) {
     mascotMgr.setState('idle');
   }finally{
     sendingMessage=false;send.disabled=false;clear.disabled=false;
+    document.querySelector('.classroom-chat-window')?.setAttribute('aria-busy','false');
     document.getElementById('chat-connection-status').textContent='';
   }
 }
@@ -847,6 +862,9 @@ async function renderKaiwaScenarios(){
 }
 
 function loadKaiwaPrompt() {
+  globalThis.stopJapaneseInputs?.();
+  globalThis.stopSpeechPlayback?.();
+  document.getElementById('kaiwa-error').hidden = true;
   const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
   if (!s) return;
 
@@ -1106,95 +1124,73 @@ async function loadProgress() {
 // 14. FLOATING SENSEI DOCK (ANYWHERE SPAWNING)
 // ==========================================
 function setupFloatingSensei() {
-  const popover = document.getElementById("sensei-floating-popover");
-  const closeBtn = document.getElementById("btn-close-popover");
-  const sendBtn = document.getElementById("btn-popover-send");
-  const inputEl = document.getElementById("popover-query-input");
-  const speechEl = document.getElementById("popover-speech-text");
-  const ttsBtn = document.getElementById("btn-popover-tts");
-  const summonBtn = document.getElementById("btn-topbar-summon");
-
-  function togglePopover() {
-    soundEngine.playBlip();
-    if (!popover) return;
-    popover.hidden = !popover.hidden;
-    if (!popover.hidden && inputEl) {
-      inputEl.focus();
+  const popover = document.getElementById('sensei-floating-popover');
+  const input = document.getElementById('popover-query-input'), send = document.getElementById('btn-popover-send');
+  const speech = document.getElementById('popover-speech-text'), summon = document.getElementById('btn-topbar-summon');
+  const settings = document.getElementById('popover-open-settings');
+  let pending = null, trigger = null, animation, open = false;
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function close(returnFocus = false) {
+    open = false;
+    animation?.cancel();
+    if (reduce()) { popover.hidden = true; }
+    else {
+      animation = popover.animate([{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.9)'}],{duration:150,easing:'cubic-bezier(.33,.17,.67,.5)'});
+      animation.onfinish = () => { popover.hidden = true; };
     }
+    if (returnFocus) trigger?.focus();
+    summon.setAttribute('aria-expanded', 'false');
   }
-
-  if (summonBtn) summonBtn.addEventListener("click", togglePopover);
-  if (closeBtn) closeBtn.addEventListener("click", () => { popover.hidden = true; });
-
-  // Keyboard Shortcut: Cmd+K / Ctrl+K
-  window.addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-      e.preventDefault();
-      togglePopover();
-    }
+  function toggle() {
+    if (!signedInUser) { openAccount(); return; }
+    if (open && !popover.hidden) { close(); return; }
+    animation?.cancel(); trigger = document.activeElement;
+    open = true; popover.hidden = false; summon.setAttribute('aria-expanded', 'true');
+    animation = popover.animate(reduce() ? [{opacity:0},{opacity:1}] : [{opacity:0,transform:'translateY(16px) scale(.9)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:220,easing:'cubic-bezier(.215,.61,.355,1)'});
+    input.focus();
+  }
+  summon.setAttribute('aria-controls', popover.id); summon.setAttribute('aria-expanded', 'false');
+  summon.addEventListener('click', toggle);
+  document.getElementById('btn-close-popover').addEventListener('click', () => close(true));
+  settings.onclick = () => { close(); switchTab('settings'); };
+  window.addEventListener('keydown', event => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); toggle(); }
+    if (event.key === 'Escape' && !popover.hidden) { event.preventDefault(); close(true); }
   });
-
-  async function handlePopoverQuery(query) {
-    if (!query || !query.trim()) return;
-    if (speechEl) speechEl.textContent = "Sensei đang suy nghĩ...";
-    mascotMgr.setState("thinking");
-
+  document.addEventListener('pointerdown', event => {
+    if (!popover.hidden && !popover.contains(event.target) && !summon.contains(event.target) && !event.target.closest('#lam-walker')) close();
+  });
+  async function ask(query) {
+    query = query.trim();
+    if (!query || globalThis.popoverBusy) return;
+    if (sendingMessage || clearingChat) { speech.textContent = 'Thầy đang trả lời trong hội thoại. Em đợi một chút nhé.'; return; }
+    if (query.length > 6000) { speech.textContent = 'Câu hỏi tối đa 6.000 ký tự.'; return; }
+    if (!pending || pending.text !== query) pending = {text:query,id:crypto.randomUUID(),screen:globalThis.teacherScreen?.()};
+    globalThis.popoverBusy = true; send.disabled = true;
+    speech.textContent = 'Thầy đang suy nghĩ…'; settings.hidden = true; mascotMgr.setState('thinking');
     try {
-      const resp = await apiFetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          message: query,
-          screen: globalThis.teacherScreen?.()
-        })
+      const response = await apiFetch('/api/chat', {
+        method:'POST',signal:AbortSignal.timeout(35000),headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:query,request_id:pending.id,screen:pending.screen})
       });
-
-      if (resp.ok) {
-        const data = await resp.json();
-        const reply = data.reply || data.response || "Sensei đã ghi nhận câu hỏi của bạn!";
-        if (speechEl) speechEl.textContent = reply;
-        mascotMgr.setState("speaking");
-        soundEngine.playReceive();
-      } else {
-        const data = await resp.json().catch(() => ({}));
-        if (speechEl) speechEl.textContent = data.detail || "Sensei chưa trả lời được. Bạn thử lại nhé!";
-        mascotMgr.setState("idle");
-      }
-    } catch {
-      if (speechEl) speechEl.textContent = "Lỗi kết nối. Bạn thử lại nhé!";
-      mascotMgr.setState("idle");
+      const data = await response.json();
+      if (!response.ok) { settings.hidden = !['no_ai','rekey'].includes(data.code); throw new Error(data.detail || 'Chưa gửi được. Em thử lại nhé.'); }
+      const reply = data.reply || data.response;
+      if (typeof reply !== 'string' || !reply.trim()) throw new Error('Chưa có câu trả lời. Em thử lại nhé.');
+      speech.textContent = reply; pending = null; input.value = ''; chatHistoryReady = false;
+      mascotMgr.setState('speaking'); soundEngine.playReceive();
+    } catch (error) {
+      speech.textContent = error.name === 'TimeoutError' ? 'Kết nối quá lâu. Câu hỏi vẫn ở đây, em thử lại nhé.' : error.message;
+      input.value = query;
+    } finally {
+      globalThis.popoverBusy = false; send.disabled = false; mascotMgr.setState('idle');
+      if (document.body.dataset.page === 'classroom') loadChatHistory();
     }
   }
-
-  if (sendBtn && inputEl) {
-    sendBtn.addEventListener("click", () => {
-      const q = inputEl.value;
-      inputEl.value = "";
-      handlePopoverQuery(q);
-    });
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const q = inputEl.value;
-        inputEl.value = "";
-        handlePopoverQuery(q);
-      }
-    });
-  }
-
-  if (ttsBtn && speechEl) {
-    ttsBtn.addEventListener("click", () => {
-      playGeminiTTS(speechEl.textContent);
-    });
-  }
-
-  document.querySelectorAll(".quick-chip-btn").forEach(chip => {
-    chip.addEventListener("click", () => {
-      if (chip.dataset.ask) {
-        handlePopoverQuery(chip.dataset.ask);
-      }
-    });
-  });
+  send.addEventListener('click', () => ask(input.value));
+  input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); ask(input.value); } });
+  document.querySelectorAll('.quick-chip-btn').forEach(chip => chip.addEventListener('click', () => { if (!globalThis.popoverBusy) { input.value = chip.dataset.ask; ask(input.value); } }));
+  document.getElementById('btn-popover-tts').addEventListener('click', () => playGeminiTTS(speech.textContent));
 }
 
 // ==========================================
@@ -1256,9 +1252,7 @@ function setupEventListeners() {
   document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
   const voiceButton=document.getElementById('btn-voice-input');
-  const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(SpeechRecognition){const recognition=new SpeechRecognition();recognition.lang='ja-JP';recognition.onresult=e=>{document.getElementById('chat-input').value=e.results[0][0].transcript;};recognition.onend=()=>{voiceButton.textContent='Nói';voiceButton.setAttribute('aria-pressed','false');};recognition.onerror=()=>chatError('Chưa nhận được giọng nói. Kiểm tra quyền micro hoặc nhập tin nhắn.',null);voiceButton.onclick=()=>{try{recognition.start();voiceButton.textContent='Dừng';voiceButton.setAttribute('aria-pressed','true');}catch{recognition.stop();}};}
-  else {voiceButton.disabled=true;voiceButton.title='Trình duyệt không hỗ trợ nhập giọng nói';}
+  createJapaneseInput({button:voiceButton,input:document.getElementById('chat-input'),onError:message=>chatError(message,null)});
 
   window.addEventListener('completion-changed',()=>{if(location.hash===`#curriculum/${activeCurriculumLevel}` && curriculumView==='plan')renderStudyPlan(activeCurriculumLevel);});
   document.getElementById('kaiwa-level').onchange=e=>switchTab('kaiwa',{level:e.target.value});
@@ -1536,93 +1530,12 @@ function setupEventListeners() {
     });
   }
 
-  // Kaiwa User Audio Recording & Web Speech Recognition
-  let mediaRecorder = null;
-  let audioChunks = [];
-  let userAudioBlobUrl = null;
-
-  const btnKaiwaPlayUser = document.getElementById("btn-kaiwa-play-user");
-  if (btnKaiwaPlayUser) {
-    btnKaiwaPlayUser.addEventListener("click", () => {
-      if (userAudioBlobUrl) {
-        const audio = new Audio(userAudioBlobUrl);
-        audio.play().catch(() => {});
-      }
-    });
-  }
-
-  async function startAudioRecording() {
-    if (!navigator.mediaDevices?.getUserMedia) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) audioChunks.push(e.data);
-      };
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: "audio/webm" });
-        if (userAudioBlobUrl) URL.revokeObjectURL(userAudioBlobUrl);
-        userAudioBlobUrl = URL.createObjectURL(blob);
-        if (btnKaiwaPlayUser) btnKaiwaPlayUser.style.display = "inline-flex";
-        stream.getTracks().forEach(t => t.stop());
-      };
-      mediaRecorder.start();
-    } catch {
-      // Audio capture fallback silently
-    }
-  }
-
-  function stopAudioRecording() {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      try { mediaRecorder.stop(); } catch {}
-    }
-  }
-
-  const btnKaiwaMic = document.getElementById("btn-kaiwa-mic");
-  const kaiwaInput = document.getElementById("kaiwa-manual-input");
-  const micStatus = document.getElementById("kaiwa-mic-status");
-
-  if (btnKaiwaMic && kaiwaInput) {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRec) {
-      const rec = new SpeechRec();
-      rec.lang = "ja-JP";
-      rec.interimResults = false;
-
-      rec.onstart = () => {
-        if (micStatus) micStatus.textContent = "Đang ghi âm…";
-        btnKaiwaMic.style.background = "#fee2e2";
-        startAudioRecording();
-      };
-
-      rec.onresult = (evt) => {
-        const transcript = evt.results[0][0].transcript;
-        kaiwaInput.value = transcript;
-        soundEngine.playSend();
-      };
-
-      rec.onerror = () => {
-        if (micStatus) micStatus.textContent = "Micro: Chưa nhận diện được";
-        btnKaiwaMic.style.background = "";
-        stopAudioRecording();
-      };
-
-      rec.onend = () => {
-        if (micStatus) micStatus.textContent = "Micro: Sẵn sàng";
-        btnKaiwaMic.style.background = "";
-        stopAudioRecording();
-      };
-
-      btnKaiwaMic.addEventListener("click", () => {
-        try { rec.start(); } catch { rec.stop(); stopAudioRecording(); }
-      });
-    } else {
-      btnKaiwaMic.addEventListener("click", () => {
-        alert("Trình duyệt chưa hỗ trợ Web Speech API. Bạn có thể nhập câu trả lời trực tiếp bằng bàn phím!");
-      });
-    }
-  }
+  const kaiwaInput = document.getElementById('kaiwa-manual-input');
+  createJapaneseInput({
+    button: document.getElementById('btn-kaiwa-mic'), input: kaiwaInput,
+    status: document.getElementById('kaiwa-mic-status'),
+    playbackButton: document.getElementById('btn-kaiwa-play-user')
+  });
 
   // Kaiwa Evaluation submit
   const btnEvalKaiwa = document.getElementById("btn-eval-kaiwa");
@@ -1630,19 +1543,23 @@ function setupEventListeners() {
     btnEvalKaiwa.addEventListener("click", async () => {
       const speech = kaiwaInput.value.trim();
       if (!speech) {
-        alert("Vui lòng nói hoặc nhập câu trả lời tiếng Nhật trước khi chấm điểm!");
+        const error = document.getElementById('kaiwa-error');
+        error.textContent = 'Nói hoặc nhập câu trả lời trước khi nhận xét.'; error.hidden = false;
+        kaiwaInput.focus();
         return;
       }
 
       if(btnEvalKaiwa.disabled)return;
       btnEvalKaiwa.disabled=true;
-      const evaluationKey=activeKaiwaKey,evaluationIndex=activeKaiwaPromptIdx;
+      document.getElementById('kaiwa-error').hidden = true;
+      document.getElementById('kaiwa-result-card').hidden = true;
+      const evaluationKey=activeKaiwaKey,evaluationIndex=activeKaiwaPromptIdx,evaluationNavigation=navigationVersion;
       btnEvalKaiwa.textContent = "Đang nhận xét…";
       const s = window.JLPT_DATA?.kaiwaScenarios?.[activeKaiwaKey];
 
       try {
         const resp = await apiFetch("/api/kaiwa/evaluate", {
-          method: "POST",
+          method: "POST", signal: AbortSignal.timeout(35000),
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             scenario_title: s?.title || activeKaiwaKey,
@@ -1653,7 +1570,7 @@ function setupEventListeners() {
           })
         });
 
-        if(evaluationKey!==activeKaiwaKey || evaluationIndex!==activeKaiwaPromptIdx)return;
+        if(evaluationKey!==activeKaiwaKey || evaluationIndex!==activeKaiwaPromptIdx || evaluationNavigation!==navigationVersion)return;
         const resultCard = document.getElementById("kaiwa-result-card");
         const scoreVal = document.getElementById("kaiwa-score-val");
         const feedbackText = document.getElementById("kaiwa-feedback-text");
@@ -1668,13 +1585,13 @@ function setupEventListeners() {
           soundEngine.playCheer();
         } else {
           const failure=await resp.json();
-          if (scoreVal) scoreVal.textContent = "—";
-          if (feedbackText) feedbackText.textContent = failure.detail || "Chưa thể chấm điểm. Vui lòng thử lại.";
-          if (modelText) modelText.textContent = "";
-          if (resultCard) resultCard.hidden = false;
+          const error = document.getElementById('kaiwa-error');
+          error.textContent = failure.detail || 'Chưa nhận xét được. Hãy thử lại.'; error.hidden = false;
         }
       } catch {
-        alert("Lỗi khi kết nối hệ thống chấm điểm.");
+        if (evaluationKey !== activeKaiwaKey || evaluationIndex !== activeKaiwaPromptIdx || evaluationNavigation !== navigationVersion) return;
+        const error = document.getElementById('kaiwa-error');
+        error.textContent = 'Chưa kết nối được. Câu trả lời vẫn ở đây, em thử lại nhé.'; error.hidden = false;
       } finally {
         btnEvalKaiwa.disabled=false;
         btnEvalKaiwa.textContent = "Nhờ thầy nhận xét";

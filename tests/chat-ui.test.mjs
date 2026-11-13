@@ -9,7 +9,7 @@ function chat(apiFetch){
     if(!elements.has(id))elements.set(id,{value:'',style:{},events:{},hidden:false,disabled:false,addEventListener(name,fn){this.events[name]=fn;},querySelectorAll:()=>rows.slice(),click(){return this.events.click?.();}});
     return elements.get(id);
   };
-  const c=vm.createContext({crypto,AbortSignal,Response,setTimeout:()=>{},signedInUser:{},userId:'qa',chatLessonContext:null,confirm:()=>true,apiFetch,document:{getElementById:element,querySelectorAll:()=>rows.slice()},soundEngine:{playSend(){},playReceive(){},playBlip(){}},mascotMgr:{setState(){}},renderBubble(role,content){const row={role,content,remove(){rows.splice(rows.indexOf(row),1);}};rows.push(row);}});
+  const c=vm.createContext({crypto,AbortSignal,Response,setTimeout:()=>{},signedInUser:{},userId:'qa',chatLessonContext:null,confirm:()=>true,apiFetch,document:{getElementById:element,querySelectorAll:()=>rows.slice(),querySelector:()=>null},soundEngine:{playSend(){},playReceive(){},playBlip(){}},mascotMgr:{setState(){}},renderBubble(role,content){const row={role,content,remove(){rows.splice(rows.indexOf(row),1);}};rows.push(row);}});
   vm.runInContext(source.slice(source.indexOf('let sendingMessage=false'),source.indexOf('async function loadGreeting()')),c);
   vm.runInContext(source.slice(source.indexOf('  const btnClearChat ='),source.indexOf('  // Level selector click')),c);
   return {c,element,rows};
@@ -48,4 +48,31 @@ test('discard reloads server history before another send is allowed',async()=>{
   await b.c.loadChatHistory();await b.c.sendMessage('unsent');
   b.element('chat-discard').onclick();await new Promise(resolve=>setImmediate(resolve));
   assert.equal(b.rows.length,0);assert.equal(b.element('chat-error').hidden,true);
+});
+
+test('floating chat is single-flight and retries the same question without losing its identity',async()=>{
+  const elements=new Map(),sent=[];let finish,fail=true;
+  const element=id=>{if(!elements.has(id))elements.set(id,{id,hidden:id==='sensei-floating-popover',value:'',events:{},addEventListener(name,fn){this.events[name]=fn;},setAttribute(){},focus(){},animate(){return {cancel(){}};}});return elements.get(id);};
+  const c=vm.createContext({crypto,AbortSignal,signedInUser:{},sendingMessage:false,clearingChat:false,chatHistoryReady:true,matchMedia:()=>({matches:true}),window:{addEventListener(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{dataset:{page:'dashboard'}}},mascotMgr:{setState(){}},soundEngine:{playReceive(){}},apiFetch:async(path,options)=>{sent.push(JSON.parse(options.body));return fail?new Promise(resolve=>finish=resolve):Response.json({reply:'回答'});}});
+  vm.runInContext(source.slice(source.indexOf('function setupFloatingSensei()'),source.indexOf('// 15. SETTINGS')),c);
+  c.setupFloatingSensei();
+  element('popover-query-input').value='私の答え';
+  const first=element('btn-popover-send').events.click();
+  await element('btn-popover-send').events.click();assert.equal(sent.length,1);assert.equal(element('btn-popover-send').disabled,true);
+  finish(Response.json({detail:'Try again'},{status:503}));await first;
+  assert.equal(element('popover-query-input').value,'私の答え');
+  fail=false;await element('btn-popover-send').events.click();
+  assert.equal(sent.length,2);assert.equal(sent[0].request_id,sent[1].request_id);
+  assert.equal(element('popover-query-input').value,'');assert.equal(element('popover-speech-text').textContent,'回答');
+});
+
+test('stopped or superseded speech cannot play a late audio response',async()=>{
+  const pending=[],audio=[];
+  const elements={};const element=id=>elements[id]??=( {hidden:true,textContent:''} );
+  const c=vm.createContext({AbortSignal,AbortController,document:{getElementById:element},window:{speechSynthesis:{cancel(){}}},mascotMgr:{setState(){}},apiFetch:()=>new Promise(resolve=>pending.push(resolve)),audioDataUrl:()=>'',Audio:class{constructor(){audio.push(this);this.paused=false;}async play(){this.played=true;}pause(){this.paused=true;}}});
+  vm.runInContext(source.slice(source.indexOf('let speechRequest ='),source.indexOf('// 7. TAB SWITCHER')),c);
+  const first=c.playGeminiTTS('一');const second=c.playGeminiTTS('二');
+  pending[0](Response.json({audioBase64:'late'}));await first;assert.equal(audio.length,0);
+  pending[1](Response.json({audioBase64:'current'}));await second;assert.equal(audio.length,1);assert.equal(audio[0].played,true);
+  c.stopSpeechPlayback();assert.equal(audio[0].paused,true);assert.equal(element('speech-player').hidden,true);
 });

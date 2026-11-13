@@ -49,11 +49,14 @@ npm run deploy    # chỉ deploy, KHÔNG chạy migration
 | Secret | Vai trò |
 | --- | --- |
 | `GOOGLE_CLIENT_ID` | Xác minh Google ID token (`GOOGLE_CLIENT_SECRET` đã lưu nhưng luồng hiện tại không dùng) |
-| `ADMIN_EMAILS` | Danh sách email Google (cách nhau dấu phẩy) có quyền admin sau khi đăng nhập Google |
+| `ADMIN_EMAILS` | Danh sách email Google (cách nhau dấu phẩy) trở thành chủ sở hữu sau khi đăng nhập Google; có thể cấp quyền admin trong ứng dụng |
 | `AI_KEY_SECRET` | Chuỗi ngẫu nhiên dài để mã hóa API key người dùng. Đổi giá trị làm mọi khóa đã lưu không đọc được |
-| `GEMINI_API_KEY` | Không còn được đọc. Có thể xóa |
+| `OPENAI_API_KEY` | API key OpenAI phía máy chủ, tự dùng cho quản trị viên chưa có API riêng |
+| `OPENAI_MODEL` | Tùy chọn, mặc định `gpt-4.1-mini` |
 
-Đặt secret bằng dashboard (Worker `vjbot` > Settings > Variables and Secrets) hoặc `cf workers secrets update <TÊN> --worker vjbot --type secret_text --text ...`. Không ghi giá trị vào mã, tài liệu, log hay lịch sử shell chia sẻ. Cục bộ: sao chép `.dev.vars.example` thành `.dev.vars` (đã bị ignore).
+Đặt secret bằng dashboard (Worker `vjbot` > Settings > Variables and Secrets) hoặc `cf workers secrets update <TÊN> --worker vjbot --type secret_text --text ...`. Không ghi giá trị vào mã, tài liệu, log hay lịch sử shell chia sẻ. Cục bộ: sao chép `.dev.vars.example` thành `.dev.vars` (đã bị ignore), điền các giá trị rồi chạy `npm run migrate -- --local`. Không đổi `AI_KEY_SECRET` của một môi trường đã có API người dùng.
+
+Trước khi triển khai phiên bản này, đặt `OPENAI_API_KEY` và `ADMIN_EMAILS` trên Worker, giữ nguyên `AI_KEY_SECRET`, rồi chạy `npm run release` để áp dụng migration `0014_admin_grants.sql` trước khi triển khai mã. Cấu hình `.dev.vars` chỉ có hiệu lực cục bộ.
 
 Google OAuth cần origin `https://vjbot.dangphuc.me` (và `http://localhost:8787` cho cục bộ). Nút Google hiển thị chưa chứng minh luồng đăng nhập hoạt động.
 

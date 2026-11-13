@@ -19,11 +19,11 @@ test('unknown API routes return JSON 404', async () => {
 });
 
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of readdirSync('migrations').filter(f=>f.endsWith('.sql')).sort())db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -237,7 +237,7 @@ test('failed chat does not persist a turn and retrying a completed request retur
     assert.equal(calls,2);assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,2);
   }finally{globalThis.fetch=previous;}
 });
-test('there is no built-in AI: even an admin needs an own API, and speech needs a Google Gemini key',async()=>{
+test('without shared OpenAI configured, admins need an own API and Gemini speech needs an official Google key',async()=>{
   const {env,request}=await authenticated(),previous=globalThis.fetch;
   env.GEMINI_API_KEY='platform-key';env.ADMIN_EMAILS='owner@example.test';await env.DB.prepare("INSERT INTO admins VALUES('google:qa','owner@example.test','now')").run();
   let calls=0;globalThis.fetch=async(url,options)=>{calls++;assert.ok(!JSON.stringify(options).includes('platform-key'));return Response.json({candidates:[{content:{parts:[{inlineData:{data:'UklGRg==',mimeType:'audio/wav'}}]}}]});};
@@ -380,4 +380,79 @@ test('admins can purge old anonymous profiles without touching real accounts',as
   assert.equal((await (await post('/api/admin/purge-guests')).json()).removed,2);
   assert.equal((await env.DB.prepare("SELECT count(*) n FROM profiles").first()).n,2);
   assert.deepEqual((await env.DB.prepare("SELECT user_id FROM conversations").all()).results.map(r=>r.user_id),['google:keep']);
+});
+
+test('admins automatically use server OpenAI while free users cannot access the shared key',async()=>{
+  const {env,request}=await authenticated(),previous=globalThis.fetch;
+  env.OPENAI_API_KEY='sk-server-only-test';env.OPENAI_MODEL='gpt-4.1-mini';
+  const calls=[];
+  globalThis.fetch=async(url,options)=>{calls.push({url,options});return Response.json({choices:[{message:{content:'こんにちは！'}}]});};
+  try{
+    assert.equal((await worker.fetch(request('/api/chat',{message:'hello'}),env)).status,403);
+    await asAdmin(env);
+    const settings=await (await worker.fetch(request('/api/ai/settings'),env)).json();
+    assert.equal(settings.source,'platform');assert.equal(settings.platform.model,'gpt-4.1-mini');
+    assert.ok(!JSON.stringify(settings).includes(env.OPENAI_API_KEY));
+    assert.equal((await worker.fetch(request('/api/chat',{message:'hello'}),env)).status,200);
+    assert.equal(calls[0].url,'https://api.openai.com/v1/chat/completions');
+    assert.equal(calls[0].options.headers.Authorization,'Bearer '+env.OPENAI_API_KEY);
+    await withApi(env,request);
+    assert.equal((await (await worker.fetch(request('/api/ai/settings'),env)).json()).source,'own');
+    assert.equal((await worker.fetch(request('/api/chat',{message:'own api'}),env)).status,200);
+    assert.equal(calls[1].url,'https://api.example.com/v1/chat/completions');
+    await worker.fetch(put(request,'/api/ai/settings',undefined,'DELETE'),env);
+    assert.equal((await (await worker.fetch(request('/api/ai/settings'),env)).json()).source,'platform');
+    env.ADMIN_EMAILS='';
+    assert.equal((await worker.fetch(request('/api/chat',{message:'revoked'}),env)).status,403);
+    assert.equal(calls.length,2);
+  }finally{globalThis.fetch=previous;}
+});
+
+test('admin role grants support registered accounts, take effect immediately and revoke shared access',async()=>{
+  const {env,request}=await authenticated();env.OPENAI_API_KEY='sk-server-only-test';
+  const now=new Date().toISOString();
+  for(const id of ['google:qa','email:learner','legacy-guest'])await env.DB.prepare('INSERT INTO profiles(user_id,level,track,updated_at) VALUES(?,?,?,?)').bind(id,'N5','openjlpt',now).run();
+  const learnerToken='c'.repeat(64);
+  await env.DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(learnerToken),'email:learner','Learner',Date.now()+60000).run();
+  const learner=(path,body)=>new Request('https://vjbot.test'+path,{headers:{Cookie:'vj_session='+learnerToken,'Content-Type':'application/json'},...(body?{method:'POST',body:JSON.stringify(body)}:{})});
+  const change=(id,role)=>worker.fetch(request('/api/admin/user',{id,action:'set_role',role}),env);
+  assert.equal((await change('email:learner','admin')).status,403);
+  await asAdmin(env);
+  assert.equal((await change('legacy-guest','admin')).status,400);
+  assert.equal((await change('email:learner','owner')).status,400);
+  assert.equal((await change('google:qa','free')).status,400);
+  assert.equal((await change('email:learner','admin')).status,200);
+  let session=await (await worker.fetch(learner('/api/auth/session'),env)).json();assert.equal(session.user.is_admin,true);
+  assert.equal((await (await worker.fetch(learner('/api/ai/settings'),env)).json()).source,'platform');
+  let list=await (await worker.fetch(request('/api/admin/users'),env)).json();
+  assert.equal(list.users.find(u=>u.user_id==='email:learner').role,'admin');
+  assert.equal(list.users.find(u=>u.user_id==='google:qa').role,'owner');
+  assert.equal((await worker.fetch(learner('/api/admin/user',{id:'email:learner',action:'set_role',role:'free'}),env)).status,400);
+  assert.equal((await worker.fetch(learner('/api/admin/user',{id:'google:qa',action:'delete'}),env)).status,400);
+  assert.equal((await change('email:learner','free')).status,200);
+  assert.equal((await worker.fetch(learner('/api/admin/overview'),env)).status,403);
+  assert.equal((await (await worker.fetch(learner('/api/ai/settings'),env)).json()).source,'none');
+  session=await (await worker.fetch(learner('/api/auth/session'),env)).json();assert.equal(session.user.is_admin,false);
+});
+
+test('official OpenAI speech uses the resolved key; proxy providers never receive speech calls',async()=>{
+  const {env,request}=await authenticated(),previous=globalThis.fetch;
+  await asAdmin(env);env.OPENAI_API_KEY='sk-server-voice-test';
+  const calls=[];
+  globalThis.fetch=async(url,options)=>{calls.push({url,options});return new Response(new Uint8Array([73,68,51]),{headers:{'Content-Type':'audio/mpeg'}});};
+  try{
+    let response=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);
+    assert.equal(response.status,200);assert.equal((await response.json()).audioBase64,'SUQz');
+    assert.equal(calls[0].url,'https://api.openai.com/v1/audio/speech');
+    assert.equal(calls[0].options.redirect,'manual');
+    assert.equal(calls[0].options.headers.Authorization,'Bearer '+env.OPENAI_API_KEY);
+    assert.equal(JSON.parse(calls[0].options.body).input,'こんにちは');
+    await withApi(env,request);
+    response=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);
+    assert.equal(response.status,403);assert.equal(calls.length,1);
+    await worker.fetch(put(request,'/api/ai/settings',undefined,'DELETE'),env);
+    globalThis.fetch=async()=>new Response('unavailable',{status:503});
+    response=await worker.fetch(request('/api/tts',{text:'こんにちは'}),env);
+    assert.equal(response.status,200);assert.equal((await response.json()).fallback,true);
+  }finally{globalThis.fetch=previous;}
 });

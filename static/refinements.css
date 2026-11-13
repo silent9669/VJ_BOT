@@ -1,0 +1,197 @@
+/* One visual system for the existing HTML app. Colours come from Lâm's green jacket. */
+:root {
+  --paper:#f3f5f2; --sheet:#ffffff; --paper-card:#ffffff; --whiteboard:#f3f5f2;
+  --ink:#242e28; --pencil:#414b45; --pencil-light:#606a63; --muted:#606a63;
+  --study-muted:#606a63; --line:#dce2dc; --border-dark:#c2ccc3;
+  --accent:#285a46; --accent-hover:#1b4433; --study-accent:#285a46;
+  --surface:#fff; --surface-2:#edf1ec; --raised:#e4ebe4;
+  --ok:#286343; --ok-bg:#e4f0e7; --warn:#a82e27; --warn-bg:#fcecea;
+  --r-1:6px; --r-2:8px;
+  --font-sans:'Plus Jakarta Sans',sans-serif; --font-display:var(--font-sans);
+  --font-marker:var(--font-sans); --font-hand:var(--font-sans); --font-serif:var(--font-sans);
+  --font-mono:var(--font-sans); --serif:var(--font-sans);
+}
+body { background:var(--paper); color:var(--ink); font-family:var(--font-sans); }
+button,input,textarea,select { font-family:inherit; }
+button,a { touch-action:manipulation; }
+button:disabled { cursor:not-allowed; opacity:.5; }
+button:focus-visible,a:focus-visible,summary:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+:is(h1,h2,h3,h4,h5,h6) { color:var(--ink); text-wrap:balance; }
+.skip-link { position:fixed;left:16px;top:12px;padding:12px 18px;background:var(--ink);color:var(--sheet);z-index:20000;transform:translateY(-150%);border-radius:6px; }
+.skip-link:focus { transform:none; }
+.app-shell,.app-main,.sketch-canvas { background:var(--paper)!important; background-image:none!important; }
+.sketch-canvas { padding:28px 32px 100px!important; }
+.sketch-canvas::before,.sketch-canvas::after { display:none; }
+.tab-panel { width:100%; max-width:1152px; margin-inline:auto; }
+.workspace-heading { display:flex;align-items:center;justify-content:space-between;gap:20px; margin-bottom:28px; }
+.workspace-heading h1,.settings-container>h1,.level-hub-heading h1,.curriculum-title { font-size:28px!important;line-height:1.3;letter-spacing:-.04em; }
+.workspace-heading p { margin-top:6px; font-size:14px;color:var(--muted); }
+.workspace-heading>img { width:60px;height:60px; }
+.app-sidebar { background:var(--sheet)!important; border-right:1px solid var(--line)!important; box-shadow:none!important; }
+.sidebar-header,.sidebar-nav { background:none; }
+.sidebar-nav-item { color:var(--muted)!important; font-size:14px; }
+.sidebar-nav-item.active { background:var(--surface-2)!important; color:var(--ink)!important; font-weight:700; }
+.sidebar-brand { gap:10px; }.brand-name { font-size:23px;letter-spacing:-.06em; }
+.sidebar-brand img { width:36px!important;height:36px!important; }
+.vj-8bit-logo-wrap { background:transparent; border:0;box-shadow:none; }
+.sidebar-user-card { flex-wrap:wrap;gap:6px; }
+.sketch-chip { border:0!important;box-shadow:none!important;background:var(--surface-2)!important;color:var(--muted)!important; }
+.main-topbar { background:var(--sheet)!important; height:72px!important;padding:12px 28px!important;box-shadow:none; }
+.topbar-logo-8bit,.chrome-status-pill { display:none!important; }
+.breadcrumb-group { font-size:13px; }.breadcrumb-root { font-weight:600; }
+.topbar-summon-btn { border:1px solid var(--line)!important;background:var(--surface-2)!important;box-shadow:none!important;border-radius:6px!important;min-height:44px; }
+.summon-icon { display:none; }.summon-text { color:var(--ink);font-size:13px;font-weight:600; }
+.sketch-kbd { font-family:inherit;background:var(--sheet);border-color:var(--line);box-shadow:none; }
+.account-avatar-wrap { background:var(--surface-2);border:0; }.account-user-name { font-size:13px; }
+.mobile-bottom-bar { background:var(--sheet)!important;box-shadow:none!important;border-top:1px solid var(--line)!important;padding-bottom:env(safe-area-inset-bottom); }
+.mobile-bottom-item { color:var(--muted)!important;background:none!important;font-size:11px; }
+.mobile-bottom-item.active { color:var(--ink)!important;font-weight:700; }
+/* The homepage is a small working lesson, with the same teacher as the app. */
+body[data-page=landing] .sketch-canvas { padding:0!important; }
+#panel-landing { max-width:1280px!important;padding:0 40px!important;background:var(--paper); }
+.public-nav { padding:24px 0;border:0; }
+.public-brand { font-size:26px;gap:12px;letter-spacing:-.05em; }
+.public-hero { grid-template-columns:1fr 1fr;gap:64px;padding:40px 0 64px; }
+.public-hero h1 { font-family:var(--font-sans);font-weight:600;font-size:clamp(46px,5.4vw,76px);line-height:1.1;letter-spacing:-.065em; }
+.public-intro { max-width:360px;margin:28px 0 0;font-size:17px;line-height:1.7;color:var(--pencil); }
+.public-levels { margin-top:32px;gap:8px; }.public-levels button { border-color:var(--line);background:var(--sheet);border-radius:6px;min-height:48px; }
+.public-cta { background:var(--ink);color:var(--sheet);border-color:var(--ink);font-size:14px;border-radius:6px;min-height:48px; }
+.public-login { border:0;background:none;font-weight:600; }.public-signin { border:0;font-weight:600; }
+.public-demo { display:flex;flex-direction:column;align-items:stretch;justify-content:center;background:#dfe9df;border:0;border-radius:12px;padding:32px;min-height:450px;overflow:visible; }
+.demo-teacher-heading { display:flex;align-items:center;margin:-20px 0 8px;gap:4px; }
+.demo-teacher-heading img { width:150px;height:150px;object-fit:contain;image-rendering:pixelated;margin-left:-36px; }
+.demo-teacher-heading h2 { font-size:22px;line-height:1.4;letter-spacing:-.04em;margin-bottom:8px; }
+.demo-teacher-heading p { font-family:var(--font-jp);font-size:20px; }
+.demo-chat { background:var(--sheet);border:0;box-shadow:none;border-radius:8px;padding:28px;gap:20px; }
+.demo-question { font-size:18px!important;line-height:1.8!important;color:var(--ink); }
+.demo-answers { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.demo-answers button { padding:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);font-size:17px;cursor:pointer;min-height:48px; }
+.demo-answers button[aria-pressed=true] { background:var(--ink);color:var(--sheet);border-color:var(--ink); }
+#demo-feedback { min-height:44px;font-size:13px;line-height:1.6;color:var(--muted);margin:0; }
+#demo-feedback[data-correct=true] { color:var(--ok); }
+.public-steps { margin:0;padding:24px 0;gap:24px;border:0;font-size:14px; }
+.public-steps li { justify-content:space-between;padding:18px 0;gap:12px; }
+.public-steps li span { font-size:20px; }.public-footer { margin:0;padding:24px 0;border-top:1px solid var(--line);font-size:12px; }
+/* Study objects share a frame; navigation stays quieter than the content. */
+:is(.dashboard-next,.dashboard-tools a,.settings-card,.plan-unit,.exam-set,.kanji-set,.level-card,.mastery-kpi-card,.weak-spots-card,.bookmarks-card) { box-shadow:none!important; background:var(--sheet); border:1px solid var(--line);border-radius:8px; }
+.dashboard-overview { gap:24px;margin-bottom:32px; }.dashboard-next { min-height:210px;padding:28px; background:var(--raised);border:0; }
+.dashboard-next span { color:var(--muted);font-size:13px; }.dashboard-next h2 { font-size:28px;line-height:1.4;max-width:430px; }
+.dashboard-numbers { border-radius:8px; }.dashboard-numbers>div { padding:20px 24px; }.dashboard-numbers dd { font-size:26px;font-weight:500; }
+.dashboard-grid { gap:32px; }.dashboard-tools { gap:0;border-top:1px solid var(--line); }
+.dashboard-tools a { background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;min-height:72px;padding:16px 12px; }
+.dashboard-tools h3 { font-size:14px; }.dashboard-tool-symbol { color:var(--muted);font-family:var(--font-jp); }
+.dashboard-recent { background:var(--sheet);padding:24px;border-radius:8px;border:1px solid var(--line); }
+.dashboard-empty { border:0;min-height:130px;display:grid;place-content:center;gap:12px; }
+.level-course-card { padding:20px 0; }.level-cover { width:104px;height:80px;background:var(--raised); }
+.level-card-content h2 { font-size:23px; }.level-card-content p { font-size:14px; }.level-card-footer { font-size:13px; }
+.feature-workspace,.skill-hub { padding:0!important; }.feature-lesson-card { padding:18px 4px;min-height:88px; }
+.feature-lesson-card h2 { font-size:16px; }.feature-lesson-card p { font-size:14px; }
+.feature-back { color:var(--muted);min-height:44px;font-family:inherit;font-size:14px; }
+.lesson-page,.lesson-outline,#lesson-page { background:var(--sheet);border-color:var(--line);border-radius:8px; }
+.lesson-footer,.lesson-page .practice-actions { background:var(--sheet); }.lesson-source,.lesson-section-title,.lesson-formula span { font-family:inherit;letter-spacing:0;text-transform:none;font-size:13px; }
+.example-ro { font-family:inherit; }.lesson-page-header h1 { font-size:26px; }.lesson-explain,.lesson-reading { color:var(--ink);font-size:16px; }
+.exam-grid,.kanji-library { gap:16px; }.exam-set { padding:24px; }.exam-set h3 { font-size:20px; }.exam-set p { font-size:14px; }
+.stage-btn,.prompt-chip,.welcome-chip-btn,.card-audio-btn { font:500 13px var(--font-sans);min-height:44px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);color:var(--ink);box-shadow:none; }
+/* Conversation: a legible reading area and a composer that remains in reach. */
+#panel-classroom { padding:0!important;max-width:1200px; }
+.classroom-layout { display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;align-items:start; }
+#panel-classroom .sensei-stage-card { background:var(--paper);border:0;box-shadow:none;padding:12px 0!important; }
+.tape-strip,.pixel-spotlight,.character-shadow,.active-rec-banner,.sensei-mood-badge,.stage-sensei-role { display:none!important; }
+.podium-title { font:600 15px var(--font-sans);letter-spacing:0; }.stage-sprite-frame { height:180px;background:var(--raised);border:0;box-shadow:none;border-radius:8px;margin:16px 0; }
+.stage-pixel-character { width:140px!important;height:160px!important;object-fit:contain; }
+.stage-sensei-info { display:none; }.stage-current-topic { border:0;background:none;border-radius:0; }.topic-display { font-size:16px;line-height:1.6; }.topic-meaning { color:var(--muted);font-size:13px; }.topic-level-badge { background:var(--raised);border:0;color:var(--muted);font:500 12px var(--font-sans); }
+.kanji-daily-card { border:0;background:var(--sheet);border-radius:8px;padding:16px;box-shadow:none;margin-bottom:16px; }
+.kanji-badge-tag { font:500 12px var(--font-sans);letter-spacing:0; }.kanji-daily-head { gap:8px; }.kanji-large-char { font-size:48px; }.kanji-hanviet { font:600 14px var(--font-sans); }.kanji-meaning,.reading-chip { font-size:12px; }
+.classroom-chat-window { display:flex;flex-direction:column;height:calc(100dvh - 160px);min-height:540px;max-height:900px;background:var(--sheet);border:1px solid var(--line);border-radius:12px;box-shadow:none!important; }
+.chat-header { background:var(--sheet);padding:18px 24px;border-bottom:1px solid var(--line); }.chat-title { font:600 18px var(--font-sans);letter-spacing:-.03em; }.chat-header-left { gap:12px; }.chat-teacher-avatar { width:44px;height:44px; }
+#chat-connection-status { font-size:12px;color:var(--muted);line-height:1.6; }
+.chat-messages-stage { background:var(--sheet);padding:24px;flex:1;min-height:120px;max-height:none;overscroll-behavior:contain; }
+.chat-welcome-state { align-items:center;justify-content:center;gap:20px;text-align:center; }.welcome-title { font:600 26px/1.35 var(--font-sans);letter-spacing:-.04em; }.welcome-mascot { width:112px;height:112px;image-rendering:pixelated;object-fit:contain; }
+.welcome-chips-row { display:flex;justify-content:center;flex-wrap:wrap;gap:8px; }.welcome-chip-btn { padding:12px 16px;white-space:normal;max-width:240px;background:var(--surface-2);border:0; }
+.chat-bubble-row { gap:12px;margin:0 0 24px;align-items:flex-start; }.bubble-avatar-box { width:32px;flex:none; }.bubble-avatar-img { width:32px!important;height:32px!important; }.learner-avatar { font-size:12px;color:var(--muted); }
+.bubble-speech-card { max-width:88%;padding:16px 20px;background:var(--surface-2);border:0;border-radius:8px;box-shadow:none; }.bubble-speech-card.user { background:var(--raised);border:0; }.bubble-speech-card::before,.bubble-speech-card::after { display:none; }
+.bubble-header-meta { margin-bottom:8px; }.bubble-name { font-size:12px;color:var(--muted);font-family:inherit; }.bubble-body-text { font:400 15px/1.85 var(--font-sans);color:var(--ink); }.bubble-tts-btn { min-height:32px;padding:4px 10px;background:transparent;border:0;font-size:12px;color:var(--muted); }
+.chat-chips-bar { display:flex;flex-wrap:wrap;padding:8px 20px;gap:6px;background:var(--sheet);border:0; }.chat-chips-bar .prompt-chip { min-height:36px;padding:7px 10px;border:0;background:var(--surface-2);font-size:12px; }
+.chat-input-bar { padding:12px 20px 20px!important;gap:10px;background:var(--sheet);border:0; }.chat-text-input { resize:none;border-radius:8px!important;min-height:52px;max-height:160px; }.chat-send-btn { background:var(--ink)!important;border:0!important;border-radius:6px!important;color:var(--sheet);box-shadow:none!important;min-height:52px;padding:12px 18px; }.chat-audio-btn { background:var(--surface-2);border:0;border-radius:6px;min-height:52px;font-size:13px; }.chat-audio-btn[aria-pressed=true] { background:var(--warn-bg);color:var(--warn); }
+.chat-ai-gate { padding:24px;background:var(--surface-2);border:0;margin:16px;border-radius:8px; }.chat-ai-gate h2 { font-size:20px; }.ai-banner { background:var(--raised);border:0; }
+#chat-error { color:var(--warn);background:var(--warn-bg);flex-wrap:wrap; }
+/* Speaking: listen, answer, then review in one aligned column. */
+.kaiwa-container { max-width:900px;margin:auto; }.kaiwa-header-card { display:flex;align-items:center;justify-content:space-between;border:0;background:none;padding:0 0 24px;box-shadow:none; }.kaiwa-title { font:600 28px/1.3 var(--font-sans);letter-spacing:-.04em; }.kaiwa-level-label { font-size:13px; }.kaiwa-level-label select { min-height:44px; }
+.kaiwa-interactive-stage { display:grid;grid-template-columns:1fr;gap:20px; }.kaiwa-prompt-card { padding:28px;background:var(--raised);border:0;border-radius:8px; }.kaiwa-prompt-header { border:0;margin-bottom:20px; }.kaiwa-scenario-tag { background:none;padding:0;font-size:16px;font-weight:600;color:var(--ink); }.kaiwa-audio-btn { min-height:44px;padding:10px 16px;border:1px solid var(--line);background:var(--sheet);border-radius:6px;font:500 13px var(--font-sans);color:var(--ink);cursor:pointer; }
+.kaiwa-prompt-japanese { font:500 26px/1.8 var(--font-jp);margin:16px 0;color:var(--ink); }.kaiwa-prompt-vietnamese { font:400 15px/1.7 var(--font-sans);color:var(--pencil);margin-top:16px; }.kaiwa-prompt-card .lesson-japanese-passage { color:var(--ink);font-size:17px;line-height:1.9; }
+.kaiwa-response-card { padding:28px;background:var(--sheet);border:1px solid var(--line);border-radius:8px; }.kaiwa-input-header { align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px; }.kaiwa-input-header label { font-size:14px;font-weight:600; }.mic-status-badge { font:400 12px/1.6 var(--font-sans);color:var(--muted);letter-spacing:0;text-transform:none;background:none; }
+.kaiwa-textarea { width:100%;font:400 18px/1.7 var(--font-jp);min-height:120px;resize:vertical;background:var(--sheet);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:16px;box-shadow:none; }
+.kaiwa-actions-row { display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px; }.kaiwa-mic-btn,.kaiwa-eval-btn { min-height:48px;font:500 14px var(--font-sans);border-radius:6px;padding:12px 18px;box-shadow:none; }.kaiwa-mic-btn { background:var(--surface-2);border:0;color:var(--ink); }.kaiwa-mic-btn[aria-pressed=true] { background:var(--warn-bg);color:var(--warn); }.kaiwa-eval-btn { background:var(--ink);color:var(--sheet);border:0; }
+#kaiwa-error { margin-top:16px;color:var(--warn);background:var(--warn-bg);padding:12px;border-radius:6px;font-size:14px;line-height:1.6; }
+.kaiwa-result-card { padding:28px;background:var(--sheet);border:1px solid var(--line);box-shadow:none;border-radius:8px; }.result-header { background:none; }.result-badge { font-size:13px;letter-spacing:0;color:var(--muted); }.score-num { font-size:36px; }.score-unit { font-size:13px; }.result-body h4 { font-size:16px; }.result-body p { font-size:15px;line-height:1.8; }
+/* Settings and admin expose effective access, without exposing credentials. */
+.settings-layout { grid-template-columns:160px minmax(0,1fr);gap:24px; }.settings-stack { gap:20px; }.settings-card { padding:24px; }.card-head .card-title { margin:0; }.settings-nav { top:24px; }.settings-nav button { font-size:14px; }.settings-card .card-desc { font-size:14px; }
+.danger-card { background:var(--sheet);border-color:var(--line); }.status-pill { font-size:12px; }.segmented { background:var(--surface-2);border:0;border-radius:6px; }.segmented button { min-height:44px; }.segmented button[aria-pressed=true] { box-shadow:none; }
+.ai-form label { font-size:14px;gap:8px; }.ai-form input { border-color:var(--border-dark);border-radius:6px; }.model-chips button { font-family:inherit;font-size:12px;min-height:36px; }
+.ai-platform { display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px;background:var(--surface-2);border-radius:6px;margin-bottom:16px; }.ai-platform>div { display:grid;gap:8px; }.ai-platform strong { font-size:14px; }.ai-platform span { font-size:13px;color:var(--muted); }
+#ai-own>summary { min-height:44px;cursor:pointer;font-size:14px;font-weight:600;padding:12px 0; }#ai-own[open]>.ai-form { padding-top:12px; }#ai-chat { margin-top:16px; }#ai-status:empty { display:none; }#ai-status:not(:empty) { margin-top:16px; }
+.admin-stats { display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:24px;background:var(--sheet); }.admin-stats>div { border:0;border-radius:0;border-right:1px solid var(--line);padding:24px;background:none;box-shadow:none; }.admin-stats>div:last-child { border:0; }.admin-stats span { font-size:13px; }.admin-stats strong { font-size:28px;font-weight:500; }.admin-ai-status { margin-bottom:20px;font-size:14px;color:var(--muted); }
+.admin-user-row { min-height:72px;padding:14px 4px; }.admin-user-who strong { font-size:14px; }.admin-user-who small { font-size:12px; }.admin-badge { border:0;background:var(--surface-2);font-size:12px;white-space:nowrap; }.admin-badge-on { color:var(--ok);background:var(--ok-bg); }
+.admin-role-row { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:20px 0;font-size:14px; }
+.admin-user-stats { grid-template-columns:1fr 1fr; }.admin-user-stats dt { margin-top:8px; }.admin-user-stats dd { margin:8px 0 0; }.admin-user-dialog { padding:28px; }.admin-user-dialog h2 { font-size:24px; }.admin-user-actions { padding-top:4px; }
+/* Floating teacher and speech controls sit clear of mobile navigation. */
+.sensei-floating-popover { right:24px;bottom:152px!important;max-height:min(640px,calc(100dvh - 180px));width:min(440px,calc(100vw - 32px));overflow:auto;box-shadow:var(--elev-3);transform-origin:bottom right; }
+.popover-speech { font-size:14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;max-height:280px;overflow:auto; }.popover-body { padding:20px;gap:16px; }.popover-sensei-box { align-items:start;border:0;padding:16px; }.popover-sensei-box img { width:48px;height:48px; }.popover-header { padding:12px 20px; }.popover-quick-chips { gap:8px; }.quick-chip-btn,.popover-tts-btn { min-height:44px;font-size:13px; }.popover-actions-row { justify-content:space-between;gap:8px; }.popover-input-row { align-items:stretch; }
+.speech-player { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1200;display:flex;align-items:center;gap:16px;padding:8px 12px 8px 20px;border:1px solid var(--line);border-radius:8px;background:var(--sheet);box-shadow:var(--elev-2);font-size:13px;max-width:calc(100vw - 32px);width:max-content; }.speech-player button { min-height:44px;border:0;background:var(--surface-2);border-radius:6px;padding:8px 12px;white-space:nowrap;color:var(--ink);font:inherit;cursor:pointer; }
+.auth-aside { background:var(--raised); }.auth-aside img:first-child { display:none; }#auth-dialog,#auth-dialog[open] { background:var(--sheet); }#auth-dialog::backdrop,.picker-overlay,dialog::backdrop { background:rgba(20,31,24,.45);backdrop-filter:none; }
+.auth-tabs button[aria-pressed=true] { color:var(--ink);border-bottom-color:var(--ink); }#auth-password-hint,#google-status { font-size:12px; }
+@media(hover:hover) and (pointer:fine) {
+  .stage-btn:hover,.prompt-chip:hover,.welcome-chip-btn:hover,.quick-chip-btn:hover,.demo-answers button:hover { background:var(--raised);transform:none;box-shadow:none; }
+  .dashboard-tools a:hover,.level-course-card:hover,.feature-lesson-card:hover,.admin-user-row:hover { background:var(--surface-2);transform:none;box-shadow:none; }
+  .public-cta:hover,.chat-send-btn:hover,.kaiwa-eval-btn:hover { background:var(--accent)!important; }
+}
+@media(max-width:1100px) {
+  .classroom-layout { grid-template-columns:minmax(0,1fr); }.classroom-chat-window { height:calc(100dvh - 148px); }
+  .public-hero { gap:32px; }.settings-layout { grid-template-columns:140px minmax(0,1fr); }
+}
+@media(max-width:899px) {
+  .sketch-canvas { padding:24px 24px 150px!important; }.main-topbar { padding:12px 20px!important;height:64px!important; }
+  .classroom-chat-window { height:calc(100dvh - 156px);min-height:400px; }
+  .sensei-floating-popover { bottom:172px!important;right:16px;max-height:calc(100dvh - 188px); }.speech-player { bottom:76px; }
+  .settings-layout { grid-template-columns:minmax(0,1fr); }.settings-nav { position:static;display:flex;gap:6px;margin:0; }.settings-nav button { min-height:44px; }
+  #panel-landing { padding:0 28px!important; }.public-hero { grid-template-columns:1fr;gap:40px;padding:40px 0; }.public-hero-copy { max-width:600px; }.public-hero h1 { font-size:64px; }.public-intro { max-width:460px; }.public-demo { min-height:0;max-width:600px;width:100%;padding:24px; }.demo-teacher-heading img { width:120px;height:120px; }
+}
+@media(max-width:600px) {
+  .sketch-canvas { padding:20px 16px 152px!important; }.tab-panel { padding:0!important; }.workspace-heading { margin-bottom:24px;gap:12px; }.workspace-heading h1,.curriculum-title,.level-hub-heading h1,.settings-container>h1 { font-size:25px!important; }
+  .main-topbar { padding:8px 12px!important;gap:8px; }.breadcrumb-root,.breadcrumb-sep { display:none; }.breadcrumb-current { font-size:13px; }.account-user-name { display:none!important; }.topbar-account-btn { padding:0; }.topbar-summon-btn { width:auto;gap:8px;padding:0 12px; }.summon-text { font-size:12px; }.summon-text::after { display:none; }.account-avatar-wrap { width:36px;height:36px; }
+  #panel-landing { padding:0 20px!important; }.public-nav { padding:20px 0;gap:8px; }.public-brand { font-size:23px;gap:8px; }.public-brand img { width:36px;height:36px; }.public-nav-actions { gap:6px; }.public-nav .public-cta { padding:10px 14px;min-height:44px; }.public-login { padding:8px; }
+  .public-hero { padding:32px 0;gap:36px; }.public-hero h1 { font-size:48px;letter-spacing:-.06em; }.public-intro { font-size:16px;line-height:1.7;margin-top:24px; }.public-levels { margin-top:24px;gap:6px; }.public-levels button { font-size:14px; }
+  .public-demo { padding:20px; }.demo-chat { padding:20px;gap:16px; }.demo-teacher-heading { margin:-16px 0 4px; }.demo-teacher-heading img { width:112px;height:112px;margin-left:-28px; }.demo-teacher-heading h2 { font-size:19px; }.demo-teacher-heading p { font-size:17px; }.demo-question { font-size:16px!important; }.demo-answers button { font-size:16px; }
+  .public-steps { display:grid;grid-template-columns:1fr;padding:4px 0 24px;gap:0; }.public-steps li { padding:14px 0; }.public-footer { font-size:11px;padding:20px 0;align-items:start; }
+  .dashboard-overview { gap:16px; }.dashboard-next { padding:24px;min-height:180px; }.dashboard-next h2 { font-size:24px; }.dashboard-numbers>div { padding:16px 8px; }.dashboard-numbers dt { font-size:11px; }.dashboard-numbers dd { font-size:24px; }.dashboard-grid { gap:24px; }.dashboard-tools h3 { font-size:13px; }.dashboard-tool-symbol { display:none; }.dashboard-recent { padding:20px; }
+  .level-course-card { padding:18px 0;gap:14px; }.level-cover { width:72px;height:72px; }.level-card-content h2 { font-size:22px; }.level-card-content p { font-size:13px; }.feature-lesson-card p { white-space:normal; }.feature-lesson-card h2 { font-size:14px; }
+  .classroom-chat-window { border-radius:8px;height:calc(100dvh - 150px);min-height:420px; }.chat-header { padding:14px 16px; }.chat-title { font-size:17px; }.chat-messages-stage { padding:20px 14px; }.chat-chips-bar { padding:6px 12px; }.chat-chips-bar .prompt-chip { font-size:11px;min-height:36px; }.chat-chips-bar #btn-bookmark-topic { display:none; }.welcome-title { font-size:23px; }.chat-welcome-state { gap:16px; }.welcome-chips-row { display:grid;grid-template-columns:1fr; }.welcome-chip-btn { font-size:13px;padding:10px 14px;min-height:44px;max-width:none; }.welcome-mascot { height:96px;width:96px; }
+  .bubble-avatar-box { display:none; }.bubble-speech-card { max-width:95%;padding:14px 16px; }.bubble-body-text { font-size:15px; }.chat-input-bar { padding:10px 12px 14px!important;gap:8px; }.chat-text-input { padding:12px 10px!important; }.chat-send-btn { padding:10px 14px; }.chat-ai-gate { margin:12px;padding:24px 16px; }.chat-ai-gate h2 { font-size:20px; }
+  .kaiwa-header-card { gap:12px; }.kaiwa-title { font-size:25px; }.kaiwa-prompt-card,.kaiwa-response-card,.kaiwa-result-card { padding:20px; }.kaiwa-prompt-japanese { font-size:22px; }.kaiwa-prompt-header { gap:10px; }.kaiwa-scenario-tag { font-size:15px; }.kaiwa-actions-row { gap:8px; }.kaiwa-mic-btn,.kaiwa-eval-btn { padding:12px 14px;font-size:13px; }.kaiwa-eval-btn { flex:1; }.kaiwa-input-header { gap:6px; }.kaiwa-textarea { font-size:17px; }
+  .settings-card { padding:20px; }.settings-nav { flex-wrap:wrap;overflow:visible; }.settings-nav button { font-size:13px; }.segmented { grid-auto-flow:column;grid-template-columns:repeat(3,1fr);width:100%; }.segmented button { min-width:0;padding:8px;font-size:12px;white-space:normal; }.ai-platform { flex-wrap:wrap;padding:16px; }.ai-platform .stage-btn { width:100%; }.ai-actions .public-cta { flex:1;justify-content:center; }.admin-stats { grid-template-columns:1fr 1fr; }.admin-stats>div { padding:20px;border-right:0;border-bottom:1px solid var(--line); }.admin-stats>div:nth-child(odd) { border-right:1px solid var(--line); }.admin-stats>div:nth-last-child(-n+2) { border-bottom:0; }.admin-stats span { font-size:12px; }.admin-user-row { gap:8px; }.admin-badge { font-size:11px; }.admin-user-dialog { padding:24px 20px; }.admin-user-stats { grid-template-columns:1fr;gap:8px; }.admin-role-row { align-items:start;flex-direction:column; }
+  .popover-body { padding:16px; }.popover-sensei-box { grid-template-columns:1fr;padding:14px; }.popover-sensei-box img { display:none; }.popover-speech { max-height:180px; }.sensei-floating-popover { max-height:calc(100dvh - 188px); }.popover-quick-chips { gap:6px; }.quick-chip-btn { padding:8px 10px;font-size:12px; }.popover-input { font-size:16px; }
+}
+@media(max-height:650px) and (max-width:899px) { .classroom-chat-window { height:auto;min-height:500px; }.sensei-floating-popover { bottom:80px!important;max-height:calc(100dvh - 96px); } }
+/* The phone docks the assistant in the header, leaving every study control clear. */
+.summon-mascot { display:none;object-fit:contain;image-rendering:pixelated; }
+#topbar-user-initial { display:none; }
+.chat-chips-bar { flex-wrap:wrap!important;overflow:visible!important; }
+.chat-chips-bar .prompt-chip { flex:0 0 auto;white-space:nowrap;min-height:40px; }
+#btn-daily-kanji-tts,#kaiwa-mic-status { font-size:12px!important; }
+.dashboard-grid { align-items:start; }.dashboard-empty { min-height:0;padding:8px 0; }
+.mastery-kpi-card .kpi-label { font-size:12px;letter-spacing:0;text-transform:none; }
+@media(max-width:899px) {
+  #lam-walker { display:none; }
+  .summon-mascot { display:block;width:24px;height:42px; }
+  .topbar-summon-btn { gap:8px; }
+  .sensei-floating-popover { top:76px;bottom:auto!important;max-height:calc(100dvh - 150px);transform-origin:top right; }
+  .popover-sensei-box img { display:block; }
+}
+@media(max-width:600px) {
+  #topbar-user-initial { display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--raised);color:var(--ink);font-size:14px;font-weight:600; }
+  #btn-topbar-account { border:0;background:transparent;min-width:44px; }
+  .chat-chips-bar { gap:6px;padding:8px; }.chat-chips-bar .prompt-chip { padding:6px 8px;min-height:40px;font-size:11px; }
+  .chat-chips-bar #btn-bookmark-topic { display:inline-flex;align-items:center; }
+}
+.public-steps li button { display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:48px;border:0;background:transparent;padding:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer; }
+main.sources-page { max-width:1000px;margin:0 auto;padding:40px 24px 80px; }.sources-page>h1 { font-size:28px;letter-spacing:-.04em;margin:24px 0; }.sources-page h2 { margin:24px 0 16px; }.sources-page p { line-height:1.8; }.sources-page .source-filters { display:flex;flex-wrap:wrap;gap:16px;margin:24px 0; }.source-filters label { display:grid;gap:8px;flex:1;min-width:200px;font-size:14px; }.source-filters input,.source-filters select { min-height:44px;max-width:100%;padding:10px 12px;border:1px solid var(--border-dark);border-radius:6px;background:var(--sheet);color:var(--ink);font-size:16px; }.sources-page .source-notes summary { min-height:44px;display:flex;align-items:center;cursor:pointer; }

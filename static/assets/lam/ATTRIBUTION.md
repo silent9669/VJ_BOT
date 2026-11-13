@@ -4,3 +4,5 @@ Renderer: https://www.dicebear.com/styles/avataaars/
 Clothing: blazer and shirt; glasses: prescription02; hair: shortFlat.
 The original license metadata remains embedded in teacher.svg.
 This checked-in asset replaces the former generated pixel teacher.
+
+The favicon and apple-touch icon crop the face of the existing project sprite at pixel/south.png. The pixel/display/ files crop the existing direction and idle sprites for the larger assistant button; no external artwork was added.

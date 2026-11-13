@@ -10,10 +10,8 @@ export default defineConfig({
       enabled: true
     },
     env: {
-      // No longer read: there is no built-in AI. Kept so deploys do not touch the existing secret; the owner may delete it.
-      GEMINI_API_KEY: bindings.secret(),
+      OPENAI_API_KEY: bindings.secret(),
       GOOGLE_CLIENT_ID: bindings.secret(),
-      GOOGLE_CLIENT_SECRET: bindings.secret(),
       ADMIN_EMAILS: bindings.secret(),
       AI_KEY_SECRET: bindings.secret(),
       DB: bindings.d1({

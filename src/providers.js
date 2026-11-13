@@ -31,10 +31,14 @@ async function unseal(env, userId, blob) {
   } catch { return null; }
 }
 
-// There is no built-in AI: a learner's chat, Kaiwa and speech all use the API they saved in Settings.
+export const platformModel = env => env.OPENAI_MODEL || 'gpt-4.1-mini';
+
+// Own credentials take precedence. The shared key never leaves the server or serves a free account.
 export async function resolveProvider(env, userId) {
   const own = await env.DB.prepare('SELECT * FROM ai_providers WHERE user_id=?').bind(userId).first();
-  if (!own) return null;
+  if (!own) return env.OPENAI_API_KEY && await isAdmin(env, userId)
+    ? {source: 'platform', protocol: 'openai', baseUrl: DEFAULT_BASES.openai, apiKey: env.OPENAI_API_KEY, models: [platformModel(env)]}
+    : null;
   const apiKey = await unseal(env, userId, own.key_enc);
   if (!apiKey) return {error: 'rekey'};
   return {source: 'own', protocol: own.protocol, baseUrl: own.base_url, apiKey, models: [own.model]};
@@ -71,6 +75,7 @@ async function overview(env) {
   const count = async (sql, ...p) => (await env.DB.prepare(sql).bind(...p).first()).n;
   const top = await env.DB.prepare(`SELECT c.user_id, count(*) n, (SELECT name FROM sessions s WHERE s.user_id=c.user_id LIMIT 1) name FROM conversations c WHERE c.role='user' AND c.timestamp>=? GROUP BY c.user_id ORDER BY n DESC LIMIT 8`).bind(since(7)).all();
   return {
+    shared_ai: {configured: Boolean(env.OPENAI_API_KEY), model: platformModel(env)},
     users: await count('SELECT count(*) n FROM profiles'),
     active_7d: await count("SELECT count(DISTINCT user_id) n FROM conversations WHERE timestamp>=?", since(7)),
     messages_24h: await count("SELECT count(*) n FROM conversations WHERE role='user' AND timestamp>=?", since(1)),
@@ -88,7 +93,8 @@ export async function aiRoute(request, env, url) {
 
   if (path === '/api/ai/settings' && method === 'GET') {
     const own = await env.DB.prepare('SELECT protocol,base_url,model,key_last4 FROM ai_providers WHERE user_id=?').bind(user.user_id).first();
-    return json({source: own ? 'own' : 'none', is_admin: admin, own, bases: DEFAULT_BASES, can_store: Boolean(env.AI_KEY_SECRET)});
+    const platform = admin ? {configured: Boolean(env.OPENAI_API_KEY), model: platformModel(env)} : null;
+    return json({source: own ? 'own' : platform?.configured ? 'platform' : 'none', is_admin: admin, own, platform, bases: DEFAULT_BASES, can_store: Boolean(env.AI_KEY_SECRET)});
   }
   if (path === '/api/ai/settings' && method === 'PUT') {
     const data = await body(request);

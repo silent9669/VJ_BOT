@@ -1,6 +1,6 @@
 # Kiến trúc hiện tại
 
-VJBot là một Cloudflare Worker duy nhất, vừa phục vụ file tĩnh vừa chạy API, lưu dữ liệu trong D1. Giao diện là HTML/CSS/JavaScript thuần (không framework, không bundler). Không có AI dùng chung: mỗi người dùng tự gắn API của mình.
+VJBot là một Cloudflare Worker duy nhất, vừa phục vụ file tĩnh vừa chạy API, lưu dữ liệu trong D1. Giao diện là HTML/CSS/JavaScript thuần (không framework, không bundler). Tài khoản miễn phí tự gắn API; admin chưa có API riêng dùng OpenAI phía máy chủ.
 
 ```mermaid
 flowchart LR
@@ -22,8 +22,8 @@ Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoD
 | --- | --- |
 | `src/worker.js` | Điểm vào. Kiểm tra Origin, định tuyến, xác thực phiên, giới hạn tốc độ, các route dữ liệu (hồ sơ, tiến độ SM-2, hoàn thành, lịch sử, chat, Kaiwa, TTS, xóa tài khoản) và trả file tĩnh |
 | `src/auth.js` | Đăng ký/đăng nhập mật khẩu (scrypt), xác minh Google ID token, phiên 7 ngày (chỉ lưu băm SHA-256), `is_admin` trong `/api/auth/session` |
-| `src/admin.js` | Quyền admin (tài khoản Google có email đã xác minh nằm trong secret `ADMIN_EMAILS`), danh sách/chi tiết/thao tác người dùng, `deleteUserData` dùng chung cho xóa tài khoản |
-| `src/providers.js` | API riêng của từng người dùng: mã hóa AES-GCM, `/api/ai/*`, `/api/admin/overview`, `askAI`, giọng đọc Gemini |
+| `src/admin.js` | Chủ sở hữu qua Google xác minh + `ADMIN_EMAILS`, vai trò admin ủy quyền qua `admin_grants`, danh sách/chi tiết/thao tác người dùng, `deleteUserData` dùng chung cho xóa tài khoản |
+| `src/providers.js` | Phân giải API riêng và OpenAI phía máy chủ cho admin; mã hóa AES-GCM, `/api/ai/*`, `/api/admin/overview`, `askAI`, giọng đọc Gemini |
 | `src/llm.js` | Gọi ba loại API (OpenAI-compatible, Anthropic, Gemini), kiểm tra URL, chuẩn hóa lượt hội thoại |
 | `src/prompt.js` | System prompt lớp học đảo ngược của thầy Lâm |
 | `src/exams.js` | Lưu và kiểm tra trạng thái bài thi thử |
@@ -75,18 +75,18 @@ Xóa tài khoản (`/api/account/delete`) xóa mọi bảng trên theo `user_id`
 - **Google**: Worker xác minh chữ ký (JWKS), issuer, audience, hạn, `email_verified` và nonce gắn cookie HttpOnly. Đăng nhập Google ghi `admins` nếu email nằm trong `ADMIN_EMAILS`.
 - **Mật khẩu**: scrypt N=16384, r=8, p=5, giới hạn 10 lần/cặp IP+email và 100 lần/IP mỗi 15 phút. Không có xác minh email hay khôi phục mật khẩu, nên tài khoản này không bao giờ là admin.
 - **Danh tính bắt buộc**: tài khoản Google phải có tên và email đã xác minh trong `profiles`. Phiên Google cũ chưa có email bị hủy ở lần gọi `/api/auth/session` kế tiếp, người dùng đăng nhập lại một lần để ghi lại.
-- **Admin**: `isAdmin` kiểm tra cả dòng trong `admins` lẫn secret hiện tại, nên xóa email khỏi `ADMIN_EMAILS` là thu hồi ngay. Admin chỉ xem thống kê, không có đặc quyền AI.
+- **Admin**: `isOwner` kiểm tra cả dòng Google đã xác minh trong `admins` lẫn secret hiện tại. `isAdmin` chấp nhận chủ sở hữu hoặc quyền rõ ràng trong `admin_grants` cho Google/email. Thu hồi quyền có hiệu lực ngay, không cần đổi phiên. Chủ sở hữu được bảo vệ khỏi đổi quyền/xóa qua bảng quản trị.
 
 ## Lớp AI
 
-- Không có khóa hệ thống. `resolveProvider` chỉ đọc API người dùng đã lưu. Chưa lưu: `403 {code:'no_ai'}`; không giải mã được (đổi `AI_KEY_SECRET`): `409 {code:'rekey'}`.
+- `resolveProvider` ưu tiên API riêng đã lưu; nếu chưa có, chỉ admin được dùng `OPENAI_API_KEY` và `OPENAI_MODEL` (mặc định `gpt-4.1-mini`). Mỗi yêu cầu kiểm tra lại quyền; khóa hệ thống không bao giờ được trả qua API cài đặt. Chưa lưu: `403 {code:'no_ai'}`; không giải mã được (đổi `AI_KEY_SECRET`): `409 {code:'rekey'}`.
 - Ba giao thức trong `src/llm.js`: OpenAI-compatible (`/chat/completions`, Bearer, không gửi `max_tokens`/`temperature`), Anthropic (`/v1/messages`, `x-api-key`, `max_tokens` 1024), Gemini (`generateContent`, `x-goog-api-key`).
 - URL do người dùng nhập phải là https công khai: chặn IP, localhost, `.local`/`.internal`, domain của chính site và `workers.dev`, có tài khoản/query/fragment. `redirect: 'manual'`, không trả lại nội dung lỗi của nhà cung cấp.
 - Mỗi yêu cầu tối đa 28 giây (trình duyệt hủy sau 35 giây). Lịch sử gửi lên là 12 tin gần nhất, được gộp để luân phiên user/assistant.
 - Ngữ cảnh: mọi nơi gọi thầy Lâm (chat, ô ⌘K ở bất kỳ màn hình nào) gửi kèm `screen` (route, tiêu đề, cấp độ, chữ trên màn hình, tối đa 3.500 ký tự). Máy chủ làm sạch rồi đưa vào prompt cùng "LEARNER NOTES" (số mục đã học, 5 mục yếu nhất từ bảng `progress`). Prompt coi cả hai là dữ liệu, không phải chỉ dẫn, và cấm lộ đáp án bài tập đang hiển thị.
 - Chat: `reversedPrompt(level, lesson, turns, screen, learner)` ở `src/prompt.js`. Vòng lặp: hỏi một câu, chờ, chẩn đoán đúng câu học viên viết, sửa tối đa hai lỗi, câu tiếp theo khó/dễ hơn; bậc gợi ý; cứ 4 lượt thì bắt tự giải thích lại; xử lý riêng các tin cố định từ nút gợi ý. Chỉ văn bản thuần, tối đa khoảng 110 từ.
 - Kaiwa chấm bản chép lời (không chấm phát âm) qua cùng API; kết quả JSON được phân tích tolerant.
-- Giọng đọc: Gemini `gemini-3.8-flash-tts` chỉ khi API đã lưu là Gemini trỏ tới Google; nếu không, trình duyệt dùng Web Speech API tiếng Nhật.
+- Giọng đọc: API OpenAI chính thức dùng `/v1/audio/speech` (`gpt-4o-mini-tts`); Gemini-Google dùng `gemini-3.8-flash-tts`. Proxy tùy chỉnh không nhận yêu cầu giọng đọc. Trình duyệt có Web Speech API tiếng Nhật dự phòng, hủy phát/yêu cầu khi chuyển màn hình hoặc bấm dừng.
 
 ## Dữ liệu bài học và ngôn ngữ
 
