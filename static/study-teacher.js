@@ -17,6 +17,12 @@
   const observer = new MutationObserver(refresh);
   observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','open','class']});
 
+  function teacherButton(text,type='button'){
+    const button=document.createElement('button');
+    button.type=type;button.className='study-teacher-button';button.textContent=text;
+    return button;
+  }
+
   globalThis.studyTarget = (key,element,source) => ({key,element,source:String(source ?? '')});
   globalThis.mountTeacherConversation = (host,{trigger,lesson,focus=null,view='checks',isCurrent=()=>true}) => {
     const box=document.createElement('section');box.className='study-teacher-chat';box.hidden=true;
@@ -28,10 +34,10 @@
     const input=document.createElement('textarea');input.rows=2;input.maxLength=6000;input.required=true;
     input.placeholder='Ví dụ: Thầy giải thích giúp em vì sao dùng mẫu câu này nhé?';label.append(input);
     const actions=document.createElement('div');actions.className='study-teacher-chat-actions';
-    const send=document.createElement('button');send.type='submit';send.className='study-teacher-button';send.textContent='Gửi thầy';
-    const close=document.createElement('button');close.type='button';close.className='study-teacher-button';close.textContent='Để em thử lại';
-    const retry=document.createElement('button');retry.type='button';retry.className='study-teacher-button';retry.textContent='Gửi lại cho thầy';retry.hidden=true;
-    const edit=document.createElement('button');edit.type='button';edit.className='study-teacher-button';edit.textContent='Hỏi câu khác';edit.hidden=true;
+    const send=teacherButton('Gửi thầy','submit');
+    const close=teacherButton('Để em thử lại');
+    const retry=teacherButton('Gửi lại cho thầy');retry.hidden=true;
+    const edit=teacherButton('Hỏi câu khác');edit.hidden=true;
     const status=document.createElement('p');status.className='study-teacher-status';status.setAttribute('role','status');
     actions.append(send,close,retry,edit);form.append(label,actions);box.append(heading,log,form,status);host.append(box);
     const route=`study/${crypto.randomUUID()}`;box.id=route.replace('/','-');
@@ -99,7 +105,7 @@
   globalThis.mountStudyTeacher = (host,{lesson,focus=null,view='checks',targets=[],isCurrent=()=>true,revealWhen=()=>true,onApply=()=>{}}) => {
     const panel=document.createElement('aside');panel.className='study-teacher';panel.setAttribute('aria-label','Học cùng thầy Lâm');panel.setAttribute('data-teacher-exclude','');
     const heading=document.createElement('strong');heading.className='study-teacher-title';heading.textContent='Cùng thầy Lâm hiểu bài';
-    const button=document.createElement('button');button.type='button';button.className='study-teacher-button';button.textContent='Nhờ thầy giảng bài';
+    const button=teacherButton('Nhờ thầy giảng bài');
     const status=document.createElement('p');status.className='study-teacher-status';status.setAttribute('role','status');
     const output=document.createElement('p');output.className='study-teacher-reply';output.hidden=true;
     panel.append(heading,button,status,output);host.append(panel);
