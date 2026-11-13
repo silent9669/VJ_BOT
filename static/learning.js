@@ -18,7 +18,9 @@ async function ensureLessons(level) {
     // Recognition drills use distinct source glosses, with a stable item ID for progress.
     for(const lesson of skills.vocabulary.filter(l=>l.source==='OpenJLPT')) {
       lesson.drills=lesson.items.map((word,index)=>{
-        const alternatives=vocabularyMeanings.filter(m=>m!==word.vi).slice(index,index+3);
+        const candidates=[];
+        for(const meaning of vocabularyMeanings){if(meaning!==word.vi)candidates.push(meaning);if(candidates.length>=index+3)break;}
+        const alternatives=candidates.slice(index,index+3);
         const opts=[...alternatives];opts.splice(index%4,0,word.vi);
         return {q:`${word.jp} (${word.reading}) — nghĩa nào đúng?`,opts,ans:word.vi,item_id:word.id};
       });
@@ -26,9 +28,10 @@ async function ensureLessons(level) {
     // Sentence practice is grouped by the target word's level; sentences are not graded JLPT passages.
     const seen=new Set();
     const sentences=vocab.flatMap(v=>(v.examples||[]).filter(e=>e.ja&&e.en&&e.tatoeba_id).map(e=>({...e,word:v.word}))).filter(e=>{if(seen.has(e.ja))return false;seen.add(e.ja);return true;});
+    const vocabularyByWord=new Map();for(const word of vocab)if(!vocabularyByWord.has(word.word))vocabularyByWord.set(word.word,word);
     for(let i=0;i<sentences.length;i+=10) {
       const batch=sentences.slice(i,i+10),number=i/10+1;
-      const targetWords=[...new Set(batch.map(e=>e.word))].map(word=>vocab.find(v=>v.word===word)).filter(Boolean).map(v=>({jp:v.word,reading:v.reading,vi:v.meanings.map(T).join('; ')}));
+      const targetWords=[...new Set(batch.map(e=>e.word))].map(word=>vocabularyByWord.get(word)).filter(Boolean).map(v=>({jp:v.word,reading:v.reading,vi:v.meanings.map(T).join('; ')}));
       const common={targetWords,lesson:number,source:'OpenJLPT',language:'en',summary:'Câu ví dụ theo từ vựng',examples:batch.map(e=>({jp:e.ja,vi:T(e.en),source:`https://tatoeba.org/sentences/show/${e.tatoeba_id}`,furigana:e.furigana}))};
       skills.reading.push({...common,id:`sentences:${level}:${number}`,title:`Đọc câu ${number} · ${batch[0].word}`});
       skills.listening.push({...common,id:`listening:${level}:${number}`,title:`Nghe chép câu ${number} · ${batch[0].word}`,dictation:true});
@@ -41,8 +44,9 @@ async function ensureLessons(level) {
       const offset=index%Math.max(1,wrong.length-2),opts=wrong.slice(offset,offset+3);
       opts.splice(index%(opts.length+1),0,answer);return {q,ans:answer,opts,item_id:id};
     };
-    for(const lesson of skills.grammar.filter(l=>l.source))lesson.drills=[makeDrill(`Mẫu ${lesson.title} có nghĩa gì?`,lesson.meaning_vi,grammar.map(g=>T(g.meaning)),lesson.id,lesson.lesson)];
-    for(const lesson of skills.kanji)lesson.drills=lesson.items.map((k,i)=>makeDrill(`${k.jp} — nghĩa nào đúng?`,k.vi,kanji.map(k=>k.meanings.map(T).join('; ')),k.id,i));
+    const grammarMeanings=grammar.map(g=>T(g.meaning)),kanjiMeanings=kanji.map(k=>k.meanings.map(T).join('; '));
+    for(const lesson of skills.grammar.filter(l=>l.source))lesson.drills=[makeDrill(`Mẫu ${lesson.title} có nghĩa gì?`,lesson.meaning_vi,grammarMeanings,lesson.id,lesson.lesson)];
+    for(const lesson of skills.kanji)lesson.drills=lesson.items.map((k,i)=>makeDrill(`${k.jp} — nghĩa nào đúng?`,k.vi,kanjiMeanings,k.id,i));
     for(const lesson of skills.reading.filter(l=>l.source))lesson.drills=lesson.examples.slice(0,5).map((e,i)=>makeDrill(`Chọn bản dịch: ${e.jp}`,e.vi,lesson.examples.map(e=>e.vi),`${lesson.id}:${i}`,i));
     if(level==='N5') {
       const rows=[['あいうえお','アイウエオ',['a','i','u','e','o']],['かきくけこ','カキクケコ',['ka','ki','ku','ke','ko']],['さしすせそ','サシスセソ',['sa','shi','su','se','so']],['たちつてと','タチツテト',['ta','chi','tsu','te','to']],['なにぬねの','ナニヌネノ',['na','ni','nu','ne','no']],['はひふへほ','ハヒフヘホ',['ha','hi','fu','he','ho']],['まみむめも','マミムメモ',['ma','mi','mu','me','mo']],['やゆよ','ヤユヨ',['ya','yu','yo']],['らりるれろ','ラリルレロ',['ra','ri','ru','re','ro']],['わをん','ワヲン',['wa','wo','n']]];
