@@ -245,3 +245,16 @@ Account deletion and administrative API removal remove all owned gateway connect
 Read-aloud uses the API-key profile selected under **API key**, even when chat uses Antigravity. Google profiles retain `gemini-3.8-flash-tts`, Charon and the existing explicit compatible-model selector. Official OpenAI profiles and admin shared access use `gpt-4o-mini-tts` with alloy. Requests use the resolved provider key, never the gateway management key or Antigravity OAuth credentials. An explicit Antigravity profile on the TTS endpoint is rejected. Quota errors remain errors; there is no browser-voice fallback or silent voice/model substitution.
 
 Sources: [gateway configuration](https://help.router-for.me/configuration/options), [v8 management API](https://help.router-for.me/management/apiv8), [Antigravity Voice Mode](https://antigravity.google/docs/voice-mode.md), [Gemini TTS](https://ai.google.dev/gemini-api/docs/speech-generation).
+
+## Admin AI preferences and live conversation
+
+- `GET /api/admin/ai`: admin-only configured state, per-account settings, supported text models, reasoning efforts and live voices. Never returns a key.
+- `PUT /api/admin/ai`: `{model,reasoning_effort,live_voice}`; validates the model's reasoning enum and persists it for this admin. Personal API profiles retain precedence. Settings apply to new text requests and new calls.
+- `POST /api/live`: authenticated admin only, with `X-VJBot-Account` matching the cookie. Accepts `{sdp,level,lesson?:{id,level}}` (64 KiB max, audio only). The Worker resolves canonical lesson context and exchanges SDP with OpenAI `/v1/live/sessions` using its secret. Returns only the answer SDP, opaque session ID, model, voice and greeting.
+- GPT-Live uses `gpt-live-1` and delegates detailed explanations to the admin's selected text model/reasoning. The untrusted WebRTC data channel can only append greeting commentary or close a session; it cannot change model, instructions, tools or server settings. No tools are configured.
+- Microphone and generated audio travel over WebRTC to/from OpenAI. Captions stay in this page and are not saved as text chat or progress. Explicit End stops microphone input immediately, sends `session.close`, then releases the transport after `session.closed` (or a bounded timeout). Navigation releases media; calls close after ten minutes in the client.
+- Startup shares the account AI request limiter and checks the current admin grant. Revocation stops new calls; it does not disconnect an already established OpenAI media session.
+- Local dev can declare `LOCAL_TEST_ADMIN_PASSWORD` from ignored `.dev.vars`. Username `admin` creates a local session/grant only when the URL host is loopback. Both the local flag and host are checked when that session is read, so its cookie is unusable on the public host. Production config never declares this binding.
+- Apply `0021_admin_ai_preferences.sql` after migration 0020. Account deletion removes preferences along with the existing owned data.
+
+API references: [GPT-Live WebRTC](https://developers.openai.com/api/docs/guides/voice-webrtc?api=live), [live session lifecycle](https://developers.openai.com/api/docs/guides/live-conversations), [model reasoning](https://developers.openai.com/api/docs/guides/reasoning).

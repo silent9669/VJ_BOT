@@ -1,4 +1,4 @@
-let signedInUser=null,accountUnavailable=true,preparingSignIn=false;
+let signedInUser=null,accountUnavailable=true,preparingSignIn=false,localAdminAvailable=false;
 function usesAntigravityOAuth(owner) {
   if (!owner) return false;
   const key='vjbot_ai_method:'+owner, saved=localStorage.getItem(key);
@@ -55,6 +55,9 @@ function renderAccount(){
   document.getElementById('google-signin').hidden=!!signedInUser;
   document.getElementById('auth-logout').hidden=!signedInUser;
   document.getElementById('tab-btn-admin').hidden=!signedInUser?.is_admin;
+  const live=document.getElementById('chat-live-toggle'),adminNav=document.getElementById('settings-admin-nav');
+  if(live)live.hidden=!signedInUser?.is_admin;
+  if(adminNav)adminNav.hidden=!signedInUser?.is_admin;
 }
 async function openAccount(message=''){
   const dialog=document.getElementById('auth-dialog');
@@ -74,6 +77,8 @@ async function prepareGoogleSignIn(){
     const response=await fetch('/api/auth/config');
     if(!response.ok)throw new Error('config');
     const config=await response.json();
+    localAdminAvailable=config.local_admin===true;
+    configureLoginFields();
     if(!config.client_id){status.textContent='Google chưa được cấu hình. Bạn có thể dùng email.';return;}
     for(let i=0;i<40 && !window.google?.accounts?.id;i++)await new Promise(r=>setTimeout(r,100));
     if(!window.google?.accounts?.id)throw new Error('google');
@@ -91,8 +96,15 @@ async function prepareGoogleSignIn(){
   finally{preparingSignIn=false;}
 }
 let registering=false;
+function configureLoginFields() {
+  const local=localAdminAvailable && !registering;
+  document.getElementById('auth-email').type=local?'text':'email';
+  document.getElementById('auth-password').minLength=local?1:12;
+  const label=document.getElementById('auth-identity-label');if(label)label.textContent=local?'Email hoặc admin local':'Email';
+}
 function setAuthMode(register) {
   registering=register;
+  configureLoginFields();
   document.getElementById('auth-user').textContent=signedInUser?signedInUser.name:register?'Tạo tài khoản':'Đăng nhập';
   document.getElementById('auth-name-label').hidden=!register;
   document.getElementById('auth-name').required=register;

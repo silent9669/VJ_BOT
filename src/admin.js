@@ -1,5 +1,6 @@
 import {disconnectAllAntigravity} from './antigravity-gateway.js';
 import {clearTutorConversation} from './tutor-session.js';
+import {LOCAL_ADMIN_ID} from './local-admin.js';
 
 // Owners require a verified Google login and ADMIN_EMAILS. Registered users may receive revocable admin grants.
 const emails = env => (env.ADMIN_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
@@ -16,13 +17,14 @@ export async function isOwner(env, userId) {
 }
 
 export async function isAdmin(env, userId) {
+  if (userId === LOCAL_ADMIN_ID && !env.LOCAL_TEST_ADMIN_PASSWORD) return false;
   if (!/^(google|email):/.test(userId || '')) return false;
   if (await isOwner(env, userId)) return true;
   return Boolean(await env.DB.prepare('SELECT user_id FROM admin_grants WHERE user_id=?').bind(userId).first());
 }
 
 const LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'];
-const OWNED_TABLES = ['ai_antigravity_oauth_states', 'ai_active_antigravity', 'ai_antigravity_connections', 'ai_google_oauth_states', 'ai_google_oauth', 'exam_attempts', 'completions', 'progress_attempts', 'progress', 'tutor_requests', 'tutor_sessions', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admin_grants', 'admins', 'profiles'];
+const OWNED_TABLES = ['admin_ai_preferences', 'ai_antigravity_oauth_states', 'ai_active_antigravity', 'ai_antigravity_connections', 'ai_google_oauth_states', 'ai_google_oauth', 'exam_attempts', 'completions', 'progress_attempts', 'progress', 'tutor_requests', 'tutor_sessions', 'conversations', 'study_days', 'ai_usage', 'sessions', 'password_accounts', 'ai_active_profiles', 'ai_providers', 'admin_grants', 'admins', 'profiles'];
 const RESET_TABLES = ['progress', 'progress_attempts', 'completions', 'exam_attempts', 'study_days'];
 const kindOf = id => id.startsWith('google:') ? 'google' : id.startsWith('email:') ? 'email' : 'guest';
 

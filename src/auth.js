@@ -1,6 +1,7 @@
 import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { isAdmin, recordAdminLogin } from './admin.js';
+import {LOCAL_ADMIN_ID, localAdminEnabled} from './local-admin.js';
 const googleKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 const cookieValue = (request, name) => (request.headers.get('Cookie') || '').split(';').map(s => s.trim()).find(s => s.startsWith(name + '='))?.slice(name.length + 1);
 const randomToken = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2,'0')).join('');
@@ -14,7 +15,8 @@ function json(data,status=200,headers={}) { return Response.json(data,{status,he
 export async function sessionUser(request,env) {
   const token=cookieValue(request,'vj_session');
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
-  return env.DB.prepare('SELECT user_id, name FROM sessions WHERE token_hash = ? AND expires_at > ?').bind(await hashToken(token),Date.now()).first();
+  const user = await env.DB.prepare('SELECT user_id, name FROM sessions WHERE token_hash = ? AND expires_at > ?').bind(await hashToken(token),Date.now()).first();
+  return user?.user_id === LOCAL_ADMIN_ID && !localAdminEnabled(request, env) ? null : user;
 }
 // 16 MiB scrypt workspace, with five passes; parameters are fixed for this schema.
 async function passwordHash(password,salt) {
@@ -47,7 +49,8 @@ async function passwordRoute(request,env,register) {
   const email=typeof body?.email==='string'?body.email.trim().toLowerCase():'';
   const password=body?.password;
   const name=typeof body?.name==='string'?body.name.trim():'';
-  if(email.length>254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof password!=='string' || password.length<12 || password.length>128 || (register && (!name || name.length>80))) {
+  const local = !register && email === 'admin' && localAdminEnabled(request, env);
+  if(!local && (email.length>254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof password!=='string' || password.length<12 || password.length>128 || (register && (!name || name.length>80)))) {
     return json({detail:'Nhập email hợp lệ, mật khẩu 12–128 ký tự và tên tối đa 80 ký tự.'},400);
   }
   const bucket=Math.floor(Date.now()/900000);
@@ -56,6 +59,13 @@ async function passwordRoute(request,env,register) {
   const attempts=await Promise.all(keys.map(key=>env.DB.prepare('INSERT INTO auth_attempts(key,bucket,count) VALUES(?,?,1) ON CONFLICT(key,bucket) DO UPDATE SET count=count+1 RETURNING count').bind(key,bucket).first()));
   await env.DB.prepare('DELETE FROM auth_attempts WHERE bucket < ?').bind(bucket-1).run();
   if(attempts[0].count>100 || attempts[1].count>10)return json({detail:'Quá nhiều lần thử. Vui lòng đợi 15 phút.'},429,{'Retry-After':'900'});
+  if (local) {
+    if (typeof password !== 'string' || password.length > 128
+      || !equalHash(await hashToken(password), await hashToken(env.LOCAL_TEST_ADMIN_PASSWORD))) return json({detail:'Tài khoản hoặc mật khẩu không đúng.'},401);
+    await env.DB.prepare('INSERT OR IGNORE INTO admin_grants(user_id,granted_by,granted_at) VALUES(?,?,?)')
+      .bind(LOCAL_ADMIN_ID, LOCAL_ADMIN_ID, new Date().toISOString()).run();
+    return createSession(request, env, LOCAL_ADMIN_ID, 'Admin local');
+  }
   const account=await env.DB.prepare('SELECT * FROM password_accounts WHERE email=?').bind(email).first();
   // Missing accounts still perform the same expensive hash to avoid a timing oracle.
   const salt=account?.salt || (register?randomToken():'0'.repeat(64));
@@ -77,7 +87,7 @@ export async function authRoute(request,env) {
   if(['/api/auth/register','/api/auth/login'].includes(path) && request.method==='POST')return passwordRoute(request,env,path.endsWith('/register'));
   if (path==='/api/auth/config' && request.method==='GET') {
     const nonce=randomToken();
-    return json({client_id:env.GOOGLE_CLIENT_ID || '',nonce},200,{'Set-Cookie':cookie('vj_nonce',nonce,600,request)});
+    return json({client_id:env.GOOGLE_CLIENT_ID || '',nonce,local_admin:localAdminEnabled(request,env)},200,{'Set-Cookie':cookie('vj_nonce',nonce,600,request)});
   }
   if (path==='/api/auth/session' && request.method==='GET') {
     const user=await sessionUser(request,env);

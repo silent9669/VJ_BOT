@@ -1,4 +1,5 @@
 const LEVELS = new Set(['N5', 'N4', 'N3', 'N2', 'N1']);
+let latestCatalog = null;
 
 export function validLessonReference(lesson) {
   return lesson && typeof lesson === 'object' && !Array.isArray(lesson)
@@ -16,13 +17,23 @@ export function validFocusReference(focus) {
 
 export async function teacherCatalog(env, level) {
   if (!LEVELS.has(level) || !env.ASSETS) return null;
-  const response = await env.ASSETS.fetch(new Request(`https://teacher-assets.invalid/course/teacher-${level}.json`));
-  if (!response.ok) return null;
-  try {
-    const catalog = await response.json();
-    return catalog && typeof catalog.lessons === 'object' && typeof catalog.items === 'object'
-      && typeof catalog.scenarios === 'object' ? catalog : null;
-  } catch { return null; }
+  if(latestCatalog?.assets===env.ASSETS && latestCatalog.level===level)return latestCatalog.promise;
+  // Retain one public level at most; N1 alone is 13 MB before parsing. No learner data is cached.
+  const entry={assets:env.ASSETS,level,promise:null};
+  entry.promise=(async()=>{
+    try {
+      // ASSETS resolves by path. Its Vite dev bridge also validates the synthetic request host.
+      const response=await env.ASSETS.fetch(new Request(`https://assets.localhost/course/teacher-${level}.json`));
+      if(!response.ok)return null;
+      const catalog=await response.json();
+      return catalog && typeof catalog.lessons==='object' && typeof catalog.items==='object'
+        && typeof catalog.scenarios==='object' ? catalog : null;
+    } catch { return null; }
+  })();
+  latestCatalog=entry;
+  const catalog=await entry.promise;
+  if(!catalog && latestCatalog===entry)latestCatalog=null;
+  return catalog;
 }
 
 export function catalogLesson(catalog, reference) {

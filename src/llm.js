@@ -45,10 +45,11 @@ export function normalizeTurns(turns) {
   return out;
 }
 
-function request(protocol, key, model, {system, turns, schema, schemaName}) {
+function request(protocol, key, model, {system, turns, schema, schemaName, reasoningEffort}) {
   if (protocol === 'openai') {
     // No max_tokens or temperature: newer OpenAI models reject both. Reply length is bounded by the prompt.
     return {headers: {Authorization: `Bearer ${key}`}, body: {model, messages: [...(system ? [{role: 'system', content: system}] : []), ...turns],
+      ...(reasoningEffort ? {reasoning_effort:reasoningEffort} : {}),
       ...(schema ? {response_format: {type: 'json_schema', json_schema: {name: schemaName === 'tutor_reply' ? 'tutor_reply' : 'kaiwa_evaluation', strict: true, schema}}} : {})}};
   }
   if (protocol === 'anthropic') {
@@ -94,7 +95,7 @@ export async function callLLM(provider, {system, turns, schema, schemaName}, {bu
     const left = deadline - Date.now();
     if (left < 1000) break;
     try {
-      const {headers, body} = request(provider.protocol, provider.apiKey, model, {system, turns: history, schema, schemaName});
+      const {headers, body} = request(provider.protocol, provider.apiKey, model, {system, turns: history, schema, schemaName, reasoningEffort:provider.reasoningEffort});
       const response = await fetch(endpoint(provider.protocol, provider.baseUrl, model), {
         method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(Math.min(left, attemptMs)),
         headers: {'Content-Type': 'application/json', ...headers}, body: JSON.stringify(body)
