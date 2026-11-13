@@ -136,6 +136,7 @@
   #panel-classroom .bubble-speech-card:not(.user) {max-width:100%}
   #panel-classroom .bubble-speech-card {max-width:94%}
   #panel-classroom .chat-input-bar {padding:6px!important;gap:6px;margin:0 12px 12px}
+  #panel-classroom .chat-chips-bar {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;overflow:visible!important;padding:0 16px}
   #panel-classroom .chat-chips-bar .prompt-chip {min-height:44px;padding:6px}
   #panel-classroom .chat-audio-btn {min-width:44px;padding:8px}
   #panel-classroom .chat-audio-btn span {display:none}
