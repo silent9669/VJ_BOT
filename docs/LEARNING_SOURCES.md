@@ -269,3 +269,108 @@ The recorded 62-test result combines unchanged successful targeted files and the
 successful repaired integration-file run; it is not a claim that the first combined
 command passed. Python retains the existing optional-plugin `asyncio_mode` warning;
 Node emits its experimental SQLite warning.
+
+## Six-source continuation
+
+The operator explicitly continued the process for the six accessible sources,
+excluding NHK. This batch permits at most four new selected teaching documents per
+source; it is not an instruction to mirror every page or manufacture a fixed quota.
+Raw captures, rejected candidates and reproducible selection manifests remain under
+the external `AIResearch/vls-six-source-expansion-20261113T152200Z/` directory.
+Only explicit admitted manifest records enter the public corpus, never all files
+matched by a directory glob. Earlier source documents must not be silently repaired
+or replaced while adding new material.
+
+### Acquisition and selection decisions
+
+- Irodori: the official Vietnam-office page links the Vietnamese grammar supplement
+  `v1Grammar_NM_VN-1.pdf`. The observed response is **3,425,445 bytes, 65 PDF pages**,
+  SHA-256 `c5256d4121ba78ede39043d7852346daa5b34431931f7b4828774a7de50b1f41`.
+  Four short explanatory sections use exact PDF page references 1, 15, 25 and 50:
+  noun predicates, choosing with `Nにします`, `あります・います`, and demonstratives/
+  prices. These are **four selected sections from one PDF**, not four PDFs or
+  four complete lessons. Furigana-interleaved dialogues and tables are excluded;
+  original selected Vietnamese paragraph text is not rewritten.
+- Saromalang: retain bounded sections on `Vながら`, past negatives, appearance/
+  potential change with `よう`, and concessive `ながらも` examples. Omit long
+  conjugation tables, unrelated opinion tangents and exercises. A separate
+  `Vていません・Vていない` candidate is excluded after the observed affirmative/
+  negative terminology mismatch and malformed `あっていない` table entry.
+- Mokumoku: visible public examples only, never reveal-more or hidden hydration.
+  The flattened `V-るV-た+ついでに` formula is omitted rather than silently fixed;
+  explanation and example spans retain their original text. The source's
+  approximate `50%` description of `かもしれない` remains an unreviewed heuristic,
+  not a calibrated probability. The malformed `V1 ます+ながら+V2` candidate is excluded.
+- Tieng Nhat Don Gian: five of six new candidates contain concrete language issues,
+  including Saturday translated as Sunday, incorrect readings, malformed Japanese
+  or conflicting rules. Retain only the bounded `てから` structure and examples
+  ①–④. The omitted advertising gap is documented as two exact ordered source
+  spans. Later examples contain observed reading/translation issues and are not
+  admitted. Stopping at one document is intentional, not a claim of source-wide
+  quality or failure.
+
+These are AI-assisted source/extraction checks, not human teacher approval or
+independent publisher-rights verification. Existing canonical lesson counts,
+question options, grading and progress are not changed by adding reference RAG
+passages. No paid generation, account/voice change or production deployment is
+authorized by this acquisition batch.
+
+### Final coverage for this continuation
+
+| Source | Candidate bodies inspected | New selected documents | Total selected documents |
+| --- | --- | --- | --- |
+| Naoki | 6 | 4 | 7 |
+| FreeTag | 4 | 4 | 7 |
+| Saromalang | 5 | 4 | 5 |
+| Mokumoku | 5 | 4 | 5 |
+| Tieng Nhat Don Gian | 6 | 1 | 4 |
+| Irodori | 1 grammar PDF, 65 pages; selected spans on four pages | 4 sections | 5 |
+| NHK | Not requested in this continuation | 0 | 0 |
+
+Final corpus: **33 selected documents/sections, 55 passages, 146,887 asset bytes**.
+The earlier **12 documents and 30 passage objects remain exactly unchanged**,
+including their hashes, source URLs, stable IDs and selected source text. This is
+a finite reference corpus, not 33 complete curated lessons or full-site coverage.
+
+Naoki additions cover time/place ranges with `から・まで`, action locations with
+`で`, invitations with `ませんか`, and causal `から`. Two candidates with an
+interrogative mismatch and `hizuka` romanization typo were excluded. The ambiguous
+causal formula is outside the admitted slice. FreeTag additions cover existence,
+requests, comparison and desires. Entire quick-check/answer panels and browser-
+voice widget text are excluded using exact ordered source-text spans. No generated
+replacement explanations or translations were introduced.
+
+### Exercised continuation checks
+
+- Existing importer: **9 Python tests passed**. Existing retrieval, provider-boundary
+  integration and source-loader regressions: **23 Node tests passed**. One existing
+  optional-plugin `asyncio_mode` warning and Node experimental SQLite warning remain.
+- Actual local source consumer verified all 33 document content/capture hashes,
+  exact lossless passage offsets, source-first headers and retained original objects.
+  All 33 document citation lookups resolved to their corresponding first passage.
+- Six natural-language queries returned the intended new source within the bounded
+  top three: time ranges, negative requests, past negatives, `ついでに`, `てから`,
+  and `あります・います`. Additional returned passages included tangential lexical
+  matches; this is not measured semantic relevance or proof of model use.
+- Actual isolated Edge loaded all **55 passages**, looked up one new ID from each
+  of the six sources, keyboard-opened disclosures and verified exact original URLs,
+  including the Irodori PDF page locator. Desktop and 390 CSS-pixel mobile screenshots
+  showed source-first text and no horizontal overflow. Existing 25 Erin lessons
+  and seven source references remained available; no JavaScript page errors occurred.
+- No implementation, canonical lesson catalog, answer, progress, provider or voice
+  file changed. No new build was necessary for this data/docs-only continuation;
+  the last implementation build remains the earlier successful Worker dry-run.
+- Provider responses in integration tests are synthetic. No real model, publisher
+  approval, human teacher approval, PR, main merge or production deployment is claimed.
+
+Regeneration used the existing importer, not a new crawler convention:
+
+```sh
+python -m scripts.build_learning_corpus --manifest "<external-expansion-directory>/expanded-manifest.json"
+python -m pytest --noconftest tests/test_learning_corpus.py -q
+node --test tests/learning-rag.test.mjs tests/learning-rag-integration.test.mjs tests/source-catalog.test.mjs
+```
+
+The external combined manifest names every exact saved capture and selected text
+file, preserves prior records and contains one explicit outcome per accessible
+source. Import records only; audit/rejected files must not become RAG passages.
