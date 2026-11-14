@@ -81,11 +81,11 @@ test('explicit stop releases tracks before recognition ends and preserves actual
   await f.start();assert.equal(recognition.stopped,true);assert.equal(recorder.stopped,true);assert.equal(f.defaultStream.track.stops,1);
   recorder.data();recorder.finish();recognition.result('こんにちは');recognition.end();
   assert.equal(f.blobs[0].type,'audio/ogg;codecs=opus');assert.equal(f.element('kaiwa-manual-input').value,'こんにちは');
-  assert.match(f.status(),/stopped/i);assert.equal(f.element('btn-kaiwa-play-user').style.display,'inline-flex');
+  assert.match(f.status(),/dừng/i);assert.equal(f.element('btn-kaiwa-play-user').style.display,'inline-flex');
 });
 test('natural recognition end stops recording without claiming user-requested stop',async()=>{
   const f=fixture();await f.start();f.recognizers[0].end();
-  assert.equal(f.recorders[0].stopped,true);assert.equal(f.defaultStream.track.stops,1);assert.match(f.status(),/ended/i);
+  assert.equal(f.recorders[0].stopped,true);assert.equal(f.defaultStream.track.stops,1);assert.match(f.status(),/kết thúc/i);
 });
 test('replacing capture invalidates old recorder and recognition callbacks',async()=>{
   const f=fixture();await f.start();await f.start();
@@ -112,13 +112,13 @@ test('replay rejection is visible and stale replay rejection cannot overwrite ne
   assert.doesNotMatch(g.status(),/obsolete/);assert.equal(g.audios[0].paused,true);
 });
 test('recognition unsupported never prompts on setup and explicit recording still supports manual text',async()=>{
-  const f=fixture({noRecognition:true});assert.equal(f.permissions,0);assert.match(f.status(),/transcription.*unavailable/i);
+  const f=fixture({noRecognition:true});assert.equal(f.permissions,0);assert.match(f.status(),/không chép lời được/i);
   f.element('kaiwa-manual-input').value='手入力';await f.start();await f.start();f.recorders[0].data();f.recorders[0].finish();
   assert.equal(f.element('kaiwa-manual-input').value,'手入力');assert.equal(f.blobs.length,1);assert.equal(f.recognizers.length,0);
 });
 for(const unavailable of ['noRecorder','noCapture'])test(`${unavailable} is visible without a capture permission prompt`,async()=>{
   const f=fixture({[unavailable]:true,noRecognition:true});await f.start();
-  assert.equal(f.permissions,0);assert.match(f.status(),/unavailable|unsupported/i);assert.equal(f.element('kaiwa-manual-input').disabled,false);
+  assert.equal(f.permissions,0);assert.match(f.status(),/không ghi âm|không chép lời/i);assert.equal(f.element('kaiwa-manual-input').disabled,false);
 });
 test('explicit browser controller stops and account changes discard delayed recognition',async()=>{
   const f=fixture(),controller=f.c.createBrowserJapaneseInput({button:f.element('manual-mic'),input:f.element('chat-input'),bindButton:false});
@@ -175,7 +175,7 @@ test('owner or route changes invalidate a pending stream even before lifecycle e
 
 test('missing recorder permits explicit browser transcription without a recording permission request',()=>{
   const f=fixture({noRecorder:true});f.start();
-  assert.equal(f.permissions,0);assert.equal(f.recognizers.length,1);assert.match(f.status(),/transcription only/i);
+  assert.equal(f.permissions,0);assert.equal(f.recognizers.length,1);assert.match(f.status(),/chỉ chép lời/i);
   f.recognizers[0].result('入力');assert.equal(f.element('kaiwa-manual-input').value,'入力');
 });
 

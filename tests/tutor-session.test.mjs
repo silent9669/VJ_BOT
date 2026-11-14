@@ -57,7 +57,7 @@ async function authenticated(t) {
     DB: database(t), AI_KEY_SECRET: 'local-tutor-test-secret',
     ASSETS: {fetch: async request => {
       const level = new URL(request.url).pathname.match(/^\/course\/teacher-(N[1-5])\.json$/)?.[1];
-      return level ? Response.json(catalogs[level]) : new Response('Not found', {status: 404});
+      return level ? Response.json(catalogs[level]) : new Response('Không tìm thấy', {status: 404});
     }}
   };
   const clients = new Map();

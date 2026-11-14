@@ -54,9 +54,9 @@
     try {
       const user = current = await call('/api/admin/user?id=' + encodeURIComponent(id));
       el('admin-user-name').textContent = user.name || 'Học viên ' + user.user_id.slice(-4);
-      el('admin-user-meta').textContent = [KIND[user.kind], user.email, user.admin ? 'Admin' : ''].filter(Boolean).join(' · ');
+      el('admin-user-meta').textContent = [KIND[user.kind], user.email, user.admin ? 'Quản trị' : ''].filter(Boolean).join(' · ');
       const stats = [['Tin nhắn', user.messages], ['Mục đã học', user.items], ['Bài hoàn thành', user.completed], ['Phiên đang mở', user.sessions], ['Đăng nhập gần nhất', day(user.last_login)], ['API', user.api || 'Chưa có']];
-      el('admin-user-stats').replaceChildren(...stats.flatMap(([label, value]) => [node('dt', label), node('dd', String(value))]));
+      el('admin-user-stats').replaceChildren(...stats.map(([label, value]) => { const cell = node('div'); cell.append(node('dt', label), node('dd', String(value))); return cell; }));
       el('admin-level').value = user.level;
       el('admin-role-label').textContent = ROLE[user.role] || 'Miễn phí';
       const roleButton = el('admin-role-toggle');

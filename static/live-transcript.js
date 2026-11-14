@@ -23,7 +23,20 @@
       segment.original.textContent=segment.text;
       segment.translation.textContent=segment.translatedText===segment.text?segment.vi:segment.failed?'Chưa dịch được đoạn này.':'Đang dịch…';
       segment.retry.hidden=!segment.failed;
+      group();
       if(follow)host.scrollTop=host.scrollHeight;
+    }
+    // Consecutive sentences from one speaker form a single turn: the first row carries the stamp for the whole turn.
+    function group(){
+      let head=null;
+      for(const segment of segments){
+        if(!segment.row)continue;
+        if(head && head.role===segment.role){
+          head.last=Math.max(head.last,segment.end);segment.row.dataset.cont='true';segment.time.textContent='';
+        }else{head=segment;head.first=segment.start;head.last=segment.end;segment.row.dataset.cont='false';}
+        head.time.textContent=clock(head.first)+' – '+clock(head.last);
+        head.time.setAttribute('aria-label','Cả lượt nói, mốc thời gian xấp xỉ '+clock(head.first)+' đến '+clock(head.last));
+      }
     }
     function schedule(){
       if(timer || busy || !owner || !segments.some(s=>s.text.trim() && !s.failed && s.translatedText!==s.text))return;

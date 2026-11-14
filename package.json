@@ -1,7 +1,7 @@
 {
   "name": "vj_bot",
   "version": "1.0.0",
-  "description": "VJBot (Nihongo Sensei) — Nền tảng luyện thi JLPT N5–N1 & phản xạ tiếng Nhật chủ động cùng AI Sensei. Hosted on Cloudflare Workers edge at https://vjbot.dangphuc.me",
+  "description": "VJBot: lớp học đảo ngược luyện JLPT N5–N1 cùng thầy Lâm (AI). Cloudflare Workers + D1, tại https://vjbot.dangphuc.me",
   "main": "index.js",
   "directories": {
     "test": "tests"
@@ -29,12 +29,14 @@
     "jlpt",
     "jlpt-n5-n1",
     "reversed-classroom",
-    "gemini-flash",
     "cloudflare-workers",
     "cloudflare-d1",
-    "apple-design",
+    "openai",
+    "claude",
+    "gemini",
+    "webrtc",
     "spaced-repetition",
-    "speech-recognition"
+    "vietnamese"
   ],
   "author": "",
   "license": "ISC",
@@ -52,5 +54,8 @@
   "dependencies": {
     "@noble/hashes": "^2.4.0",
     "jose": "^6.2.14"
+  },
+  "engines": {
+    "node": ">=22.13"
   }
 }

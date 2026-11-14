@@ -25,13 +25,13 @@ function speechText(text, {reading = '', japaneseOnly = false} = {}) {
 function audioDataUrl(data) {
   const mime = data.mimeType || 'audio/wav';
   if (!/^audio\/l16(?:;|$)/i.test(mime)) {
-    if (!/^audio\/(?:wav|x-wav|mpeg|mp3|ogg)(?:;|$)/i.test(mime)) throw new Error('Unsupported speech audio format.');
+    if (!/^audio\/(?:wav|x-wav|mpeg|mp3|ogg)(?:;|$)/i.test(mime)) throw new Error('Định dạng âm thanh giọng nói không được hỗ trợ.');
     return `data:${mime};base64,${data.audioBase64}`;
   }
   const rate = Number(mime.match(/;\s*rate=(\d+)(?:;|$)/i)?.[1] || 24000);
   const channels = Number(mime.match(/;\s*channels=(\d+)(?:;|$)/i)?.[1] || 1);
   const pcm = Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0));
-  if (rate < 8000 || rate > 192000 || ![1, 2].includes(channels) || pcm.length % (2 * channels)) throw new Error('Invalid speech PCM format.');
+  if (rate < 8000 || rate > 192000 || ![1, 2].includes(channels) || pcm.length % (2 * channels)) throw new Error('Định dạng PCM của giọng nói không hợp lệ.');
   const wav = new Uint8Array(44 + pcm.length), view = new DataView(wav.buffer);
   const write = (offset, text) => [...text].forEach((c, i) => {wav[offset + i] = c.charCodeAt(0);});
   write(0, 'RIFF'); view.setUint32(4, 36 + pcm.length, true); write(8, 'WAVE'); write(12, 'fmt ');
@@ -47,7 +47,7 @@ function audioDataUrl(data) {
 function speechStatus(message, active = false) {
   document.getElementById('speech-notice').hidden = !message;
   document.getElementById('speech-status').textContent = message;
-  document.getElementById('speech-stop').textContent = active ? 'Stop' : 'Dismiss';
+  document.getElementById('speech-stop').textContent = active ? 'Dừng' : 'Bỏ qua';
 }
 
 function stopSpeech() {
@@ -78,13 +78,13 @@ async function playGeminiTTS(text, options = {}) {
   window.speechSynthesis?.cancel();
   const clean = speechText(text, options);
   if (!/\p{L}/u.test(clean)) {
-    speechStatus('No text to read.');
+    speechStatus('Không có chữ để đọc.');
     return;
   }
   const identity = speechIdentity();
-  if (identity === null) {speechStatus('Voice settings are unavailable. Reopen voice settings.'); return;}
+  if (identity === null) {speechStatus('Cài đặt giọng nói không dùng được. Hãy mở lại cài đặt giọng nói.'); return;}
   const model = window.selectedSpeechModel();
-  if (!model) {speechStatus('Choose a voice account and model in Settings.'); return;}
+  if (!model) {speechStatus('Chọn tài khoản và model giọng nói trong Cài đặt.'); return;}
   const controller = new AbortController();
   const current = () => {
     if (speechPlayback?.controller !== controller) return false;
@@ -92,9 +92,9 @@ async function playGeminiTTS(text, options = {}) {
     stopSpeech();
     return false;
   };
-  const language = options.japaneseOnly ? 'Japanese' : 'Vietnamese–Japanese';
+  const language = options.japaneseOnly ? 'tiếng Nhật' : 'tiếng Việt và tiếng Nhật';
   speechPlayback = {controller, audio: null};
-  speechStatus(`Preparing ${language} audio…`, true);
+  speechStatus(`Đang chuẩn bị âm thanh ${language}…`, true);
   try {
     let reference={};
     const context=options.lesson?options:globalThis.teacherContext?.();
@@ -110,24 +110,24 @@ async function playGeminiTTS(text, options = {}) {
     if (!current()) return;
     const data = await response.json();
     if (!current()) return;
-    if (!response.ok) throw new Error(data.detail || 'Speech is unavailable. Please try again.');
-    if (typeof data.audioBase64 !== 'string' || !data.audioBase64) throw new Error('No speech audio was returned.');
+    if (!response.ok) throw new Error(data.detail || 'Không đọc được lúc này. Hãy thử lại.');
+    if (typeof data.audioBase64 !== 'string' || !data.audioBase64) throw new Error('Không nhận được âm thanh giọng nói.');
     const audio = new Audio(audioDataUrl(data));
     speechPlayback = {controller, audio};
     audio.onended = () => {if (current()) stopSpeech();};
     audio.onerror = () => {
       if (!current()) return;
       stopSpeech();
-      speechStatus('Unable to play speech audio. Please try again.');
+      speechStatus('Không phát được giọng đọc. Hãy thử lại.');
     };
     await audio.play();
     if (!current()) {audio.pause(); return;}
     mascotMgr.setState('speaking');
-    speechStatus(`Reading ${language}${data.voice ? ' · ' + data.voice : ''}${data.model ? ' · ' + data.model : ''}`, true);
+    speechStatus(`Đang đọc ${language}${data.voice ? ' · ' + data.voice : ''}${data.model ? ' · ' + data.model : ''}`, true);
   } catch (error) {
     if (!current()) return;
     stopSpeech();
-    speechStatus(error.name === 'NotAllowedError' ? 'Audio playback was blocked. Press Listen again.' : error.message || 'Speech is unavailable. Please try again.');
+    speechStatus(error.name === 'NotAllowedError' ? 'Trình duyệt chặn phát âm thanh. Bấm Nghe lại.' : error.message || 'Không đọc được lúc này. Hãy thử lại.');
   }
 }
 

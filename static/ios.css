@@ -1,0 +1,222 @@
+/* iOS / Safari layer. Loaded last. Liquid Glass bars and sheets, safe areas, system type, touch fixes.
+   Earlier sheets use !important on several chrome backgrounds, so those few properties repeat it here. */
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Plus Jakarta Sans", sans-serif;
+  --font-jp: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Meiryo", sans-serif;
+
+  --sa-t: env(safe-area-inset-top, 0px);
+  --sa-r: env(safe-area-inset-right, 0px);
+  --sa-b: env(safe-area-inset-bottom, 0px);
+  --sa-l: env(safe-area-inset-left, 0px);
+  --bar-h: calc(60px + var(--sa-b));
+
+  --glass: rgba(255, 255, 255, .64);
+  --glass-strong: rgba(255, 255, 255, .84);
+  --glass-hair: rgba(38, 42, 39, .12);
+  --glass-rim: inset 0 .5px 0 rgba(255, 255, 255, .9), inset 0 -.5px 0 rgba(38, 42, 39, .06);
+  --glass-lift: 0 10px 34px rgba(38, 42, 39, .14), 0 1px 3px rgba(38, 42, 39, .08);
+  --glass-blur: saturate(180%) blur(22px);
+  --ios-ease: cubic-bezier(.32, .72, 0, 1);
+  --ios-r: 18px;
+}
+
+/* No backdrop-filter, or the reader asked for less transparency: solid surfaces. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: rgba(255, 255, 255, .97); --glass-strong: #fff; --glass-blur: none; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root { --glass: #fff; --glass-strong: #fff; --glass-blur: none; }
+}
+
+/* Safari base */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body {
+  -webkit-font-smoothing: antialiased;
+  padding-left: var(--sa-l);
+  padding-right: var(--sa-r);
+  background:
+    radial-gradient(52rem 34rem at 96% -8%, rgba(50, 93, 67, .10), transparent 62%),
+    radial-gradient(44rem 30rem at -8% 26%, rgba(173, 57, 46, .055), transparent 60%),
+    var(--paper);
+  background-attachment: fixed;
+}
+button, a, [role="button"], summary, label, select { touch-action: manipulation; }
+button, [role="button"] { -webkit-touch-callout: none; }
+img { -webkit-user-drag: none; }
+@supports (height: 100dvh) {
+  body, .app-shell, .app-sidebar, #progress-panel { min-height: 100dvh; }
+}
+/* iOS Safari zooms the page when a focused field is under 16px. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
+}
+
+/* Glass bars */
+.main-topbar {
+  position: sticky;
+  top: 0;
+  background: var(--glass) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: .5px solid var(--glass-hair) !important;
+  box-shadow: var(--glass-rim) !important;
+}
+.mobile-bottom-bar {
+  height: var(--bar-h) !important;
+  padding: 0 max(6px, var(--sa-r)) var(--sa-b) max(6px, var(--sa-l)) !important;
+  background: var(--glass) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-top: .5px solid var(--glass-hair) !important;
+  box-shadow: var(--glass-rim) !important;
+}
+.mobile-bottom-item { gap: 3px; border-radius: 14px; min-height: 48px; transition: background .2s var(--ios-ease), color .2s var(--ios-ease), transform .2s var(--ios-ease); }
+.mobile-bottom-item { margin: 6px 1px; padding-inline: 2px !important; white-space: nowrap; }
+.mobile-bottom-item.active { background: rgba(50, 93, 67, .14) !important; color: var(--accent) !important; border-top: 0; box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .8); }
+.mobile-bottom-item:active { transform: scale(.94); }
+@media (max-width: 768px) {
+  .lesson-footer { bottom: var(--bar-h); background: var(--glass) !important; -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border-top: .5px solid var(--glass-hair); }
+  .sketch-canvas, .tab-panel { padding-bottom: calc(var(--bar-h) + 24px) !important; }
+  .sensei-floating-dock { bottom: calc(var(--bar-h) + 10px) !important; }
+  .speech-player { bottom: calc(var(--bar-h) + 16px); }
+  .speech-notice { inset: auto 16px calc(var(--bar-h) + 16px); }
+  body[data-page=lesson] #lam-walker { bottom: calc(var(--bar-h) + 24px); }
+}
+@media (max-width: 899px) {
+  #lam-walker { bottom: calc(var(--bar-h) + 16px); right: max(12px, var(--sa-r)); }
+  .speech-notice { max-width: none; }
+}
+
+/* Sidebar drawer (phones and tablets) */
+@media (max-width: 899px) {
+  .app-sidebar, .sidebar-expanded .app-sidebar {
+    background: var(--glass-strong) !important;
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border-right: .5px solid var(--glass-hair) !important;
+    border-radius: 0 var(--ios-r) var(--ios-r) 0;
+    box-shadow: var(--glass-lift);
+    padding-top: var(--sa-t) !important;
+    padding-bottom: var(--sa-b) !important;
+    padding-left: var(--sa-l) !important;
+    transition-timing-function: var(--ios-ease);
+    overscroll-behavior: contain;
+  }
+  .app-shell #app-sidebar { z-index: 10001; }
+  .sidebar-backdrop.active { z-index: 10000; background: rgba(20, 24, 21, .28); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+}
+
+/* Sheets: dialogs, ask popover, picker */
+dialog[open], #auth-dialog[open], .lesson-detail-modal[open] {
+  background: var(--glass-strong) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: .5px solid var(--glass-hair) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--glass-lift), var(--glass-rim) !important;
+  max-height: calc(100dvh - 24px - var(--sa-t) - var(--sa-b));
+  overscroll-behavior: contain;
+}
+dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
+  background: rgba(20, 24, 21, .32) !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+#sensei-floating-popover, .sensei-floating-popover {
+  background: var(--glass-strong) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: .5px solid var(--glass-hair) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--glass-lift), var(--glass-rim) !important;
+}
+.lam-speech {
+  background: var(--glass-strong) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: .5px solid var(--glass-hair) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--glass-lift) !important;
+}
+.lam-speech::after { display: none; }
+
+/* iOS controls */
+.segmented, .curriculum-view-switch { background: rgba(120, 120, 128, .12) !important; border: 0 !important; border-radius: 12px !important; padding: 3px !important; gap: 2px; }
+.segmented button, .curriculum-view-switch button { border: 0 !important; border-radius: 9px !important; transition: background .2s var(--ios-ease), box-shadow .2s var(--ios-ease); }
+.segmented button[aria-pressed=true], .curriculum-view-switch button[aria-pressed=true] { background: #fff !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .14), 0 .5px 1px rgba(0, 0, 0, .08) !important; }
+.curriculum-breadcrumb-bar { border: .5px solid var(--glass-hair) !important; border-radius: 14px !important; background: var(--glass-strong); }
+.settings-nav { top: calc(76px + var(--sa-t)); }
+.settings-nav button[aria-current=true] { background: rgba(50, 93, 67, .12); color: var(--accent); }
+.settings-card { border-radius: var(--ios-r); border-color: var(--glass-hair); }
+.status-pill { border-radius: 99px; }
+.stage-btn, .delete-account-btn, .topbar-summon-btn { transition: transform .18s var(--ios-ease), opacity .18s; }
+.stage-btn:active, .delete-account-btn:active, .topbar-summon-btn:active { transform: scale(.97); opacity: .85; }
+
+/* Motion off: keep the glass, drop the movement */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-bottom-item, .segmented button, .stage-btn, .delete-account-btn, .topbar-summon-btn { transition: none; }
+  .mobile-bottom-item:active, .stage-btn:active, .delete-account-btn:active, .topbar-summon-btn:active { transform: none; }
+}
+
+/* Admin */
+.admin-user-row { position: relative; padding-right: 22px !important; }
+.admin-user-row::after { content: ""; position: absolute; right: 4px; top: 50%; width: 8px; height: 8px; border: solid var(--muted); border-width: 2px 2px 0 0; transform: translateY(-50%) rotate(45deg); opacity: .45; }
+.admin-user-row:active { background: var(--surface-2) !important; }
+.admin-user-row > .admin-user-metrics { display: flex !important; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 12px; color: var(--muted); }
+.admin-user-metrics > * + *::before { content: "·"; margin-right: 8px; opacity: .6; }
+.admin-user-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+.admin-user-stats > div { padding: 10px 12px; background: var(--surface-2); border-radius: 12px; min-width: 0; }
+.admin-user-stats dt { margin: 0 !important; font-size: 11px; }
+.admin-user-stats dd { margin: 2px 0 0 !important; }
+.admin-user-actions .stage-btn { flex: 1 1 calc(50% - 8px); }
+.admin-user-actions .admin-danger { flex-basis: 100%; margin-top: 8px; color: #b42318 !important; background: rgba(180, 35, 24, .06) !important; border-color: rgba(180, 35, 24, .4) !important; }
+
+/* Bottom sheets on phones */
+@media (max-width: 768px) {
+  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open] {
+    margin: auto 0 0;
+    width: 100% !important;
+    max-width: none;
+    border-radius: 24px 24px 0 0 !important;
+    max-height: calc(100dvh - 16px - var(--sa-t)) !important;
+    padding-bottom: calc(20px + var(--sa-b)) !important;
+  }
+  .admin-user-dialog .modal-close-btn { top: 8px; right: 8px; }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  @keyframes sheet-up { from { transform: translateY(100%); } }
+  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open] { animation: sheet-up .32s var(--ios-ease); }
+}
+
+/* Voice: a call owns the screen. The tab bar goes away so a stray tap cannot end it. */
+@media (max-width: 899px) {
+  body:has(#classroom-voice:not([hidden]) #live-end:not([hidden])) .mobile-bottom-bar { display: none !important; }
+  #panel-classroom .live-controls { gap: 12px; padding: 8px 0 calc(8px + var(--sa-b)); }
+  #live-start { min-width: min(280px, 80vw); min-height: 56px; border-radius: 28px; font-size: 17px; }
+  #live-mute, #live-end { min-height: 52px; min-width: 132px; border-radius: 26px; font-size: 15px; font-weight: 600; }
+  #live-mute[aria-pressed=true] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  #live-end { background: #d92d20 !important; color: #fff !important; border-color: #d92d20 !important; }
+}
+
+/* Chat fills the space between the top bar and the (taller, safe-area aware) tab bar. */
+@media (max-width: 768px) {
+  #panel-classroom .classroom-chat-window { height: calc(100dvh - 76px - var(--bar-h)); }
+  body:has(#classroom-voice:not([hidden]) #live-end:not([hidden])) #panel-classroom .classroom-chat-window { height: calc(100dvh - 76px); }
+}
+
+/* Voice: whole-turn stamps, turn indicator, quick commands */
+.live-turn[data-cont=true] { margin-top: -16px; }
+.live-turn[data-cont=true] > header { display: none; }
+.live-turn.user[data-cont=true] { border-top-left-radius: 4px; border-top-right-radius: 4px; }
+.live-commands { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
+.live-commands::-webkit-scrollbar { display: none; }
+.live-commands[hidden] { display: none; }
+.live-commands button { flex: none; min-height: 40px; padding: 0 14px; border: .5px solid var(--glass-hair); border-radius: 20px; background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); color: var(--ink); font: 500 14px var(--font-sans); }
+.live-commands button:disabled { opacity: .4; }
+.live-commands button:not(:disabled):active { transform: scale(.96); }
+#live-stage[data-turn=teacher] { box-shadow: inset 0 0 0 2px rgba(50, 93, 67, .35); }
+#live-stage[data-turn=you] { box-shadow: inset 0 0 0 2px rgba(217, 45, 32, .45); }
+#live-stage[data-turn=muted] { box-shadow: inset 0 0 0 2px rgba(120, 120, 128, .4); }
+#live-stage { transition: box-shadow .25s var(--ios-ease); border-radius: 12px; }
+#live-status { font-weight: 500; color: var(--ink); }

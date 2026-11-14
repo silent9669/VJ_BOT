@@ -14,7 +14,7 @@ const kaiwaReference = {level: 'N5', scenario_id: Object.keys(teacherCatalogs.N5
 const kaiwaRubric = teacherCatalogs.N5.scenarios[kaiwaReference.scenario_id].rubrics[0];
 const teacherAssets = {fetch: async request => {
   const level = new URL(request.url).pathname.match(/^\/course\/teacher-(N[1-5])\.json$/)?.[1];
-  return level ? Response.json(teacherCatalogs[level]) : new Response('Not found', {status: 404});
+  return level ? Response.json(teacherCatalogs[level]) : new Response('Không tìm thấy', {status: 404});
 }};
 
 const migrations = readdirSync('migrations').filter(f => /^\d+.*\.sql$/.test(f)).sort();

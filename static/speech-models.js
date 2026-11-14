@@ -53,8 +53,8 @@
       const saved = localStorage.getItem(preference(key));
       if (saved === null) return defaults[provider()];
       if (compatible(saved)) return saved;
-      status.textContent = 'The saved speech model is invalid. Refresh and choose a model explicitly.';
-    } catch { status.textContent = 'Voice preference storage is unavailable. Restore site storage before using read-aloud.'; }
+      status.textContent = 'Model giọng nói đã lưu không hợp lệ. Hãy tải lại và chọn model.';
+    } catch { status.textContent = 'Không lưu được lựa chọn giọng nói. Hãy bật lại bộ nhớ của trang rồi dùng đọc thành tiếng.'; }
     return '';
   }
   function draw(models, selected) {
@@ -62,7 +62,7 @@
     for (const model of [...new Set([selected, ...models])]) {
       const option = document.createElement('option');
       option.value = model;
-      option.textContent = model || 'Choose a speech model';
+      option.textContent = model || 'Chọn model giọng nói';
       select.append(option);
     }
     select.value = selected;
@@ -70,9 +70,9 @@
   function closeKeyForm() {
     formRevision++; formOwner = null;
     form.reset(); form.hidden = true;
-    key.type = 'password'; keyToggle.textContent = 'Show';
+    key.type = 'password'; keyToggle.textContent = 'Hiện';
     keyToggle.setAttribute('aria-pressed', 'false');
-    keyToggle.setAttribute('aria-label', 'Show voice API key');
+    keyToggle.setAttribute('aria-label', 'Hiện API key giọng nói');
     addKey.setAttribute('aria-expanded', 'false');
   }
   async function saveKey(event) {
@@ -83,9 +83,9 @@
     const ticket = ++formRevision;
     saving = true; save.disabled = true;
     form.setAttribute('aria-busy', 'true');
-    formStatus.textContent = 'Saving encrypted connection…';
+    formStatus.textContent = 'Đang lưu kết nối đã mã hóa…';
     try {
-      if (typeof window.saveVoiceProfile !== 'function') throw new Error('Voice setup did not load. Reload Settings.');
+      if (typeof window.saveVoiceProfile !== 'function') throw new Error('Phần giọng nói chưa tải được. Hãy tải lại Cài đặt.');
       const saved = await window.saveVoiceProfile(user, {name:keyName.value.trim(), api_key:key.value.trim(), protocol:keyProvider.value}, storage.value);
       if (owner() !== user || managed()) return;
       const chooseSaved = ticket === formRevision;
@@ -93,11 +93,11 @@
       if (chooseSaved) window.VJProfiles.setVoice(user, {scope:saved.scope, id:saved.id});
       sync();
       status.textContent = chooseSaved
-        ? `Saved ${saved.name}. Listen to a sample to check voice access.`
-        : `Saved ${saved.name}. Your newer voice choice was kept.`;
+        ? `Đã lưu ${saved.name}. Bấm Nghe thử để kiểm tra quyền dùng giọng nói.`
+        : `Đã lưu ${saved.name}. Lựa chọn giọng nói mới hơn của em được giữ nguyên.`;
       if (chooseSaved) accounts.focus();
     } catch (error) {
-      if (owner() === user && ticket === formRevision) formStatus.textContent = error.message || 'Unable to save the voice account.';
+      if (owner() === user && ticket === formRevision) formStatus.textContent = error.message || 'Không lưu được tài khoản giọng nói.';
     } finally {
       saving = false; save.disabled = false; addKey.disabled = !owner() || managed();
       form.setAttribute('aria-busy', 'false');
@@ -130,11 +130,11 @@
     const rows = voiceRows();
     accounts.replaceChildren();
     const empty = document.createElement('option');
-    empty.value = ''; empty.textContent = invalid ? 'Voice preference unavailable · choose again' : 'Choose a saved voice account';
+    empty.value = ''; empty.textContent = invalid ? 'Lựa chọn giọng nói không dùng được · hãy chọn lại' : 'Chọn tài khoản giọng nói đã lưu';
     accounts.append(empty);
     for (const scope of ['local', 'server']) {
       const group = document.createElement('optgroup');
-      group.label = scope === 'local' ? 'This device · encrypted' : 'Server · encrypted';
+      group.label = scope === 'local' ? 'Thiết bị này · đã mã hóa' : 'Máy chủ · đã mã hóa';
       for (const row of rows.filter(row => row.scope === scope)) {
         const option = document.createElement('option');
         option.value = reference(row); option.textContent = row.name; group.append(option);
@@ -144,18 +144,18 @@
     const selectedRow = rows.find(row => reference(row) === reference(selected));
     if (key && !selectedRow) {
       const missing = document.createElement('option');
-      missing.value = reference(selected); missing.textContent = 'Selected voice account unavailable · choose another';
+      missing.value = reference(selected); missing.textContent = 'Tài khoản giọng nói đã chọn không dùng được · hãy chọn tài khoản khác';
       accounts.append(missing);
     }
     accounts.value = reference(selected);
     accounts.disabled = !user;
     select.disabled = test.disabled = !key || !selectedRow;
     refresh.disabled = select.disabled || Boolean(pending);
-    hint.textContent = 'Voice uses its own saved native Gemini or official OpenAI account, independently of chat.';
-    modelLabel.textContent = selectedRow ? `Speech model · ${selectedRow.protocol === 'openai' ? 'alloy' : 'Charon'}` : 'Speech model';
-    status.textContent = invalid ? 'Voice preference storage is unavailable or corrupt. Restore storage or choose a voice account again.' : key && !selectedRow
-      ? 'The selected voice account is unavailable or unsupported. It was not replaced.'
-      : selectedRow ? '' : 'Add or choose a voice account to use voice.';
+    hint.textContent = 'Giọng nói dùng tài khoản Gemini gốc hoặc OpenAI chính thức đã lưu riêng, độc lập với chat.';
+    modelLabel.textContent = selectedRow ? `Model giọng nói · ${selectedRow.protocol === 'openai' ? 'alloy' : 'Charon'}` : 'Model giọng nói';
+    status.textContent = invalid ? 'Không lưu được hoặc dữ liệu lựa chọn giọng nói bị lỗi. Hãy bật lại bộ nhớ hoặc chọn lại tài khoản giọng nói.' : key && !selectedRow
+      ? 'Tài khoản giọng nói đã chọn không dùng được hoặc không được hỗ trợ. Hệ thống không tự thay thế.'
+      : selectedRow ? '' : 'Hãy thêm hoặc chọn tài khoản giọng nói để dùng giọng nói.';
     draw(catalogModels, choice(key));
     if (preserveRequest) status.textContent = message;
   }
@@ -168,21 +168,21 @@
     pending = controller;
     const current = () => !controller.signal.aborted && request === version && key === identity();
     draw(catalogIdentity === key ? catalogModels : [], choice(key));
-    status.textContent = `Refreshing compatible ${provider() === 'openai' ? 'OpenAI' : 'Gemini'} speech models. No audio tests are sent.`;
+    status.textContent = `Đang tải model giọng nói ${provider() === 'openai' ? 'OpenAI' : 'Gemini'} tương thích. Không gửi thử âm thanh.`;
     refresh.disabled = true;
     try {
       const response = await apiFetch('/api/tts', {method:'POST', signal:controller.signal,
         headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'models'})});
       const data = await response.json();
       if (!current()) return;
-      if (!response.ok) throw new Error(data.detail || 'Unable to refresh speech models.');
-      if (!Array.isArray(data.models) || data.models.length > 1000 || !data.models.every(model => compatible(model))) throw new Error('Invalid speech model catalog.');
+      if (!response.ok) throw new Error(data.detail || 'Không tải lại được model giọng nói.');
+      if (!Array.isArray(data.models) || data.models.length > 1000 || !data.models.every(model => compatible(model))) throw new Error('Danh sách model giọng nói không hợp lệ.');
       catalogIdentity = key; catalogModels = data.models;
       draw(data.models, choice(key));
-      status.textContent = `${data.models.length} speech models listed${data.truncated ? ' (partial list)' : ''}. Access is checked when you listen.`;
+      status.textContent = `${data.models.length} model giọng nói trong danh sách${data.truncated ? ' (danh sách một phần)' : ''}. Quyền truy cập được kiểm tra khi em nghe.`;
     } catch (error) {
       if (!current()) return;
-      status.textContent = error.message || 'Unable to refresh speech models. Your choice has not changed.';
+      status.textContent = error.message || 'Không tải lại được model giọng nói. Lựa chọn của em không đổi.';
     } finally {
       if (request === version) { pending = null; refresh.disabled = false; }
     }
@@ -195,7 +195,7 @@
     try {
       window.VJProfiles.setVoice(user, row ? {scope:row.scope, id:row.id} : {scope:'none', id:''});
       sync();
-    } catch (error) { sync(); status.textContent = error.message || 'Unable to save the voice account.'; }
+    } catch (error) { sync(); status.textContent = error.message || 'Không lưu được tài khoản giọng nói.'; }
   });
   select.addEventListener('change', () => {
     if (managed()) { sync(); return; }
@@ -203,16 +203,16 @@
     if (!key || !compatible(selected)) return;
     try {
       localStorage.setItem(preference(key), selected);
-      if (localStorage.getItem(preference(key)) !== selected) throw new Error('Unable to save the speech choice.');
+      if (localStorage.getItem(preference(key)) !== selected) throw new Error('Không lưu được lựa chọn giọng nói.');
       if (previous !== selected) window.dispatchEvent(new Event('vjbot-voice-changed'));
-    } catch { sync(); status.textContent = 'Unable to save the speech choice. Restore site storage before using read-aloud.'; }
+    } catch { sync(); status.textContent = 'Không lưu được lựa chọn giọng nói. Hãy bật lại bộ nhớ của trang rồi dùng đọc thành tiếng.'; }
   });
   refresh.addEventListener('click', update);
   addKey.addEventListener('click', () => {
     if (!owner() || managed() || saving) return;
     formOwner = owner(); formRevision++;
-    form.hidden = false; keyProvider.value = 'gemini'; keyName.value = 'Voice account'; storage.value = 'local';
-    formStatus.textContent = 'Saving does not generate audio or change your chat account.';
+    form.hidden = false; keyProvider.value = 'gemini'; keyName.value = 'Tài khoản giọng nói'; storage.value = 'local';
+    formStatus.textContent = 'Việc lưu không tạo âm thanh và không đổi tài khoản chat.';
     addKey.setAttribute('aria-expanded', 'true'); keyName.focus();
   });
   document.getElementById('speech-key-cancel').addEventListener('click', () => { closeKeyForm(); addKey.focus(); });
@@ -222,13 +222,13 @@
   });
   keyToggle.addEventListener('click', () => {
     const show = key.type === 'password';
-    key.type = show ? 'text' : 'password'; keyToggle.textContent = show ? 'Hide' : 'Show';
+    key.type = show ? 'text' : 'password'; keyToggle.textContent = show ? 'Ẩn' : 'Hiện';
     keyToggle.setAttribute('aria-pressed', String(show));
-    keyToggle.setAttribute('aria-label', show ? 'Hide voice API key' : 'Show voice API key');
+    keyToggle.setAttribute('aria-label', show ? 'Ẩn API key giọng nói' : 'Hiện API key giọng nói');
   });
   test.addEventListener('click', () => {
     if (test.disabled) return;
-    if (typeof window.playGeminiTTS !== 'function') { status.textContent = 'Audio controls did not load. Reload Settings.'; return; }
+    if (typeof window.playGeminiTTS !== 'function') { status.textContent = 'Điều khiển âm thanh chưa tải được. Hãy tải lại Cài đặt.'; return; }
     return window.playGeminiTTS('こんにちは。日本語をいっしょに練習しましょう。', {japaneseOnly:true});
   });
   window.addEventListener('pagehide', closeKeyForm);

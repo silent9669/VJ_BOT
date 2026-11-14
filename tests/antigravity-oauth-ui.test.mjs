@@ -102,9 +102,9 @@ test('quota rendering preserves native IDs, distinguishes zero from unknown, and
       {model:'native-half', remaining_fraction:0.375, reset_at:null} ]}) : null});
   await ui.context.renderAntigravityOAuth();
   const rows = ui.element('ai-oauth-usage-models').children.map(text);
-  assert.match(rows[0], /native-tiered<script>.*0% remaining · exhausted.*Historical reset/);
-  assert.match(rows[1], /Remaining usage unknown.*Reset unknown/);
-  assert.match(rows[2], /37.5% remaining/);
+  assert.match(rows[0], /native-tiered<script>.*còn 0% · đã hết.*Historical reset/);
+  assert.match(rows[1], /Chưa rõ hạn mức còn lại.*Reset unknown/);
+  assert.match(rows[2], /còn 37.5%/);
   assert.equal(ui.element('ai-oauth-usage-meter').value, 0);
   assert.equal(ui.element('ai-oauth-usage-meter').hidden, false);
   assert.deepEqual(ui.element('ai-oauth-usage-models').children.map(row => row.children

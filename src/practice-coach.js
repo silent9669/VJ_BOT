@@ -28,23 +28,23 @@ export async function practiceCoach(request, env, expectedEpoch=undefined) {
     || body.item_id !== undefined && (typeof body.item_id !== 'string' || !body.item_id || body.item_id.length > 500)
     || ['attempt_id','session_id'].some(key=>Object.hasOwn(body,key) && (typeof body[key]!=='string' || !taskAttemptIdPattern.test(body[key])))
     || body.action === 'hint' && ['answer_index','response_text'].some(key=>Object.hasOwn(body,key))) {
-    return reply({detail:'Invalid practice coaching request.'},400);
+    return reply({detail:'Yêu cầu hướng dẫn luyện tập không hợp lệ.'},400);
   }
   const profile=await env.DB.prepare('SELECT task_evidence_epoch FROM profiles WHERE user_id=?').bind(body.user_id).first();
   const epoch=expectedEpoch===undefined?profile?.task_evidence_epoch:expectedEpoch;
-  if(!epoch || profile?.task_evidence_epoch!==epoch)return reply({detail:'The learner account changed. Reopen the activity.'},409);
+  if(!epoch || profile?.task_evidence_epoch!==epoch)return reply({detail:'Tài khoản học đã đổi. Hãy mở lại hoạt động.'},409);
   const currentEpoch=async()=>Boolean(await env.DB.prepare('SELECT 1 valid FROM profiles WHERE user_id=? AND task_evidence_epoch=?').bind(body.user_id,epoch).first());
   const catalog = await teacherCatalog(env,body.lesson.level);
-  if (!catalog) return reply({detail:'The lesson catalog is unavailable. Your exercise result has not changed.'},503);
+  if (!catalog) return reply({detail:'Chưa tải được danh mục bài học. Kết quả bài tập của em không đổi.'},503);
   const lesson = catalogLesson(catalog,body.lesson),view=body.view??'checks';
   const resolved=resolveTaskReference(lesson,{kind:'question',index:body.question_index},view,body.task,body.action==='hint'?'hint':'evaluation');
   if(resolved.error)return reply({detail:resolved.error},resolved.status);
   const question=resolved.task;
-  if(body.item_id !== undefined && question.item_id!==body.item_id)return reply({detail:'This task does not own that progress item.'},409);
+  if(body.item_id !== undefined && question.item_id!==body.item_id)return reply({detail:'Bài tập này không thuộc mục tiến độ đó.'},409);
   if(body.action==='feedback' && (question.mode==='choice'
     ?!Number.isInteger(body.answer_index) || body.answer_index<0 || body.answer_index>=question.opts.length || Object.hasOwn(body,'response_text')
     :Object.hasOwn(body,'answer_index') || typeof body.response_text!=='string' || !body.response_text.trim() || body.response_text.length>4000)) {
-    return reply({detail:'Submit the original choice index or actual text for this task.'},400);
+    return reply({detail:'Hãy gửi đúng lựa chọn hoặc nội dung trả lời của bài tập này.'},400);
   }
   let bound=null;
   if(body.attempt_id!==undefined) {
@@ -55,13 +55,13 @@ export async function practiceCoach(request, env, expectedEpoch=undefined) {
       || bound.view!==view || bound.question_index!==body.question_index || (bound.session_id??null)!==(body.session_id??null)
       || body.action==='feedback' && (bound.answer_payload===null || (question.mode==='choice'
         ?bound.answer_index!==body.answer_index:bound.response_text!==body.response_text))) {
-      return reply({detail:'Feedback must use the original answered task, submission and learning session.'},409);
+      return reply({detail:'Nhận xét phải dùng đúng bài tập, bài nộp và phiên học ban đầu.'},409);
     }
   }
   const prior=await priorTaskResponses(env,body.user_id,lesson,question,body.session_id,epoch,bound?.answered_at??null);
   if(prior.error)return reply({detail:prior.error},409);
   if(body.action==='feedback' && bound?.feedback_json) {
-    if(!(await currentEpoch()))return reply({detail:'The learner account changed. Reopen the activity.'},409);
+    if(!(await currentEpoch()))return reply({detail:'Tài khoản học đã đổi. Hãy mở lại hoạt động.'},409);
     return reply(JSON.parse(bound.feedback_json));
   }
   const assessed=assessTaskResponse(question,bound || body);
@@ -78,21 +78,21 @@ export async function practiceCoach(request, env, expectedEpoch=undefined) {
       submission_index:body.answer_index??null,source_correct:correct,basis,assessment,authored_answer:answer,
       authored_explanation:question.explanation || '',...(question.mode==='writing'?{model:question.model || ''}:{})} : {})};
   // Budget room for task metadata and two bounded 4K learner responses.
-  if(JSON.stringify(evidence).length>16000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
+  if(JSON.stringify(evidence).length>16000)return reply({detail:'Hãy chọn một bài tập nhỏ hơn để được hướng dẫn.'},413);
   const retrieval = await retrieveLearning(env, learningQuery(lesson,'',question), {assessment:body.action==='hint'});
   evidence.learning_retrieval = retrieval;
-  if(JSON.stringify(evidence).length>20000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
-  if(!(await currentEpoch()))return reply({detail:'The learner account changed before coaching. Reopen the activity.'},409);
+  if(JSON.stringify(evidence).length>20000)return reply({detail:'Hãy chọn một bài tập nhỏ hơn để được hướng dẫn.'},413);
+  if(!(await currentEpoch()))return reply({detail:'Tài khoản học đã đổi trước khi hướng dẫn. Hãy mở lại hoạt động.'},409);
   const asked = await askAI(env,body.user_id, {system:boundary + '\n' + instructions[body.action] + '\n' + learningBoundary,
     schema,schemaName:'practice_coaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
   body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined,{beforeGeneration:currentEpoch});
   if (asked.response) return asked.response;
-  if(!(await currentEpoch()))return reply({detail:'The learner account changed before feedback returned. Reopen the activity.'},409);
+  if(!(await currentEpoch()))return reply({detail:'Tài khoản học đã đổi trước khi nhận xét trả về. Hãy mở lại hoạt động.'},409);
   let result;
-  try { result = JSON.parse(asked.text); } catch { return reply({detail:'AI did not return a usable explanation. Your result is unchanged.'},503); }
+  try { result = JSON.parse(asked.text); } catch { return reply({detail:'AI chưa trả về lời giải thích dùng được. Kết quả của em không đổi.'},503); }
   if (!result || Array.isArray(result) || Object.keys(result).length !== 1
     || typeof result.reply !== 'string' || !result.reply.trim() || result.reply.length > 2000) {
-    return reply({detail:'AI did not return a usable explanation. Your result is unchanged.'},503);
+    return reply({detail:'AI chưa trả về lời giải thích dùng được. Kết quả của em không đổi.'},503);
   }
   const basisLabel=body.action==='feedback'?(basis==='source_advisory'?'Đối chiếu khóa nguồn chưa được thẩm định; đây chỉ là phản hồi tham khảo. '
     :basis==='self_report'?'Đây là tự đánh giá, không phải điểm số đã xác minh. ':'Đối chiếu khóa nguồn có thông tin thẩm định. '):'';
@@ -112,7 +112,7 @@ export async function practiceCoach(request, env, expectedEpoch=undefined) {
       .bind(feedback_json,feedback_at,...ownerValues).run();
     const saved=await env.DB.prepare(`SELECT feedback_json FROM task_attempt_evidence WHERE ${ownership}`)
       .bind(...ownerValues).first();
-    if(!saved?.feedback_json)return reply({detail:'This account or attempt changed before feedback was saved.'},409);
+    if(!saved?.feedback_json)return reply({detail:'Tài khoản hoặc lượt làm đã đổi trước khi lưu nhận xét.'},409);
     return reply(JSON.parse(saved.feedback_json));
   }
   return reply(response);

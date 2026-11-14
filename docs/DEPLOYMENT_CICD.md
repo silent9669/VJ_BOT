@@ -11,17 +11,19 @@
 
 ```mermaid
 flowchart LR
-  A[Nhánh tính năng] -->|push| B[GitHub Actions: Test and Quality Checks]
-  A -->|PR + squash merge| M[main]
-  M --> C[Workers Builds: npm test]
+  A[Nhánh tính năng] -->|push| B[GitHub Actions: test + build dry-run]
+  A -->|PR xanh + squash merge| M[main]
+  M --> C[Workers Builds: npm run build]
   C --> D[npm run release: migrate rồi cf deploy]
   D --> P[vjbot.dangphuc.me]
 ```
 
 - **GitHub Actions** chỉ kiểm tra, không giữ khóa Cloudflare. `ci.yml` chạy trên mọi push: `npm ci`, `npm test`, `npm run build` (dry run). `python.yml` chạy pytest khi `app/`, `scripts/`, test Python hoặc `requirements.txt` đổi.
 - **Ruleset "Protect main branch"**: phải qua PR và check tên `Test & Quality Checks` (tên của job trong `ci.yml`; đổi tên job là chặn merge). Thread review phải được giải quyết. Chỉ squash/merge qua PR, không push thẳng.
+- **Phân vai**: test chỉ chạy ở GitHub Actions (check bắt buộc trước khi merge), nên `main` luôn đã qua test. Workers Builds không chạy lại test mà chỉ dựng file cần để deploy, vì vậy một test chập chờn hay lệch phiên bản Node không còn làm hỏng deploy.
 - **Cloudflare Workers Builds** là nơi duy nhất deploy. Push hoặc merge vào `main` tự chạy. Đồng đội chỉ cần quyền ghi repo, không cần token Cloudflare; muốn xem log build thì cần vào dashboard Cloudflare hoặc dùng `cf builds`.
-- Cấu hình (Worker `vjbot` > Settings > Builds, hoặc `cf builds workers get <script-tag>`): nhánh `main`, build `npm test`, deploy `npm run release`, thư mục gốc `/`. Token build cần Workers Scripts Write và D1 Write. **Preview đã tắt**: lệnh mặc định `npx wrangler preview` không chạy được với project `cf`, và preview sẽ dùng chung D1 production (xem [ROADMAP](ROADMAP.md) mục staging).
+- Cấu hình (Worker `vjbot` > Settings > Builds, hoặc `cf builds workers get <script-tag>`): nhánh `main`, build `npm run build` (sinh catalog giáo viên + `cf deploy --dry-run` để bắt lỗi cấu hình sớm), deploy `npm run release`, bật build caching, thư mục gốc `/`. Token build cần Workers Scripts Write và D1 Write. **Preview đã tắt**: lệnh mặc định `npx wrangler preview` không chạy được với project `cf`, và preview sẽ dùng chung D1 production (xem [ROADMAP](ROADMAP.md) mục staging).
+- Node: `.nvmrc` và `engines` ghim 22 (test dùng `node:sqlite`, cần 22.13+).
 - Chỉ giữ một lockfile (`package-lock.json`); lockfile thứ hai làm Workers Builds đổi trình quản lý gói.
 
 Xem log build bằng CLI:

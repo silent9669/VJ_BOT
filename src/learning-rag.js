@@ -24,14 +24,14 @@ function terms(text){
 }
 function prepare(data){
   if(data?.version!==1 || data.authorization?.basis!=='user_asserted_rights'
-    || !Array.isArray(data.chunks) || !data.chunks.length || data.chunks.length>1500)throw new Error('Invalid learning corpus');
+    || !Array.isArray(data.chunks) || !data.chunks.length || data.chunks.length>1500)throw new Error('Kho bài học không hợp lệ');
   const ids=new Set();
   const rows=data.chunks.map(chunk=>{
     const publisher=publishers[chunk.source_id],url=new URL(chunk.url);
     if(!publisher || url.protocol!=='https:' || !publisher.hosts.includes(url.hostname) || url.username || url.password
       || (url.port && url.port!=='443') || typeof chunk.id!=='string' || !/^[A-Z]{2}-[a-f0-9]{12}-[1-9]\d*$/.test(chunk.id)
       || ids.has(chunk.id) || typeof chunk.text!=='string' || !chunk.text.trim() || chunk.text.length>1400
-      || typeof chunk.title!=='string' || chunk.title.length>300)throw new Error('Invalid learning passage');
+      || typeof chunk.title!=='string' || chunk.title.length>300)throw new Error('Đoạn bài học không hợp lệ');
     ids.add(chunk.id);
     return {id:chunk.id,source_id:chunk.source_id,source_name:publisher.name,url:url.href,title:chunk.title,
       text:chunk.text,titleTerms:terms(chunk.title),bodyTerms:terms(chunk.text)};
