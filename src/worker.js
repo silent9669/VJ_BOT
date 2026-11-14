@@ -75,7 +75,7 @@ export default {
       if (url.pathname === '/api/stt') return await transcriptionRoute(request,env);
       if (url.pathname.startsWith('/api/ai/oauth/antigravity')) return await antigravityOAuthRoute(request, env);
       if (url.pathname.startsWith('/api/ai/') || url.pathname.startsWith('/api/admin/')) return await aiRoute(request,env,url);
-      const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach','/api/account/delete'];
+      const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/history/threads','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
         if(!user) return jsonResponse({detail:'Đăng nhập để học với thầy Lâm và đồng bộ tiến độ.'},401);
@@ -384,6 +384,24 @@ export default {
         if(attemptId){const saved=await env.DB.prepare('SELECT result,submission FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
           return saved?.submission===submission?jsonResponse(JSON.parse(saved.result)):jsonResponse({detail:'Lượt làm đã đổi trước khi lưu.'},409);}
         return jsonResponse(result);
+      }
+
+      // 7a. Past conversations: the general chat plus one thread per lesson.
+      if (url.pathname === "/api/history/threads" && request.method === "GET") {
+        const rows = await env.DB.prepare("SELECT c.context_key, g.n, c.role, c.content, c.timestamp FROM conversations c JOIN (SELECT context_key, COUNT(*) n, MAX(id) mid FROM conversations WHERE user_id = ? AND (context_key = 'chat' OR context_key LIKE 'lesson:%') GROUP BY context_key) g ON c.id = g.mid ORDER BY g.mid DESC LIMIT 30").bind(url.searchParams.get("user_id")).all();
+        const catalogs = {}, threads = [];
+        for (const row of rows.results || []) {
+          let lesson = null, title = 'Trò chuyện chung';
+          if (row.context_key !== 'chat') {
+            const match = /^lesson:(N[1-5]):(.+)$/.exec(row.context_key);
+            lesson = match && {level: match[1], id: match[2]};
+            if (!validLessonReference(lesson)) continue;
+            catalogs[lesson.level] ??= await teacherCatalog(env, lesson.level);
+            title = (catalogs[lesson.level] && catalogLesson(catalogs[lesson.level], lesson)?.title) || lesson.id;
+          }
+          threads.push({scope: row.context_key, lesson, title, count: row.n, last_role: row.role, snippet: String(row.content).replace(/\s+/g, ' ').slice(0, 90), timestamp: row.timestamp});
+        }
+        return jsonResponse(threads);
       }
 
       // 7. Chat History API

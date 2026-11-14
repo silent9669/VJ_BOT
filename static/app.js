@@ -97,7 +97,7 @@ function renderBookmarks() {
   if (!container) return;
   const list = getBookmarks();
   if (!list || list.length === 0) {
-    container.innerHTML = `<p class="empty-bookmark-msg">Chưa có mục nào được lưu. Hãy bấm nút <strong>Lưu chủ đề</strong> trong phòng học Sensei!</p>`;
+    container.innerHTML = `<p class="empty-bookmark-msg">Chưa có mục nào được lưu. Hãy bấm nút <strong>Lưu chủ đề</strong> trong lớp của thầy Lâm!</p>`;
     return;
   }
   container.innerHTML = list.map((item) => `
@@ -256,7 +256,7 @@ function initLoadingScreen() {
   setTimeout(() => {
     if (progressFill) progressFill.style.width = "100%";
     if (percentText) percentText.textContent = "100%";
-    if (statusText) statusText.textContent = "Sẵn sàng cùng VJBot Sensei!";
+    if (statusText) statusText.textContent = "Thầy Lâm đã sẵn sàng!";
     setTimeout(() => {
       loadingOverlay.classList.add("fade-out");
       setTimeout(() => loadingOverlay.remove(), 350);

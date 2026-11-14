@@ -226,6 +226,7 @@
                 </div>
                 <div class="chat-header-actions">
 
+                  <button type="button" class="sketch-icon-btn" id="btn-chat-history" aria-haspopup="dialog">Lịch sử</button>
                   <button type="button" class="sketch-icon-btn" id="btn-clear-chat-history" title="Xóa lịch sử hội thoại">
                     Xóa
                   </button>
@@ -938,6 +939,7 @@
 
   <!-- LOAD COMPREHENSIVE DATA & APP SCRIPT -->
   <script src="jlpt-data.js"></script>
+  <dialog id="chat-history-dialog" class="history-sheet" aria-labelledby="chat-history-title"><header><h2 id="chat-history-title">Lịch sử</h2><button type="button" id="chat-history-close" aria-label="Đóng">×</button></header><div id="chat-history-list" role="list"></div></dialog>
   <dialog id="admin-user-dialog" class="admin-user-dialog" aria-labelledby="admin-user-name">
     <button type="button" id="admin-user-close" class="modal-close-btn" aria-label="Đóng">×</button>
     <h2 id="admin-user-name"></h2>
@@ -989,6 +991,7 @@
   <script src="mascot.js"></script>
   <script src="refinements.js"></script>
   <script src="admin-ai.js"></script>
+  <script src="chat-history.js"></script>
   <script src="live-transcript.js"></script>
   <script src="live.js"></script>
 
