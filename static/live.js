@@ -3,8 +3,8 @@
   const el = id => document.getElementById(id);
   let peer=null, stream=null, channel=null, abort=null, version=0, ready=false, closing=false;
   let timer=null, closeTimer=null, connectTimer=null, disconnectedTimer=null, startedAt=0;
-  const BARS=33;
-  let audioContext=null,analyser=null,waveFrame=null,callOwner=null;
+  const BARS=33,SILENCE='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+  let audioContext=null,analyser=null,waveFrame=null,callOwner=null,statsTimer=null,remoteLevel=0;
   const audioSources=[];
   let wakeLock=null,commands={},teacherAnalyser=null,teacherHeardAt=0,teacherExpectedUntil=0,teacherSpeaking=false,userMuted=false;
   // Keep the screen on during a call: iPhone locking the screen drops the microphone.
@@ -29,6 +29,16 @@
     for(const button of el('live-commands').querySelectorAll?.('button')||[])button.disabled=!mine || !commands[button.dataset.command];
     if(live)status(teacherSpeaking?'Thầy đang nói · Em đợi thầy nói xong nhé':userMuted?'Micro đang tắt':'Đến lượt em · Em nói đi');
   }
+  // Safari cannot tap a remote WebRTC track with Web Audio, so the teacher's level comes from the connection stats.
+  async function pollRemoteLevel() {
+    if(!peer?.getStats)return;
+    try {
+      let level=0;
+      (await peer.getStats()).forEach(report=>{if(report.type==='inbound-rtp' && (report.kind||report.mediaType)==='audio' && typeof report.audioLevel==='number')level=Math.max(level,report.audioLevel);});
+      remoteLevel=level;
+      if(level>.01)teacherHeardAt=Date.now();
+    } catch {}
+  }
   function teacherPulse() {
     if(!teacherAnalyser)return;
     const samples=new Uint8Array(teacherAnalyser.fftSize);teacherAnalyser.getByteTimeDomainData(samples);
@@ -46,11 +56,12 @@
     const oldChannel=channel, oldPeer=peer; channel=null;peer=null;
     oldChannel?.close(); oldPeer?.close();
     if(waveFrame!==null)cancelAnimationFrame(waveFrame);waveFrame=null;
+    clearInterval(statsTimer);statsTimer=null;remoteLevel=0;
     audioSources.splice(0).forEach(source=>source.disconnect());
     audioContext?.close().catch(()=>{});audioContext=null;analyser=null;teacherAnalyser=null;
     teacherHeardAt=0;teacherExpectedUntil=0;teacherSpeaking=false;userMuted=false;commands={};
     paint(new Float32Array(BARS),0);
-    el('live-audio').srcObject=null;letSleep();
+    el('live-audio').srcObject=null;el('live-audio').removeAttribute?.('src');letSleep();
     el('live-play-audio').hidden=true;
     el('live-mute').setAttribute('aria-pressed','false');el('live-mute').textContent='Tắt micro';
     controls(false); if (message) status(message);
@@ -69,6 +80,7 @@
     analyser=audioContext.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.65;
     teacherAnalyser=audioContext.createAnalyser();teacherAnalyser.fftSize=512;
     const samples=new Uint8Array(analyser.fftSize),levels=new Float32Array(BARS);
+    statsTimer=setInterval(pollRemoteLevel,150);
     const draw=()=>{
       if(!analyser)return;
       teacherPulse();
@@ -77,7 +89,9 @@
       for(let i=0;i<BARS;i++){
         let energy=0;for(let j=0;j<span;j++)energy+=Math.abs(samples[i*span+j]-128);
         const envelope=.3+.7*Math.sin(Math.PI*(i+.5)/BARS);
-        levels[i]+=(Math.min(1,energy/span/36*envelope)-levels[i])*.35;sum+=levels[i];
+        const own=Math.min(1,energy/span/36*envelope);
+        const remote=Math.min(1,remoteLevel*5)*envelope*(.6+.4*Math.sin(Date.now()/110+i*.9));
+        levels[i]+=(Math.max(own,remote)-levels[i])*.35;sum+=levels[i];
       }
       paint(levels,sum/BARS);waveFrame=requestAnimationFrame(draw);
     };draw();
@@ -109,6 +123,9 @@
   async function start() {
     if (peer || el('live-start').disabled) return;
     if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection==='undefined') {status('Trình duyệt cần hỗ trợ WebRTC và micro qua HTTPS hoặc localhost.');return;}
+    // iOS only lets an element play later if it was started inside this tap: unlock it with a silent clip.
+    const speaker=el('live-audio');
+    if(!speaker.srcObject){speaker.src=SILENCE;speaker.play?.()?.catch?.(()=>{});}
     const run=++version, owner=signedInUser?.user_id;
     callOwner=owner;
     timeline.reset();
