@@ -158,3 +158,65 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
   .mobile-bottom-item, .segmented button, .stage-btn, .delete-account-btn, .topbar-summon-btn { transition: none; }
   .mobile-bottom-item:active, .stage-btn:active, .delete-account-btn:active, .topbar-summon-btn:active { transform: none; }
 }
+
+/* Admin */
+.admin-user-row { position: relative; padding-right: 22px !important; }
+.admin-user-row::after { content: ""; position: absolute; right: 4px; top: 50%; width: 8px; height: 8px; border: solid var(--muted); border-width: 2px 2px 0 0; transform: translateY(-50%) rotate(45deg); opacity: .45; }
+.admin-user-row:active { background: var(--surface-2) !important; }
+.admin-user-row > .admin-user-metrics { display: flex !important; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 12px; color: var(--muted); }
+.admin-user-metrics > * + *::before { content: "·"; margin-right: 8px; opacity: .6; }
+.admin-user-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+.admin-user-stats > div { padding: 10px 12px; background: var(--surface-2); border-radius: 12px; min-width: 0; }
+.admin-user-stats dt { margin: 0 !important; font-size: 11px; }
+.admin-user-stats dd { margin: 2px 0 0 !important; }
+.admin-user-actions .stage-btn { flex: 1 1 calc(50% - 8px); }
+.admin-user-actions .admin-danger { flex-basis: 100%; margin-top: 8px; color: #b42318 !important; background: rgba(180, 35, 24, .06) !important; border-color: rgba(180, 35, 24, .4) !important; }
+
+/* Bottom sheets on phones */
+@media (max-width: 768px) {
+  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open] {
+    margin: auto 0 0;
+    width: 100% !important;
+    max-width: none;
+    border-radius: 24px 24px 0 0 !important;
+    max-height: calc(100dvh - 16px - var(--sa-t)) !important;
+    padding-bottom: calc(20px + var(--sa-b)) !important;
+  }
+  .admin-user-dialog .modal-close-btn { top: 8px; right: 8px; }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  @keyframes sheet-up { from { transform: translateY(100%); } }
+  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open] { animation: sheet-up .32s var(--ios-ease); }
+}
+
+/* Voice: a call owns the screen. The tab bar goes away so a stray tap cannot end it. */
+@media (max-width: 899px) {
+  body:has(#classroom-voice:not([hidden]) #live-end:not([hidden])) .mobile-bottom-bar { display: none !important; }
+  #panel-classroom .live-controls { gap: 12px; padding: 8px 0 calc(8px + var(--sa-b)); }
+  #live-start { min-width: min(280px, 80vw); min-height: 56px; border-radius: 28px; font-size: 17px; }
+  #live-mute, #live-end { min-height: 52px; min-width: 132px; border-radius: 26px; font-size: 15px; font-weight: 600; }
+  #live-mute[aria-pressed=true] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  #live-end { background: #d92d20 !important; color: #fff !important; border-color: #d92d20 !important; }
+}
+
+/* Chat fills the space between the top bar and the (taller, safe-area aware) tab bar. */
+@media (max-width: 768px) {
+  #panel-classroom .classroom-chat-window { height: calc(100dvh - 76px - var(--bar-h)); }
+  body:has(#classroom-voice:not([hidden]) #live-end:not([hidden])) #panel-classroom .classroom-chat-window { height: calc(100dvh - 76px); }
+}
+
+/* Voice: whole-turn stamps, turn indicator, quick commands */
+.live-turn[data-cont=true] { margin-top: -16px; }
+.live-turn[data-cont=true] > header { display: none; }
+.live-turn.user[data-cont=true] { border-top-left-radius: 4px; border-top-right-radius: 4px; }
+.live-commands { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
+.live-commands::-webkit-scrollbar { display: none; }
+.live-commands[hidden] { display: none; }
+.live-commands button { flex: none; min-height: 40px; padding: 0 14px; border: .5px solid var(--glass-hair); border-radius: 20px; background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); color: var(--ink); font: 500 14px var(--font-sans); }
+.live-commands button:disabled { opacity: .4; }
+.live-commands button:not(:disabled):active { transform: scale(.96); }
+#live-stage[data-turn=teacher] { box-shadow: inset 0 0 0 2px rgba(50, 93, 67, .35); }
+#live-stage[data-turn=you] { box-shadow: inset 0 0 0 2px rgba(217, 45, 32, .45); }
+#live-stage[data-turn=muted] { box-shadow: inset 0 0 0 2px rgba(120, 120, 128, .4); }
+#live-stage { transition: box-shadow .25s var(--ios-ease); border-radius: 12px; }
+#live-status { font-weight: 500; color: var(--ink); }

@@ -11,7 +11,7 @@ flowchart LR
   W --> D[(D1)]
   W -->|API key của người dùng| P[OpenAI-compatible / Claude / Gemini]
   GH[GitHub main] --> WB[Workers Builds]
-  WB -->|npm test, migrate, cf deploy| W
+  WB -->|build, migrate, cf deploy| W
 ```
 
 Thư mục `app/`, `Dockerfile`, `docker-compose.yml` là bản FastAPI + MongoDB cũ, không được deploy và không phải API của website. `wrangler.config.ts` không được dùng (deploy dùng `cloudflare.config.ts`).

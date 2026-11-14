@@ -5,6 +5,10 @@
   let timer=null, closeTimer=null, connectTimer=null, disconnectedTimer=null, startedAt=0;
   let audioContext=null,analyser=null,waveFrame=null,callOwner=null;
   const audioSources=[];
+  let wakeLock=null,commands={},teacherAnalyser=null,teacherHeardAt=0,teacherExpectedUntil=0,teacherSpeaking=false,userMuted=false;
+  // Keep the screen on during a call: iPhone locking the screen drops the microphone.
+  const keepAwake=async()=>{try{wakeLock?.release?.();wakeLock=await navigator.wakeLock?.request('screen');}catch{wakeLock=null;}};
+  const letSleep=()=>{wakeLock?.release?.().catch(()=>{});wakeLock=null;};
   const timeline = createLiveTranscript(el('live-transcript'));
   const status = text => { el('live-status').textContent=text; };
   function controls(active) {
@@ -13,6 +17,25 @@
     el('live-mute').disabled=!ready || closing;
     el('live-end').hidden=!active;el('live-mute').hidden=!active;
     el('live-stage').dataset.active=String(ready && !closing);
+    turn();
+  }
+  // One speaker at a time: the microphone stays closed while the teacher talks and opens when the teacher stops.
+  function turn() {
+    const live=ready && !closing, mine=live && !teacherSpeaking;
+    stream?.getAudioTracks().forEach(track=>{track.enabled=mine && !userMuted;});
+    el('live-stage').dataset.turn=live?(teacherSpeaking?'teacher':userMuted?'muted':'you'):'';
+    el('live-commands').hidden=!live;
+    for(const button of el('live-commands').querySelectorAll?.('button')||[])button.disabled=!mine || !commands[button.dataset.command];
+    if(live)status(teacherSpeaking?'Thầy đang nói · Em đợi thầy nói xong nhé':userMuted?'Micro đang tắt':'Đến lượt em · Em nói đi');
+  }
+  function teacherPulse() {
+    if(!teacherAnalyser)return;
+    const samples=new Uint8Array(teacherAnalyser.fftSize);teacherAnalyser.getByteTimeDomainData(samples);
+    let peak=0;for(const value of samples)peak=Math.max(peak,Math.abs(value-128));
+    const now=Date.now();
+    if(peak>4)teacherHeardAt=now;
+    const speaking=ready && (now<teacherExpectedUntil || now-teacherHeardAt<900);
+    if(speaking!==teacherSpeaking){teacherSpeaking=speaking;turn();}
   }
   function cleanup(message) {
     ++version; ready=false; closing=false;
@@ -23,17 +46,19 @@
     oldChannel?.close(); oldPeer?.close();
     if(waveFrame!==null)cancelAnimationFrame(waveFrame);waveFrame=null;
     audioSources.splice(0).forEach(source=>source.disconnect());
-    audioContext?.close().catch(()=>{});audioContext=null;analyser=null;
+    audioContext?.close().catch(()=>{});audioContext=null;analyser=null;teacherAnalyser=null;
+    teacherHeardAt=0;teacherExpectedUntil=0;teacherSpeaking=false;userMuted=false;commands={};
     const canvas=el('live-wave');canvas?.getContext?.('2d')?.clearRect(0,0,canvas.width,canvas.height);
-    el('live-audio').srcObject=null;
+    el('live-audio').srcObject=null;letSleep();
     el('live-play-audio').hidden=true;
     el('live-mute').setAttribute('aria-pressed','false');el('live-mute').textContent='Tắt micro';
     controls(false); if (message) status(message);
     timeline.finish();
   }
-  function connectWave(media) {
+  function connectWave(media,teacher=false) {
     if(!audioContext || !analyser)return;
     const source=audioContext.createMediaStreamSource(media);source.connect(analyser);audioSources.push(source);
+    if(teacher && teacherAnalyser)source.connect(teacherAnalyser);
   }
   function wave() {
     const canvas=el('live-wave'),ctx=canvas?.getContext?.('2d');
@@ -41,9 +66,11 @@
     if(!ctx || !AudioContext)return;
     audioContext=new AudioContext();audioContext.resume().catch(()=>{});
     analyser=audioContext.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.65;
+    teacherAnalyser=audioContext.createAnalyser();teacherAnalyser.fftSize=512;
     const samples=new Uint8Array(analyser.fftSize);
     const draw=()=>{
       if(!analyser)return;
+      teacherPulse();
       analyser.getByteTimeDomainData(samples);ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.strokeStyle=getComputedStyle(canvas).color;ctx.lineWidth=3;ctx.beginPath();
       for(let i=0;i<samples.length;i++){const x=i/(samples.length-1)*canvas.width,y=canvas.height/2+(samples[i]-128)/128*canvas.height*.46;if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);}
@@ -81,7 +108,7 @@
       connection.addEventListener('track',event=>{
         if(run!==version)return;
         el('live-audio').srcObject=new MediaStream([event.track]);
-        connectWave(el('live-audio').srcObject);
+        connectWave(el('live-audio').srcObject,true);
         el('live-audio').play().catch(()=>{if(run===version){el('live-play-audio').hidden=false;status('Nhấn Bật âm thanh để nghe thầy.');}});
       });
       connection.addEventListener('connectionstatechange',()=>{
@@ -96,7 +123,7 @@
         if(run!==version)return;
         let event;try{event=JSON.parse(data);}catch{return;}
         if(event.type==='session.started') {
-          ready=true;clearTimeout(connectTimer);controls(true);status('Đang nghe · Em có thể nói ngay');startedAt=Date.now();
+          ready=true;clearTimeout(connectTimer);controls(true);startedAt=Date.now();keepAwake();teacherExpectedUntil=Date.now()+4000;turn();
           events.send(JSON.stringify({type:'session.commentary.append',event_id:'hello_'+Date.now(),delegation_id:null,content:greeting}));
           timer=setInterval(()=>{
             const seconds=Math.floor((Date.now()-startedAt)/1000);
@@ -104,7 +131,7 @@
             if(seconds>=600)end();
           },1000);
         } else if(event.type==='session.closed')cleanup('Đã kết thúc cuộc trò chuyện.');
-        else if(['session.input_transcript.delta','session.output_transcript.delta'].includes(event.type))timeline.add(event);
+        else if(['session.input_transcript.delta','session.output_transcript.delta'].includes(event.type)){if(event.type==='session.output_transcript.delta')teacherHeardAt=Date.now();timeline.add(event);}
         else if(event.type==='error')cleanup('GPT-Live báo lỗi. Kết thúc phiên; hãy thử lại.');
       });
       events.addEventListener('close',()=>{if(run===version)cleanup('Kết nối đã đóng.');});
@@ -127,7 +154,7 @@
       if(run!==version)return;
       if(owner!==signedInUser?.user_id){cleanup('Tài khoản đã thay đổi.');return;}
       if(!response.ok)throw new Error(result.detail || 'Không mở được GPT-Live.');
-      greeting=result.greeting;
+      greeting=result.greeting;commands=result.commands && typeof result.commands==='object'?result.commands:{};
       el('live-model-name').textContent=result.model+' · '+result.voice;
       await connection.setRemoteDescription({type:'answer',sdp:result.sdp});
     } catch(error) {
@@ -150,12 +177,20 @@
     try{await el('live-audio').play();if(run===version){el('live-play-audio').hidden=true;status('Đang nghe · Em có thể nói ngay');}}
     catch{if(run===version)status('Chưa phát được âm thanh. Kiểm tra thiết bị rồi thử lại.');}
   });
+  el('live-commands').addEventListener('click',event=>{
+    const text=commands[event.target?.dataset?.command];
+    if(!text || !ready || closing || teacherSpeaking || channel?.readyState!=='open')return;
+    teacherExpectedUntil=Date.now()+4000;turn();
+    channel.send(JSON.stringify({type:'session.commentary.append',event_id:'cmd_'+Date.now(),delegation_id:null,content:text}));
+  });
   el('live-mute').addEventListener('click',()=>{
     const mute=el('live-mute').getAttribute('aria-pressed')!=='true';
-    stream?.getAudioTracks().forEach(track=>{track.enabled=!mute;});
+    userMuted=mute;turn();
     el('live-mute').setAttribute('aria-pressed',String(mute));el('live-mute').textContent=mute?'Bật micro':'Tắt micro';
   });
   for(const button of document.querySelectorAll('[data-chat-mode]'))button.addEventListener('click',()=>mode(button.dataset.chatMode==='live'));
+  // The browser drops the wake lock when the tab is hidden; take it again on return.
+  window.addEventListener('focus',()=>{if(ready&&!closing)keepAwake();});
   window.addEventListener('pagehide',()=>{end(true);timeline.stop();});
   window.addEventListener('hashchange',()=>{if(!location.hash.startsWith('#classroom')){end();timeline.stop();}});
   window.checkLiveAccount=()=>{
