@@ -256,3 +256,25 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
   /* Loose retry/error buttons get the same shape instead of the system default. */
   #panel-dashboard button:not([class]) { min-height: 36px; padding: 0 14px; border: .5px solid var(--glass-hair, rgba(60, 60, 67, .29)); border-radius: 18px; background: #fff; color: var(--ink); font: inherit; font-weight: 600; }
 }
+
+/* Voice stage: a glowing orb that follows the voice, with mirrored capsule bars under it. */
+#panel-classroom .live-stage { --level: 0; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 0; padding: 20px 16px 14px; border-radius: 24px; color: var(--accent, #325d43); background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, currentColor 14%, transparent), transparent 70%), var(--glass-strong, #fff); border: .5px solid var(--glass-hair, rgba(60, 60, 67, .2)); transition: color .35s var(--ios-ease); }
+#live-stage[data-turn=teacher] { color: #0a84ff; box-shadow: none; }
+#live-stage[data-turn=you] { color: #30b25a; box-shadow: none; }
+#live-stage[data-turn=muted] { color: #8e8e93; box-shadow: none; }
+.live-orb { position: relative; width: 112px; height: 112px; border-radius: 50%; flex: none; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #fff, color-mix(in srgb, currentColor 22%, #fff) 70%); box-shadow: 0 0 0 calc(4px + var(--level) * 26px) color-mix(in srgb, currentColor calc(10% + var(--level) * 40%), transparent), 0 10px 30px color-mix(in srgb, currentColor 28%, transparent); transform: scale(calc(1 + var(--level) * .08)); transition: box-shadow .12s linear, transform .12s linear; overflow: hidden; margin: 14px 0 22px; }
+#panel-classroom .live-stage > .live-orb > img { width: 76px; height: 136px; margin-top: 46px; object-fit: contain; image-rendering: pixelated; animation: none; }
+.live-id { text-align: center; }
+#panel-classroom .live-stage h2 { font-size: 17px; font-weight: 600; margin: 0; }
+#panel-classroom .live-stage p { margin: 2px 0 0; font-size: 12px; }
+#panel-classroom #live-wave { width: min(100%, 360px); height: 52px; opacity: 1; color: inherit; }
+#panel-classroom .live-stage:not([data-active=true]) #live-wave { opacity: .4; }
+.live-stage:not([data-active=true]) .live-orb { animation: orb-breathe 4s var(--ios-ease, ease-in-out) infinite; }
+@keyframes orb-breathe { 50% { transform: scale(1.04); } }
+/* Once the conversation has text, the stage shrinks into a header so the transcript gets the room. */
+#panel-classroom .classroom-voice:has(#live-transcript[data-empty=false]) .live-stage { flex-direction: row; gap: 12px; padding: 10px 14px; border-radius: 18px; }
+#panel-classroom .classroom-voice:has(#live-transcript[data-empty=false]) .live-orb { width: 52px; height: 52px; margin: 0; box-shadow: 0 0 0 calc(2px + var(--level) * 8px) color-mix(in srgb, currentColor calc(10% + var(--level) * 40%), transparent); }
+#panel-classroom .classroom-voice:has(#live-transcript[data-empty=false]) .live-orb > img { width: 36px; height: 64px; margin-top: 22px; }
+#panel-classroom .classroom-voice:has(#live-transcript[data-empty=false]) .live-id { text-align: left; flex: 1; min-width: 0; }
+#panel-classroom .classroom-voice:has(#live-transcript[data-empty=false]) #live-wave { width: 120px; height: 36px; }
+@media (prefers-reduced-motion: reduce) { .live-orb, .live-stage:not([data-active=true]) .live-orb { animation: none; transition: none; } }
