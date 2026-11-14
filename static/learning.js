@@ -13,9 +13,10 @@ async function loadTeachingDrafts(level){
       || lesson.eligibility?.scored_assessment!==false || lesson.eligibility?.mastery_credit!==false
       || !Array.isArray(lesson.tasks)))throw new Error(`Bộ bài ${level} chưa có cấu trúc và giới hạn sử dụng phù hợp.`);
   for(const lesson of source.lessons){
-    const ids=new Set(lesson.tasks.map(task=>task.id)),paths=[lesson.practice_path,lesson.reference_task_ids,...(lesson.guided_steps || []).map(step=>step.task_ids)].filter(path=>path!==undefined);
-    if(ids.size!==lesson.tasks.length || paths.some(path=>!Array.isArray(path) || !path.length || new Set(path).size!==path.length || path.some(id=>!ids.has(id)))
-      || lesson.delayed_review_task_id && !ids.has(lesson.delayed_review_task_id)
+    const taskPositions=new Map(lesson.tasks.map((task,index)=>[task.id,index]));
+    const paths=[lesson.practice_path,lesson.reference_task_ids,...(lesson.guided_steps || []).map(step=>step.task_ids)].filter(path=>path!==undefined);
+    if(taskPositions.size!==lesson.tasks.length || paths.some(path=>!Array.isArray(path) || !path.length || new Set(path).size!==path.length || path.some(id=>!taskPositions.has(id)))
+      || lesson.delayed_review_task_id && !taskPositions.has(lesson.delayed_review_task_id)
       || lesson.guided_steps?.some(step=>typeof step.title!=='string' || typeof step.note!=='string'
         || !step.example || ['jp','reading','vi'].some(key=>typeof step.example[key]!=='string' || !step.example[key].trim())))
       throw new Error(`Bộ bài ${level} có bước luyện chưa gắn đúng câu hỏi. Hãy mở lại sau khi nội dung được sửa.`);
@@ -23,13 +24,15 @@ async function loadTeachingDrafts(level){
     for(const [index,task] of lesson.tasks.entries()){
       const exchange=task.exchange;if(!exchange)continue;
       const priorIds=exchange.prior_task_ids;
-      const priors=Array.isArray(priorIds)?priorIds.map(id=>lesson.tasks.find(prior=>prior.id===id)):null;
+      const priors=Array.isArray(priorIds)?priorIds.map(id=>lesson.tasks[taskPositions.get(id)]):null;
       const starts=['invite','produce'].includes(exchange.stage),delayed=exchange.stage==='delayed';
+      const requiredStart=['accept','refuse'].includes(exchange.stage)?'invite':'produce';
+      const hasRequiredStart=priors?.some(prior=>prior?.exchange?.stage===requiredStart)
+        || delayed && priors?.some(prior=>prior?.exchange?.stage==='invite');
       if(!priors || new Set(priorIds).size!==priorIds.length || starts!==(priorIds.length===0)
         || priors.some(prior=>!prior || prior.mode!=='writing' || prior.exchange?.group!==exchange.group
-          || prior.exchange.stage==='delayed' || lesson.tasks.indexOf(prior)>=index)
-        || !starts && !priors.some(prior=>prior.exchange.stage===(['accept','refuse'].includes(exchange.stage)?'invite':'produce'))
-          && !(delayed && priors.some(prior=>prior.exchange.stage==='invite'))
+          || prior.exchange.stage==='delayed' || taskPositions.get(prior.id)>=index)
+        || !starts && !hasRequiredStart
         || delayed && (lesson.delayed_review_task_id!==task.id || defaultPath.includes(task.id)
           || !priors.some(prior=>['accept','refuse','respond','revise'].includes(prior.exchange.stage)))
         || !delayed && (!defaultPath.includes(task.id) || priorIds.some(id=>!defaultPath.includes(id) || defaultPath.indexOf(id)>=defaultPath.indexOf(task.id)))

@@ -61,8 +61,7 @@ export async function practiceCoach(request, env, expectedEpoch=undefined) {
   const prior=await priorTaskResponses(env,body.user_id,lesson,question,body.session_id,epoch,bound?.answered_at??null);
   if(prior.error)return reply({detail:prior.error},409);
   if(body.action==='feedback' && bound?.feedback_json) {
-    const current=await env.DB.prepare('SELECT task_evidence_epoch FROM profiles WHERE user_id=?').bind(body.user_id).first();
-    if(current?.task_evidence_epoch!==epoch)return reply({detail:'The learner account changed. Reopen the activity.'},409);
+    if(!(await currentEpoch()))return reply({detail:'The learner account changed. Reopen the activity.'},409);
     return reply(JSON.parse(bound.feedback_json));
   }
   const assessed=assessTaskResponse(question,bound || body);
@@ -105,14 +104,14 @@ export async function practiceCoach(request, env, expectedEpoch=undefined) {
       answer_index:question.answer_index??null,answer,...(assessed.assessment?{assessment:assessed.assessment}:{})} : {})};
   if(body.action==='feedback' && bound) {
     const feedback_at=new Date().toISOString(),feedback_json=JSON.stringify({...response,feedback_at});
+    const ownership=`user_id=? AND attempt_id=? AND account_epoch=? AND identity_json=? AND answer_payload=? AND session_id IS ?
+      AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)`;
+    const ownerValues=[body.user_id,body.attempt_id,epoch,bound.identity_json,bound.answer_payload,body.session_id??null,body.user_id,epoch];
     await env.DB.prepare(`UPDATE task_attempt_evidence SET feedback_json=?,feedback_at=?,post_answer_help_mask=post_answer_help_mask|8
-      WHERE user_id=? AND attempt_id=? AND account_epoch=? AND identity_json=? AND answer_payload=? AND session_id IS ?
-      AND feedback_json IS NULL AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)`)
-      .bind(feedback_json,feedback_at,body.user_id,body.attempt_id,epoch,bound.identity_json,bound.answer_payload,body.session_id??null,body.user_id,epoch).run();
-    const saved=await env.DB.prepare(`SELECT feedback_json FROM task_attempt_evidence
-      WHERE user_id=? AND attempt_id=? AND account_epoch=? AND identity_json=? AND answer_payload=? AND session_id IS ?
-      AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)`)
-      .bind(body.user_id,body.attempt_id,epoch,bound.identity_json,bound.answer_payload,body.session_id??null,body.user_id,epoch).first();
+      WHERE ${ownership} AND feedback_json IS NULL`)
+      .bind(feedback_json,feedback_at,...ownerValues).run();
+    const saved=await env.DB.prepare(`SELECT feedback_json FROM task_attempt_evidence WHERE ${ownership}`)
+      .bind(...ownerValues).first();
     if(!saved?.feedback_json)return reply({detail:'This account or attempt changed before feedback was saved.'},409);
     return reply(JSON.parse(saved.feedback_json));
   }
