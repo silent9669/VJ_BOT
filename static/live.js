@@ -3,7 +3,8 @@
   const el = id => document.getElementById(id);
   let peer=null, stream=null, channel=null, abort=null, version=0, ready=false, closing=false;
   let timer=null, closeTimer=null, connectTimer=null, disconnectedTimer=null, startedAt=0;
-  let audioContext=null,analyser=null,waveFrame=null,callOwner=null;
+  const BARS=33,SILENCE='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+  let audioContext=null,analyser=null,waveFrame=null,callOwner=null,statsTimer=null,remoteLevel=0;
   const audioSources=[];
   let wakeLock=null,commands={},teacherAnalyser=null,teacherHeardAt=0,teacherExpectedUntil=0,teacherSpeaking=false,userMuted=false;
   // Keep the screen on during a call: iPhone locking the screen drops the microphone.
@@ -28,6 +29,16 @@
     for(const button of el('live-commands').querySelectorAll?.('button')||[])button.disabled=!mine || !commands[button.dataset.command];
     if(live)status(teacherSpeaking?'Thầy đang nói · Em đợi thầy nói xong nhé':userMuted?'Micro đang tắt':'Đến lượt em · Em nói đi');
   }
+  // Safari cannot tap a remote WebRTC track with Web Audio, so the teacher's level comes from the connection stats.
+  async function pollRemoteLevel() {
+    if(!peer?.getStats)return;
+    try {
+      let level=0;
+      (await peer.getStats()).forEach(report=>{if(report.type==='inbound-rtp' && (report.kind||report.mediaType)==='audio' && typeof report.audioLevel==='number')level=Math.max(level,report.audioLevel);});
+      remoteLevel=level;
+      if(level>.01)teacherHeardAt=Date.now();
+    } catch {}
+  }
   function teacherPulse() {
     if(!teacherAnalyser)return;
     const samples=new Uint8Array(teacherAnalyser.fftSize);teacherAnalyser.getByteTimeDomainData(samples);
@@ -45,11 +56,12 @@
     const oldChannel=channel, oldPeer=peer; channel=null;peer=null;
     oldChannel?.close(); oldPeer?.close();
     if(waveFrame!==null)cancelAnimationFrame(waveFrame);waveFrame=null;
+    clearInterval(statsTimer);statsTimer=null;remoteLevel=0;
     audioSources.splice(0).forEach(source=>source.disconnect());
     audioContext?.close().catch(()=>{});audioContext=null;analyser=null;teacherAnalyser=null;
     teacherHeardAt=0;teacherExpectedUntil=0;teacherSpeaking=false;userMuted=false;commands={};
-    const canvas=el('live-wave');canvas?.getContext?.('2d')?.clearRect(0,0,canvas.width,canvas.height);
-    el('live-audio').srcObject=null;letSleep();
+    paint(new Float32Array(BARS),0);
+    el('live-audio').srcObject=null;el('live-audio').removeAttribute?.('src');letSleep();
     el('live-play-audio').hidden=true;
     el('live-mute').setAttribute('aria-pressed','false');el('live-mute').textContent='Tắt micro';
     controls(false); if (message) status(message);
@@ -67,15 +79,33 @@
     audioContext=new AudioContext();audioContext.resume().catch(()=>{});
     analyser=audioContext.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.65;
     teacherAnalyser=audioContext.createAnalyser();teacherAnalyser.fftSize=512;
-    const samples=new Uint8Array(analyser.fftSize);
+    const samples=new Uint8Array(analyser.fftSize),levels=new Float32Array(BARS);
+    statsTimer=setInterval(pollRemoteLevel,150);
     const draw=()=>{
       if(!analyser)return;
       teacherPulse();
-      analyser.getByteTimeDomainData(samples);ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.strokeStyle=getComputedStyle(canvas).color;ctx.lineWidth=3;ctx.beginPath();
-      for(let i=0;i<samples.length;i++){const x=i/(samples.length-1)*canvas.width,y=canvas.height/2+(samples[i]-128)/128*canvas.height*.46;if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);}
-      ctx.stroke();waveFrame=requestAnimationFrame(draw);
+      analyser.getByteTimeDomainData(samples);
+      const span=Math.floor(samples.length/BARS);let sum=0;
+      for(let i=0;i<BARS;i++){
+        let energy=0;for(let j=0;j<span;j++)energy+=Math.abs(samples[i*span+j]-128);
+        const envelope=.3+.7*Math.sin(Math.PI*(i+.5)/BARS);
+        const own=Math.min(1,energy/span/36*envelope);
+        const remote=Math.min(1,remoteLevel*5)*envelope*(.6+.4*Math.sin(Date.now()/110+i*.9));
+        levels[i]+=(Math.max(own,remote)-levels[i])*.35;sum+=levels[i];
+      }
+      paint(levels,sum/BARS);waveFrame=requestAnimationFrame(draw);
     };draw();
+  }
+  // Mirrored capsule bars (Siri / Voice Memos style) drawn with one stroked path.
+  function paint(levels,level) {
+    const canvas=el('live-wave'),ctx=canvas?.getContext?.('2d');
+    if(!ctx)return;
+    const gap=canvas.width/BARS,mid=canvas.height/2,max=canvas.height*.86;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.lineCap='round';ctx.lineWidth=gap*.46;ctx.strokeStyle=getComputedStyle(canvas).color;ctx.beginPath();
+    for(let i=0;i<BARS;i++){const x=(i+.5)*gap,half=Math.max(.01,levels[i]*max/2);ctx.moveTo(x,mid-half);ctx.lineTo(x,mid+half);}
+    ctx.stroke();
+    el('live-stage')?.style?.setProperty?.('--level',level.toFixed(3));
   }
   function end(immediate=false) {
     stream?.getTracks().forEach(track=>{track.enabled=false;});
@@ -93,6 +123,9 @@
   async function start() {
     if (peer || el('live-start').disabled) return;
     if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection==='undefined') {status('Trình duyệt cần hỗ trợ WebRTC và micro qua HTTPS hoặc localhost.');return;}
+    // iOS only lets an element play later if it was started inside this tap: unlock it with a silent clip.
+    const speaker=el('live-audio');
+    if(!speaker.srcObject){speaker.src=SILENCE;speaker.play?.()?.catch?.(()=>{});}
     const run=++version, owner=signedInUser?.user_id;
     callOwner=owner;
     timeline.reset();
@@ -132,10 +165,10 @@
           },1000);
         } else if(event.type==='session.closed')cleanup('Đã kết thúc cuộc trò chuyện.');
         else if(['session.input_transcript.delta','session.output_transcript.delta'].includes(event.type)){if(event.type==='session.output_transcript.delta')teacherHeardAt=Date.now();timeline.add(event);}
-        else if(event.type==='error')cleanup('GPT-Live báo lỗi. Kết thúc phiên; hãy thử lại.');
+        else if(event.type==='error')cleanup('Cuộc gọi gặp lỗi và đã kết thúc. Hãy thử lại.');
       });
       events.addEventListener('close',()=>{if(run===version)cleanup('Kết nối đã đóng.');});
-      status('Đang mở GPT-Live…');
+      status('Đang kết nối với thầy…');
       connectTimer=setTimeout(()=>{if(run===version)cleanup('Kết nối hết thời gian. Hãy thử lại.');},35000);
       await connection.setLocalDescription(await connection.createOffer());
       if(connection.iceGatheringState!=='complete')await new Promise(resolve=>{
@@ -153,9 +186,8 @@
       const result=await response.json();
       if(run!==version)return;
       if(owner!==signedInUser?.user_id){cleanup('Tài khoản đã thay đổi.');return;}
-      if(!response.ok)throw new Error(result.detail || 'Không mở được GPT-Live.');
+      if(!response.ok)throw new Error(result.detail || 'Không mở được cuộc gọi.');
       greeting=result.greeting;commands=result.commands && typeof result.commands==='object'?result.commands:{};
-      el('live-model-name').textContent=result.model+' · '+result.voice;
       await connection.setRemoteDescription({type:'answer',sdp:result.sdp});
     } catch(error) {
       if(run!==version)return;
@@ -200,4 +232,5 @@
   window.addEventListener('vjbot-account-ready',window.checkLiveAccount);
   window.stopLiveConversation=()=>{end();timeline.stop();timeline.accountChanged();};
   window.openLiveConversation=()=>{if(!signedInUser?.is_admin)return;mode(true);return start();};
+  paint(new Float32Array(BARS),0);
 })();

@@ -121,7 +121,7 @@
     const status=document.createElement('p');status.className='study-teacher-status';status.setAttribute('role','status');
     const output=document.createElement('p');output.className='study-teacher-reply';output.hidden=true;
     const generated=document.createElement('section');generated.className='study-generated-fields';generated.hidden=true;
-    generated.setAttribute('aria-label','Bản diễn giải được tạo từ nguyên văn');
+    generated.setAttribute('aria-label','Phần giải thích thêm của AI');
     const compare=teacherButton('Xem bản gốc');compare.hidden=true;
     panel.append(heading,button,status,output,compare,generated);host.append(panel);
     const bindings=targets.filter(target=>target.element && target.source.trim()).map(target=>({...target}));
@@ -132,7 +132,7 @@
     function restore() {
       for(const target of bindings)if(translated && target.element.textContent===translated.get(target.key))target.element.textContent=target.source;
       onApply(null);
-      showingGenerated=false;compare.textContent='Xem bản diễn giải AI';
+      showingGenerated=false;compare.textContent='Xem phần AI giải thích';
       generated.hidden=true;
     }
     function clear(message='') {
@@ -146,7 +146,7 @@
     const entry={refresh(){
       if(!panel.isConnected){cleanup();return;}
       if(panel.hidden===Boolean(revealWhen()))panel.hidden=!revealWhen();
-      if(ticket && (!live() || identity()!==ticket))clear('Đã dừng phần giải thích cũ. Bấm lại cho mục đang học.');
+      if(ticket && (!live() || identity()!==ticket))clear('Bài hoặc tài khoản đã đổi. Em có thể hỏi lại.');
     }};
     function cleanup(){if(disposed)return;clear();conversation.cleanup();disposed=true;active.delete(entry);panel.remove();}
     compare.onclick=()=>{
@@ -156,7 +156,7 @@
         for(const target of bindings)target.element.textContent=translated.get(target.key);
         showingGenerated=true;compare.textContent='Xem bản gốc';onApply(translated);
         generated.hidden=!generated.children.length;
-        status.textContent='Đang xem bản diễn giải AI, chưa được thẩm định độc lập.';
+        status.textContent='Đang xem phần AI giải thích. Em có thể mở lại bản gốc.';
       }
     };
     button.onclick=async()=>{
@@ -180,14 +180,14 @@
           headers:{'Content-Type':'application/json'},body:JSON.stringify({lesson,focus,view,action:'teach',...(reference?{task:reference}:{})})});
         const data=await response.json();
         if(!current())return;
-        if(!response.ok)throw new Error(data.detail || 'AI chưa soạn được phần học. Nội dung gốc được giữ nguyên.');
+        if(!response.ok)throw new Error(data.detail || 'Chưa nhận được lời giải thích. Bài gốc vẫn được giữ nguyên.');
         if(data.action!=='teach' || !same(data.lesson,lesson) || !same(data.focus,focus) || data.view!==view
-          || typeof data.reply!=='string' || !data.reply.trim() || data.reply.length>2000 || !Array.isArray(data.fields) || data.fields.length>64)throw new Error('Phần AI không khớp mục đang học. Nội dung gốc được giữ nguyên.');
+          || typeof data.reply!=='string' || !data.reply.trim() || data.reply.length>2000 || !Array.isArray(data.fields) || data.fields.length>64)throw new Error('Phản hồi không khớp bài đang mở. Em thử lại nhé.');
         if(reference && (data.task?.id!==reference.id || data.task?.revision!==reference.revision))throw new Error('Bài đã đổi phiên bản. Mở lại trước khi dùng AI.');
         const fields=new Map();
         for(const field of data.fields){
           if(!field || typeof field.key!=='string' || typeof field.source!=='string' || typeof field.text!=='string'
-            || !field.text.trim() || field.text.length>8000 || fields.has(field.key))throw new Error('Bản diễn giải AI không đầy đủ. Hãy thử lại nếu muốn.');
+            || !field.text.trim() || field.text.length>8000 || fields.has(field.key))throw new Error('Phần giải thích chưa đầy đủ. Em có thể thử lại.');
           fields.set(field.key,field);
         }
         for(const target of bindings){
@@ -201,20 +201,20 @@
         for(const field of fields.values())if(!bound.has(field.key) && field.text!==field.source){
           const original=document.createElement('p');original.lang='ja';original.textContent=field.source;
           const translation=document.createElement('p');translation.textContent=field.text;
-          const label=document.createElement('strong');label.textContent='Diễn giải AI từ nguyên văn · chưa thẩm định';
+          const label=document.createElement('strong');label.textContent='AI giải thích thêm';
           generated.append(label,original,translation);
         }
         generated.hidden=!generated.children.length;
         showingGenerated=true;compare.hidden=false;compare.textContent='Xem bản gốc';
         onApply(translated);
-        output.textContent=data.reply;output.hidden=false;status.textContent='Diễn giải AI để tham khảo; không thay đổi đáp án hoặc điểm.';
+        output.textContent=data.reply;output.hidden=false;status.textContent='AI giải thích để em tham khảo, không chấm lại đáp án.';
         button.textContent='Em vẫn chưa hiểu';
       } catch(error) {
         if(current()){status.textContent=error.name==='TimeoutError'?'Kết nối hơi lâu. Em nhờ thầy thử lại nhé.':error.message || 'Chưa nhận được phần giảng bài.';button.textContent='Nhờ thầy thử lại';}
       } finally {
         if(controller===request){
           controller=null;button.disabled=false;button.setAttribute('aria-busy','false');
-          if(!live() || identity()!==owner)clear('Đã bỏ phản hồi của mục hoặc tài khoản cũ.');
+          if(!live() || identity()!==owner)clear('Bài hoặc tài khoản đã đổi. Em có thể hỏi lại.');
         }
       }
     };
@@ -234,7 +234,9 @@
       target('script_vi','.listening-translation',item.script_vi),
       ...(item.examples || []).map((example,index)=>target(`example:${index}:vi`,`[data-teacher-example="${index}"] .example-vi`,example.vi))
     ];
-    mountStudyTeacher(reference,{lesson,targets,isCurrent:()=>currentLesson===descriptor && body.dataset.mode==='read'});
+    const formula=reference.querySelector('.lesson-formula code'),layout=reference.querySelector('.grammar-layout');
+    mountStudyTeacher(reference,{lesson,targets,isCurrent:()=>currentLesson===descriptor && body.dataset.mode==='read',
+      onApply:()=>{if(formula && layout)layout.innerHTML=grammarFormulaHtml(formula.textContent);}});
     reference.querySelectorAll('.word-detail').forEach((element,index)=>{
       const word=item.items[index],host=element.querySelector('.word-detail-body');
       mountStudyTeacher(host,{lesson,focus:{kind:'word',index},isCurrent:()=>currentLesson===descriptor && element.open && body.dataset.mode==='read',

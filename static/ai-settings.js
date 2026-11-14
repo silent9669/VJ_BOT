@@ -647,7 +647,7 @@
     el('chat-gate-title').textContent = managed()
       ? 'OpenAI quản trị chưa sẵn sàng. Kiểm tra OPENAI_API_KEY trên máy chủ và quyền quản trị.'
       : 'Kết nối API để chat với thầy Lâm';
-    el('chat-gate-open').textContent = managed() ? 'Model quản trị' : 'Thêm API';
+    el('chat-gate-open').textContent = managed() ? 'Chọn model' : 'Thêm API';
     el('chat-input').disabled = none;
     el('btn-send-message').disabled = none;
     if (!none && /Cài đặt/.test(el('chat-error-text').textContent)) chatError('', null);
@@ -657,7 +657,7 @@
     const banner = document.createElement('div'), text = document.createElement('p'), open = document.createElement('button');
     banner.className = 'ai-banner';
     text.textContent = managed() ? 'OpenAI quản trị chưa sẵn sàng. Kiểm tra cấu hình máy chủ.' : 'Kết nối API để chat với thầy Lâm.';
-    open.type = 'button'; open.className = 'public-cta'; open.textContent = managed() ? 'Model quản trị' : 'Thêm API';
+    open.type = 'button'; open.className = 'public-cta'; open.textContent = managed() ? 'Chọn model' : 'Thêm API';
     open.onclick = openAiSettings;
     banner.append(text, open);
     host.prepend(banner);

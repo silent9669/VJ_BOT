@@ -12,7 +12,7 @@
     document.querySelectorAll('.settings-nav button').forEach(button=>{
       if(button.dataset.settings===area)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
     });
-    document.querySelector('#panel-settings h1').textContent={account:'Tài khoản',api:'Kết nối AI',admin:'Model quản trị',sound:'Âm thanh',data:'Dữ liệu'}[area];
+    document.querySelector('#panel-settings h1').textContent={account:'Tài khoản',api:'Kết nối AI',admin:'Model AI',sound:'Âm thanh',data:'Dữ liệu'}[area];
     return area;
   };
   const option=(value,label=value)=>{const node=document.createElement('option');node.value=value;node.textContent=label;return node;};

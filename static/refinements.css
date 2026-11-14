@@ -57,7 +57,7 @@ body[data-page=landing] .sketch-canvas { padding:0!important; }
 .public-levels { margin-top:32px;gap:8px; }.public-levels button { border-color:var(--line);background:var(--sheet);border-radius:6px;min-height:48px; }
 .public-cta { background:var(--ink);color:var(--sheet);border-color:var(--ink);font-size:14px;border-radius:6px;min-height:48px; }
 .public-login { border:0;background:none;font-weight:600; }.public-signin { border:0;font-weight:600; }
-.public-demo { display:flex;flex-direction:column;align-items:stretch;justify-content:center;background:#dfe9df;border:0;border-radius:12px;padding:32px;min-height:450px;overflow:visible; }
+.public-demo { display:flex;flex-direction:column;align-items:stretch;justify-content:center;background:var(--c-dfe9df,#dfe9df);border:0;border-radius:12px;padding:32px;min-height:450px;overflow:visible; }
 .demo-teacher-heading { display:flex;align-items:center;margin:-20px 0 8px;gap:4px; }
 .demo-teacher-heading img { width:150px;height:150px;object-fit:contain;image-rendering:pixelated;margin-left:-36px; }
 .demo-teacher-heading h2 { font-size:22px;line-height:1.4;letter-spacing:-.04em;margin-bottom:8px; }

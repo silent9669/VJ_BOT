@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f7f8f6">
+  <script>try{var t=localStorage.getItem('vjbot_theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;if(t==='dark')document.querySelector('meta[name=theme-color]').content='#121413'}catch(e){}</script>
   <meta name="apple-mobile-web-app-title" content="VJBot">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="format-detection" content="telephone=no">
@@ -31,7 +32,8 @@
   <!-- Vietnamese and Japanese type, shared across every screen. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
 
   <!-- Google Identity Services (GIS) for Google Sign-In -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -43,6 +45,7 @@
   <link rel="stylesheet" href="refinements.css">
   <link rel="stylesheet" href="compact.css"><link rel="stylesheet" href="workbench.css">
   <link rel="stylesheet" href="ios.css">
+  <link rel="stylesheet" href="dark.css">
   <script src="local-ui.js"></script>
 </head>
 <body data-page="landing">
@@ -57,8 +60,8 @@
         <button type="button" id="sidebar-toggle" aria-label="Thu gọn menu" aria-controls="app-sidebar" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v14H4zM9 5v14M15 9l-3 3 3 3"/></svg></button>
         <button type="button" id="sidebar-close" aria-label="Đóng menu">×</button>
       </header>
-      <div class="sidebar-user-card"><button id="level-chip" type="button" aria-label="Đổi trình độ JLPT"><span id="level-chip-text">JLPT N5</span><span aria-hidden="true">⌄</span></button><span id="streak-counter" class="sidebar-streak">0 ngày</span></div>
-      <nav class="sidebar-nav" aria-label="Điều hướng chính"><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Học tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="dashboard" id="tab-btn-dashboard"><span class="nav-label">Tổng quan</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum"><span class="nav-label">Khóa học JLPT</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom"><span class="nav-label">Thầy Lâm</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery"><span class="nav-label">Tiến độ</span></button></section><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Luyện tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards"><span class="nav-label">Thẻ nhớ</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Kanji</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa"><span class="nav-label">Luyện nói</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz"><span class="nav-label">Bài luyện JLPT</span></button></section></nav>
+      <div class="sidebar-user-card"><button id="level-chip" data-level="N5" type="button" aria-label="Đổi trình độ JLPT"><span id="level-chip-text">JLPT N5</span><span aria-hidden="true">⌄</span></button><span id="streak-counter" class="sidebar-streak">0 ngày</span></div>
+      <nav class="sidebar-nav" aria-label="Điều hướng chính"><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Bài học</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="dashboard" id="tab-btn-dashboard"><span class="nav-label">Học tập</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum"><span class="nav-label">Khóa học</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom"><span class="nav-label">Thầy Lâm</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery"><span class="nav-label">Tiến độ</span></button></section><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Luyện tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards"><span class="nav-label">Thẻ nhớ</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Kanji</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa"><span class="nav-label">Luyện nói</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz"><span class="nav-label">Luyện thi</span></button></section></nav>
       <div class="sidebar-companion" id="sidebar-companion"></div>
       <footer class="sidebar-footer"><div class="sidebar-utilities"><button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden><span class="nav-label">Quản trị</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings"><span class="nav-label">Cài đặt</span></button></div><a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn học liệu ↗</a><button type="button" class="sidebar-account" id="sidebar-account"><span class="sidebar-account-initial" id="sidebar-account-initial" aria-hidden="true">A</span><span class="sidebar-account-copy"><strong id="sidebar-account-name">Tài khoản</strong><span id="sidebar-account-role"></span></span></button></footer>
     </aside>
@@ -83,7 +86,7 @@
 
         <!-- Topbar Quick Assistant Summon Button -->
         <div class="topbar-center">
-          <button type="button" class="topbar-summon-btn" id="btn-topbar-summon" aria-label="Hỏi thầy Lâm" title="Gọi Sensei bất cứ lúc nào (⌘K)">
+          <button type="button" class="topbar-summon-btn" id="btn-topbar-summon" aria-label="Hỏi thầy Lâm" title="Hỏi thầy Lâm bất cứ lúc nào (⌘K)">
             <img class="summon-mascot" src="assets/lam/pixel/display/south.png" width="26" height="44" alt="">
             <span class="summon-text">Hỏi thầy Lâm</span>
             <kbd class="sketch-kbd">⌘K</kbd>
@@ -93,9 +96,15 @@
         <div class="topbar-right">
           <div class="chrome-status-pill">
             <span class="status-indicator"></span>
-            <span id="sensei-state-tag">Sensei: Sẵn sàng</span>
+            <span id="sensei-state-tag">Thầy Lâm: sẵn sàng</span>
           </div>
           <div class="topbar-auth" id="topbar-auth-section">
+            <div id="account-menu" class="account-menu" role="menu" aria-label="Tài khoản" hidden>
+              <div class="account-menu-head"><span id="account-menu-initial" aria-hidden="true">A</span><div><strong id="account-menu-name">Tài khoản</strong><small id="account-menu-role"></small></div></div>
+              <div class="account-menu-theme" role="group" aria-label="Giao diện"><button type="button" role="menuitemradio" data-theme-choice="light">Sáng</button><button type="button" role="menuitemradio" data-theme-choice="dark">Tối</button></div>
+              <button type="button" role="menuitem" id="account-menu-settings">Cài đặt</button>
+              <button type="button" role="menuitem" id="account-menu-logout" class="danger">Đăng xuất</button>
+            </div>
             <button type="button" class="topbar-account-btn" id="btn-topbar-account" title="Tài khoản học viên" aria-label="Tài khoản">
               <span class="account-avatar-wrap">
                 <img id="topbar-user-avatar" src="assets/lam/teacher.svg" alt="Ảnh đại diện" class="account-avatar-img pixel-sprite">
@@ -209,7 +218,7 @@
               <div class="active-rec-banner" id="active-rec-banner">
                 <div class="rec-icon"></div>
                 <div class="rec-content">
-                  <strong id="rec-title">Gợi ý bài học hôm nay cho bạn:</strong>
+                  <strong id="rec-title">Gợi ý bài học hôm nay cho em:</strong>
                   <p id="rec-text">Ôn tập ngữ pháp「〜は〜です / 〜じゃありません」và thử thách đề thi N5!</p>
                 </div>
                 <button type="button" class="rec-action-btn" id="btn-rec-action">Luyện ngay</button>
@@ -226,6 +235,7 @@
                 </div>
                 <div class="chat-header-actions">
 
+                  <button type="button" class="sketch-icon-btn" id="btn-chat-history" aria-haspopup="dialog">Lịch sử</button>
                   <button type="button" class="sketch-icon-btn" id="btn-clear-chat-history" title="Xóa lịch sử hội thoại">
                     Xóa
                   </button>
@@ -234,7 +244,7 @@
 
               <section id="classroom-voice" class="classroom-voice" hidden aria-label="Trò chuyện trực tiếp với thầy Lâm">
                 <header class="live-heading"><button type="button" class="stage-btn" data-chat-mode="text">← Nhắn tin</button><span id="live-duration">00:00</span></header>
-                <div id="live-stage" class="live-stage" data-active="false"><img src="assets/lam/pixel/display/south.png" width="88" height="156" alt="Thầy Lâm"><div><h2>Hội thoại trực tiếp</h2><p id="live-model-name">GPT-Live · Tiếng Nhật</p></div><canvas id="live-wave" width="640" height="96" role="img" aria-label="Mức âm thanh micro và giọng thầy"></canvas></div>
+                <div id="live-stage" class="live-stage" data-active="false"><div class="live-orb"><img src="assets/lam/pixel/display/south.png" width="88" height="156" alt="Thầy Lâm"></div><div class="live-id"><h2>Hội thoại trực tiếp</h2><p id="live-model-name">Tiếng Nhật</p></div><canvas id="live-wave" width="640" height="96" role="img" aria-label="Mức âm thanh micro và giọng thầy"></canvas></div>
                 <div id="live-transcript" class="live-transcript" data-empty="true" role="log" aria-live="off" aria-label="Hội thoại và bản dịch tiếng Việt theo mốc thời gian xấp xỉ"></div>
                 <div id="live-commands" class="live-commands" role="group" aria-label="Lệnh nhanh với thầy" hidden>
                   <button type="button" data-command="hint" disabled>Gợi ý</button><button type="button" data-command="repeat" disabled>Nhắc lại</button><button type="button" data-command="slower" disabled>Nói chậm</button><button type="button" data-command="situation" disabled>Tình huống</button><button type="button" data-command="check" disabled>Sửa câu</button><button type="button" data-command="explain" disabled>Tự giải thích</button><button type="button" data-command="summary" disabled>Tóm tắt</button>
@@ -253,10 +263,10 @@
                   <h2 class="welcome-title">Hôm nay, em muốn luyện gì?</h2>
 
                   <div class="welcome-chips-row">
-                    <button type="button" class="welcome-chip-btn" data-preset="Sensei ơi, em muốn bắt đầu luyện bài 1 ngay!">
+                    <button type="button" class="welcome-chip-btn" data-preset="Thầy Lâm ơi, em muốn bắt đầu luyện bài 1 ngay!">
                        Bắt đầu bài học
                     </button>
-                    <button type="button" class="welcome-chip-btn" data-preset="Sensei hãy đặt 1 câu hỏi kiểm tra phản xạ tiếng Nhật cho em!">
+                    <button type="button" class="welcome-chip-btn" data-preset="Thầy Lâm hãy đặt 1 câu hỏi kiểm tra phản xạ tiếng Nhật cho em!">
                        Đặt câu hỏi phản xạ
                     </button>
                     <button type="button" class="welcome-chip-btn" data-preset="Thầy hãy giúp em luyện một đoạn hội thoại tiếng Nhật.">
@@ -287,7 +297,7 @@
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3v18M7 7v10M17 7v10M3 10v4M21 10v4"/></svg><span id="mic-icon">Voice</span>
                 </button>
                 <textarea id="chat-input" class="sketch-input chat-text-input" rows="1" maxlength="6000" placeholder="Nhắn cho thầy Lâm…" aria-label="Tin nhắn cho thầy Lâm"></textarea>
-                <button type="submit" id="btn-send-message" class="sketch-btn-cta chat-send-btn">
+                <button type="submit" id="btn-send-message" class="sketch-btn-cta chat-send-btn" aria-label="Gửi">
                   <span>Gửi</span>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
@@ -446,7 +456,7 @@
               <div class="kaiwa-prompt-card">
                 <div class="kaiwa-prompt-header">
                   <span class="kaiwa-scenario-tag" id="kaiwa-prompt-tag">Tiệm tiện lợi (Combini)</span>
-                  <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-prompt" title="Nghe Sensei nói">Nghe</button>
+                  <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-prompt" title="Nghe thầy nói">Nghe</button>
                 </div>
                 <p id="kaiwa-context" class="lesson-japanese-passage" lang="ja" hidden></p><div class="kaiwa-prompt-japanese" id="kaiwa-prompt-jp" lang="ja">いらっしゃいませ！お弁当温めますか？</div>
                 <button type="button" class="stage-btn" id="kaiwa-next-prompt">Câu tiếp →</button>
@@ -457,7 +467,7 @@
               <!-- User Response Input & Mic -->
               <div class="kaiwa-response-card">
                 <div class="kaiwa-input-header">
-                  <label for="kaiwa-manual-input">Câu trả lời tiếng Nhật của bạn:</label>
+                  <label for="kaiwa-manual-input">Câu trả lời tiếng Nhật của em:</label>
                   <span class="mic-status-badge" id="kaiwa-mic-status" role="status">Micro sẵn sàng</span>
                 </div>
                 <textarea id="kaiwa-manual-input" class="sketch-input kaiwa-textarea" placeholder="Viết hoặc đọc câu trả lời…" rows="3" maxlength="6000" lang="ja"></textarea>
@@ -470,8 +480,8 @@
                   <button type="button" class="sketch-btn-cta kaiwa-eval-btn" id="btn-eval-kaiwa">
                     <span>Nhờ thầy nhận xét</span>
                   </button>
-                  <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-user" hidden title="Nghe lại bản thu âm của bạn">
-                     Nghe lại giọng bạn
+                  <button type="button" class="kaiwa-audio-btn" id="btn-kaiwa-play-user" hidden title="Nghe lại bản thu của em">
+                     Nghe lại giọng em
                   </button>
                 </div>
                 <p id="kaiwa-error" role="alert" hidden></p>
@@ -511,7 +521,7 @@
             <div class="quiz-header-card">
               <div class="quiz-title-row">
                 <div>
-                  <h2 class="quiz-title"> Bài luyện JLPT</h2>
+                  <h2 class="quiz-title"> Luyện thi JLPT</h2>
 
                 </div>
                 <div class="quiz-level-row" id="quiz-level-picker">
@@ -526,7 +536,7 @@
               <!-- Exam Selection Row -->
               <div class="quiz-test-select-row" style="display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 12px; flex-wrap: wrap;">
                 <label for="quiz-test-picker">Bộ luyện</label>
-                <select id="quiz-test-picker" aria-label="Chọn bộ luyện"></select>
+                <select id="quiz-test-picker" aria-label="Chọn bộ đề"></select>
                 <span id="quiz-source-note"></span>
               </div>
 
@@ -563,7 +573,7 @@
                   「学校」đọc chuẩn là「がっこう」(âm ngắt nhỏ っ) nghĩa là trường học.
                 </p>
                 <button type="button" class="sketch-btn-cta" id="btn-quiz-next">
-                  <span>Câu tiếp theo →</span>
+                  <span>Câu tiếp →</span>
                 </button>
               </div>
             </div>
@@ -575,10 +585,10 @@
               <div class="final-score-display">
                 <span id="quiz-final-score-val">100%</span>
               </div>
-              <p id="quiz-result-praise">Xuất sắc! Bạn đã nắm rất vững kiến thức phần này.</p>
+              <p id="quiz-result-praise">Xuất sắc! Em đã nắm rất vững phần này.</p>
               <div id="quiz-completion"></div><div class="result-actions">
                 <button type="button" class="sketch-btn-cta" id="btn-quiz-restart">Làm lại đề này</button>
-                <button type="button" class="stage-btn" id="btn-quiz-to-classroom">Vào phòng học hỏi Sensei</button>
+                <button type="button" class="stage-btn" id="btn-quiz-to-classroom">Vào lớp hỏi thầy Lâm</button>
               </div>
             </div>
           </div>
@@ -660,23 +670,23 @@
         </section>
         <section class="tab-panel" id="panel-settings" hidden>
           <div class="settings-container settings-layout"><h1>Cài đặt</h1>
-            <nav class="settings-nav" aria-label="Mục cài đặt"><button type="button" data-settings="account" data-target="settings-account-card" aria-current="true">Tài khoản</button><button type="button" data-settings="api" data-target="ai-card" id="settings-api-nav">Kết nối AI</button><button type="button" data-settings="admin" data-target="settings-admin-ai" id="settings-admin-nav" hidden>Model quản trị</button><button type="button" data-settings="sound" data-target="settings-sound-card">Âm thanh</button><button type="button" data-settings="data" data-target="settings-danger-card">Dữ liệu</button></nav>
+            <nav class="settings-nav" aria-label="Mục cài đặt"><button type="button" data-settings="account" data-target="settings-account-card" aria-current="true">Tài khoản</button><button type="button" data-settings="api" data-target="ai-card" id="settings-api-nav">Kết nối AI</button><button type="button" data-settings="admin" data-target="settings-admin-ai" id="settings-admin-nav" hidden>Model AI</button><button type="button" data-settings="sound" data-target="settings-sound-card">Âm thanh</button><button type="button" data-settings="data" data-target="settings-danger-card">Dữ liệu</button></nav>
             <div class="settings-stack">
               <section class="settings-card" id="settings-admin-ai" hidden>
-                <header class="card-head"><h2 class="card-title">Model quản trị</h2></header>
+                <header class="card-head"><h2 class="card-title">Model AI</h2></header>
                 <form id="admin-ai-form" class="admin-ai-form">
                   <div class="settings-field"><label for="admin-text-model">Model văn bản</label><select id="admin-text-model" required></select></div>
                   <div class="settings-field"><label for="admin-reasoning">Mức suy luận</label><select id="admin-reasoning"></select></div>
                   <div class="settings-field"><label for="admin-live-voice">Giọng GPT-Live</label><select id="admin-live-voice"></select></div>
                   <div class="admin-model-preview"><img src="assets/lam/pixel/display/south.png" width="28" height="48" alt=""><span id="admin-model-preview">Đang tải cấu hình…</span></div>
-                  <div class="card-actions"><button type="submit" class="public-cta" id="admin-ai-save">Lưu cài đặt</button><a class="stage-btn" href="#classroom">Vào lớp ↗</a></div>
+                  <div class="card-actions"><button type="submit" class="public-cta" id="admin-ai-save">Lưu cài đặt</button><a class="stage-btn" href="#classroom">Vào lớp</a></div>
                   <p id="admin-ai-message" role="status"></p>
                 </form>
               </section>
               <section class="settings-card" id="settings-account-card">
                 <header class="card-head"><h2 class="card-title">Tài khoản</h2></header>
                 <div class="account-row"><span class="account-initial" id="settings-initial" aria-hidden="true"></span><div class="account-who"><strong id="settings-name"></strong><span id="settings-email"></span></div><span class="status-pill" id="settings-kind"></span></div>
-                <div class="card-actions"><button type="button" class="stage-btn" id="settings-account">Quản lý đăng nhập</button><button type="button" class="stage-btn" id="settings-logout">Đăng xuất</button></div>
+                <div class="card-actions"><button type="button" class="stage-btn" id="settings-account">Phiên đăng nhập</button><button type="button" class="stage-btn" id="settings-logout">Đăng xuất</button></div>
               </section>
               <section class="settings-card ai-settings-card" id="ai-card">
                 <header class="card-head"><h2 class="card-title">Kết nối AI</h2></header>
@@ -848,7 +858,7 @@
       </div>
 
       <div class="popover-quick-chips">
-        <button type="button" class="quick-chip-btn" data-ask="Sensei giải thích cách dùng trợ từ は và が">
+        <button type="button" class="quick-chip-btn" data-ask="Thầy Lâm giải thích cách dùng trợ từ は và が">
           は vs が
         </button>
         <button type="button" class="quick-chip-btn" data-ask="Phát âm từ ありがとう">
@@ -916,7 +926,7 @@
   <nav class="mobile-bottom-bar" id="mobile-bottom-bar" aria-label="Điều hướng trên điện thoại">
     <button type="button" class="mobile-bottom-item active" data-tab="dashboard">
 
-      <span class="m-label">Trang chủ</span>
+      <span class="m-label">Học tập</span>
     </button>
     <button type="button" class="mobile-bottom-item" data-tab="classroom">
 
@@ -924,20 +934,21 @@
     </button>
     <button type="button" class="mobile-bottom-item" data-tab="curriculum">
 
-      <span class="m-label">Lộ trình</span>
+      <span class="m-label">Khóa học</span>
     </button>
     <button type="button" class="mobile-bottom-item" data-tab="kaiwa">
 
-      <span class="m-label">Kaiwa</span>
+      <span class="m-label">Luyện nói</span>
     </button>
     <button type="button" class="mobile-bottom-item" data-tab="quiz">
 
-      <span class="m-label">Bài luyện</span>
+      <span class="m-label">Luyện thi</span>
     </button>
   </nav>
 
   <!-- LOAD COMPREHENSIVE DATA & APP SCRIPT -->
   <script src="jlpt-data.js"></script>
+  <dialog id="chat-history-dialog" class="history-sheet" aria-labelledby="chat-history-title"><header><h2 id="chat-history-title">Lịch sử</h2><button type="button" id="chat-history-close" aria-label="Đóng">×</button></header><div id="chat-history-list" role="list"></div></dialog>
   <dialog id="admin-user-dialog" class="admin-user-dialog" aria-labelledby="admin-user-name">
     <button type="button" id="admin-user-close" class="modal-close-btn" aria-label="Đóng">×</button>
     <h2 id="admin-user-name"></h2>
@@ -989,6 +1000,8 @@
   <script src="mascot.js"></script>
   <script src="refinements.js"></script>
   <script src="admin-ai.js"></script>
+  <script src="chat-history.js"></script>
+  <script src="account-menu.js"></script>
   <script src="live-transcript.js"></script>
   <script src="live.js"></script>
 

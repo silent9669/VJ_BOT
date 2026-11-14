@@ -92,7 +92,7 @@ test('feature lessons resume their feature route and canonical completion identi
 test('the real lesson-opening flow records the selected lesson only after successful rendering',async()=>{
   const p=await page();
   const app=readFileSync('static/app.js','utf8');
-  const fn=app.slice(app.indexOf('function showLessonDetail('),app.indexOf('// 10. FLASHCARDS CONTROLLER'));
+  const fn=app.slice(app.indexOf('function grammarFormulaHtml('),app.indexOf('// 10. FLASHCARDS CONTROLLER'));
   Object.assign(p.c,{curriculumView:'plan',switchTab:()=>true,renderLessonExercises(){},lessonQuestions:()=>[],
     mountCompletion(){},addFeatureLessonAction(){},renderLessonOutline(){},returnToCourse(){},openStudyStep(){}});
   vm.runInContext(fn,p.c);

@@ -103,7 +103,7 @@ async function prepareGoogleSignIn(){
     const config=await response.json();
     localAdminAvailable=config.local_admin===true;
     configureLoginFields();
-    if(!config.client_id){status.textContent='Google chưa được cấu hình. Bạn có thể dùng email.';return;}
+    if(!config.client_id){status.textContent='Google chưa được cấu hình. Em có thể dùng email.';return;}
     for(let i=0;i<40 && !window.google?.accounts?.id;i++)await new Promise(r=>setTimeout(r,100));
     if(!window.google?.accounts?.id)throw new Error('google');
     google.accounts.id.initialize({client_id:config.client_id,nonce:config.nonce,callback:async({credential})=>{
@@ -116,7 +116,7 @@ async function prepareGoogleSignIn(){
       }catch{status.textContent='Không kết nối được. Đóng và mở lại đăng nhập để thử lại.';}
     }});
     google.accounts.id.renderButton(button,{theme:'outline',size:'large',text:'signin_with',shape:'rectangular'});
-  }catch{status.textContent='Google chưa kết nối được. Bạn có thể dùng email.';}
+  }catch{status.textContent='Google chưa kết nối được. Em có thể dùng email.';}
   finally{preparingSignIn=false;}
 }
 let registering=false;
@@ -142,8 +142,8 @@ function setAuthMode(register) {
   document.getElementById(register?'auth-name':'auth-email').focus();
 }
 async function setupAccount() {
-  document.getElementById('btn-topbar-account').addEventListener('click',()=>openAccount());
-  document.getElementById('sidebar-account')?.addEventListener('click',()=>{window.closeAppSidebar?.();openAccount();});
+  document.getElementById('btn-topbar-account').addEventListener('click',()=>signedInUser?window.toggleAccountMenu?.():openAccount());
+  document.getElementById('sidebar-account')?.addEventListener('click',()=>{window.closeAppSidebar?.();signedInUser?window.toggleAccountMenu?.():openAccount();});
   document.getElementById('auth-close').addEventListener('click',()=>document.getElementById('auth-dialog').close());
   const dialog=document.getElementById('auth-dialog'),password=document.getElementById('auth-password'),toggle=document.getElementById('auth-password-toggle'),meter=document.getElementById('auth-meter');
   password.addEventListener('input',()=>{
