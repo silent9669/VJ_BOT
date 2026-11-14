@@ -27,11 +27,11 @@ const WEIGHTS = {task: 50, grammar: 30, expression: 20};
 const PASSING_SCORE = 75;
 const LABELS = {grammar: 'Grammar and meaning', expression: 'Vocabulary and situational expression'};
 const SUMMARIES = {
-  meets_requirements: 'Estimated result: the current question requirements are met. This is not an independently verified grade.',
+  meets_requirements: 'Kết quả ước tính: đã đáp ứng yêu cầu của câu hỏi hiện tại. Đây không phải điểm được kiểm chứng độc lập.',
   incomplete: 'Estimated result: one or more requested details are missing or incomplete.',
-  needs_practice: 'Estimated result: the answer needs more work on the criteria shown below.',
-  off_topic: 'Estimated result: the answer does not address the current question.',
-  uncertain: 'There is not enough consistent evidence to estimate a score.'
+  needs_practice: 'Kết quả ước tính: câu trả lời cần cải thiện ở các tiêu chí bên dưới.',
+  off_topic: 'Kết quả ước tính: câu trả lời chưa đúng với câu hỏi hiện tại.',
+  uncertain: 'Chưa đủ bằng chứng nhất quán để ước tính điểm.'
 };
 
 function validRubric(rubric) {

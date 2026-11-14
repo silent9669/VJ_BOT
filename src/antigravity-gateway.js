@@ -14,7 +14,7 @@ export const activateConnection = (env, owner, id) => env.DB.prepare(`INSERT INT
 export const pendingFor = (env, owner) => env.DB.prepare('SELECT * FROM ai_antigravity_oauth_states WHERE user_id=?').bind(owner).first();
 export const oauthError = (message, status = 409, code = 'oauth_unavailable') => Object.assign(new Error(message), {status, code});
 export const modelIdOk = model => typeof model === 'string' && /^[\w.:-]{1,100}$/.test(model) && !/(?:tts|image|transcrib|embedding|audio)/i.test(model);
-const unavailable = () => oauthError('Reconnect Antigravity in Settings. No API-key connection was used instead.', 409, 'oauth_reconnect');
+const unavailable = () => oauthError('Hãy kết nối lại Antigravity trong Cài đặt. Hệ thống không dùng kết nối API key thay thế.', 409, 'oauth_reconnect');
 
 export function gatewayConfiguration(env) {
   const required = ['ANTIGRAVITY_GATEWAY_URL', 'ANTIGRAVITY_MANAGEMENT_KEY', 'ANTIGRAVITY_API_KEY', 'AI_KEY_SECRET'];
@@ -50,7 +50,7 @@ async function boundedJson(response, limit = 1048576) {
 
 export async function gatewayRequest(env, path, {method = 'GET', body, allowMissing = false} = {}) {
   const config = gatewayConfiguration(env);
-  if (config.missing.length) throw oauthError('Antigravity gateway is not configured on this server.', 503, 'oauth_not_configured');
+  if (config.missing.length) throw oauthError('Máy chủ này chưa cấu hình cổng Antigravity.', 503, 'oauth_not_configured');
   try {
     const response = await fetch(config.baseUrl + '/v8/management' + path, {
       method, redirect:'manual', signal:AbortSignal.timeout(15000),
@@ -60,12 +60,12 @@ export async function gatewayRequest(env, path, {method = 'GET', body, allowMiss
     if (allowMissing && response.status === 404) { await response.body?.cancel(); return null; }
     if (!response.ok) { await response.body?.cancel(); throw new Error(); }
     return await boundedJson(response);
-  } catch { throw oauthError('Antigravity gateway did not complete this request. No other account or API key was used.', 503); }
+  } catch { throw oauthError('Cổng Antigravity chưa hoàn tất yêu cầu này. Hệ thống không dùng tài khoản hay API key khác.', 503); }
 }
 
 export async function requireStrictRouting(env) {
   if (await gatewayRequest(env, '/config/routing/force-model-prefix') !== true) {
-    throw oauthError('This gateway must enable force-model-prefix before accounts can be connected or used.', 503);
+    throw oauthError('Cổng này cần bật force-model-prefix trước khi kết nối hoặc dùng tài khoản.', 503);
   }
 }
 
@@ -75,7 +75,7 @@ export async function pendingPayload(env, pending) {
     if (typeof value?.state !== 'string' || !/^[\w-]{16,256}$/.test(value.state)
       || value.gateway_url !== gatewayConfiguration(env).baseUrl) throw new Error();
     return value;
-  } catch { throw oauthError('The pending sign-in could not be restored. Keep the connection and retry after server configuration is restored.', 503); }
+  } catch { throw oauthError('Không khôi phục được lần đăng nhập đang chờ. Hãy giữ kết nối và thử lại sau khi máy chủ được cấu hình lại.', 503); }
 }
 
 async function ownedCredential(env, row) {
@@ -91,10 +91,10 @@ async function ownedCredential(env, row) {
 export async function accountCatalog(env, row) {
   await ownedCredential(env, row);
   const catalog = await gatewayRequest(env, '/credentials/models?name=' + encodeURIComponent(row.auth_id));
-  if (!Array.isArray(catalog.models) || catalog.models.length > 1000) throw oauthError('The Antigravity account catalog is unavailable.', 503);
+  if (!Array.isArray(catalog.models) || catalog.models.length > 1000) throw oauthError('Chưa tải được danh sách tài khoản Antigravity.', 503);
   const routePrefix = row.prefix + '/';
   if (!catalog.models.every(model => model && typeof model.id === 'string' && model.id.length <= routePrefix.length + 100 && model.id.startsWith(routePrefix))) {
-    throw oauthError('Antigravity account isolation has not finished. Refresh the model catalog before using chat.', 409);
+    throw oauthError('Việc tách riêng tài khoản Antigravity chưa xong. Hãy tải lại danh sách model trước khi chat.', 409);
   }
   return [...new Set(catalog.models.map(model => model.id.slice(routePrefix.length)).filter(modelIdOk))].sort();
 }
@@ -111,7 +111,7 @@ export async function antigravityProvider(env, owner, id) {
 
 export async function accountUsage(env, row) {
   const checked_at = new Date().toISOString(), connection_id = row.login_id;
-  const unknown = () => ({connection_id, available:false, checked_at, models:[], detail:'Provider quota is unavailable. No generation was requested.'});
+  const unknown = () => ({connection_id, available:false, checked_at, models:[], detail:'Chưa lấy được hạn mức của nhà cung cấp. Chưa có yêu cầu tạo nội dung nào.'});
   try {
     const credential = await ownedCredential(env, row);
     if (typeof credential.auth_index !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(credential.auth_index)
@@ -139,7 +139,7 @@ export async function accountUsage(env, row) {
 
 async function removeCredential(env, authId, owner) {
   const bound = await env.DB.prepare('SELECT user_id FROM ai_antigravity_connections WHERE auth_id=?').bind(authId).first();
-  if (bound && bound.user_id !== owner) throw oauthError('This Google account is already linked to a different VJBot account.');
+  if (bound && bound.user_id !== owner) throw oauthError('Tài khoản Google này đã liên kết với một tài khoản VJBot khác.');
   const removed = await gatewayRequest(env, '/credentials?name=' + encodeURIComponent(authId), {method:'DELETE', allowMissing:true});
   if (removed !== null && removed?.status !== 'ok') throw oauthError('The gateway did not confirm account removal. Retry removal before using this connection.', 503);
 }
@@ -166,11 +166,11 @@ export async function cancelPending(env, pending) {
 }
 
 export async function disconnectAntigravity(env, owner, id) {
-  if (!connectionIdOk(id)) throw oauthError('Choose a saved Antigravity connection.', 400);
+  if (!connectionIdOk(id)) throw oauthError('Chọn một kết nối Antigravity đã lưu.', 400);
   const row = await connectionFor(env, owner, id);
-  if (!row) throw oauthError('This Antigravity connection is not available.', 404);
+  if (!row) throw oauthError('Kết nối Antigravity này không dùng được.', 404);
   const config = gatewayConfiguration(env);
-  if (config.missing.length || config.baseUrl !== row.gateway_url) throw oauthError('Restore the original gateway before removing this account connection.', 503);
+  if (config.missing.length || config.baseUrl !== row.gateway_url) throw oauthError('Hãy khôi phục cổng ban đầu trước khi xóa kết nối tài khoản này.', 503);
   await env.DB.prepare("UPDATE ai_antigravity_connections SET state='disconnecting',updated_at=max(updated_at+1,?) WHERE user_id=? AND login_id=? AND auth_id=?")
     .bind(Date.now(), owner, id, row.auth_id).run();
   await removeCredential(env, row.auth_id, owner);

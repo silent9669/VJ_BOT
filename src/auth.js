@@ -107,10 +107,10 @@ export async function authRoute(request,env) {
   if(path==='/api/auth/google' && request.method==='POST') {
     if(!env.GOOGLE_CLIENT_ID) return json({detail:'Google sign-in chưa được cấu hình.'},503);
     const raw=await request.text();
-    if(raw.length>12000)return json({detail:'Credential too large'},413);
-    let body;try{body=JSON.parse(raw);}catch{return json({detail:'Invalid JSON'},400);}
+    if(raw.length>12000)return json({detail:'Thông tin đăng nhập quá dài'},413);
+    let body;try{body=JSON.parse(raw);}catch{return json({detail:'Dữ liệu không hợp lệ'},400);}
     const credential=body?.credential;
-    if(typeof credential!=='string' || credential.length>10000) return json({detail:'Invalid credential'},400);
+    if(typeof credential!=='string' || credential.length>10000) return json({detail:'Thông tin đăng nhập không hợp lệ'},400);
     let payload;
     try {
       ({payload}=await jwtVerify(credential,googleKeys,{issuer:['https://accounts.google.com','accounts.google.com'],audience:env.GOOGLE_CLIENT_ID,algorithms:['RS256']}));
@@ -122,5 +122,5 @@ export async function authRoute(request,env) {
     await recordAdminLogin(env,userId,payload.email);
     return createSession(request,env,userId,name,payload.email.toLowerCase());
   }
-  return json({detail:'Not found'},404);
+  return json({detail:'Không tìm thấy'},404);
 }

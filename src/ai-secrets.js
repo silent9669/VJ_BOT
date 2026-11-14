@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 async function encryptionKey(env) {
-  if (!env.AI_KEY_SECRET) throw new Error('AI credential encryption is not configured.');
+  if (!env.AI_KEY_SECRET) throw new Error('Máy chủ chưa cấu hình mã hóa khóa AI.');
   return crypto.subtle.importKey('raw', await crypto.subtle.digest('SHA-256', encoder.encode(env.AI_KEY_SECRET)), 'AES-GCM', false, ['encrypt', 'decrypt']);
 }
 export async function seal(env, owner, secret) {

@@ -114,7 +114,7 @@ test('late replay failures cannot overwrite a newer capture',async()=>{
 });
 test('unsupported speech recognition retains explicit replay recording and manual text',async()=>{
   const h=recording({supported:false,noRecognition:true});await h.controller.toggle();
-  assert.match(h.status.textContent,/transcription.*unavailable/i);await h.controller.toggle();await tick();
+  assert.match(h.status.textContent,/không chép lời được/i);await h.controller.toggle();await tick();
   assert.equal(h.input.value,'入力');assert.equal(h.playback.hidden,false);assert.equal(h.requests.length,1);
   h.controller.reset();
 });

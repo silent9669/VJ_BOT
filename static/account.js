@@ -27,15 +27,15 @@ async function apiFetch(path,options={}) {
         method=inference&&!voice?usesAntigravityOAuth(owner):false;
         oauth=Boolean(method);
         connectionId=oauth?antigravityConnectionId(owner):null;
-        if(oauth&&!connectionId)return Response.json({detail:'Choose a saved Antigravity connection in Settings.',code:'api_profile_unavailable'},{status:409});
-      } catch { return Response.json({detail:'Connection preference storage is unavailable. Restore browser storage before using AI.',code:'api_profile_unavailable'},{status:409}); }
-      if(inference&&!oauth&&!window.VJProfiles)return Response.json({detail:'API profile support did not load. Reload before using AI.',code:'api_profile_unavailable'},{status:503});
+        if(oauth&&!connectionId)return Response.json({detail:'Chọn một kết nối Antigravity đã lưu trong Cài đặt.',code:'api_profile_unavailable'},{status:409});
+      } catch { return Response.json({detail:'Không lưu được lựa chọn kết nối. Hãy bật lại bộ nhớ của trình duyệt rồi dùng AI.',code:'api_profile_unavailable'},{status:409}); }
+      if(inference&&!oauth&&!window.VJProfiles)return Response.json({detail:'Phần kết nối API chưa tải được. Hãy tải lại trang rồi dùng AI.',code:'api_profile_unavailable'},{status:503});
       if(speech) {
         try {
           const selected=VJProfiles.voice(owner);
           if(!selected||selected.scope==='none')throw new Error('No voice selected');
           voiceChoice=JSON.stringify(selected);
-        } catch { return Response.json({detail:'Choose an available voice account in Settings.',code:'api_profile_unavailable'},{status:409}); }
+        } catch { return Response.json({detail:'Chọn một tài khoản giọng nói hợp lệ trong Cài đặt.',code:'api_profile_unavailable'},{status:409}); }
       }
       try {
         if(oauth) {
@@ -43,17 +43,17 @@ async function apiFetch(path,options={}) {
           headers.set('X-VJBot-Profile','antigravity_oauth:'+connectionId);
           prepared={...options,headers};
         } else if(window.VJProfiles)prepared=await VJProfiles.prepareRequest(path,options,owner);
-      } catch { return Response.json({detail:'The selected API profile is unavailable. Open Settings to choose or repair it.',code:'api_profile_unavailable'},{status:409}); }
+      } catch { return Response.json({detail:'Kết nối API đã chọn không dùng được. Mở Cài đặt để chọn hoặc sửa lại.',code:'api_profile_unavailable'},{status:409}); }
       try {
         if(speech&&(revision!==voiceRevision||voiceChoice!==JSON.stringify(VJProfiles.voice(owner))))
-          return Response.json({detail:'The voice connection changed. Press Listen again.',code:'api_profile_unavailable'},{status:409});
+          return Response.json({detail:'Kết nối giọng nói đã đổi. Bấm Nghe lại.',code:'api_profile_unavailable'},{status:409});
         if(inference&&!voice&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
-          return Response.json({detail:'The selected AI connection changed. Send the request again.',code:'api_profile_unavailable'},{status:409});
-      } catch { return Response.json({detail:'Connection preference storage is unavailable.',code:'api_profile_unavailable'},{status:409}); }
+          return Response.json({detail:'Kết nối AI đã đổi. Hãy gửi lại yêu cầu.',code:'api_profile_unavailable'},{status:409});
+      } catch { return Response.json({detail:'Không lưu được lựa chọn kết nối.',code:'api_profile_unavailable'},{status:409}); }
     }
-    if(signedInUser?.user_id!==owner)return Response.json({detail:'The signed-in account changed.'},{status:401});
+    if(signedInUser?.user_id!==owner)return Response.json({detail:'Tài khoản đăng nhập đã thay đổi.'},{status:401});
     if(inference&&(signedInUser.is_admin===true)!==managed)
-      return Response.json({detail:'AI access changed. Send the request again.',code:'api_profile_unavailable'},{status:409});
+      return Response.json({detail:'Quyền dùng AI đã đổi. Hãy gửi lại yêu cầu.',code:'api_profile_unavailable'},{status:409});
     const headers=new Headers(prepared.headers);
     headers.set('X-VJBot-Account',owner);
     const response=await fetch(path,{...prepared,headers});

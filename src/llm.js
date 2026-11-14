@@ -273,13 +273,13 @@ function probeEvent(protocol, raw) {
 }
 
 export function failureMessage(status) {
-  if (status === 401) return 'The provider rejected this API key. It may be invalid, expired or revoked.';
-  if (status === 402) return 'The provider requires credits or a higher spending limit for this model.';
-  if (status === 403) return 'The provider denied access to this model or endpoint. Check key permissions and provider policies.';
-  if (status === 429) return 'The provider rate limit or quota was reached. Model access is not verified; try later.';
-  if (status === 404 || status === 400) return 'The endpoint, model or request is not supported. Check your settings.';
-  if (status === 504) return 'The provider timed out. Model access is not verified; try later.';
-  return 'The provider request failed. Model access is not verified.';
+  if (status === 401) return 'Nhà cung cấp từ chối API key này. Khóa có thể sai, hết hạn hoặc đã bị thu hồi.';
+  if (status === 402) return 'Nhà cung cấp yêu cầu tín dụng hoặc hạn mức chi tiêu cao hơn cho model này.';
+  if (status === 403) return 'Nhà cung cấp từ chối quyền dùng model hoặc địa chỉ này. Hãy kiểm tra quyền của khóa và chính sách của họ.';
+  if (status === 429) return 'Đã chạm giới hạn tốc độ hoặc hạn mức của nhà cung cấp. Chưa xác nhận được quyền dùng model; hãy thử lại sau.';
+  if (status === 404 || status === 400) return 'Địa chỉ, model hoặc yêu cầu không được hỗ trợ. Hãy kiểm tra lại cài đặt.';
+  if (status === 504) return 'Nhà cung cấp phản hồi quá lâu. Chưa xác nhận được quyền dùng model; hãy thử lại sau.';
+  return 'Yêu cầu tới nhà cung cấp không thành công. Chưa xác nhận được quyền dùng model.';
 }
 
 // Discovery does not generate content. Never follow a provider redirect with credentials.
@@ -371,7 +371,7 @@ async function modelPage(response) {
       const {done, value} = await reader.read();
       if (done) break;
       bytes += value.byteLength;
-      if (bytes > 4000000) throw new Error('Model catalog is too large');
+      if (bytes > 4000000) throw new Error('Danh sách model quá lớn');
       raw += decoder.decode(value, {stream: true});
     }
     return JSON.parse(raw + decoder.decode());

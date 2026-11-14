@@ -11,16 +11,16 @@ export function validExamState(body){
 export async function examRoute(request,url,env,userId){
   if(request.method==='GET'){
     const paper=url.searchParams.get('paper_id');
-    if(!/^N[1-5]:(2012|2018)$/.test(paper || ''))return Response.json({detail:'Invalid paper'},{status:400});
+    if(!/^N[1-5]:(2012|2018)$/.test(paper || ''))return Response.json({detail:'Đề thi không hợp lệ'},{status:400});
     const row=await env.DB.prepare('SELECT state_json FROM exam_attempts WHERE user_id=? AND paper_id=?').bind(userId,paper).first();
     return Response.json({attempt:row?JSON.parse(row.state_json):null},{headers:{'Cache-Control':'no-store'}});
   }
   if(request.method==='POST'){
     const body=await request.json();
-    if(!validExamState(body))return Response.json({detail:'Invalid exam state'},{status:400});
+    if(!validExamState(body))return Response.json({detail:'Trạng thái bài thi không hợp lệ'},{status:400});
     const {paper_id,status,section,deadline,answers}=body;
     await env.DB.prepare('INSERT INTO exam_attempts(user_id,paper_id,state_json,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,paper_id) DO UPDATE SET state_json=excluded.state_json,updated_at=excluded.updated_at').bind(userId,paper_id,JSON.stringify({paper_id,status,section,deadline,answers}),new Date().toISOString()).run();
     return Response.json({ok:true},{headers:{'Cache-Control':'no-store'}});
   }
-  return Response.json({detail:'Method not allowed'},{status:405});
+  return Response.json({detail:'Phương thức không được phép'},{status:405});
 }

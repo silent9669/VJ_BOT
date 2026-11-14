@@ -641,7 +641,7 @@ test('structured tutor chat pins its OAuth account and fences completed retries 
   g.credentials.set('bob-credential', {prefix:'bob-prefix'});
   f.env.ASSETS = {fetch: async request => {
     const level = new URL(request.url).pathname.match(/^\/course\/teacher-(N[1-5])\.json$/)?.[1];
-    return level ? Response.json(catalogs[level]) : new Response('Not found', {status:404});
+    return level ? Response.json(catalogs[level]) : new Response('Không tìm thấy', {status:404});
   }};
   const body = {message:'Em muốn học cách nói giờ bắt đầu công việc.', request_id:crypto.randomUUID()};
   const send = (profileId, requestBody = body) => worker.fetch(new Request('https://vjbot.test/api/chat', {

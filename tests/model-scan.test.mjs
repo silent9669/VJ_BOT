@@ -23,7 +23,7 @@ test('quota cooldown blocks pending starts without retrying the failed model', a
   const stopped = await simulate({models, scenario: () => ({delay: 10, status: 429, retryAfterMs: 900000})});
   assert.equal(stopped.sent, 1);
   assert.equal(stopped.remaining, models.length - 1);
-  assert.match(stopped.halted, /wait budget/);
+  assert.match(stopped.halted, /giới hạn của lần quét/);
 });
 
 test('stop and rejected keys prevent subsequent dispatch or stale success callbacks', async () => {

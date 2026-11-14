@@ -6,7 +6,7 @@ import {kaiwaJudgment} from './fixtures/kaiwa-judgments.mjs';
 const teacherCatalogs = await buildTeacherCatalog();
 const teacherAssets = {fetch: async request => {
   const level = new URL(request.url).pathname.match(/^\/course\/teacher-(N[1-5])\.json$/)?.[1];
-  return level ? Response.json(teacherCatalogs[level]) : new Response('Not found', {status: 404});
+  return level ? Response.json(teacherCatalogs[level]) : new Response('Không tìm thấy', {status: 404});
 }};
 const tutorText = reply => JSON.stringify({reply, action: 'explanation', open_probe: null});
 
@@ -532,9 +532,9 @@ test('selected-model verification blocks unlisted paid models and requires a rea
       const payload = await response.json();
       assert.equal(payload.ok, undefined);
       assert.ok(!JSON.stringify(payload).includes('router-test-key'));
-      if (status === 403) assert.match(payload.detail, /denied access to this model/);
-      if (status === 402) assert.match(payload.detail, /credits|spending limit/);
-      if (status === 504) assert.match(payload.detail, /timed out/);
+      if (status === 403) assert.match(payload.detail, /từ chối quyền dùng model/);
+      if (status === 402) assert.match(payload.detail, /tín dụng|hạn mức chi tiêu/);
+      if (status === 504) assert.match(payload.detail, /phản hồi quá lâu/);
     }
     assert.equal(generations, 6);
   } finally { globalThis.fetch = previous; }
@@ -1239,7 +1239,7 @@ test('missing or mismatched question rubrics fail before inference instead of gu
     const isolated={...env,ASSETS:{fetch:async()=>Response.json(catalog)}};
     const response=await worker.fetch(request('/api/kaiwa/evaluate',{scenario_id,level:'N5',user_speech:'私はアンです。学生です。'}),isolated);
     assert.equal(response.status,503);
-    assert.match((await response.json()).detail,/rubric is unavailable/);
+    assert.match((await response.json()).detail,/Chưa có tiêu chí chấm của câu hỏi/);
   }
   assert.equal(calls,0);
 });

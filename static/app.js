@@ -230,7 +230,7 @@ class MascotManager {
     const stateTag = document.getElementById("sensei-state-tag");
     const label = st === "thinking" ? "Đang suy nghĩ 🤔" : (st === "speaking" ? "Đang giảng bài 🗣️" : "Tươi vui 😊");
     if (moodBadge) moodBadge.textContent = label;
-    if (stateTag) stateTag.textContent = `Sensei: ${label}`;
+    if (stateTag) stateTag.textContent = `Thầy Lâm: ${label}`;
   }
 
   celebrate() {
@@ -1582,7 +1582,7 @@ function setupEventListeners() {
       if (element) element.textContent = "";
     }
     const score = document.getElementById("kaiwa-score-val");
-    if (score) score.textContent = "Not graded";
+    if (score) score.textContent = "Chưa chấm";
     const error = document.getElementById("kaiwa-error");
     if (error) {error.textContent = "";error.hidden = true;}
   }
@@ -1644,7 +1644,7 @@ function setupEventListeners() {
             && (!['met', 'partial'].includes(item.verdict) || item.evidence.length > 0)
             && item.evidence.every(span => typeof span === 'string' && span.trim() && span.length <= 1200 && speech.includes(span)));
         if (assessment) {
-          if (scoreVal) scoreVal.textContent = estimated ? `${evalData.estimated_score}/100 (estimated)` : 'Not graded';
+          if (scoreVal) scoreVal.textContent = estimated ? `${evalData.estimated_score}/100 (ước tính)` : 'Chưa chấm';
           if (feedbackText) feedbackText.textContent = evalData.feedback;
           if (modelText) modelText.textContent = evalData.model_answer;
           const labels = {met: 'Met', partial: 'Partly met', not_met: 'Not met', uncertain: 'Uncertain'};
@@ -1655,12 +1655,12 @@ function setupEventListeners() {
           }
         } else {
           if (feedbackText) feedbackText.textContent = !resp.ok && typeof evalData?.detail === 'string'
-            ? evalData.detail : "No verified assessment is available. Nothing has been graded.";
+            ? evalData.detail : "Chưa có đánh giá được kiểm chứng. Chưa có gì được chấm.";
         }
         if (resultCard) resultCard.hidden = false;
       } catch {
         if (!stillCurrent()) return;
-        if (feedbackText) feedbackText.textContent = "Unable to retrieve AI advice. Nothing has been graded.";
+        if (feedbackText) feedbackText.textContent = "Không lấy được nhận xét của AI. Chưa có gì được chấm.";
         if (resultCard) resultCard.hidden = false;
       } finally {
         btnEvalKaiwa.disabled=false;

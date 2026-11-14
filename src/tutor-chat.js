@@ -11,13 +11,13 @@ async function resolveRequest(env, body) {
   const message = (body.message || '').trim();
   const intent = body.intent ?? (body.type === 'greeting' || !message ? 'start' : 'message');
   const requestId = body.request_id ?? crypto.randomUUID();
-  if (!validTutorIntent(intent)) return {response: failure('Invalid tutor action.')};
-  if (typeof requestId !== 'string' || !/^[a-f0-9-]{36}$/.test(requestId)) return {response: failure('Invalid request ID.')};
+  if (!validTutorIntent(intent)) return {response: failure('Thao tác với thầy không hợp lệ.')};
+  if (typeof requestId !== 'string' || !/^[a-f0-9-]{36}$/.test(requestId)) return {response: failure('Mã yêu cầu không hợp lệ.')};
   const suppliedLesson = body.lesson ?? null, suppliedFocus = body.focus ?? null;
-  if (suppliedLesson !== null && !validLessonReference(suppliedLesson)) return {response: failure('Invalid lesson reference.')};
-  if (suppliedFocus !== null && (!suppliedLesson || !validFocusReference(suppliedFocus))) return {response: failure('Invalid lesson focus.')};
+  if (suppliedLesson !== null && !validLessonReference(suppliedLesson)) return {response: failure('Tham chiếu bài học không hợp lệ.')};
+  if (suppliedFocus !== null && (!suppliedLesson || !validFocusReference(suppliedFocus))) return {response: failure('Mục đang xem của bài học không hợp lệ.')};
   if (body.view !== undefined && (!['checks', 'exam'].includes(body.view) || !suppliedLesson)
-    || body.view === 'exam' && suppliedFocus?.kind !== 'question') return {response: failure('Invalid lesson view.')};
+    || body.view === 'exam' && suppliedFocus?.kind !== 'question') return {response: failure('Màn hình bài học không hợp lệ.')};
   const reference = suppliedLesson ? {id: suppliedLesson.id, level: suppliedLesson.level} : null;
   const focus = suppliedFocus ? {kind: suppliedFocus.kind, index: suppliedFocus.index} : null;
   const focusSpecified = Object.hasOwn(body, 'focus');
@@ -25,16 +25,16 @@ async function resolveRequest(env, body) {
   // either selector may continue the canonical item and view already in this session.
   const view = body.view ?? (focus ? 'checks' : null);
   const screen = cleanScreen(body.screen);
-  if (body.screen != null && !screen) return {response: failure('Invalid screen context.')};
+  if (body.screen != null && !screen) return {response: failure('Ngữ cảnh màn hình không hợp lệ.')};
   const channel = body.channel || 'chat';
-  if (!['chat', 'quick'].includes(channel)) return {response: failure('Invalid chat channel.')};
+  if (!['chat', 'quick'].includes(channel)) return {response: failure('Kênh chat không hợp lệ.')};
   const profile = await env.DB.prepare('SELECT level FROM profiles WHERE user_id=?').bind(body.user_id).first();
   const level = reference?.level || screen?.level || (LEVELS.has(profile?.level) ? profile.level : 'N5');
   const catalog = await teacherCatalog(env, level);
-  if (!catalog) return {response: failure('The lesson catalog is unavailable. Please try again later.', 503)};
+  if (!catalog) return {response: failure('Chưa tải được danh mục bài học. Hãy thử lại sau.', 503)};
   const lesson = reference ? catalogLesson(catalog, reference) : null;
-  if (reference && !lesson) return {response: failure('Unknown lesson reference.')};
-  if (focus && !groundLesson(lesson, focus, view)) return {response: failure('The selected item does not belong to this lesson.')};
+  if (reference && !lesson) return {response: failure('Không tìm thấy bài học.')};
+  if (focus && !groundLesson(lesson, focus, view)) return {response: failure('Mục đã chọn không thuộc bài học này.')};
   const scope = conversationScope(channel, lesson, screen);
   return {message, intent, requestId, reference, focus, focusSpecified, view, screen, level, catalog, lesson, scope};
 }
@@ -59,7 +59,7 @@ async function dialogue(env, userId, scope, session, restart) {
 async function generateTurn(env, userId, request, session, token) {
   const {focus, view, previous} = currentTeaching(session, request);
   const lesson = request.lesson ? groundLesson(request.lesson, focus, view) : null;
-  if (request.lesson && !lesson) return {response: failure('The lesson changed. Select the item again.', 409)};
+  if (request.lesson && !lesson) return {response: failure('Bài học đã đổi. Hãy chọn lại mục.', 409)};
   const {history, historyAfter} = await dialogue(env, userId, request.scope, session, request.intent === 'restart');
   const learner = await learnerSnapshot(env, userId, request.level, request.catalog);
   const teaching = {intent: request.intent, state: previous,
@@ -71,7 +71,7 @@ async function generateTurn(env, userId, request, session, token) {
   }, request.override, request.profileId, {beforeGeneration: () => renewTutorClaim(env, userId, request.scope, request.requestId, token)});
   if (asked.response) return {response: asked.response};
   const result = parseTutorReply(asked.text, {intent: request.intent, previous});
-  if (!result) return {response: failure('The tutor returned an incomplete or invalid teaching response. Please retry.', 503)};
+  if (!result) return {response: failure('Thầy trả về nội dung chưa đầy đủ hoặc không hợp lệ. Hãy thử lại.', 503)};
   const state = nextTeachingState(previous, result, request.intent, request.lesson, focus);
   if (view === 'exam') state.view = view;
   return {result, historyAfter, state};
@@ -95,12 +95,12 @@ export async function tutorChat(request, env) {
   if (claim.cached !== undefined) return json({reply: claim.cached, response: claim.cached});
   try {
     const session = await claimTutorScope(env, userId, scope, claim.token);
-    if (!session) return failure('Another message in this conversation is still being answered. Please retry.', 409);
+    if (!session) return failure('Một tin nhắn khác trong cuộc trò chuyện đang được trả lời. Hãy thử lại.', 409);
     const generated = await generateTurn(env, userId, {...resolved, override: body.api_connection, profileId}, session, claim.token);
     if (generated.response) return generated.response;
     const reply = await commitTutorTurn(env, {userId, scope, requestId, token: claim.token, message, reply: generated.result.reply,
       state: generated.state, historyAfter: generated.historyAfter});
-    if (reply === null) return failure('This conversation changed before the response completed. Send a new message.', 409);
+    if (reply === null) return failure('Cuộc trò chuyện đã đổi trước khi câu trả lời hoàn tất. Hãy gửi tin nhắn mới.', 409);
     return json({reply, response: reply, updated_topic: lesson ? {id: lesson.id, level: resolved.level, display: lesson.title, meaning_en: lesson.goal} : null});
   } finally {
     await releaseTutorClaim(env, userId, scope, requestId, claim.token);

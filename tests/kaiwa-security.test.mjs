@@ -46,8 +46,8 @@ test('real Kaiwa callback shows estimated points and criterion evidence without 
   await b.submit();
   assert.equal(sent.length, 1);assert.equal(sent[0][0], '/api/kaiwa/evaluate');
   assert.deepEqual(sent[0][1], {scenario_id: 'intro', prompt_index: 0, user_speech: speech, level: 'N5'});
-  assert.equal(b.element('kaiwa-score-val').textContent, '100/100 (estimated)');
-  assert.match(b.element('kaiwa-feedback-text').textContent, /not an independently verified grade/i);
+  assert.equal(b.element('kaiwa-score-val').textContent, '100/100 (ước tính)');
+  assert.match(b.element('kaiwa-feedback-text').textContent, /không phải điểm được kiểm chứng độc lập/i);
   assert.equal(b.element('kaiwa-criteria').children.length, 4);
   assert.ok(b.element('kaiwa-criteria').children[0].textContent.includes(speech));
   assert.equal(b.element('kaiwa-model-text').textContent, assessment(speech).model_answer);
@@ -61,7 +61,7 @@ test('Kaiwa UI never invents a successful grade, praise or model answer for inva
   for (const data of [{score: 100, rating: 'Xuất sắc', feedback: 'Excellent!'}, {...assessment(speech), score: 100}, {...assessment(speech), model_answer: ''}, {...assessment(speech), criteria: [{label: 'Fabrication', verdict: 'met', evidence: ['私は学生です。']}]}, {...assessment(speech), criteria: assessment(speech).criteria.map(item => ({...item, evidence: []}))}, {status: 'ungraded', reason: 'empty_submission', score: null, rating: null, feedback: 'No answer was submitted.', model_answer: '', criteria: []}]) {
     const b = kaiwaUI(async () => Response.json(data));
     b.element('kaiwa-manual-input').value = speech;await b.submit();
-    assert.equal(b.element('kaiwa-score-val').textContent, 'Not graded');
+    assert.equal(b.element('kaiwa-score-val').textContent, 'Chưa chấm');
     assert.equal(b.element('kaiwa-model-text').textContent, '');
     assert.doesNotMatch(b.element('kaiwa-feedback-text').textContent, /Excellent|Phản xạ giao tiếp rất tốt/);
     assert.equal(b.effects.cheers, 0);assert.equal(b.effects.completions, 0);
@@ -71,8 +71,8 @@ test('Kaiwa UI never invents a successful grade, praise or model answer for inva
   b.element('kaiwa-manual-input').value = speech;b.element('kaiwa-model-text').textContent = 'OLD';
   await b.submit();
   assert.equal(b.element('kaiwa-model-text').textContent, '');
-  assert.equal(b.element('kaiwa-score-val').textContent, 'Not graded');
-  assert.match(b.element('kaiwa-feedback-text').textContent, /Nothing has been graded/);
+  assert.equal(b.element('kaiwa-score-val').textContent, 'Chưa chấm');
+  assert.match(b.element('kaiwa-feedback-text').textContent, /Chưa có gì được chấm/);
 });
 
 test('empty Kaiwa UI input never sends inference or triggers success callbacks', async () => {
@@ -97,9 +97,9 @@ test('Kaiwa result markup labels the entire advice and example as unverified ins
   const html = readFileSync('static/index.html', 'utf8');
   const panel = html.slice(html.indexOf('id="kaiwa-result-card"'), html.indexOf('<!-- TAB 5:'));
   assert.match(panel, /aria-describedby="kaiwa-advisory-notice"/);
-  assert.match(panel, /Estimated score from AI judgments — not an official grade/);
+  assert.match(panel, /Điểm ước tính từ nhận xét của AI, không phải điểm chính thức/);
   assert.match(panel, /id="kaiwa-feedback-text" role="status" aria-live="polite"/);
-  assert.match(panel, /Unverified AI example/);
+  assert.match(panel, /Ví dụ của AI \(chưa kiểm chứng\)/);
   assert.doesNotMatch(panel, /100 Điểm|>90<|Câu trả lời rất tự nhiên và chính xác/);
 });
 
@@ -110,7 +110,7 @@ test('Kaiwa UI displays a provider failure honestly without retaining the previo
   }, {status: 503}));
   b.element('kaiwa-manual-input').value = 'はい。';
   b.element('kaiwa-model-text').textContent = 'OLD EXAMPLE';await b.submit();
-  assert.equal(b.element('kaiwa-score-val').textContent, 'Not graded');
+  assert.equal(b.element('kaiwa-score-val').textContent, 'Chưa chấm');
   assert.equal(b.element('kaiwa-model-text').textContent, '');
   assert.equal(b.element('kaiwa-feedback-text').textContent, 'No reliable advisory feedback was returned. Nothing has been graded.');
   assert.equal(b.element('kaiwa-result-card').hidden, false);
@@ -164,8 +164,8 @@ test('uncertain criterion results show no numeric grade and retain transparent c
   const result = parseKaiwaEvaluation(JSON.stringify(kaiwaJudgment(testRubric, speech, {grammar: {verdict: 'uncertain', evidence: []}})), speech, testRubric);
   const b = kaiwaUI(async () => Response.json({...result, user_text: speech}));
   b.element('kaiwa-manual-input').value = speech;await b.submit();
-  assert.equal(b.element('kaiwa-score-val').textContent, 'Not graded');
-  assert.match(b.element('kaiwa-feedback-text').textContent, /not enough consistent evidence/i);
+  assert.equal(b.element('kaiwa-score-val').textContent, 'Chưa chấm');
+  assert.match(b.element('kaiwa-feedback-text').textContent, /Chưa đủ bằng chứng nhất quán/i);
   assert.equal(b.element('kaiwa-criteria').children.length, 4);
 });
 

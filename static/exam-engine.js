@@ -48,7 +48,7 @@ function drawSimulation(){
   host.querySelectorAll('[data-question]').forEach(input=>input.onchange=()=>{if(!chooseSimulationAnswer(attempt,Number(input.dataset.question),Number(input.value))){endSimulationSection();return;}saveSimulation(attempt,version);});
   if(section.audio.length){
     let track=0;const audio=document.getElementById('simulation-audio');
-    audio.onended=()=>{if(++track<section.audio.length){audio.src=section.audio[track];document.getElementById('simulation-track').textContent=`Track ${track+1} / ${section.audio.length}`;document.getElementById('simulation-audio-link').href=section.audio[track];audio.play().catch(()=>{});}else document.getElementById('simulation-track').textContent='Đã hết audio';};
+    audio.onended=()=>{if(++track<section.audio.length){audio.src=section.audio[track];document.getElementById('simulation-track').textContent=`Bài nghe ${track+1} / ${section.audio.length}`;document.getElementById('simulation-audio-link').href=section.audio[track];audio.play().catch(()=>{});}else document.getElementById('simulation-track').textContent='Đã hết audio';};
   }
   const dialog=document.getElementById('simulation-confirm');
   document.getElementById('simulation-submit').onclick=()=>{document.getElementById('simulation-unanswered').textContent=`${simulation.answers[simulation.section].filter(a=>a===null).length} câu chưa trả lời.`;dialog.showModal();};

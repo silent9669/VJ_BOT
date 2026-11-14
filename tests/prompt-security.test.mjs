@@ -24,7 +24,7 @@ async function fixture(protocol = 'openai') {
   const token = 'e'.repeat(64);
   const env = {DB, AI_KEY_SECRET: 'offline-test-secret', ASSETS: {fetch: async request => {
     const level = new URL(request.url).pathname.match(/teacher-(N[1-5])\.json$/)?.[1];
-    return level ? Response.json(catalogs[level]) : new Response('Not found', {status: 404});
+    return level ? Response.json(catalogs[level]) : new Response('Không tìm thấy', {status: 404});
   }}};
   await DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(token), 'google:injection', 'Probe', Date.now() + 600000).run();
   const send = (path, body, method = body === undefined ? 'GET' : 'POST') => worker.fetch(new Request('https://vjbot.test' + path, {

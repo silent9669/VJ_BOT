@@ -79,22 +79,22 @@ export async function studyTeacher(body, request, env) {
   if (!body || Object.keys(body).some(key => !allowed.includes(key)) || body.action !== 'teach'
     || !validLessonReference(body.lesson) || (body.focus != null && !validFocusReference(body.focus))
     || (body.view !== undefined && !['checks','exam'].includes(body.view))
-    || (body.view === 'exam' && body.focus?.kind !== 'question')) return json({detail:'Invalid teaching reference.'},400);
+    || (body.view === 'exam' && body.focus?.kind !== 'question')) return json({detail:'Tham chiếu bài giảng không hợp lệ.'},400);
   const focus = body.focus ?? null, view = body.view ?? 'checks';
   const catalog = await teacherCatalog(env,body.lesson.level);
-  if (!catalog) return json({detail:'The lesson catalog is unavailable. No exercise result changed.'},503);
+  if (!catalog) return json({detail:'Chưa tải được danh mục bài học. Không có kết quả bài tập nào thay đổi.'},503);
   const lesson = catalogLesson(catalog,body.lesson);
   const evidence = lesson && teachingEvidence(lesson,focus,view);
-  if (!evidence) return json({detail:'This item does not belong to the lesson. Reopen it.'},409);
-  if (evidence.fields.length > 64 || JSON.stringify(evidence).length > 48000) return json({detail:'Choose one word or example for a focused explanation.'},413);
+  if (!evidence) return json({detail:'Mục này không thuộc bài học. Hãy mở lại.'},409);
+  if (evidence.fields.length > 64 || JSON.stringify(evidence).length > 48000) return json({detail:'Hãy chọn một từ hoặc một ví dụ để được giải thích cụ thể.'},413);
   const schema = {type:'object',additionalProperties:false,properties:{reply:{type:'string'},fields:{type:'array',items:{type:'object',additionalProperties:false,
     properties:{key:{type:'string'},text:{type:'string'}},required:['key','text']}}},required:['reply','fields']};
   const asked = await askAI(env,body.user_id,{system,schema,schemaName:'study_teaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
     body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
   if (asked.response) return asked.response;
   let parsed;
-  try {parsed = JSON.parse(asked.text);} catch {return json({detail:'AI returned an unusable teaching response. Original content is unchanged.'},503);}
+  try {parsed = JSON.parse(asked.text);} catch {return json({detail:'AI trả về nội dung giảng không dùng được. Nội dung gốc không đổi.'},503);}
   const result = validateTeaching(parsed,evidence);
-  if (!result) return json({detail:'AI changed source text or returned incomplete teaching. Original content is unchanged.'},503);
+  if (!result) return json({detail:'AI đã đổi văn bản gốc hoặc trả về nội dung chưa đầy đủ. Nội dung gốc không đổi.'},503);
   return json({action:'teach',lesson:{id:body.lesson.id,level:body.lesson.level},focus,view,...result});
 }

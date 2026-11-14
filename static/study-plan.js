@@ -20,13 +20,13 @@ function installCourseKaiwa(){
 }
 function createStudyPlan(level){
   if(studyPlans.has(level))return studyPlans.get(level);
-  if(!practicalCourse)throw new Error('Course has not loaded');
+  if(!practicalCourse)throw new Error('Lộ trình chưa tải được');
   const units=[],skills=window.JLPT_DATA.curriculum[level].skills;
   const step=(lesson,skill)=>({lesson,skill,ids:lessonProgressIds(lesson,level,skill)});
   if(level==='N5')units.push({id:'practical:kana',title:'Làm quen bảng chữ cái',goal:'Nhận diện cách đọc các chữ cơ bản trước khi bắt đầu hội thoại.',minutes:60,optional:true,steps:skills.kana.map(l=>step(l,'kana'))});
   for(const chapter of courseChapters.chapters.filter(c=>c.level===level)){
     const lessons=chapter.grammar_ids.map(id=>skills.grammar.find(l=>l.id===`openjlpt:${level}:grammar:${id}`));
-    if(lessons.some(l=>!l))throw new Error('Missing chapter source');
+    if(lessons.some(l=>!l))throw new Error('Thiếu nguồn của chương');
     units.push({...chapter,type:'grammar',steps:lessons.map(l=>step(l,'grammar'))});
   }
   for(const unit of practicalCourse.units.filter(u=>u.level===level)){

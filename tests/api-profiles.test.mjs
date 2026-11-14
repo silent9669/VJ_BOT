@@ -106,9 +106,9 @@ test('rejects invalid inputs and public URL violations before opening storage', 
     ...['http://api.example', 'https://localhost', 'https://127.0.0.1', 'https://2130706433',
       'https://[::1]', 'https://service.internal', 'https://x.workers.dev', 'https://x.dangphuc.me',
       'https://user:pass@api.example', 'https://api.example?token=secret', 'https://api.example/#fragment'].map(base_url => ({base_url}))]) {
-    await assert.rejects(b.api.save(owner, {...draft(), ...changes}), /Invalid|HTTPS|public|key/i);
+    await assert.rejects(b.api.save(owner, {...draft(), ...changes}), /không hợp lệ|HTTPS|công khai|khóa/i);
   }
-  await assert.rejects(b.api.save('', draft()), /account/i);
+  await assert.rejects(b.api.save('', draft()), /tài khoản/i);
 });
 
 test('supports saving before discovery but fails closed before choosing a model', async () => {
@@ -118,14 +118,14 @@ test('supports saving before discovery but fails closed before choosing a model'
   assert.deepEqual(plain(profile.models), []);
   assert.equal(profile.checked_at, null);
   b.api.setActive(owner, {scope: 'local', id: profile.id});
-  await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), /choose|check.*model/i);
+  await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), /chọn|kiểm tra.*model/i);
 });
 
 test('isolates accounts and profiles; another account cannot overwrite an id', async () => {
   const b = browser(), profile = await b.api.save(owner, draft());
   assert.deepEqual(plain(await b.api.list(other)), []);
-  await assert.rejects(b.api.load(other, profile.id), /unavailable/i);
-  await assert.rejects(b.api.save(other, {...draft(), id: profile.id}), /unavailable/i);
+  await assert.rejects(b.api.load(other, profile.id), /không dùng được/i);
+  await assert.rejects(b.api.save(other, {...draft(), id: profile.id}), /không dùng được/i);
   await b.api.remove(other, profile.id);
   assert.equal((await b.api.load(owner, profile.id)).api_key, draft().api_key);
 });
@@ -174,9 +174,9 @@ test('authenticates encrypted key against owner, profile and endpoint metadata',
   const rows = b.idb.stores.get('profiles'), rowA = rows.get(JSON.stringify([owner, a.id]));
   const rowB = rows.get(JSON.stringify([owner, second.id]));
   rows.set(JSON.stringify([owner, second.id]), {...rowB, iv: rowA.iv, ciphertext: rowA.ciphertext});
-  await assert.rejects(b.api.load(owner, second.id), /unavailable/i);
+  await assert.rejects(b.api.load(owner, second.id), /không dùng được/i);
   rows.set(JSON.stringify([owner, a.id]), {...rowA, base_url: 'https://other.example'});
-  await assert.rejects(b.api.load(owner, a.id), /unavailable/i);
+  await assert.rejects(b.api.load(owner, a.id), /không dùng được/i);
 });
 
 test('persists scoped local/server choices without storing keys and deletes without fallback', async () => {
@@ -199,12 +199,12 @@ test('persists scoped local/server choices without storing keys and deletes with
 
 test('storage failures and corrupt choices fail closed without volatile success', async () => {
   const b = browser({brokenStorage: true});
-  assert.throws(() => b.api.setActive(owner, {scope: 'local', id: 'id'}), /storage|browser/i);
-  assert.throws(() => b.api.active(owner), /storage|browser/i);
+  assert.throws(() => b.api.setActive(owner, {scope: 'local', id: 'id'}), /bộ nhớ|trình duyệt/i);
+  assert.throws(() => b.api.active(owner), /bộ nhớ|trình duyệt/i);
   const good = browser();
   good.storage.set('vjbot_ai_active_v1:' + owner, '{bad');
-  assert.throws(() => good.api.active(owner), /unavailable|corrupt/i);
-  assert.throws(() => good.api.setActive(owner, {scope: 'bogus', id: 'x'}), /Invalid/i);
+  assert.throws(() => good.api.active(owner), /không dùng được|lỗi/i);
+  assert.throws(() => good.api.setActive(owner, {scope: 'bogus', id: 'x'}), /không hợp lệ/i);
 });
 
 test('only exact intended same-origin inference POST paths receive an immutable override', async () => {
@@ -231,14 +231,14 @@ test('only exact intended same-origin inference POST paths receive an immutable 
 test('stale selection, malformed request bodies and missing device storage never use server fallback', async () => {
   const b = browser();
   b.api.setActive(owner, {scope: 'local', id: 'missing-profile'});
-  await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), /unavailable/i);
+  await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), /không dùng được/i);
   const profile = await b.api.save(owner, draft());
   b.api.setActive(owner, {scope: 'local', id: profile.id});
   for (const body of ['not JSON', 'null', '[]', 3, {}]) {
-    await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body}, owner), /request|JSON/i);
+    await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body}, owner), /yêu cầu|JSON/i);
   }
   const unavailable = browser({idb: null, storage: b.storage});
-  await assert.rejects(unavailable.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), /unavailable/i);
+  await assert.rejects(unavailable.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), /không dùng được/i);
   await assert.rejects(unavailable.api.list(owner), /IndexedDB|browser/i);
   await assert.rejects(unavailable.api.save(owner, draft()), /IndexedDB|browser/i);
 });
@@ -257,11 +257,11 @@ test('corrupt schema and missing account encryption keys fail without exposing s
   const b = browser(), profile = await b.api.save(owner, draft());
   const rows = b.idb.stores.get('profiles'), slot = JSON.stringify([owner, profile.id]), row = rows.get(slot);
   rows.set(slot, {...row, models: 'corrupt'});
-  await assert.rejects(b.api.list(owner), /unavailable/i);
-  await assert.rejects(b.api.load(owner, profile.id), /unavailable/i);
+  await assert.rejects(b.api.list(owner), /không dùng được/i);
+  await assert.rejects(b.api.load(owner, profile.id), /không dùng được/i);
   rows.set(slot, row);
   b.idb.stores.get('keys').clear();
-  await assert.rejects(b.api.load(owner, profile.id), /unavailable/i);
+  await assert.rejects(b.api.load(owner, profile.id), /không dùng được/i);
 });
 
 test('explicit none selection blocks inference but never injects into unrelated endpoints', async () => {
@@ -291,7 +291,7 @@ test('clear still attempts credential deletion when localStorage is blocked and 
   const b = browser();
   await b.api.save(owner, draft());
   const blocked = browser({idb: b.idb, brokenStorage: true});
-  await assert.rejects(blocked.api.clear(owner), /storage|browser/i);
+  await assert.rejects(blocked.api.clear(owner), /bộ nhớ|trình duyệt/i);
   assert.deepEqual(plain(await b.api.list(owner)), []);
   assert.equal(b.idb.stores.get('keys').has(JSON.stringify(owner)), false);
 });
@@ -336,10 +336,10 @@ test('missing, corrupt, deleted, unsupported and inaccessible voice choices neve
   b.api.setActive(owner, {scope:'local',id:chat.id});
   await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
   b.api.setVoice(owner, {scope:'local',id:chat.id});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /native Gemini|official OpenAI/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /Gemini gốc|OpenAI chính thức/i);
   const proxy = await b.api.save(owner, {...draft(),protocol:'gemini',base_url:'https://proxy.example.com'});
   b.api.setVoice(owner, {scope:'local',id:proxy.id});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /native Gemini|official OpenAI/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /Gemini gốc|OpenAI chính thức/i);
   const voice = await b.api.save(owner, {...draft(),protocol:'gemini',model:''});
   b.api.setVoice(owner, {scope:'local',id:voice.id});
   await assert.rejects(b.api.prepareRequest('/api/tts', options, other), /voice/i);
@@ -347,13 +347,13 @@ test('missing, corrupt, deleted, unsupported and inaccessible voice choices neve
   assert.deepEqual(plain(b.api.voice(owner)), {scope:'none',id:''});
   await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
   b.storage.set('vjbot_voice_profile_v1:' + owner, '{corrupt');
-  assert.throws(() => b.api.voice(owner), /unavailable/i);
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /unavailable/i);
+  assert.throws(() => b.api.voice(owner), /không dùng được/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /không dùng được/i);
   b.api.setVoice(owner, {scope:'local',id:'missing'});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /unavailable/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /không dùng được/i);
   const blocked = browser({storage:b.storage,brokenStorage:true});
-  assert.throws(() => blocked.api.setVoice(owner, {scope:'server',id:'voice'}), /storage/i);
-  await assert.rejects(blocked.api.prepareRequest('/api/tts', options, owner), /storage/i);
+  assert.throws(() => blocked.api.setVoice(owner, {scope:'server',id:'voice'}), /bộ nhớ/i);
+  await assert.rejects(blocked.api.prepareRequest('/api/tts', options, owner), /bộ nhớ/i);
 });
 
 test('server voice is explicitly pinned and clear does not borrow another owner or chat selection', async () => {
@@ -375,7 +375,7 @@ test('voice changes invalidate in-flight encrypted loads, including changing awa
   const pending = b.api.prepareRequest('/api/tts', {method:'POST',body:'{}'}, owner);
   b.api.setVoice(owner, {scope:'local',id:next.id});
   b.api.setVoice(owner, {scope:'local',id:a.id});
-  await assert.rejects(pending, /unavailable/i);
+  await assert.rejects(pending, /không dùng được/i);
   assert.equal(JSON.parse((await b.api.prepareRequest('/api/tts', {method:'POST',body:'{}'}, owner)).body).api_connection.api_key,draft().api_key);
 });
 
@@ -420,11 +420,11 @@ test('only exact platform OpenAI voice refs persist and only exact speech POSTs 
   assert.deepEqual(plain(browser({storage:b.storage}).api.voice(owner)),{scope:'platform',id:'openai'});
   assert.equal(b.api.voice(other),null);
   for (const choice of [{scope:'platform',id:'other'}, {scope:'platform',id:'https://evil.example'}]) {
-    assert.throws(()=>b.api.setVoice(owner,choice),/Invalid/i);
+    assert.throws(()=>b.api.setVoice(owner,choice),/không hợp lệ/i);
   }
-  assert.throws(()=>b.api.setActive(owner,{scope:'platform',id:'openai'}),/Invalid/i);
+  assert.throws(()=>b.api.setActive(owner,{scope:'platform',id:'openai'}),/không hợp lệ/i);
   b.storage.set('vjbot_ai_active_v1:' + other,JSON.stringify({scope:'platform',id:'openai'}));
-  assert.throws(()=>b.api.active(other),/unavailable/i);
+  assert.throws(()=>b.api.active(other),/không dùng được/i);
   for (const path of ['/api/tts','https://tutor.example/api/tts']) {
     const prepared=await b.api.prepareRequest(path,options,owner);
     assert.equal(new Headers(prepared.headers).get('X-VJBot-Profile'),'platform_openai');
@@ -446,7 +446,7 @@ test('corrupt independent voice storage cannot block deleting selected chat cred
   await b.api.remove(owner, chat.id);
   assert.deepEqual(plain(b.api.active(owner)), {scope:'none', id:''});
   assert.deepEqual(plain(await b.api.list(owner)).map(row => row.id), [retained.id]);
-  await assert.rejects(b.api.load(owner, chat.id), /unavailable/i);
+  await assert.rejects(b.api.load(owner, chat.id), /không dùng được/i);
   assert.equal(b.storage.get('vjbot_voice_profile_v1:' + owner), '{corrupt');
-  assert.throws(() => b.api.voice(owner), /unavailable/i);
+  assert.throws(() => b.api.voice(owner), /không dùng được/i);
 });

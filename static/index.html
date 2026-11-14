@@ -478,20 +478,20 @@
               <div id="kaiwa-completion"></div><!-- Model-assisted estimates, never official grades -->
               <div class="kaiwa-result-card" id="kaiwa-result-card" aria-describedby="kaiwa-advisory-notice" hidden>
                 <div class="result-header">
-                  <span class="result-badge">ESTIMATED PRACTICE SCORE</span>
+                  <span class="result-badge">ĐIỂM LUYỆN TẬP ƯỚC TÍNH</span>
                   <div class="result-score-wrap">
-                    <span id="kaiwa-score-val" role="status">Not graded</span>
+                    <span id="kaiwa-score-val" role="status">Chưa chấm</span>
                   </div>
                 </div>
                 <div class="result-body">
-                  <p id="kaiwa-advisory-notice">Estimated score from AI judgments — not an official grade. The server weights task fulfillment 50%, grammar 30%, and expression 20%. Missing requirements cannot pass. AI judgments and examples may still be wrong.</p>
+                  <p id="kaiwa-advisory-notice">Điểm ước tính từ nhận xét của AI, không phải điểm chính thức. Máy chủ tính hoàn thành nhiệm vụ 50%, ngữ pháp 30%, diễn đạt 20%. Thiếu yêu cầu thì không đạt. Nhận xét và ví dụ của AI vẫn có thể sai.</p>
                   <div class="result-feedback-section">
-                    <h4>Question criteria</h4>
+                    <h4>Tiêu chí của câu hỏi</h4>
                     <p id="kaiwa-feedback-text" role="status" aria-live="polite"></p>
-                    <ul id="kaiwa-criteria" aria-label="Criterion assessments"></ul>
+                    <ul id="kaiwa-criteria" aria-label="Đánh giá theo tiêu chí"></ul>
                   </div>
                   <div class="result-model-section">
-                    <h4>Unverified AI example</h4>
+                    <h4>Ví dụ của AI (chưa kiểm chứng)</h4>
                     <div class="model-sentence-row">
                       <p id="kaiwa-model-text"></p>
                       <button type="button" class="card-audio-btn" id="btn-kaiwa-model-tts">Nghe</button>
@@ -679,10 +679,10 @@
               <section class="settings-card ai-settings-card" id="ai-card">
                 <header class="card-head"><h2 class="card-title">Kết nối AI</h2></header>
                 <p id="ai-source" class="ai-source" role="status"></p>
-                <section class="ai-current" aria-label="Current chat setup">
-                  <div class="ai-current-heading"><span class="ai-current-dot" aria-hidden="true"></span><span class="status-pill" id="ai-pill" data-state="none">No account selected</span></div>
-                  <strong id="ai-current-model">Choose an account to get started</strong>
-                  <p class="ai-field-hint" id="ai-current-hint">Your saved chat model will appear here.</p>
+                <section class="ai-current" aria-label="Cấu hình chat hiện tại">
+                  <div class="ai-current-heading"><span class="ai-current-dot" aria-hidden="true"></span><span class="status-pill" id="ai-pill" data-state="none">Chưa chọn tài khoản</span></div>
+                  <strong id="ai-current-model">Chọn một tài khoản để bắt đầu</strong>
+                  <p class="ai-field-hint" id="ai-current-hint">Model chat đã lưu sẽ hiện ở đây.</p>
                   <button type="button" class="public-cta" id="ai-chat" hidden>Vào lớp với thầy Lâm <span aria-hidden="true">↗</span></button>
                 </section>
                 <div class="ai-saved-connections">
@@ -691,123 +691,123 @@
                   <p class="ai-field-hint" id="ai-profile-hint" hidden></p>
                   <p id="ai-connection-status" role="status" aria-live="polite"></p>
                 </div>
-                <section id="ai-oauth-panel" class="ai-form" aria-label="Antigravity account" hidden>
+                <section id="ai-oauth-panel" class="ai-form" aria-label="Tài khoản Antigravity" hidden>
                   <p id="ai-oauth-status" role="status" aria-live="polite"></p>
                   <div id="ai-oauth-pending" class="ai-form" hidden>
-                    <div class="ai-actions"><a id="ai-oauth-continue" class="public-cta" target="_blank" rel="noopener noreferrer">Continue with Google</a><button type="button" class="stage-btn" id="ai-oauth-cancel">Cancel sign-in</button></div>
-                    <p class="ai-field-hint">Review Google's account permissions yourself. This third-party gateway connection does not grant Gemini API or TTS access.</p>
-                    <details><summary>Callback did not open?</summary><p class="ai-field-hint">For a remote gateway, paste the final localhost callback address after Google sign-in. Do not paste account passwords or API keys.</p><label>Callback URL<input type="url" id="ai-oauth-callback-url" autocomplete="off" spellcheck="false"></label><button type="button" class="stage-btn" id="ai-oauth-callback-submit">Submit callback</button></details>
+                    <div class="ai-actions"><a id="ai-oauth-continue" class="public-cta" target="_blank" rel="noopener noreferrer">Tiếp tục với Google</a><button type="button" class="stage-btn" id="ai-oauth-cancel">Hủy đăng nhập</button></div>
+                    <p class="ai-field-hint">Tự kiểm tra quyền của tài khoản Google. Kết nối cổng bên thứ ba này không cấp quyền dùng Gemini API hay giọng đọc.</p>
+                    <details><summary>Trang gọi lại không mở?</summary><p class="ai-field-hint">Với cổng từ xa, dán địa chỉ localhost cuối cùng sau khi đăng nhập Google. Không dán mật khẩu hay API key.</p><label>Địa chỉ gọi lại<input type="url" id="ai-oauth-callback-url" autocomplete="off" spellcheck="false"></label><button type="button" class="stage-btn" id="ai-oauth-callback-submit">Gửi địa chỉ</button></details>
                   </div>
                   <div id="ai-oauth-selection" class="ai-form" hidden>
-                    <div class="ai-section-heading"><label for="ai-oauth-model">Chat model</label><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-refresh">Refresh models</button></div>
+                    <div class="ai-section-heading"><label for="ai-oauth-model">Model chat</label><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-refresh">Tải lại model</button></div>
                     <select id="ai-oauth-model" aria-describedby="ai-oauth-model-hint"></select>
                     <p class="ai-field-hint" id="ai-oauth-model-hint"></p>
-                    <div class="ai-actions ai-model-apply"><button type="button" class="public-cta" id="ai-oauth-use" disabled>Test &amp; save model</button></div>
-                    <p class="ai-field-hint" id="ai-oauth-test-hint" hidden>Testing sends one request. Quota or charges may apply. Your current model stays active if the test fails.</p>
+                    <div class="ai-actions ai-model-apply"><button type="button" class="public-cta" id="ai-oauth-use" disabled>Thử và lưu model</button></div>
+                    <p class="ai-field-hint" id="ai-oauth-test-hint" hidden>Mỗi lần thử gửi một yêu cầu, có thể tốn hạn mức hoặc phí. Nếu thử lỗi, model hiện tại vẫn được giữ.</p>
                   </div>
                   <section id="ai-oauth-usage" class="ai-usage" aria-labelledby="ai-oauth-usage-title" hidden>
-                    <div class="ai-actions"><h3 id="ai-oauth-usage-title">Lowest model quota</h3><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-usage-refresh">Refresh quota</button></div>
-                    <p id="ai-oauth-usage-overview" class="ai-quota-overview">Loading quota…</p>
-                    <meter id="ai-oauth-usage-meter" class="ai-quota-meter" min="0" max="1" value="0" aria-label="Lowest reported model quota remaining" aria-describedby="ai-quota-bar-hint" hidden></meter>
-                    <details class="ai-quota-details"><summary>Model limits &amp; details</summary><p class="ai-field-hint ai-quota-scope" id="ai-quota-bar-hint">Lowest model quota · not a shared balance</p><p id="ai-oauth-usage-status" class="ai-field-hint" role="status" aria-live="polite"></p><ul id="ai-oauth-usage-models" class="ai-usage-models" tabindex="0" aria-label="Per-model remaining usage"></ul>
-                    <p class="ai-field-hint">Provider model IDs may differ from chat aliases. Unknown is not zero. Refreshing does not generate text.</p></details>
+                    <div class="ai-actions"><h3 id="ai-oauth-usage-title">Hạn mức model thấp nhất</h3><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-usage-refresh">Tải lại hạn mức</button></div>
+                    <p id="ai-oauth-usage-overview" class="ai-quota-overview">Đang tải hạn mức…</p>
+                    <meter id="ai-oauth-usage-meter" class="ai-quota-meter" min="0" max="1" value="0" aria-label="Hạn mức còn lại thấp nhất của các model" aria-describedby="ai-quota-bar-hint" hidden></meter>
+                    <details class="ai-quota-details"><summary>Hạn mức và chi tiết model</summary><p class="ai-field-hint ai-quota-scope" id="ai-quota-bar-hint">Hạn mức model thấp nhất · không phải số dư chung</p><p id="ai-oauth-usage-status" class="ai-field-hint" role="status" aria-live="polite"></p><ul id="ai-oauth-usage-models" class="ai-usage-models" tabindex="0" aria-label="Hạn mức còn lại theo từng model"></ul>
+                    <p class="ai-field-hint">ID model của nhà cung cấp có thể khác tên trong chat. Chưa rõ không có nghĩa là bằng 0. Tải lại không tạo văn bản.</p></details>
                   </section>
-                  <details id="ai-oauth-manage" class="ai-disclosure"><summary>Account settings</summary>
-                  <div id="ai-oauth-add-fields" hidden><p class="ai-step-description">Add a Google / Antigravity account</p><label>Account label (optional)<input id="ai-oauth-name" maxlength="80" autocomplete="off" placeholder="Personal or study account"></label></div>
-                  <div class="ai-actions"><button type="button" class="public-cta" id="ai-oauth-connect">Sign in with Google</button><button type="button" class="stage-btn" id="ai-oauth-status-refresh">Reload accounts</button><button type="button" class="stage-btn" id="ai-oauth-disconnect" hidden>Remove this account</button></div>
+                  <details id="ai-oauth-manage" class="ai-disclosure"><summary>Cài đặt tài khoản</summary>
+                  <div id="ai-oauth-add-fields" hidden><p class="ai-step-description">Thêm tài khoản Google / Antigravity</p><label>Tên gọi tài khoản (không bắt buộc)<input id="ai-oauth-name" maxlength="80" autocomplete="off" placeholder="Tài khoản cá nhân hoặc học tập"></label></div>
+                  <div class="ai-actions"><button type="button" class="public-cta" id="ai-oauth-connect">Đăng nhập với Google</button><button type="button" class="stage-btn" id="ai-oauth-status-refresh">Tải lại tài khoản</button><button type="button" class="stage-btn" id="ai-oauth-disconnect" hidden>Xóa tài khoản này</button></div>
                   </details>
-                  <details id="ai-oauth-setup" hidden><summary>Gateway setup</summary><p id="ai-oauth-missing"></p><p>The server needs a dedicated CLIProxyAPI v8 gateway with force-model-prefix enabled. Gateway keys stay on the server. Cloudflare needs a reachable HTTPS gateway; it cannot run the gateway binary or access this laptop's localhost.</p></details>
-                  <button type="button" class="stage-btn" id="ai-oauth-back" hidden>Back to my saved account</button>
+                  <details id="ai-oauth-setup" hidden><summary>Cấu hình cổng</summary><p id="ai-oauth-missing"></p><p>Máy chủ cần một cổng CLIProxyAPI v8 riêng, bật force-model-prefix. Khóa của cổng chỉ nằm trên máy chủ. Cloudflare cần cổng HTTPS truy cập được; không chạy được chương trình cổng và không truy cập được localhost của máy này.</p></details>
+                  <button type="button" class="stage-btn" id="ai-oauth-back" hidden>Quay lại tài khoản đã lưu</button>
                 </section>
                 <form id="ai-form" class="ai-form" autocomplete="off">
                   <fieldset class="ai-step">
-                    <legend>Chat model</legend>
-                    <label id="ai-models" hidden>Previously checked models<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
+                    <legend>Model chat</legend>
+                    <label id="ai-models" hidden>Model đã kiểm tra trước đó<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
                     <input id="ai-model" type="hidden" maxlength="100">
-                    <p class="ai-field-hint" id="ai-selection-hint">Only tested models are listed. Availability can change.</p>
-                    <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save" disabled>Save model for this account</button></div>
+                    <p class="ai-field-hint" id="ai-selection-hint">Chỉ liệt kê model đã thử. Tình trạng có thể thay đổi.</p>
+                    <div class="ai-actions"><button type="submit" class="public-cta" id="ai-save" disabled>Lưu model cho tài khoản này</button></div>
                     <p id="ai-status" role="status"></p>
                   </fieldset>
-                  <details id="ai-api-manage" class="ai-disclosure"><summary>Connection settings</summary>
+                  <details id="ai-api-manage" class="ai-disclosure"><summary>Cài đặt kết nối</summary>
                   <fieldset class="ai-step ai-profile-step">
-                    <legend id="ai-api-editor-title">API-key connection</legend>
+                    <legend id="ai-api-editor-title">Kết nối bằng API key</legend>
                     <div id="ai-profile-edit">
                     <div class="ai-profile-fields">
-                      <label>Account label<input id="ai-profile-name" maxlength="80" autocomplete="off" placeholder="My Gemini or Groq"></label>
-                      <label>Save location<select id="ai-profile-storage" aria-describedby="ai-profile-storage-hint"><option value="local">This device only</option><option value="server">My account on the server</option></select></label>
+                      <label>Tên gọi tài khoản<input id="ai-profile-name" maxlength="80" autocomplete="off" placeholder="Gemini hoặc Groq của em"></label>
+                      <label>Nơi lưu<select id="ai-profile-storage" aria-describedby="ai-profile-storage-hint"><option value="local">Chỉ trên thiết bị này</option><option value="server">Tài khoản của em trên máy chủ</option></select></label>
                     </div>
-                    <details class="ai-storage-note"><summary>Storage &amp; privacy</summary><p class="ai-field-hint" id="ai-profile-storage-hint">Device keys are encrypted in this browser profile, not synced. The backend receives the key only while making AI requests. A compromised browser can still access it.</p></details>
+                    <details class="ai-storage-note"><summary>Lưu trữ và riêng tư</summary><p class="ai-field-hint" id="ai-profile-storage-hint">Khóa trên thiết bị được mã hóa trong trình duyệt này và không đồng bộ. Máy chủ chỉ nhận khóa khi gửi yêu cầu AI. Trình duyệt bị xâm nhập vẫn có thể đọc được khóa.</p></details>
                     </div>
                   </fieldset>
                   <fieldset class="ai-step">
-                    <legend>Provider details</legend>
+                    <legend>Chi tiết nhà cung cấp</legend>
                     <div id="ai-credentials">
                     <select id="ai-protocol" hidden><option value="openai">OpenAI-compatible</option><option value="anthropic">Claude (Anthropic)</option><option value="gemini">Gemini</option></select>
-                    <div class="segmented" role="group" aria-label="API type" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
-                    <label>Base URL<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false" aria-describedby="ai-url-hint"></label>
-                    <p class="ai-field-hint" id="ai-url-hint">Use your provider's API base URL, not its website or chat page.</p>
-                    <div class="ai-field"><label for="ai-key">API key</label><div class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="ai-key-hint"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Show API key">Show</button></div></div>
-                    <p class="ai-field-hint" id="ai-key-hint">Stored encrypted on the server. Never paste your key into chat.</p>
+                    <div class="segmented" role="group" aria-label="Loại API" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
+                    <label>URL gốc<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false" aria-describedby="ai-url-hint"></label>
+                    <p class="ai-field-hint" id="ai-url-hint">Dùng URL gốc của API nhà cung cấp, không phải trang web hay trang chat.</p>
+                    <div class="ai-field"><label for="ai-key">API key</label><div class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="ai-key-hint"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Hiện API key">Hiện</button></div></div>
+                    <p class="ai-field-hint" id="ai-key-hint">Được mã hóa và lưu trên máy chủ. Đừng dán khóa vào khung chat.</p>
                     </div>
                   </fieldset>
-                  <div class="ai-actions"><button type="button" class="public-cta" id="ai-profile-save">Save connection</button><button type="button" class="stage-btn" id="ai-api-back" hidden>Cancel</button></div>
-                  <div class="ai-connection-footer"><span>Editing credentials clears model results.</span><button type="button" class="stage-btn" id="ai-remove" hidden>Delete this profile</button></div>
+                  <div class="ai-actions"><button type="button" class="public-cta" id="ai-profile-save">Lưu kết nối</button><button type="button" class="stage-btn" id="ai-api-back" hidden>Hủy</button></div>
+                  <div class="ai-connection-footer"><span>Sửa thông tin đăng nhập sẽ xóa kết quả kiểm tra model.</span><button type="button" class="stage-btn" id="ai-remove" hidden>Xóa kết nối này</button></div>
                   </details>
-                  <details id="ai-api-scan" class="ai-disclosure"><summary>Find models for this account</summary>
+                  <details id="ai-api-scan" class="ai-disclosure"><summary>Tìm model cho tài khoản này</summary>
                   <fieldset class="ai-step">
-                    <legend>Models</legend>
-                    <p class="ai-step-description">Tests use quota and may incur charges.</p>
-                    <details><summary>Scan options &amp; resume</summary>
-                    <label class="ai-field-hint ai-recheck"><input type="checkbox" id="ai-recheck-all"> Recheck all models (uses quota again)</label>
-                    <p class="ai-field-hint" id="ai-resume-hint" role="status">Continue only models never sent for this API connection. Interrupted requests are not retried automatically.</p>
+                    <legend>Model</legend>
+                    <p class="ai-step-description">Việc thử tốn hạn mức và có thể tốn phí.</p>
+                    <details><summary>Tùy chọn quét và tiếp tục</summary>
+                    <label class="ai-field-hint ai-recheck"><input type="checkbox" id="ai-recheck-all"> Kiểm tra lại mọi model (tốn hạn mức lần nữa)</label>
+                    <p class="ai-field-hint" id="ai-resume-hint" role="status">Chỉ tiếp tục các model chưa từng được gửi cho kết nối này. Yêu cầu bị gián đoạn không tự thử lại.</p>
                     </details>
-                    <div class="ai-actions"><button type="button" class="stage-btn ai-load-button" id="ai-fetch-models">Find usable models</button><button type="button" class="stage-btn" id="ai-stop-models" hidden>Stop</button></div>
-                    <progress id="ai-load-progress" aria-label="Model verification progress" hidden></progress>
+                    <div class="ai-actions"><button type="button" class="stage-btn ai-load-button" id="ai-fetch-models">Tìm model dùng được</button><button type="button" class="stage-btn" id="ai-stop-models" hidden>Dừng</button></div>
+                    <progress id="ai-load-progress" aria-label="Tiến độ kiểm tra model" hidden></progress>
                     <p id="ai-model-status" role="status" aria-live="polite"></p>
                   </fieldset>
                   </details>
                 </form>
                 <dialog id="ai-confirm-dialog" class="ai-confirm-dialog" aria-labelledby="ai-confirm-title" aria-describedby="ai-confirm-description ai-confirm-warning">
                   <form method="dialog">
-                    <header><p class="ai-confirm-eyebrow">API connection</p><h2 id="ai-confirm-title">Find models you can use</h2></header>
-                    <p class="ai-confirm-count"><strong id="ai-confirm-count"></strong><span>models to check</span></p>
-                    <p id="ai-confirm-description">One short test per model. Only models that respond will appear in your list.</p>
-                    <p id="ai-confirm-warning" class="ai-confirm-warning">Tests use your quota and may charge your provider account, including paid models. Stopping cannot reverse requests already sent.</p>
-                    <p id="ai-confirm-partial" hidden>The provider returned a partial catalog. Other models will not be checked.</p>
-                    <footer><button type="submit" class="stage-btn" value="cancel" autofocus>Cancel</button><button type="submit" class="public-cta" id="ai-confirm-start" value="start">Start checks</button></footer>
+                    <header><p class="ai-confirm-eyebrow">Kết nối API</p><h2 id="ai-confirm-title">Tìm model em dùng được</h2></header>
+                    <p class="ai-confirm-count"><strong id="ai-confirm-count"></strong><span>model cần kiểm tra</span></p>
+                    <p id="ai-confirm-description">Mỗi model thử một lần ngắn. Chỉ model phản hồi mới hiện trong danh sách.</p>
+                    <p id="ai-confirm-warning" class="ai-confirm-warning">Việc thử tốn hạn mức và có thể tính phí vào tài khoản nhà cung cấp, kể cả model trả phí. Dừng không thu hồi được yêu cầu đã gửi.</p>
+                    <p id="ai-confirm-partial" hidden>Nhà cung cấp chỉ trả danh mục một phần. Các model còn lại sẽ không được kiểm tra.</p>
+                    <footer><button type="submit" class="stage-btn" value="cancel" autofocus>Hủy</button><button type="submit" class="public-cta" id="ai-confirm-start" value="start">Bắt đầu kiểm tra</button></footer>
                   </form>
                 </dialog>
                 <dialog id="ai-add-dialog" class="ai-add-dialog" aria-labelledby="ai-add-title" aria-describedby="ai-add-description">
-                  <div class="ai-add-heading"><div><p class="ai-eyebrow">Add an account</p><h2 id="ai-add-title">How would you like to connect?</h2></div><button type="button" class="stage-btn" id="ai-add-close" aria-label="Close add account">Close</button></div>
-                  <p id="ai-add-description">Keep your saved accounts. Choose how to add the next one.</p>
+                  <div class="ai-add-heading"><div><p class="ai-eyebrow">Thêm tài khoản</p><h2 id="ai-add-title">Em muốn kết nối bằng cách nào?</h2></div><button type="button" class="stage-btn" id="ai-add-close" aria-label="Đóng">Đóng</button></div>
+                  <p id="ai-add-description">Các tài khoản đã lưu vẫn được giữ. Chọn cách thêm tài khoản tiếp theo.</p>
                   <div class="ai-connect-options">
-                    <button type="button" id="ai-profile-new"><span class="ai-connect-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4.5"></circle><path d="m11.2 11.2 9.3 9.3M17 17l3-3M14 14l3-3"></path></svg></span><strong>Use an API key</strong><span>Paste your provider's URL and key.</span><small>OpenAI-compatible · Gemini · Claude</small><b aria-hidden="true">→</b></button>
-                    <button type="button" id="ai-method-oauth"><span class="ai-connect-icon" aria-hidden="true">G</span><strong>Sign in with Google</strong><span>Connect your Antigravity account.</span><small>OAuth · No API key to paste</small><b aria-hidden="true">→</b></button>
+                    <button type="button" id="ai-profile-new"><span class="ai-connect-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4.5"></circle><path d="m11.2 11.2 9.3 9.3M17 17l3-3M14 14l3-3"></path></svg></span><strong>Dùng API key</strong><span>Dán URL và khóa của nhà cung cấp.</span><small>OpenAI-compatible · Gemini · Claude</small><b aria-hidden="true">→</b></button>
+                    <button type="button" id="ai-method-oauth"><span class="ai-connect-icon" aria-hidden="true">G</span><strong>Đăng nhập với Google</strong><span>Kết nối tài khoản Antigravity.</span><small>OAuth · Không cần dán API key</small><b aria-hidden="true">→</b></button>
                   </div>
                 </dialog>
 
               </section>
               <section class="settings-card ai-settings-card" id="settings-sound-card">
                 <header class="card-head"><h2 class="card-title">Âm thanh</h2></header>
-                <details class="ai-disclosure ai-voice-disclosure" open><summary>Voice &amp; read-aloud</summary><div class="ai-voice-controls">
+                <details class="ai-disclosure ai-voice-disclosure" open><summary>Giọng nói và đọc thành tiếng</summary><div class="ai-voice-controls">
                   <p id="speech-managed-summary" class="ai-field-hint" hidden>OpenAI quản trị · gpt-4o-mini-tts · alloy · Tự động dùng cấu hình máy chủ. <a href="#settings/admin">Model văn bản &amp; GPT-Live ↗</a></p>
-                  <div class="ai-section-heading ai-voice-connect" id="speech-account-controls"><label for="speech-profile">Voice account</label><button type="button" class="stage-btn" id="speech-key-add" aria-expanded="false" aria-controls="speech-key-form">+ Add key</button></div>
-                  <form id="speech-key-form" class="ai-voice-form" autocomplete="off" aria-label="Add a voice account" hidden>
-                    <label for="speech-key-provider">Voice provider<select id="speech-key-provider"><option value="gemini">Google Gemini</option><option value="openai">Official OpenAI</option></select></label>
-                    <div class="ai-profile-fields"><label for="speech-key-name">Account label<input id="speech-key-name" maxlength="80" required autocomplete="off" placeholder="My voice account"></label><label for="speech-key-storage">Save location<select id="speech-key-storage" aria-describedby="speech-key-privacy"><option value="local">This device only</option><option value="server" id="speech-key-server" disabled>My account on the server</option></select></label></div>
-                    <div class="ai-field"><label for="speech-key">Voice API key</label><div class="auth-password-wrap"><input id="speech-key" type="password" required minlength="8" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="speech-key-privacy speech-key-status"><button type="button" id="speech-key-toggle" aria-pressed="false" aria-label="Show voice API key">Show</button></div></div>
-                    <p id="speech-key-privacy" class="ai-field-hint">Device: encrypted in this browser, not synced. Server: encrypted under your VJBot account. The backend receives the key for voice requests.</p>
-                    <div class="ai-actions"><button type="submit" class="public-cta" id="speech-key-save">Save voice account</button><button type="button" class="stage-btn" id="speech-key-cancel">Cancel</button></div>
+                  <div class="ai-section-heading ai-voice-connect" id="speech-account-controls"><label for="speech-profile">Tài khoản giọng nói</label><button type="button" class="stage-btn" id="speech-key-add" aria-expanded="false" aria-controls="speech-key-form">+ Thêm khóa</button></div>
+                  <form id="speech-key-form" class="ai-voice-form" autocomplete="off" aria-label="Thêm tài khoản giọng nói" hidden>
+                    <label for="speech-key-provider">Nhà cung cấp giọng nói<select id="speech-key-provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI chính thức</option></select></label>
+                    <div class="ai-profile-fields"><label for="speech-key-name">Tên gọi tài khoản<input id="speech-key-name" maxlength="80" required autocomplete="off" placeholder="Tài khoản giọng nói của em"></label><label for="speech-key-storage">Nơi lưu<select id="speech-key-storage" aria-describedby="speech-key-privacy"><option value="local">Chỉ trên thiết bị này</option><option value="server" id="speech-key-server" disabled>Tài khoản của em trên máy chủ</option></select></label></div>
+                    <div class="ai-field"><label for="speech-key">API key giọng nói</label><div class="auth-password-wrap"><input id="speech-key" type="password" required minlength="8" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="speech-key-privacy speech-key-status"><button type="button" id="speech-key-toggle" aria-pressed="false" aria-label="Hiện API key giọng nói">Hiện</button></div></div>
+                    <p id="speech-key-privacy" class="ai-field-hint">Thiết bị: mã hóa trong trình duyệt này, không đồng bộ. Máy chủ: mã hóa theo tài khoản VJBot của em. Máy chủ nhận khóa khi gửi yêu cầu giọng nói.</p>
+                    <div class="ai-actions"><button type="submit" class="public-cta" id="speech-key-save">Lưu tài khoản giọng nói</button><button type="button" class="stage-btn" id="speech-key-cancel">Hủy</button></div>
                     <p id="speech-key-status" class="ai-field-hint" role="status" aria-live="polite"></p>
                   </form>
-                  <select id="speech-profile" aria-describedby="ai-oauth-voice-hint speech-model-status"><option value="">Choose a saved voice account</option></select>
-                  <div class="ai-voice-listen"><button type="button" class="public-cta" id="speech-test" aria-describedby="speech-test-hint" disabled>Listen to a sample</button><p id="speech-test-hint" class="ai-field-hint">One audio request. Uses quota; charges may apply.</p></div>
+                  <select id="speech-profile" aria-describedby="ai-oauth-voice-hint speech-model-status"><option value="">Chọn tài khoản giọng nói đã lưu</option></select>
+                  <div class="ai-voice-listen"><button type="button" class="public-cta" id="speech-test" aria-describedby="speech-test-hint" disabled>Nghe thử</button><p id="speech-test-hint" class="ai-field-hint">Một yêu cầu âm thanh. Tốn hạn mức, có thể tính phí.</p></div>
                   <p id="speech-model-status" class="ai-field-hint" role="status"></p>
-                  <details class="ai-voice-help" id="speech-personal-setup"><summary>Speech model &amp; setup</summary><div class="ai-voice-options">
-                    <label for="speech-model"><span id="speech-model-label">Speech model</span><select id="speech-model" aria-describedby="speech-model-status" disabled><option value="">Choose a voice account</option></select></label>
-                    <div class="ai-actions"><button type="button" class="stage-btn" id="speech-model-refresh" disabled>Refresh models</button><a class="stage-btn" href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Get a Gemini key ↗</a><a class="stage-btn" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Get an OpenAI key ↗</a></div>
-                    <p class="ai-field-hint" id="ai-oauth-voice-hint">Voice uses its own saved account, independently of chat.</p>
-                    <p class="ai-field-hint">Access is checked when you listen. Antigravity sign-in is for chat, not this TTS API. <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer">Gemini pricing ↗</a> · <a href="https://openai.com/api/pricing/" target="_blank" rel="noopener noreferrer">OpenAI pricing ↗</a></p>
+                  <details class="ai-voice-help" id="speech-personal-setup"><summary>Model giọng nói và cài đặt</summary><div class="ai-voice-options">
+                    <label for="speech-model"><span id="speech-model-label">Model giọng nói</span><select id="speech-model" aria-describedby="speech-model-status" disabled><option value="">Chọn tài khoản giọng nói</option></select></label>
+                    <div class="ai-actions"><button type="button" class="stage-btn" id="speech-model-refresh" disabled>Tải lại model</button><a class="stage-btn" href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Lấy khóa Gemini ↗</a><a class="stage-btn" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Lấy khóa OpenAI ↗</a></div>
+                    <p class="ai-field-hint" id="ai-oauth-voice-hint">Giọng nói dùng tài khoản đã lưu riêng, độc lập với chat.</p>
+                    <p class="ai-field-hint">Quyền truy cập được kiểm tra khi em nghe. Đăng nhập Antigravity dành cho chat, không dùng cho API giọng đọc này. <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener noreferrer">Bảng giá Gemini ↗</a> · <a href="https://openai.com/api/pricing/" target="_blank" rel="noopener noreferrer">Bảng giá OpenAI ↗</a></p>
                   </div></details>
                 </div></details>
                 <div class="setting-toggle-row"><strong>Âm báo khi học</strong><button type="button" class="sketch-action-chip" id="btn-toggle-sound-setting" aria-label="Âm báo khi học" aria-pressed="true">Bật âm thanh</button></div>
@@ -966,7 +966,7 @@
       <p id="auth-status" role="status"></p><button type="button" id="auth-logout" class="stage-btn" hidden>Đăng xuất</button>
     </div>
   </dialog>
-  <aside id="speech-notice" class="speech-notice speech-player" aria-label="Read-aloud" hidden><p id="speech-status" role="status" aria-live="polite"></p><button type="button" id="speech-stop">Stop</button></aside>
+  <aside id="speech-notice" class="speech-notice speech-player" aria-label="Đọc thành tiếng" hidden><p id="speech-status" role="status" aria-live="polite"></p><button type="button" id="speech-stop">Dừng</button></aside>
   <script src="speech.js"></script>
   <script src="speech-models.js"></script>
   <script src="practice.js"></script>

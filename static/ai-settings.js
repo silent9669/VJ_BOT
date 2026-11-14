@@ -27,7 +27,7 @@
     list.replaceChildren();
     const empty = document.createElement('option');
     empty.value = ''; empty.textContent = 'Chọn API đã lưu'; list.append(empty);
-    for (const [label, scope] of [['API key · This device', 'local'], ['API key · Server', 'server'], ['Antigravity OAuth', 'oauth']]) {
+    for (const [label, scope] of [['API key · Thiết bị này', 'local'], ['API key · Máy chủ', 'server'], ['Antigravity OAuth', 'oauth']]) {
       const rows = scope === 'oauth' ? window.savedOAuthConnections?.() || [] : profilesOwner === owner ? profileRows.filter(row => row.scope === scope) : [];
       if (!rows.length) continue;
       const group = document.createElement('optgroup'); group.label = label;
@@ -45,7 +45,7 @@
       : profilesOwner === owner && profileRows.some(row => profileChoice(row) === choice);
     if (choice && choice !== 'oauth:' && !available) {
       const missing = document.createElement('option');
-      missing.value = choice; missing.textContent = 'Selected connection unavailable · choose another'; list.append(missing);
+      missing.value = choice; missing.textContent = 'Kết nối đã chọn không dùng được · hãy chọn kết nối khác'; list.append(missing);
     }
     list.value = choice === 'oauth:' ? '' : choice;
     const currentProfile = choice.startsWith('oauth:')
@@ -64,15 +64,15 @@
   function storageHint() {
     const local = el('ai-profile-storage').value === 'local';
     el('ai-profile-storage-hint').textContent = local
-      ? 'Encrypted in this browser profile, not synced. The backend receives the key only during AI requests. A compromised browser can still access it.'
-      : 'Saved encrypted on the server under your account. Other devices signed into your account can use this profile.';
+      ? 'Được mã hóa trong trình duyệt này và không đồng bộ. Máy chủ chỉ nhận khóa khi gửi yêu cầu AI. Trình duyệt bị xâm nhập vẫn có thể đọc được khóa.'
+      : 'Được mã hóa và lưu trên máy chủ theo tài khoản của em. Các thiết bị khác đăng nhập tài khoản này dùng được kết nối này.';
   }
   function fillProfile(profile, cache = null, key = '') {
     el('ai-form').hidden = false;
     selectedProfile = profile;
     savedConnection = Boolean(profile);
     el('ai-form').dataset.draft = String(!profile);
-    el('ai-api-editor-title').textContent = profile ? 'Edit API-key connection' : 'Thêm kết nối API';
+    el('ai-api-editor-title').textContent = profile ? 'Sửa kết nối API key' : 'Thêm kết nối API';
     el('ai-api-back').hidden = Boolean(profile);
     el('ai-api-manage').open = !profile;
     el('ai-api-scan').open = Boolean(profile && !profile.model);
@@ -87,11 +87,11 @@
     el('ai-key').value = '';
     el('ai-key').placeholder = profile ? '••••' + profile.key_last4 : 'sk-…';
     el('ai-key').type = 'password';
-    el('ai-key-toggle').textContent = 'Show';
-    el('ai-key-toggle').setAttribute('aria-label', 'Show API key');
+    el('ai-key-toggle').textContent = 'Hiện';
+    el('ai-key-toggle').setAttribute('aria-label', 'Hiện API key');
     el('ai-key-toggle').setAttribute('aria-pressed', 'false');
     el('ai-key').required = !profile;
-    el('ai-key-hint').textContent = profile ? 'Leave blank to reuse the key in this profile. A different URL or API type needs a new key.' : 'Choose a save location. Never paste your key into chat.';
+    el('ai-key-hint').textContent = profile ? 'Để trống để dùng lại khóa của kết nối này. Đổi URL hoặc loại API thì cần khóa mới.' : 'Chọn nơi lưu. Đừng dán khóa vào khung chat.';
     el('ai-remove').hidden = !profile;
     restoreModels(cache || (profile?.models?.length ? {models: profile.models, checkedAt: profile.checked_at} : null));
   }
@@ -99,14 +99,14 @@
     const owner = signedInUser?.user_id, scope = el('ai-profile-storage').value;
     if (!owner || managed()) throw new Error('API cá nhân chỉ dành cho tài khoản học viên.');
     const model = el('ai-models').hidden ? '' : el('ai-model-list').value;
-    if (useModel && !model) throw new Error('Check models and choose a responding result first.');
+    if (useModel && !model) throw new Error('Hãy kiểm tra model và chọn một kết quả phản hồi được trước.');
     const snapshot = modelSnapshot;
     const draft = {name: el('ai-profile-name').value.trim(), protocol: el('ai-protocol').value,
       base_url: el('ai-base').value, model, api_key: draftKey(),
       models: [...el('ai-model-list').options].map(option => option.value),
       checked_at: snapshot?.checkedAt || selectedProfile?.checked_at || null,
       connection_id: snapshot?.identity || selectedProfile?.connection_id || null};
-    if (!draft.name) throw new Error('Enter a profile name.');
+    if (!draft.name) throw new Error('Nhập tên kết nối.');
     const id = selectedProfile?.scope === scope ? selectedProfile.id : null;
     let profile;
     if (scope === 'local') {
@@ -116,23 +116,23 @@
       profile = result.profile;
       await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
     }
-    if (signedInUser?.user_id !== owner || managed()) throw new Error('The signed-in account or role changed.');
+    if (signedInUser?.user_id !== owner || managed()) throw new Error('Tài khoản hoặc quyền đăng nhập đã thay đổi.');
     VJProfiles.setActive(owner, {scope, id: profile.id});
     localStorage.setItem(methodKey(owner), 'key');
     window.aiConnectionChanged?.();
     modelSnapshot = null;
-    return `Saved ${profile.name} on ${scope === 'local' ? 'this device' : 'your account'}. ${model ? 'Ready to use; no models were rechecked.' : 'Choose Find usable models when ready.'}`;
+    return `Đã lưu ${profile.name} ${scope === 'local' ? 'trên thiết bị này' : 'vào tài khoản của em'}. ${model ? 'Dùng được ngay; không kiểm tra lại model nào.' : 'Bấm Tìm model dùng được khi sẵn sàng.'}`;
   }
   window.saveVoiceProfile = async (owner, input, scope) => {
     if (!owner || signedInUser?.user_id !== owner || managed()) throw new Error('API cá nhân chỉ dành cho tài khoản học viên.');
-    if (!['local', 'server'].includes(scope)) throw new Error('Choose a valid save location.');
-    if (scope === 'server' && !storageEnabled) throw new Error('Server key storage is unavailable. Choose this device instead.');
+    if (!['local', 'server'].includes(scope)) throw new Error('Chọn nơi lưu hợp lệ.');
+    if (scope === 'server' && !storageEnabled) throw new Error('Máy chủ chưa lưu được khóa. Hãy chọn lưu trên thiết bị này.');
     const protocol = input.protocol || 'gemini';
-    if (!['gemini', 'openai'].includes(protocol)) throw new Error('Choose native Gemini or official OpenAI.');
+    if (!['gemini', 'openai'].includes(protocol)) throw new Error('Chọn Gemini gốc hoặc OpenAI chính thức.');
     const draft = {name:input.name, api_key:input.api_key, protocol, base_url:BASES[protocol], model:''};
     const profile = scope === 'local' ? await VJProfiles.save(owner, draft)
       : (await send('/api/ai/profiles', 'POST', draft)).profile;
-    if (signedInUser?.user_id !== owner || managed()) throw new Error('The signed-in account or role changed.');
+    if (signedInUser?.user_id !== owner || managed()) throw new Error('Tài khoản hoặc quyền đăng nhập đã thay đổi.');
     rendering++;
     const previous = profilesOwner === owner ? profileRows : [];
     profileRows = [...previous, {...profile, scope}];
@@ -145,7 +145,7 @@
     if (testing || managed()) return;
     stopModels();
     testing = true;
-    el('ai-connection-status').textContent = 'Updating saved connection…';
+    el('ai-connection-status').textContent = 'Đang cập nhật kết nối đã lưu…';
     el('ai-profile-list').setAttribute('aria-busy', 'true');
     const owner = signedInUser?.user_id;
     const controls = [...el('ai-form').querySelectorAll('input, select, button'), el('ai-profile-list'), el('ai-profile-new'), el('ai-method-oauth'), el('ai-add-connection'), el('ai-chat')];
@@ -167,7 +167,7 @@
     window.checkAiReady();
   }
   const cacheName = (owner, identity) => `vjbot_ai_models_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
-  const cacheWarning = () => { el('ai-selection-hint').textContent = 'Browser storage is unavailable. These models will not be remembered after a reload.'; };
+  const cacheWarning = () => { el('ai-selection-hint').textContent = 'Bộ nhớ trình duyệt không dùng được. Danh sách model sẽ mất sau khi tải lại.'; };
   const scanName = (owner, identity) => `vjbot_ai_scan_v1:${encodeURIComponent(owner)}:${encodeURIComponent(identity)}`;
   const validModel = value => typeof value === 'string' && value.length <= 100 && /^~?[\w.:/-]+$/.test(value);
   function readScan(owner, identity) {
@@ -187,7 +187,7 @@
         || !scan.dispatchedAt.every(at => Number.isFinite(at) && at > 0 && at <= Date.now() + 60000)
         || !Number.isFinite(scan.nextAt) || scan.nextAt < 0) throw new Error();
       return scan;
-    } catch { throw new Error('Saved scan progress is invalid. Select Recheck all models to start a new scan.'); }
+    } catch { throw new Error('Tiến độ quét đã lưu không hợp lệ. Chọn Kiểm tra lại mọi model để quét mới.'); }
   }
   function writeScan(owner, scan) {
     if (!owner || !scan.identity) return;
@@ -201,11 +201,11 @@
     catch (error) { el('ai-resume-hint').textContent = error.message; return; }
     const dispatched = new Set(scan?.entries.map(entry => entry.model));
     const remaining = scan?.catalog.filter(model => !dispatched.has(model)).length || 0;
-    el('ai-fetch-models').textContent = el('ai-recheck-all').checked || !scan ? 'Find usable models'
-      : remaining ? `Continue ${remaining} unchecked models` : 'Show saved check results';
+    el('ai-fetch-models').textContent = el('ai-recheck-all').checked || !scan ? 'Tìm model dùng được'
+      : remaining ? `Tiếp tục ${remaining} model chưa kiểm tra` : 'Hiện kết quả đã kiểm tra';
     el('ai-resume-hint').textContent = scan
-      ? `${scan.entries.filter(entry => entry.state !== 'sent').length}/${scan.catalog.length} checked · ${remaining} never sent. Interrupted requests are not retried automatically.`
-      : 'Progress is saved for this account and exact API connection. Reload or Stop, then continue models not yet sent.';
+      ? `${scan.entries.filter(entry => entry.state !== 'sent').length}/${scan.catalog.length} đã kiểm tra · ${remaining} chưa gửi. Yêu cầu bị gián đoạn không tự thử lại.`
+      : 'Tiến độ được lưu theo tài khoản và đúng kết nối API này. Tải lại hoặc Dừng, rồi tiếp tục các model chưa gửi.';
   }
   function rememberModels(identity, draft) {
     const owner = signedInUser?.user_id;
@@ -233,8 +233,8 @@
       el('ai-model-list').append(option);
     }
     publishModels();
-    el('ai-model-status').textContent = `${cache.models.length} previously responding models · last checked ${new Date(cache.checkedAt).toLocaleString()}. Refresh to check again.`;
-    el('ai-selection-hint').textContent = 'Restored from this browser. Quota and access may have changed since the last check.';
+    el('ai-model-status').textContent = `${cache.models.length} model từng phản hồi · kiểm tra lần cuối ${new Date(cache.checkedAt).toLocaleString()}. Tải lại để kiểm tra lần nữa.`;
+    el('ai-selection-hint').textContent = 'Khôi phục từ trình duyệt này. Hạn mức và quyền truy cập có thể đã đổi từ lần kiểm tra trước.';
   }
   const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
@@ -244,7 +244,7 @@
       resetModels();
       syncProbeBudget(null);
     }
-    if (!response.ok) throw Object.assign(new Error(data.detail || 'Request failed. Please try again.'), {
+    if (!response.ok) throw Object.assign(new Error(data.detail || 'Yêu cầu không thành công. Hãy thử lại.'), {
       status: response.status, providerStatus: data.provider_status, retryAfterMs: data.retry_after_ms
     });
     return data;
@@ -288,12 +288,12 @@
     el('ai-model-list').disabled = true;
     el('ai-save').disabled = true;
     el('ai-model-status').textContent = '';
-    el('ai-fetch-models').textContent = 'Find usable models';
+    el('ai-fetch-models').textContent = 'Tìm model dùng được';
     el('ai-resume-hint').textContent = '';
-    el('ai-selection-hint').textContent = 'Only models that returned a real response can be selected. Future quota and availability may change.';
+    el('ai-selection-hint').textContent = 'Chỉ chọn được model đã phản hồi thật. Hạn mức và tình trạng sau này có thể đổi.';
   }
   function invalidateSelection() {
-    el('ai-status').textContent = 'Changes are not saved yet. Your current chat account stays active.';
+    el('ai-status').textContent = 'Thay đổi chưa được lưu. Tài khoản chat hiện tại vẫn được giữ.';
   }
   function publishModels() {
     const list = el('ai-model-list'), available = list.options.length > 0;
@@ -311,7 +311,7 @@
     if (signal.aborted) return Promise.resolve(false);
     const dialog = el('ai-confirm-dialog');
     el('ai-confirm-count').textContent = String(total);
-    el('ai-confirm-start').textContent = `Check ${total} models`;
+    el('ai-confirm-start').textContent = `Kiểm tra ${total} model`;
     el('ai-confirm-partial').hidden = !partial;
     dialog.returnValue = '';
     return new Promise(resolve => {
@@ -333,7 +333,7 @@
     const draft = {protocol: el('ai-protocol').value, base_url: el('ai-base').value, api_key: draftKey(),
       ...(selectedProfile?.scope === 'server' ? {profile_id: selectedProfile.id} : {})};
     if (!draft.api_key && !savedConnection) {
-      status.textContent = 'Enter your API URL and key to check models.';
+      status.textContent = 'Nhập URL và khóa API để kiểm tra model.';
       return;
     }
     modelAbort = new AbortController();
@@ -346,7 +346,7 @@
     el('ai-fetch-models').setAttribute('aria-busy', 'true');
     el('ai-load-progress').hidden = false;
     el('ai-stop-models').hidden = false;
-    status.textContent = 'Loading models…';
+    status.textContent = 'Đang tải danh sách model…';
     try {
       const data = await call('/api/ai/models', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -355,16 +355,16 @@
       if (!current()) return;
       total = data.models.length;
       partial = data.truncated ? ' Catalog is partial.' : '';
-      if (!total) { status.textContent = 'No candidate models returned.'; return; }
+      if (!total) { status.textContent = 'Không có model nào để kiểm tra.'; return; }
       if (data.connection_id && typeof navigator !== 'undefined' && navigator.locks) {
         const acquired = await new Promise((resolve, reject) => {
           navigator.locks.request(scanName(owner, data.connection_id), {ifAvailable: true}, lock => {
             if (!lock) { resolve(false); return; }
             return new Promise(release => { releaseScan = release; resolve(true); });
-          }).catch(() => reject(new Error('Cannot coordinate this scan across tabs. Try again after closing the other scan.')));
+          }).catch(() => reject(new Error('Không phối hợp được lần quét giữa các tab. Hãy đóng lần quét kia rồi thử lại.')));
         });
         if (!current()) return;
-        if (!acquired) { status.textContent = 'Another scan for this API connection is still active. Continue after it stops.'; return; }
+        if (!acquired) { status.textContent = 'Một lần quét khác của kết nối này đang chạy. Hãy tiếp tục sau khi nó dừng.'; return; }
       }
       const fresh = el('ai-recheck-all').checked;
       const catalog = new Set(data.models);
@@ -383,16 +383,16 @@
       }
       if (saved && !fresh) {
         publishModels();
-        el('ai-selection-hint').textContent = 'Includes earlier successful checks. They were not checked again; access and quota may have changed.';
+        el('ai-selection-hint').textContent = 'Gồm cả kết quả kiểm tra thành công trước đó, không kiểm tra lại; quyền truy cập và hạn mức có thể đã đổi.';
       }
       if (!unfinished.length) {
-        status.textContent = `Saved: ${checked}/${total} checked · ${passed} responded · ${checkpoint.entries.filter(entry => entry.state === 'sent').length} interrupted, not retried. Select Recheck all models only for a fresh scan.`;
+        status.textContent = `Đã lưu: ${checked}/${total} đã kiểm tra · ${passed} phản hồi · ${checkpoint.entries.filter(entry => entry.state === 'sent').length} bị gián đoạn, không thử lại. Chỉ chọn Kiểm tra lại mọi model khi muốn quét mới.`;
         return;
       }
       const accepted = await confirmModelChecks(unfinished.length, partial, modelAbort.signal);
       if (!current()) return;
       if (!accepted) {
-        status.textContent = 'Cancelled. No new model tests were sent; saved results are unchanged.';
+        status.textContent = 'Đã hủy. Không gửi thêm lần thử nào; kết quả đã lưu giữ nguyên.';
         return;
       }
       if (!current()) return;
@@ -423,7 +423,7 @@
             try { localStorage.removeItem(cacheName(owner, data.connection_id)); } catch { cacheWarning(); }
             try { if (data.connection_id) localStorage.removeItem(scanName(owner, data.connection_id)); } catch { cacheWarning(); }
             resetModels();
-            status.textContent = `Connection changed or key rejected. ${outcome.message}`;
+            status.textContent = `Kết nối đã đổi hoặc khóa bị từ chối. ${outcome.message}`;
             return;
           }
           checked++;
@@ -447,18 +447,18 @@
           checkpoint = {...checkpoint, dispatchedAt: [...dispatchedAt], nextAt: nextProbeAt};
           writeScan(owner, checkpoint);
           const wait = Math.max(0, Math.ceil((info.nextAt - Date.now()) / 1000));
-          status.textContent = `Checked ${checked}/${total} · ${passed} responded${wait ? ` · waiting ${wait}s for quota` : ''}`;
+          status.textContent = `Đã kiểm tra ${checked}/${total} · ${passed} phản hồi${wait ? ` · chờ ${wait}s vì hạn mức` : ''}`;
         }
       });
       if (!current()) return;
       publishModels();
       pill(passed ? 'ok' : 'saved', passed ? `${passed} models responded` : 'No confirmed models');
       const interrupted = checkpoint.entries.filter(entry => entry.state === 'sent').length;
-      status.textContent = `${result.halted ? 'Stopped' : 'Complete'}: ${checked}/${total} checked · ${passed} responded.${partial}${interrupted ? ` ${interrupted} interrupted requests were not retried.` : ''}${result.halted ? ' Continue to check models not yet sent.' : ''}`;
+      status.textContent = `${result.halted ? 'Đã dừng' : 'Hoàn tất'}: ${checked}/${total} đã kiểm tra · ${passed} phản hồi.${partial}${interrupted ? ` ${interrupted} yêu cầu bị gián đoạn, không thử lại.` : ''}${result.halted ? ' Hãy tiếp tục để kiểm tra các model chưa gửi.' : ''}`;
     } catch (error) {
       if (current()) {
         publishModels();
-        status.textContent = `Stopped: ${error.message} ${checked}/${total} checked.`;
+        status.textContent = `Đã dừng: ${error.message} ${checked}/${total} đã kiểm tra.`;
       }
     } finally {
       releaseScan?.();
@@ -525,7 +525,7 @@
       const data = await call('/api/ai/profiles');
       if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner || managed()) return;
       let local = [], deviceError = '';
-      try { local = await VJProfiles.list(owner); } catch { deviceError = 'Device storage is unavailable. Choose server storage or enable browser storage.'; }
+      try { local = await VJProfiles.list(owner); } catch { deviceError = 'Bộ nhớ thiết bị không dùng được. Chọn lưu trên máy chủ hoặc bật bộ nhớ trình duyệt.'; }
       if (testing || activeScan || version !== rendering || signedInUser?.user_id !== owner || managed()) return;
       profileRows = [...data.profiles.map(profile => ({...profile, scope: 'server'})), ...local.map(profile => ({...profile, scope: 'local'}))];
       profilesOwner = owner;
@@ -548,7 +548,7 @@
         el('ai-protocol').value = pending.draft.protocol;
         el('ai-base').value = pending.draft.base_url;
         el('ai-key').value = pending.draft.api_key;
-        el('ai-key-hint').textContent = 'This checked draft is not saved. Save the profile to keep it after reload.';
+        el('ai-key-hint').textContent = 'Kết quả kiểm tra này chưa được lưu. Hãy lưu kết nối để giữ lại sau khi tải lại.';
       }
       modelSnapshot = pending;
       scanHint();
@@ -691,7 +691,7 @@
   el('ai-stop-models').addEventListener('click', () => {
     stopModels();
     publishModels();
-    el('ai-model-status').textContent = 'Stopped. Only completed successful responses are shown.';
+    el('ai-model-status').textContent = 'Đã dừng. Chỉ hiện các phản hồi thành công đã hoàn tất.';
     scanHint();
   });
   el('ai-recheck-all').addEventListener('change', scanHint);
@@ -703,8 +703,8 @@
   el('ai-key-toggle').addEventListener('click', () => {
     const show = el('ai-key').type === 'password';
     el('ai-key').type = show ? 'text' : 'password';
-    el('ai-key-toggle').textContent = show ? 'Hide' : 'Show';
-    el('ai-key-toggle').setAttribute('aria-label', show ? 'Hide API key' : 'Show API key');
+    el('ai-key-toggle').textContent = show ? 'Ẩn' : 'Hiện';
+    el('ai-key-toggle').setAttribute('aria-label', show ? 'Ẩn API key' : 'Hiện API key');
     el('ai-key-toggle').setAttribute('aria-pressed', String(show));
   });
   el('auth-logout').addEventListener('click', () => {
@@ -740,12 +740,12 @@
     await profileAction(async owner => {
       if (profile?.scope === 'server') await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
       else if (profile) await VJProfiles.load(owner, profile.id);
-      if (signedInUser?.user_id !== owner || managed()) throw new Error('The signed-in account or role changed.');
+      if (signedInUser?.user_id !== owner || managed()) throw new Error('Tài khoản hoặc quyền đăng nhập đã thay đổi.');
       VJProfiles.setActive(owner, profile ? {scope: profile.scope, id: profile.id} : {scope:'none', id:''});
       localStorage.setItem(methodKey(owner), 'key');
       window.aiConnectionChanged?.();
       modelSnapshot = null;
-      return profile ? `Using ${profile.name}. Saved models restored without checking them again.` : 'No chat connection selected.';
+      return profile ? `Đang dùng ${profile.name}. Đã khôi phục model đã lưu, không kiểm tra lại.` : 'Chưa chọn kết nối chat.';
     });
     refreshSavedConnections();
   });
@@ -756,17 +756,17 @@
   });
   el('ai-remove').addEventListener('click', () => {
     const profile = selectedProfile;
-    if (!profile || !confirm(`Delete ${profile.name} from ${profile.scope === 'local' ? 'this device' : 'your account'}? Other profiles will remain.`)) return;
+    if (!profile || !confirm(`Xóa ${profile.name} khỏi ${profile.scope === 'local' ? 'thiết bị này' : 'tài khoản của em'}? Các kết nối khác vẫn được giữ.`)) return;
     return profileAction(async owner => {
       if (profile.scope === 'local') await VJProfiles.remove(owner, profile.id);
       else await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}`, 'DELETE');
-      if (signedInUser?.user_id !== owner) throw new Error('The signed-in account changed.');
+      if (signedInUser?.user_id !== owner) throw new Error('Tài khoản đăng nhập đã thay đổi.');
       let voice;
       try { voice = VJProfiles.voice(owner); } catch { /* Independent corrupt voice storage does not block credential deletion. */ }
       if (voice?.scope === profile.scope && voice.id === profile.id) VJProfiles.setVoice(owner, {scope:'none', id:''});
       VJProfiles.setActive(owner, {scope: 'none', id: ''});
       modelSnapshot = null;
-      return 'Profile deleted. Choose another connection to continue; no fallback was selected.';
+      return 'Đã xóa kết nối. Hãy chọn kết nối khác để tiếp tục; hệ thống không tự chọn thay.';
     });
   });
   window.addEventListener('vjbot-voice-changed', () => {

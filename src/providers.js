@@ -70,9 +70,9 @@ export const REKEY = 'Không giải mã được API key đã lưu. Hãy nhập 
 const providerFailure = provider => !provider || provider.error === 'no_model'
   ? json({detail: NO_AI, code: 'no_ai'}, 403)
   : provider.error === 'rekey' ? json({detail: REKEY, code: 'rekey'}, 409)
-  : provider.error === 'profile_changed' ? json({detail: 'The selected API profile no longer exists. Choose a connection in Settings.', code: 'profile_changed'}, 409)
-  : provider.error === 'oauth_model' ? json({detail:'Choose and test an Antigravity chat model in Settings.',code:'oauth_model'},403)
-  : provider.error === 'oauth_reconnect' ? json({detail:'Reconnect Antigravity in Settings. No API-key connection was used instead.',code:'oauth_reconnect'},provider.status || 409)
+  : provider.error === 'profile_changed' ? json({detail: 'Kết nối API đã chọn không còn nữa. Hãy chọn kết nối trong Cài đặt.', code: 'profile_changed'}, 409)
+  : provider.error === 'oauth_model' ? json({detail:'Hãy chọn và thử một model chat Antigravity trong Cài đặt.',code:'oauth_model'},403)
+  : provider.error === 'oauth_reconnect' ? json({detail:'Hãy kết nối lại Antigravity trong Cài đặt. Hệ thống không dùng kết nối API key thay thế.',code:'oauth_reconnect'},provider.status || 409)
   : provider.error ? json({detail: 'Kết nối API không hợp lệ.', code: 'invalid_connection'}, 400) : null;
 
 // Chat and Kaiwa share this: {text} on success, otherwise {response} ready to return.
@@ -80,7 +80,7 @@ export async function askAI(env, userId, request, override, profileId, {beforeGe
   const provider = await resolveProvider(env, userId, override, profileId);
   const response = providerFailure(provider);
   if (response) return {response};
-  if (beforeGeneration && !(await beforeGeneration())) return {response: json({detail: 'This conversation changed before generation. Please send a new message.'}, 409)};
+  if (beforeGeneration && !(await beforeGeneration())) return {response: json({detail: 'Cuộc trò chuyện đã đổi trước khi tạo câu trả lời. Hãy gửi tin nhắn mới.'}, 409)};
   const result = await callLLM(provider, request);
   if (result.text) return {text: result.text};
   return {response: json({detail: failureMessage(result.status)}, result.status === 429 ? 429 : 503)};
@@ -90,8 +90,8 @@ export async function askAI(env, userId, request, override, profileId, {beforeGe
 export async function resolveSpeechProvider(env, userId, override, profileId) {
   const admin = await isAdmin(env, userId);
   const noSpeech = () => ({response:json({detail:admin
-    ? 'Server-managed OpenAI voice is not configured. No private connection was used.'
-    : 'Choose a native Google Gemini or official OpenAI voice connection in Sound settings. No other connection was used.',code:'no_tts'},403)});
+    ? 'Máy chủ chưa cấu hình giọng nói OpenAI. Hệ thống không dùng kết nối riêng.'
+    : 'Hãy chọn kết nối giọng nói Google Gemini gốc hoặc OpenAI chính thức trong cài đặt Âm thanh. Hệ thống không dùng kết nối khác.',code:'no_tts'},403)});
   if (profileId === 'platform_openai' && override !== undefined) return {response:providerFailure({error:'invalid_connection'})};
   if (admin) {
     if (override !== undefined || (profileId !== undefined && profileId !== 'platform_openai')) {
@@ -160,7 +160,7 @@ async function saveProfile(env, userId, data, existing, requireModel = false) {
   const replacingKey = data.api_key !== undefined && data.api_key !== '';
   if (replacingKey && !keyOk(data.api_key)) return {response: json({detail: 'API key không hợp lệ.'}, 400)};
   if (!replacingKey && (!existing || existing.protocol !== data.protocol || existing.base_url !== base.url)) {
-    return {response: json({detail: 'Enter an API key for this URL and protocol. The saved key cannot be transferred to another endpoint.'}, 400)};
+    return {response: json({detail: 'Hãy nhập API key cho URL và loại API này. Khóa đã lưu không chuyển sang địa chỉ khác được.'}, 400)};
   }
   const apiKey = replacingKey ? data.api_key : await unseal(env, userId, existing.key_enc);
   if (!apiKey) return {response: json({detail: REKEY, code: 'rekey'}, 409)};
@@ -214,7 +214,7 @@ export async function aiRoute(request, env, url) {
   const user = await sessionUser(request, env);
   if (!user) return json({detail: 'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'}, 401);
   const expectedAccount = request.headers.get('X-VJBot-Account');
-  if (expectedAccount !== null && expectedAccount !== user.user_id) return json({detail: 'The signed-in account changed. Reload before using API profiles.', code: 'account_changed'}, 409);
+  if (expectedAccount !== null && expectedAccount !== user.user_id) return json({detail: 'Tài khoản đăng nhập đã đổi. Hãy tải lại trang trước khi dùng kết nối API.', code: 'account_changed'}, 409);
   const path = url.pathname, method = request.method, admin = await isAdmin(env, user.user_id);
 
   if (path === '/api/admin/ai') {
@@ -226,7 +226,7 @@ export async function aiRoute(request, env, url) {
       if (!data || !await saveAdminAISettings(env,user.user_id,data)) return json({detail:'Model, mức suy luận hoặc giọng nói không hợp lệ.'},400);
       return json({ok:true,settings:await adminAISettings(env,user.user_id)});
     }
-    return json({detail:'Method not allowed'},405);
+    return json({detail:'Phương thức không được phép'},405);
   }
 
   if (path === '/api/ai/profiles' && method === 'GET') {
@@ -277,31 +277,31 @@ export async function aiRoute(request, env, url) {
   }
   if (['/api/ai/models', '/api/ai/models/test'].includes(path) && method === 'POST') {
     const data = await body(request);
-    if (!data) return json({detail: 'Invalid model discovery request.'}, 400);
+    if (!data) return json({detail: 'Yêu cầu tìm model không hợp lệ.'}, 400);
     const base = connectionBase(data.protocol, data.base_url);
     if (base.error) return json({detail: base.error}, 400);
     const probe = path === '/api/ai/models/test';
-    if (probe && !modelOk(data.model)) return json({detail: 'Invalid model ID.'}, 400);
+    if (probe && !modelOk(data.model)) return json({detail: 'ID model không hợp lệ.'}, 400);
     let apiKey = data.api_key;
     if (apiKey !== undefined && apiKey !== '' && (typeof apiKey !== 'string' || !/^[\x21-\x7e]{8,512}$/.test(apiKey))) {
-      return json({detail: 'Invalid API key.'}, 400);
+      return json({detail: 'API key không hợp lệ.'}, 400);
     }
     if (!apiKey) {
       const own = data.profile_id === undefined ? await activeProfile(env, user.user_id)
         : typeof data.profile_id === 'string' ? await ownedProfile(env, user.user_id, data.profile_id) : null;
       if (!own || own.protocol !== data.protocol || own.base_url !== base.url) {
-        return json({detail: 'Enter an API key for this URL and protocol. The saved key will not be sent to a different endpoint.'}, 400);
+        return json({detail: 'Hãy nhập API key cho URL và loại API này. Khóa đã lưu sẽ không được gửi tới địa chỉ khác.'}, 400);
       }
       apiKey = await unseal(env, user.user_id, own.key_enc);
       if (!apiKey) return json({detail: REKEY, code: 'rekey'}, 409);
     }
-    if ((probe && data.model.includes(apiKey)) || base.url.includes(apiKey)) return json({detail: 'Invalid API connection.'}, 400);
+    if ((probe && data.model.includes(apiKey)) || base.url.includes(apiKey)) return json({detail: 'Kết nối API không hợp lệ.'}, 400);
     const identity = await connectionId(env, user.user_id, data.protocol, base.url, apiKey);
     if (probe && data.connection_id !== undefined && (!identity || data.connection_id !== identity)) {
-      return json({detail: 'The API connection changed. Fetch models again before testing.'}, 409);
+      return json({detail: 'Kết nối API đã đổi. Hãy tải lại danh sách model trước khi thử.'}, 409);
     }
     if (await rateLimited(env, user.user_id)) return json({
-      detail: 'Too many requests. Try again in a minute.', retry_after_ms: 61000 - Date.now() % 60000
+      detail: 'Quá nhiều yêu cầu. Hãy thử lại sau một phút.', retry_after_ms: 61000 - Date.now() % 60000
     }, 429);
     if (probe) {
       const provider = {protocol: data.protocol, baseUrl: base.url, apiKey, models: [data.model], source: 'draft'};
@@ -314,8 +314,8 @@ export async function aiRoute(request, env, url) {
     const result = await listModels({protocol: data.protocol, baseUrl: base.url, apiKey});
     if (result.models) return json({...result, ...(identity ? {connection_id: identity} : {})});
     const detail = result.status === 404 || result.status === 405
-      ? 'This API does not support model listing. Use an endpoint that provides a model catalog.'
-      : result.status === 502 ? 'The API returned an invalid model catalog. Check the API URL and provider.' : failureMessage(result.status);
+      ? 'API này không hỗ trợ liệt kê model. Hãy dùng địa chỉ có danh mục model.'
+      : result.status === 502 ? 'API trả về danh mục model không hợp lệ. Hãy kiểm tra URL API và nhà cung cấp.' : failureMessage(result.status);
     // A provider's rejected key is not an expired VJBot session.
     return json({detail}, [400, 404, 405, 429, 504].includes(result.status) ? result.status : 502);
   }
@@ -331,8 +331,8 @@ export async function aiRoute(request, env, url) {
       if (!catalog.models) return json({detail: failureMessage(catalog.status)}, catalog.status === 429 ? 429 : 503);
       if (!catalog.models.includes(provider.models[0])) {
         return json({detail: catalog.free_only
-          ? 'This key has no paid budget. Choose a listed zero-price candidate; the selected model was not tested.'
-          : 'The selected model is not in this key-filtered catalog. Access was not verified; no generation was sent.'}, 403);
+          ? 'Khóa này không có ngân sách trả phí. Hãy chọn model miễn phí trong danh sách; model đã chọn chưa được thử.'
+          : 'Model đã chọn không có trong danh mục lọc theo khóa này. Chưa xác nhận quyền truy cập; chưa gửi yêu cầu tạo nội dung.'}, 403);
       }
     }
     const result = await callLLM(provider, {turns: [{role: 'user', content: 'Reply with the single word OK.'}]});
@@ -355,5 +355,5 @@ export async function aiRoute(request, env, url) {
       return error ? json({detail: error}, 400) : json({ok: true});
     }
   }
-  return json({detail: 'Not found'}, 404);
+  return json({detail: 'Không tìm thấy'}, 404);
 }

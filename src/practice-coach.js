@@ -23,17 +23,17 @@ export async function practiceCoach(request, env) {
     || typeof body.item_id !== 'string' || !body.item_id || body.item_id.length > 500
     || (body.action === 'hint' && Object.hasOwn(body,'answer_index'))
     || (body.action === 'feedback' && (!Number.isInteger(body.answer_index) || body.answer_index < 0))) {
-    return reply({detail:'Invalid practice coaching request.'},400);
+    return reply({detail:'Yêu cầu hướng dẫn luyện tập không hợp lệ.'},400);
   }
   const catalog = await teacherCatalog(env,body.lesson.level);
-  if (!catalog) return reply({detail:'The lesson catalog is unavailable. Your exercise result has not changed.'},503);
+  if (!catalog) return reply({detail:'Chưa tải được danh mục bài học. Kết quả bài tập của em không đổi.'},503);
   const lesson = catalogLesson(catalog,body.lesson);
   const grounded = lesson && groundLesson(lesson,{kind:'question',index:body.question_index});
   const question = grounded?.focus.item;
   if (!question || question.item_id !== body.item_id || !Array.isArray(question.opts)
     || question.opts.filter(option => option === question.ans).length !== 1
     || (body.action === 'feedback' && body.answer_index >= question.opts.length)) {
-    return reply({detail:'This question changed or does not belong to the lesson. Reopen the exercise.'},409);
+    return reply({detail:'Câu hỏi đã đổi hoặc không thuộc bài học này. Hãy mở lại bài tập.'},409);
   }
   const correct = body.action === 'feedback' ? question.opts[body.answer_index] === question.ans : null;
   const evidence = {level:body.lesson.level, title:lesson.title, goal:lesson.goal,
@@ -46,10 +46,10 @@ export async function practiceCoach(request, env) {
   body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
   if (asked.response) return asked.response;
   let result;
-  try { result = JSON.parse(asked.text); } catch { return reply({detail:'AI did not return a usable explanation. Your result is unchanged.'},503); }
+  try { result = JSON.parse(asked.text); } catch { return reply({detail:'AI chưa trả về lời giải thích dùng được. Kết quả của em không đổi.'},503); }
   if (!result || Array.isArray(result) || Object.keys(result).length !== 1
     || typeof result.reply !== 'string' || !result.reply.trim() || result.reply.length > 2000) {
-    return reply({detail:'AI did not return a usable explanation. Your result is unchanged.'},503);
+    return reply({detail:'AI chưa trả về lời giải thích dùng được. Kết quả của em không đổi.'},503);
   }
   return reply({reply:result.reply.trim(), action:body.action, item_id:question.item_id,
     ...(body.action === 'feedback' ? {correct,answer:question.ans} : {})});
