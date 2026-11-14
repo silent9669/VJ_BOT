@@ -550,3 +550,21 @@ Run affected existing checks after the final edits, regenerate catalogs through 
 - One **synthetic** structured teaching response exercised the real AI/original controls and formula layout: no live model inference occurred. Runtime diagnostics contained no unexpected errors; remote Google fonts and Google sign-in scripts were deliberately blocked by the preview's host allowlist. No live Google authentication, paid provider, audio hardware, assistive-technology or independent Japanese-quality acceptance is claimed.
 - Scoped JS and general code reviews found two issues: pre-existing pipe notation and an over-specific Vietnamese gloss label. Both were corrected. General flow/data review found no substantive issue; this is code review, not human language approval. Temporary preview runtime/data and browser tab are disposable and are removed/closed after evidence capture.
 
+## 15. Clear question cards and non-repetitive choice feedback
+
+The next screenshot request targets repeated information, not grading: the selected options already communicate the keyed result; a separate red verdict and repeated answer compete with the optional AI explanation. Choice practice now hides that duplicate result after an acknowledged save. Recall samples, ungraded writing, dictation and persistence errors retain their distinct feedback. AI coaching remains user-triggered and unavailable until the existing answer receipt succeeds.
+
+Exam references now use one numbered card per original question, separate passage/instruction/stem/choices, two desktop option columns and one mobile column. Actual lexical targets are underlined once; an off-screen target cue remains available to screen readers. Reorder instructions do not repeat their embedded numbered part list when the original parts are already displayed. Part numbers and answer-choice positions remain distinct. Original instructions, Japanese, IDs, order, keys and quarantine capabilities are not rewritten. Unavailable slots remain visible with the shorter notice "Câu này đang được kiểm tra lại."
+
+Scoped review found that the real full-quiz HTML nested its Next button inside the result box, unlike the old test fixture. The renderer now moves that existing navigation button outside the feedback box before displaying a question. The fixture now mirrors the actual nesting and checks the resulting navigation parent. The change also retains accessible target cues, explicit option numbers and list roles when native markers are visually suppressed.
+
+Verification after the final behavioral edit:
+
+- `node --test --test-concurrency=2 tests/tutor-ui.test.mjs tests/study-teacher-ui.test.mjs tests/lesson-flow.test.mjs && npm run build`: **77/77 passed**, all five catalog levels regenerated and Worker/static **dry-run** passed.
+- Actual Edge UI used a loopback-only Worker/static adapter and disposable in-memory D1. N4 exam 1 retained all four original question positions, one target underline and four original reorder parts. Desktop **1280×1000** used two option columns; mobile **390×844** used one. Neither viewport overflowed horizontally.
+- A wrong answer saved through the actual local progress endpoint retained the correct/selected option marks and accessible labels, hid the empty duplicate result and exposed the user-invoked coaching control. Next opened the original unavailable second position without answer controls.
+- In the actual full-quiz view, Chromium offline mode caused the real save request to fail. The failure and explicit retry remained visible; Next stayed disabled. Restoring connectivity and clicking retry saved through the local endpoint, hid the duplicate result and left Next visible and enabled outside that box. Clicking Next advanced to question 2.
+- Browser diagnostics contained only deliberately blocked Google sign-in/font requests and the deliberately induced offline progress request. No unexpected JavaScript exception appeared. External inference was disabled; no live model, production data, account/provider/voice change or screen-reader hardware acceptance is claimed.
+
+This is a presentation checkpoint, not a repair of quarantined source questions or proof of Japanese teaching quality. Commit/push target only the isolated task branch; merge and production release remain separate.
+

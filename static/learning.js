@@ -166,19 +166,25 @@ function focusedTaskAttempt(lesson,focus,view='checks',question=null){
   if(!question)return null;
   return taskAttempt(lesson,question,focus.index,view);
 }
+function taskInstruction(task){
+  const instruction=String(task.instruction || '');
+  return task.parts?.length && /^Sắp xếp/u.test(instruction)
+    ?instruction.replace(/\s*\[\s*\d+\s*:[^\]]+\]/gu,'').replace(/[:：]\s*$/u,'').trim()
+    :instruction;
+}
 function taskPromptHtml(task){
-  const text=String(task.q || ''),candidate=String(task.target || '');
+  const text=String(task.q || ''),candidate=String(task.target || ''),instruction=taskInstruction(task);
   const target=candidate && text.includes(candidate) && !/^[_\s★]+$/.test(candidate)?candidate:'';
   const offset=target?text.indexOf(target):-1;
   const prompt=offset<0?escapeHtml(text):`${escapeHtml(text.slice(0,offset))}<mark>${escapeHtml(target)}</mark>${escapeHtml(text.slice(offset+target.length))}`;
   return `${task.passage?`<section class="task-stimulus" aria-label="Ngữ cảnh để trả lời"><p lang="ja">${escapeHtml(task.passage)}</p></section>`:''}
-    ${task.instruction?`<p class="task-instruction">${escapeHtml(task.instruction)}</p>`:''}
-    ${target?`<p class="task-target">Từ cần xét: <strong lang="ja">${escapeHtml(target)}</strong></p>`:''}
+    ${instruction?`<p class="task-instruction">${escapeHtml(instruction)}</p>`:''}
+    ${target?`<span class="task-accessible-target">Từ được gạch chân: <span lang="ja">${escapeHtml(target)}</span>.</span>`:''}
     <p class="task-stem" lang="ja">${prompt}</p>
-    ${task.parts?.length?`<ol class="task-parts" aria-label="Các phần cần sắp xếp">${task.parts.map(part=>`<li lang="ja">${escapeHtml(part)}</li>`).join('')}</ol>`:''}`;
+    ${task.parts?.length?`<ol class="task-parts" role="list" aria-label="Các phần cần sắp xếp">${task.parts.map(part=>`<li lang="ja">${escapeHtml(part)}</li>`).join('')}</ol>`:''}`;
 }
 function taskUnavailableMessage(task){
-  return task.review_status==='quarantined'?'Câu hỏi đang được rà soát nên chưa thể kiểm tra đáp án.':task.unavailable_reason;
+  return task.review_status==='quarantined'?'Câu này đang được kiểm tra lại.':task.unavailable_reason;
 }
 function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
   const container=document.getElementById('lesson-exercises'),questions=lessonQuestions(item,level,skill);

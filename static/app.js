@@ -721,10 +721,9 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   const guided=item.guided_steps?.length && !delayedReview;
   const firstStage=guided?item.guided_steps[0]:null;
   const supportHtml=item.support?.length?`<details class="lesson-disclosure lesson-support"><summary>Từ cần biết trong bài</summary>${item.support.map(entry=>`<details class="lesson-disclosure"><summary>${escapeHtml(entry.term)}</summary><p>${escapeHtml(entry.explanation)}</p></details>`).join('')}</details>`:'';
-  const taskReferenceHtml=Number.isInteger(item.examIndex)?`<section class="lesson-section"><h3>Bộ câu hỏi · ${tasks.length} câu</h3>
-    <p>Đọc đầy đủ đề và ngữ cảnh. Đáp án/lời giải chỉ xuất hiện sau khi em thử trả lời.</p>
-    <ol class="task-reference-list">${tasks.map(task=>`<li>${taskPromptHtml(task)}${task.unavailable_reason?`<p role="note">Tạm ngừng: ${escapeHtml(taskUnavailableMessage(task))}</p>`:
-      `<ol>${task.opts.map(option=>`<li lang="ja">${escapeHtml(option)}</li>`).join('')}</ol>`}</li>`).join('')}</ol></section>`:'';
+  const taskReferenceHtml=Number.isInteger(item.examIndex)?`<section class="lesson-section"><h3>${tasks.length} câu hỏi</h3>
+    <ol class="task-reference-list" role="list">${tasks.map((task,index)=>`<li><h4 class="task-number">Câu ${index+1}</h4>${taskPromptHtml(task)}${task.unavailable_reason?`<p class="task-unavailable" role="note">${escapeHtml(taskUnavailableMessage(task))}</p>`:
+      `<ol class="task-preview-options" role="list" aria-label="Các lựa chọn">${task.opts.map((option,position)=>`<li><span class="task-choice-number">${position+1}</span><span lang="ja">${escapeHtml(option)}</span></li>`).join('')}</ol>`}</li>`).join('')}</ol></section>`:'';
 
   body.innerHTML = `
     <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">Luyện tập</button></div>
@@ -1040,6 +1039,7 @@ function displayQuizQuestion(){
   const quizCard=document.getElementById('quiz-card'),resultCard=document.getElementById('quiz-result-card'),feedback=document.getElementById('quiz-feedback-box');
   quizCard.hidden=false;resultCard.hidden=true;feedback.hidden=true;
   const next=document.getElementById('btn-quiz-next'),question=currentExamQuestions[examQuestionIdx];
+  feedback.after(next);
   next.disabled=true;
   if(!question){finishExam();return;}
   const descriptor=featureLessons('quiz',activeQuizLevel).find(item=>item.examIndex===activeQuizTestIdx);
@@ -1049,14 +1049,13 @@ function displayQuizQuestion(){
   const number=document.getElementById('quiz-q-num'),instruction=document.getElementById('quiz-instruction'),sentence=document.getElementById('quiz-question-sentence'),grid=document.getElementById('quiz-options-grid');
   number.textContent=`Câu ${examQuestionIdx+1} / ${currentExamQuestions.length}`;
   document.getElementById('quiz-q-type').textContent=question.type || question.mode;
-  instruction.textContent=question.instruction || 'Chọn một đáp án.';
+  instruction.textContent=taskInstruction(question) || 'Chọn một đáp án.';
   sentence.innerHTML=taskPromptHtml({...question,instruction:''});
   grid.replaceChildren();delete grid.dataset.answered;
   instruction.tabIndex=-1;
   if(question.unavailable_reason){
-    sentence.append(document.createTextNode(`Tạm ngừng sử dụng: ${taskUnavailableMessage(question)}`));
-    document.getElementById('quiz-feedback-status').textContent='Câu này đang tạm ngừng, chưa tính điểm.';
-    document.getElementById('quiz-feedback-text').textContent=taskUnavailableMessage(question);
+    document.getElementById('quiz-feedback-status').textContent=taskUnavailableMessage(question);
+    document.getElementById('quiz-feedback-text').textContent='';
     feedback.hidden=false;next.disabled=false;instruction.focus();return;
   }
   if(question.script_jp){
@@ -1082,9 +1081,8 @@ function handleQuizAnswer(selectedIndex){
   const attempt=taskAttempt(buildLessonContext(descriptor,activeQuizLevel,'reading'),question,index,'exam');
   const feedback=document.getElementById('quiz-feedback-box'),status=document.getElementById('quiz-feedback-status'),text=document.getElementById('quiz-feedback-text'),next=document.getElementById('btn-quiz-next');
   const matched=selectedIndex===question.answer_index;
-  status.textContent=matched?'Em chọn đúng đáp án.':'Em chọn chưa đúng.';
-  const explanation=`Em chọn (${selectedIndex+1}) ${question.opts[selectedIndex]}. Đáp án: (${question.answer_index+1}) ${question.opts[question.answer_index]}. ${question.explanation || 'Câu này chưa có lời giải. Em có thể nhờ thầy giải thích.'}`;
-  text.textContent=explanation;feedback.hidden=false;next.disabled=true;
+  status.textContent='Đang lưu câu trả lời…';
+  text.textContent='';feedback.hidden=false;next.disabled=true;
   grid.querySelectorAll('.quiz-option-btn').forEach((button,position)=>{
     button.disabled=true;button.dataset.state=position===question.answer_index?'correct':position===selectedIndex?'incorrect':'idle';
     button.setAttribute('aria-label',`${position+1}. ${question.opts[position]}${position===selectedIndex?' · em đã chọn':''}${position===question.answer_index?' · đáp án':''}`);
@@ -1098,8 +1096,8 @@ function handleQuizAnswer(selectedIndex){
       await recordTaskEvent(attempt,'answer',{answer_index:selectedIndex});
       if(!current())return;
       examAnswers.set(index,matched);examScore=[...examAnswers.values()].filter(Boolean).length;
-      text.textContent=explanation;retry.remove();next.disabled=false;next.focus();
-    }catch(error){if(current()){text.textContent=explanation+' '+error.message;retry.hidden=false;retry.disabled=false;}}
+      status.textContent='';text.textContent='';feedback.hidden=true;retry.remove();next.disabled=false;next.focus();
+    }catch(error){if(current()){status.textContent='Chưa lưu được câu trả lời.';text.textContent=error.message;feedback.hidden=false;retry.hidden=false;retry.disabled=false;}}
   }
   retry.onclick=save;save();
 }
