@@ -731,3 +731,18 @@ node --test --test-timeout=30000 --test-concurrency=2 --test-name-pattern="all g
 
 Observed: two tests passed, zero failures/cancellations/skips, 10.13 seconds. Combined evidence is the preceding 768 unchanged passing cases plus these two corrected regressions, not a second full 770-test run. No live-provider request, real voice/audio acceptance, production migration or deployment occurred. The 28,607 projected strings, Japanese content and model pedagogy are not claimed independently approved; original history remains unchanged.
 
+## 21. Reported classroom controls and spacing
+
+After production release `147cd51`, the user reported three inactive welcome actions, a wrapped/clipped desktop voice label, excessive reply whitespace, and an unnecessary “Về bài học này” disclosure.
+
+- The welcome buttons had `data-preset` values but no event handler. They now call the existing `sendMessage` path, retaining history loading, single-flight ownership, scope, explicit retry and account/connection guards.
+- The last-loaded iOS stylesheet forced a 38px grid button while leaving its desktop text visible. The voice control now uses a nonwrapping flexible row with a 44px minimum/height; the existing mobile icon-only presentation retains its accessible label and actual 44×44 target. This changes no microphone/start/provider behavior.
+- An empty speaker header reserved at least 24px plus margin after hiding its name. The renderer no longer creates that unused header. It escapes content into paragraphs, preserves single-line breaks and Japanese sentences, and collapses runs of blank lines into an 8px inter-paragraph gap. Stored messages are not rewritten.
+- The generic lesson metadata disclosure is removed from the learner lesson renderer. Catalog/source records and the source-browser route remain; unrelated lesson content and external-resource links are unchanged.
+
+The user separately requested a compact formula layout and asked to see a sample first. A four-row `～たら` sample was provided in chat. No formula renderer, Japanese source, accepted answer, shared prompt or global presentation conversion is included in this checkpoint; that change awaits sample approval.
+
+Verification: `node --test --test-timeout=20000 --test-concurrency=2 tests/chat-ui.test.mjs tests/microphone.test.mjs tests/lesson-flow.test.mjs tests/tutor-ui.test.mjs` passed **105/105**, with no failures, cancellations or skips. New regressions exercise all three presets through actual chat request handling, loading/in-flight/failed-request guards and retry identity, plus safe paragraph/Japanese-line rendering.
+
+Actual local desktop 1280×900 and mobile 390×844 pages exercised the first preset by click, the second by native Enter, and the third by mobile click. Each sent its distinct message and rendered a response. The final voice control measured 119.14×44 on desktop and 44×44 on mobile, without clipping or horizontal overflow. Replies had three paragraphs with an 8px gap, 10px bottom padding and no empty header; the actual lesson still rendered with no metadata disclosure and retained its source-browser links. API responses were process-local synthetic fixtures, not real model quality, authenticated production or microphone acceptance. No dependencies were installed, and no production data, accounts, providers or history were changed.
+
