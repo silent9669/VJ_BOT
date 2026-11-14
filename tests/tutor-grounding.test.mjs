@@ -109,14 +109,19 @@ test('practical introductions distinguish original VJBot teaching content from p
   assert.equal(Object.hasOwn(focused.focus,'examples'),false);
 });
 
-test('production targets preserve the complete prompt, model, question and criteria', () => {
+test('written production keeps its prompt model and criteria separate from the canonical spoken question', () => {
   const grounded = groundLesson(lesson('practical:v1:N5:introductions:production'));
   assert.equal(grounded.overview.task.prompt, 'Viết lời tự giới thiệu của chính bạn: tên, quê quán và nghề nghiệp.');
   assert.equal(grounded.overview.task.model, 'はじめまして。私はリンです。ベトナムから来ました。学生です。よろしくお願いします。');
-  assert.equal(grounded.overview.task.question_jp, 'はじめまして。お名前とお仕事を教えてください。');
+  assert.equal(Object.hasOwn(grounded.overview.task,'question_jp'),false);
   assert.deepEqual(grounded.overview.task.criteria, ['Có tên của bạn', 'Có quê quán và nghề nghiệp', 'Có lời chào mở đầu hoặc kết thúc']);
-  const kaiwa = groundLesson(lesson('kaiwa:practical:v1:N5:introductions'));
-  assert.deepEqual(kaiwa.overview.task, grounded.overview.task);
+  const canonical = lesson('kaiwa:practical:v1:N5:introductions');
+  const kaiwa = groundLesson(canonical);
+  assert.equal(Object.hasOwn(kaiwa.overview,'task'),false,'spoken grounding must not inherit broader written requirements or model');
+  const index=canonical.examples.findIndex(example=>example.jp==='はじめまして。お名前とお仕事を教えてください。');
+  const spoken=groundLesson(canonical,{kind:'example',index});
+  assert.equal(spoken.focus.item.jp,'はじめまして。お名前とお仕事を教えてください。');
+  assert.equal(spoken.focus.item.vi,'','missing spoken gloss must not become the different written prompt');
 });
 
 test('beginner overviews omit ungraded corpus sentences while retaining actual lesson targets', () => {

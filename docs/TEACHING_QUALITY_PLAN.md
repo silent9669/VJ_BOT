@@ -503,3 +503,9 @@ The user explicitly requested code simplification and **creation of the PR befor
 
 The existing all-level actual-UI proof in section 12 remains the last UI result: this cleanup changes neither rendered controls nor canonical content. No new provider call, production migration, merge, deployment or human-quality/retention claim is introduced.
 
+### PR CI contract correction before release consideration
+
+The exact-head `b8edd83` GitHub Actions run `43561927275` reported **715/716 Node tests passed**, with one old `tutor-grounding.test.mjs` assertion still requiring `question_jp` inside written-production evidence and the entire written task inside Kaiwa grounding. This contradicts the written/spoken separation implemented in section 12. The assertion was migrated, not the application weakened: written prompt/model/criteria remain checked, spoken grounding must omit the broader written task, and the exact Japanese spoken question remains separately addressable without a fake written-prompt translation.
+
+`node --test tests/tutor-grounding.test.mjs` passed **11/11** after the correction. The failed GitHub run was inspected rather than rerun without a change; the new commit requires its own CI result. No application or source content changed in this test-only correction. Production release remains a separate approval: merging this PR invokes the existing `main` pipeline, including forward migrations `0022`/`0023` and deployment to the live site; the documented preview build is disabled because it would share production D1.
+
