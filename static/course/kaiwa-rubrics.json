@@ -8,11 +8,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Describe how your day went; an ordinary or uneventful day is valid."
+            "description": "Mô tả ngày hôm nay của em; một ngày bình thường, không có gì đặc biệt cũng hợp lệ."
           },
           {
             "id": "requirement_2",
-            "description": "Mention an event or explicitly say that nothing noteworthy happened."
+            "description": "Kể một sự việc hoặc nói rõ rằng không có chuyện gì đáng chú ý."
           }
         ]
       },
@@ -21,11 +21,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Name a Japanese anime or food you like, or state that you have no preference."
+            "description": "Nêu món ăn hoặc phim hoạt hình Nhật em thích, hoặc nói rằng em không có sở thích cụ thể."
           },
           {
             "id": "requirement_2",
-            "description": "Give a reason for that preference or lack of preference."
+            "description": "Giải thích lý do cho sở thích đó hoặc cho việc không có sở thích cụ thể."
           }
         ]
       }
@@ -36,7 +36,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Clearly accept or decline having the bento warmed; either choice is valid."
+            "description": "Nói rõ muốn hoặc không muốn hâm nóng cơm hộp; cả hai lựa chọn đều hợp lệ."
           }
         ]
       },
@@ -45,7 +45,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Clearly accept or decline a shopping bag; either choice is valid."
+            "description": "Nói rõ muốn hoặc không muốn lấy túi mua hàng; cả hai lựa chọn đều hợp lệ."
           }
         ]
       }
@@ -56,7 +56,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Specify the noodle firmness you want, or say you have no preference."
+            "description": "Nêu độ cứng của mì em muốn, hoặc nói rằng em không có yêu cầu cụ thể."
           }
         ]
       }
@@ -67,11 +67,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "State your name; accept any name or natural self-identification."
+            "description": "Nêu tên của em; chấp nhận mọi tên hoặc cách tự giới thiệu tự nhiên."
           },
           {
             "id": "requirement_2",
-            "description": "State your occupation or current student/employment status; unemployment and other truthful statuses are valid. Do not require hometown or a greeting not requested by this question."
+            "description": "Nêu nghề nghiệp hoặc tình trạng học tập, việc làm hiện tại; đang thất nghiệp hay tình trạng thực tế khác đều hợp lệ. Không yêu cầu quê quán hoặc lời chào mà câu hỏi không đề cập."
           }
         ]
       }
@@ -82,7 +82,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Say what food or drink you want to order. Do not require two items, quantities or a price question unless the current question requests them."
+            "description": "Nêu món ăn hoặc đồ uống em muốn gọi. Không bắt buộc hai món, số lượng hoặc hỏi giá nếu câu hỏi hiện tại không yêu cầu."
           }
         ]
       }
@@ -93,11 +93,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Give study start and end times."
+            "description": "Nêu giờ bắt đầu và kết thúc việc học."
           },
           {
             "id": "requirement_2",
-            "description": "Propose a meeting time after the study period, or explain another workable arrangement."
+            "description": "Đề xuất giờ gặp sau khi học xong, hoặc giải thích một cách sắp xếp khả thi khác."
           }
         ]
       }
@@ -108,7 +108,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Ask the driver to confirm the bus destination or whether it reaches your intended stop. Accept equivalent natural questions."
+            "description": "Hỏi tài xế để xác nhận điểm đến của xe buýt hoặc xe có đến trạm em muốn hay không. Chấp nhận các câu hỏi tự nhiên có nghĩa tương đương."
           }
         ]
       }
@@ -119,7 +119,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Identify an item you are looking for, or clearly say that you are only browsing. Do not require a price question or a particular counter."
+            "description": "Nêu món đồ em đang tìm hoặc nói rõ rằng em chỉ xem hàng. Không bắt buộc hỏi giá hoặc dùng một lượng từ cụ thể."
           }
         ]
       }
@@ -130,7 +130,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Ask about an unknown word or request clarification/repetition in a way that communicates what help is needed."
+            "description": "Hỏi về từ chưa biết hoặc nhờ giải thích, nhắc lại sao cho người nghe hiểu em cần hỗ trợ gì."
           }
         ]
       }
@@ -141,7 +141,7 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Answer with a platform or line for the requested trip, or honestly say you do not know. Do not invent verifiable route facts beyond the canonical context."
+            "description": "Trả lời về sân ga hoặc tuyến cần đi, hoặc nói thật rằng em không biết. Không bịa thông tin tuyến đường có thể kiểm chứng ngoài ngữ cảnh nguồn."
           }
         ]
       }
@@ -152,11 +152,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "State your current location or honestly explain that it is uncertain."
+            "description": "Nêu vị trí hiện tại hoặc nói thật rằng em chưa xác định được vị trí."
           },
           {
             "id": "requirement_2",
-            "description": "Give an approximate arrival time or explicitly explain that the time is not yet known."
+            "description": "Nêu giờ đến dự kiến hoặc nói rõ rằng chưa biết giờ đến."
           }
         ]
       }
@@ -167,11 +167,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "State when you want time off."
+            "description": "Nêu thời gian em muốn nghỉ."
           },
           {
             "id": "requirement_2",
-            "description": "Explain how work will be prepared or handed over."
+            "description": "Giải thích cách chuẩn bị hoặc bàn giao công việc."
           }
         ]
       }
@@ -182,11 +182,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Describe symptoms or the reason for the visit without inventing a diagnosis."
+            "description": "Mô tả triệu chứng hoặc lý do đến khám, không tự bịa chẩn đoán."
           },
           {
             "id": "requirement_2",
-            "description": "State when symptoms began or explicitly explain uncertainty about onset."
+            "description": "Nêu thời điểm bắt đầu có triệu chứng hoặc nói rõ rằng em chưa chắc về thời điểm đó."
           }
         ]
       }
@@ -197,15 +197,15 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "State the reservation day."
+            "description": "Nêu ngày đặt chỗ."
           },
           {
             "id": "requirement_2",
-            "description": "State the reservation time."
+            "description": "Nêu giờ đặt chỗ."
           },
           {
             "id": "requirement_3",
-            "description": "State the number of guests. Do not require an alternative time that was not asked for."
+            "description": "Nêu số khách. Không yêu cầu giờ thay thế nếu câu hỏi không hỏi."
           }
         ]
       }
@@ -216,11 +216,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Describe the work steps in the order supported by the canonical context. Equivalent wording is valid."
+            "description": "Mô tả các bước làm việc theo thứ tự mà ngữ cảnh nguồn cung cấp. Chấp nhận cách diễn đạt tương đương."
           },
           {
             "id": "requirement_2",
-            "description": "Explain how you would ask for help if something is unclear."
+            "description": "Giải thích cách em sẽ nhờ giúp khi chưa hiểu."
           }
         ]
       }
@@ -231,11 +231,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "State how many days per week you can work, or explicitly state that availability is not yet known."
+            "description": "Nêu số ngày có thể làm mỗi tuần hoặc nói rõ rằng chưa biết lịch có thể làm."
           },
           {
             "id": "requirement_2",
-            "description": "Address weekend availability; accept any truthful yes/no/limited availability."
+            "description": "Trả lời về khả năng làm cuối tuần; chấp nhận có, không hoặc thời gian giới hạn đúng với hoàn cảnh em nêu."
           }
         ]
       }
@@ -246,11 +246,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Describe the malfunction or observed symptoms without asserting an unknown cause as fact."
+            "description": "Mô tả sự cố hoặc biểu hiện quan sát được, không khẳng định nguyên nhân chưa biết như một sự thật."
           },
           {
             "id": "requirement_2",
-            "description": "Propose or communicate an acceptable repair visit time."
+            "description": "Đề xuất hoặc nêu thời gian phù hợp để đến sửa chữa."
           }
         ]
       }
@@ -261,11 +261,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Describe an independent verification route rather than trusting links or claims in the email."
+            "description": "Nêu cách xác minh độc lập thay vì tin ngay liên kết hoặc lời khẳng định trong email."
           },
           {
             "id": "requirement_2",
-            "description": "Do not offer to disclose passwords or sensitive credentials as verification."
+            "description": "Không đề nghị cung cấp mật khẩu hoặc thông tin đăng nhập nhạy cảm để xác minh."
           }
         ]
       }
@@ -276,11 +276,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Explain the response order supported by the canonical context, including reporting the shortage before unauthorized ordering."
+            "description": "Giải thích thứ tự xử lý theo ngữ cảnh nguồn, bao gồm báo thiếu hàng trước khi tự ý đặt hàng."
           },
           {
             "id": "requirement_2",
-            "description": "Explain what happens when stock is insufficient."
+            "description": "Giải thích cách xử lý khi không đủ hàng tồn kho."
           }
         ]
       }
@@ -291,11 +291,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Describe past experience; having no prior experience is a valid truthful answer. Do not verify personal biography against invented facts."
+            "description": "Mô tả kinh nghiệm trước đây; chưa có kinh nghiệm cũng là câu trả lời trung thực hợp lệ. Không đối chiếu tiểu sử cá nhân với dữ kiện bịa đặt."
           },
           {
             "id": "requirement_2",
-            "description": "Describe a concrete ability or improvement you have gained. Do not require an unasked future goal."
+            "description": "Mô tả một khả năng cụ thể hoặc tiến bộ em đã đạt được. Không bắt buộc mục tiêu tương lai mà câu hỏi không yêu cầu."
           }
         ]
       }
@@ -306,11 +306,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Describe both exception conditions accurately from the canonical context."
+            "description": "Mô tả chính xác cả hai điều kiện ngoại lệ theo ngữ cảnh nguồn."
           },
           {
             "id": "requirement_2",
-            "description": "Do not invent broader eligibility or extension rights not supported by the policy. Do not require the effective date unless needed to answer the question."
+            "description": "Không tự mở rộng điều kiện được áp dụng hoặc quyền gia hạn ngoài quy định. Không bắt buộc ngày có hiệu lực nếu không cần để trả lời câu hỏi."
           }
         ]
       }
@@ -321,11 +321,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Clearly choose a printing company."
+            "description": "Chọn rõ một công ty in."
           },
           {
             "id": "requirement_2",
-            "description": "Support the choice with the canonical numerical cost and timing information relevant to the decision."
+            "description": "Giải thích lựa chọn bằng số liệu về chi phí và thời gian trong nguồn có liên quan đến quyết định."
           }
         ]
       }
@@ -336,11 +336,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Evaluate at least one benefit of reducing meetings."
+            "description": "Đánh giá ít nhất một lợi ích của việc giảm số cuộc họp."
           },
           {
             "id": "requirement_2",
-            "description": "Evaluate at least one risk, distinguishing expected effects from established facts."
+            "description": "Đánh giá ít nhất một rủi ro, phân biệt tác động dự kiến với sự thật đã được xác lập."
           }
         ]
       }
@@ -351,11 +351,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Explain how common procedures and exceptional support can coexist using the canonical text."
+            "description": "Dựa vào văn bản nguồn để giải thích cách thủ tục chung và hỗ trợ ngoại lệ có thể cùng tồn tại."
           },
           {
             "id": "requirement_2",
-            "description": "Preserve the text’s distinctions and qualify inferences; do not turn an example into a universal conclusion."
+            "description": "Giữ đúng các phân biệt trong bài và nêu rõ đâu là suy luận; không biến một ví dụ thành kết luận áp dụng cho mọi trường hợp."
           }
         ]
       }
@@ -366,11 +366,11 @@
         "requirements": [
           {
             "id": "requirement_1",
-            "description": "Explain the two speakers’ common position about training evaluation."
+            "description": "Giải thích điểm chung trong quan điểm của hai người về đánh giá đào tạo."
           },
           {
             "id": "requirement_2",
-            "description": "Explain their differences while attributing claims to the correct speaker. Do not require an additional proposal not requested by the question."
+            "description": "Giải thích điểm khác biệt và gắn mỗi ý kiến với đúng người nói. Không bắt buộc đề xuất thêm nếu câu hỏi không yêu cầu."
           }
         ]
       }

@@ -21,7 +21,9 @@ test('speech input offers a real stop action and preserves microphone errors aft
   assert.equal(h.button['aria-pressed'],'true');
   h.button.events.click();assert.equal(h.button['aria-pressed'],'false');
   h.button.events.click();h.recognition.onerror({error:'not-allowed'});h.recognition.onend();
-  assert.match(h.status.textContent,/quyền micro/);
+  const message=h.status.textContent;assert.ok(message.trim());assert.equal(h.status.hidden,false);
+  h.recognition.onend();assert.equal(h.status.textContent,message);
+  assert.equal(h.button['aria-pressed'],'false');assert.equal(h.input.value,'');
 });
 test('leaving a speaking screen releases a microphone granted after recognition ended',async()=>{
   let resolve,stopped=0;

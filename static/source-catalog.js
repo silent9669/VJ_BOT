@@ -6,7 +6,7 @@ const sourceRetry=document.getElementById('source-retry');
 let sourceLessons=[];
 function renderSources(){
   const query=sourceSearch.value.trim().toLocaleLowerCase();
-  const lessons=sourceLessons.filter(l=>l.book===bookPicker.value && `${l.number} ${l.title}`.toLocaleLowerCase().includes(query));
+  const lessons=sourceLessons.filter(l=>l.book===bookPicker.value && `${l.number} ${l.title} ${l.sourceTitle} ${(l.resources || []).map(resource=>`${resource.title} ${resource.sourceTitle}`).join(' ')}`.toLocaleLowerCase().includes(query));
   sourceList.replaceChildren();
   sourceCount.textContent=lessons.length?`${lessons.length} bài`:'Không tìm thấy bài. Thử tên hoặc số bài khác.';
   for(const lesson of lessons){
@@ -17,14 +17,21 @@ function renderSources(){
       if(!url)continue;
       const link=document.createElement('a');link.textContent=label;link.href=url;link.target='_blank';link.rel='noopener';link.setAttribute('aria-label',`${label} · ${lesson.title}`);links.append(link);
     }
-    row.append(title,links);sourceList.append(row);
+    row.append(title);
+    if(lesson.sourceTitle!==lesson.title){const original=document.createElement('p');original.textContent=lesson.sourceTitle;row.append(original);}
+    row.append(links);sourceList.append(row);
     row.addEventListener('toggle',()=>{if(row.open)for(const other of sourceList.children)if(other!==row)other.open=false;});
   }
 }
 async function loadSources(){
   sourceRetry.hidden=true;sourceCount.textContent='Đang tải tài liệu…';
   try{
-    const [data,erin,jlpt]=await Promise.all(['sources','erin-resources','jlpt-resources'].map(async name=>{const response=await fetch(`course/${name}.json`);if(!response.ok)throw new Error('sources');return response.json();}));sourceLessons=[...data.lessons,...erin.lessons,...['2018','2012'].flatMap(year=>['N5','N4','N3','N2','N1'].map(level=>({book:`jlpt-${year}`,title:`JLPT ${level} · ${year}`,number:level,resources:jlpt.resources.filter(r=>r.year===year && r.level===level)})))];
+    const [data,erin,jlpt,dict]=await Promise.all([
+      ...['sources','erin-resources','jlpt-resources'].map(async name=>{const response=await fetch(`course/${name}.json`);if(!response.ok)throw new Error('sources');return response.json();}),
+      loadViDict()
+    ]);
+    sourceLessons=[...data.lessons,...erin.lessons,...['2018','2012'].flatMap(year=>['N5','N4','N3','N2','N1'].map(level=>({book:`jlpt-${year}`,title:`JLPT ${level} · ${year}`,number:level,resources:jlpt.resources.filter(r=>r.year===year && r.level===level)})))]
+      .map(lesson=>({...viResource(lesson,dict),...(lesson.resources?{resources:lesson.resources.map(resource=>viResource(resource,dict))}:{})}));
     document.getElementById('source-date').textContent=`Cập nhật nguồn: ${new Date(data.retrieved_at).toLocaleDateString('vi-VN')} · ${data.lessons.length} bài Irodori · ${erin.lessons.length} bài Erin · ${jlpt.resources.length} tài liệu JLPT.`;
     renderSources();
   }catch{sourceCount.textContent='Chưa tải được danh mục tài liệu.';sourceRetry.hidden=false;}
@@ -102,16 +109,17 @@ function renderLearningPassages(){
   const found=learningPassages.filter(passage=>`${passage.id} ${passage.source_name} ${passage.title} ${passage.text}`.normalize('NFKC').toLowerCase().includes(query));
   const rows=found.slice(0,20).map(passage=>{
     const row=document.createElement('details');row.className='source-notes';
-    const title=document.createElement('summary');title.textContent=`Nguồn: ${passage.source_name} [${passage.id}] · ${passage.title}`;
+    const title=document.createElement('summary');title.textContent=`${passage.source_name} · ${passage.title}`;
+    const identifier=document.createElement('p');identifier.textContent=`Mã đoạn: ${passage.id}`;
     const link=learningSourceLink('Mở tài liệu gốc',passage.url,learningSourceHosts[passage.source_id]);
     const text=document.createElement('p');text.textContent=passage.text;
-    row.append(title,link,text);return row;
+    row.append(title,identifier,link,text);return row;
   });
   corpusList.replaceChildren(...rows);
-  corpusCount.textContent=`${found.length} đoạn khớp · hiển thị ${rows.length}. Mã nguồn ở đầu mỗi đoạn và câu trả lời RAG; nội dung chưa được duyệt sư phạm.`;
+  corpusCount.textContent=`${found.length} đoạn phù hợp · đang hiển thị ${rows.length}. Mở từng đoạn để xem nguồn gốc và mã tra cứu. Nội dung chưa được giáo viên duyệt.`;
 }
 async function loadLearningCorpus(){
-  corpusRetry.hidden=true;corpusCount.textContent='Đang tải corpus có ghi nguồn…';
+  corpusRetry.hidden=true;corpusCount.textContent='Đang tải tài liệu tham khảo…';
   try{
     const response=await fetch('course/learning-corpus.json');
     if(!response.ok)throw new Error('corpus unavailable');
@@ -129,7 +137,7 @@ async function loadLearningCorpus(){
     renderLearningPassages();
   }catch{
     learningPassages=[];corpusList.replaceChildren();
-    corpusCount.textContent='Chưa tải được corpus RAG. Không coi lỗi tải là corpus rỗng; danh mục liên kết vẫn hoạt động riêng.';
+    corpusCount.textContent='Chưa tải được tài liệu tham khảo. Em thử tải lại nhé; danh mục liên kết vẫn mở riêng được.';
     corpusRetry.hidden=false;
   }
 }

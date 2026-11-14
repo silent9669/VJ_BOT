@@ -185,11 +185,11 @@
             "Lập luận: thừa nhận lợi ích đang được kỳ vọng mà không biến nó thành số liệu đã đo; bác bước suy từ thống nhất ra tối ưu cho tất cả, không bác mọi giá trị của thống nhất.",
             "Thiết kế mở: tự chọn hỗ trợ/thử, nêu ai được dùng và theo điều kiện nào; giữ chung điều kiện thành viên và giới hạn mượn, không mở quyền tùy tiện cho người xử lý.",
             "Kiểm chứng: cách ghi nhận đủ cụ thể để thấy người hoàn tất lẫn người còn khó, không chỉ một trung bình che nhóm nhỏ; tự nêu một giới hạn mà phép ghi chưa giải quyết.",
-            "Ngôn ngữ: lượng từ, phủ định và mức chắc chắn nhất quán giữa tiền đề và kết luận; người đọc hiểu ai kỳ vọng, ai đề nghị, việc gì chưa quyết định. Không yêu cầu thuộc một mẫu câu hoặc đủ từ khóa.",
-            "Giao tiếp/tự kiểm: tách dữ kiện, khả năng và đề nghị trong lời mình; giọng góp ý phù hợp nhóm, chính tả được nhận xét riêng, tự kiểm không là phê duyệt nghĩa/ngữ pháp."
+            "Ngôn ngữ: lượng từ, phủ định và mức chắc chắn nhất quán giữa tiền đề và kết luận; người đọc hiểu ai kỳ vọng, ai đề nghị, việc gì chưa quyết định. Em chọn cách diễn đạt phù hợp lập luận của mình.",
+            "Giao tiếp/tự kiểm: tách dữ kiện, khả năng và đề nghị trong lời mình; giọng góp ý phù hợp nhóm. Thầy góp ý chữ viết riêng với nghĩa và cách ghép câu."
           ],
           "exchange": { "group": "n1-argument-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
-          "rationale": "Lưu nguyên văn ý kiến tự chọn dưới dạng chưa được đánh giá; không có câu mẫu hoặc chấm đúng bằng từ khóa. Góp ý AI cần chỉ ra quan hệ trong văn bản thật và nói rõ điểm chưa chắc, không xác nhận phương án đã thực thi.",
+          "rationale": "Em tự chọn phương án hỗ trợ và giải thích lý do. Thầy giúp em xem từng kết luận có được điều kiện và bằng chứng trong bài hỗ trợ không; góp ý AI chưa có nghĩa là phương án đã được thực hiện hay chứng minh hiệu quả.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -205,10 +205,10 @@
             "Phản biện: khả năng tự chọn được xét bằng cơ chế cụ thể trong thiết kế, không kết luận rằng rủi ro chắc chắn đã xảy ra.",
             "Sửa/giữ có lý do: giải thích gắn với phạm vi đối tượng, điều kiện hoặc mức bằng chứng của câu thật; cho phép giữ nguyên nếu đã có giới hạn phù hợp.",
             "Nhất quán: không vô tình bỏ tiêu chuẩn chung hay coi hỗ trợ bảo đảm hết khó khăn cho tất cả; giữ vai đề nghị chưa thông qua và nguồn phát ngôn rõ.",
-            "Bằng chứng: hai lượt nguyên văn phải còn riêng; nhận xét AI hoặc lời tự kiểm không tạo dữ liệu về người dùng, không chứng nhận năng lực lập luận."
+            "Em giải thích thay đổi bằng chính ý kiến đã viết, không tự thêm dữ liệu về người sử dụng. Góp ý AI và lời tự kiểm chưa chứng minh phương án sẽ có hiệu quả."
           ],
           "exchange": { "group": "n1-argument-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N1:argument:task:5"] },
-          "rationale": "Yêu cầu biên tập tĩnh, không giả vờ có đối tác thích ứng hoặc đã phát hiện lỗi cá nhân. Chỉ đọc bản thật mới xem được người học giới hạn luận điểm ra sao; lưu riêng bản sửa/lý do, không ghi đè bài đầu.",
+          "rationale": "Hai khả năng biên tập là câu hỏi chung để em xem lại thiết kế, không phải lỗi đã được phát hiện trong bài. Thầy đối chiếu đoạn mới với ý kiến ban đầu, giúp em làm rõ phạm vi kết luận và lý do sửa hoặc giữ.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -224,10 +224,10 @@
             "Phạm vi: giữ chuẩn năm sáng tác/tên tác giả chung, phân biệt mục tiêu giảm chênh lệch lượng thông tin với kết luận tối ưu cho tất cả; không đổi ý kiến về khả năng thành dữ kiện quan sát.",
             "Thiết kế: phương án và điều kiện do người học tự chọn có thể thực hiện trong cảnh; cách nghe thử xem được hai nhóm nhu cầu thay vì chỉ nêu khẩu hiệu 'hỗ trợ mọi người'.",
             "Giới hạn: nêu điều phép thử chưa chứng minh, giữ lượng từ/phủ định tương ứng và trạng thái chưa quyết định; không phủ định sạch mọi giá trị của phương án đồng đều.",
-            "Bằng chứng: nguyên văn mới và trợ giúp thực tế mới hỗ trợ nhận xét. Tiêu chí tự kiểm/AI tư vấn hay đủ 24 giờ không chứng minh chuyển giao, ghi nhớ tự lực hoặc chất lượng triển lãm."
+            "Em thử tự viết góp ý mới và chỉ ra căn cứ cho lời mình. Thầy giúp em xem chỗ còn cần làm rõ; bài viết và nhận xét AI chưa cho biết em đã nhớ lâu hoặc triển lãm có chất lượng ra sao."
           ],
           "exchange": { "group": "n1-argument-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N1:argument:task:5", "teaching:v1:N1:argument:task:6"], "delay_hours": 24 },
-          "rationale": "Đổi vai, mục đích và loại tiêu chuẩn; bối cảnh mới đầy đủ, không mang theo bài/đáp án cũ. Giữ riêng nguyên văn chưa chấm để con người xem lập luận, không dùng từ vựng nâng cao làm bằng chứng ngữ nghĩa.",
+          "rationale": "Em lập luận về cách tổ chức âm thanh trong bối cảnh triển lãm mới, không xem bài mượn dụng cụ cũ hay lời giải. Thầy góp ý cách nối căn cứ với kết luận; dùng từ khó không thay cho việc giải thích rõ.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         }
@@ -409,10 +409,10 @@
             "Thiết kế mở: ít nhất hai chỉ số đầu kỳ có định nghĩa không trùng nhau, một loại trường hợp về sau và mốc cụ thể tự chọn; người khác hiểu sẽ ghi gì vào lúc nào.",
             "Tổng hợp: giải thích mỗi phần đáp ứng yêu cầu nào, không chỉ ghép danh từ; mốc cụ thể và phương pháp được đánh dấu là đề nghị mới, không giả làm đồng thuận đã thông qua.",
             "Giới hạn: không có số liệu thực hiện trong cảnh, không kết luận mọi người đã tiến bộ hoặc đào tạo là nguyên nhân duy nhất; điểm giao không xóa khác biệt.",
-            "Ngôn ngữ/tự kiểm: nguồn phát ngôn, thời và mức chắc chắn rõ, cách tường thuật nhất quán; góp ý chính tả riêng, không dùng sự có mặt mẫu câu/từ khóa để chấm nghĩa."
+            "Ngôn ngữ/tự kiểm: nguồn phát ngôn, thời và mức chắc chắn rõ, cách tường thuật nhất quán. Thầy góp ý chữ viết riêng với việc em có giữ đúng hai lập trường và giải thích được đề nghị của mình không."
           ],
           "exchange": { "group": "n1-synthesis-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
-          "rationale": "Lưu nguyên văn tổng hợp và thiết kế chưa chấm qua nhiệm vụ viết hiện có. Có nhiều kế hoạch hợp lý, không có câu mẫu; AI chỉ tư vấn việc giữ lập trường và giới hạn, không chứng nhận đào tạo có hiệu quả.",
+          "rationale": "Em có thể thiết kế nhiều kế hoạch hợp lý nếu giải thích chúng đáp ứng hai lập trường thế nào. AI chỉ góp ý cách tổng hợp và giới hạn kết luận, không xác nhận đào tạo có hiệu quả.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -428,10 +428,10 @@
             "Ranh giới: chỉ ra phần nào căn cứ ở lời A/B, phần nào là suy điểm giao và phần nào là thiết kế mới; không viết rằng hai người đã đồng ý mốc/đại lượng tự chọn.",
             "Hiệu đính: đoạn mới hoặc lý do giữ giải quyết được một phạm vi cụ thể trong câu thật, không chỉ thêm từ 'có thể' vào mọi câu.",
             "Giới hạn: nói rõ một điều các phép đo/trường hợp thực sự đã đề nghị chưa chứng minh, không tự thêm dữ liệu hoặc biến mục tiêu thành cải thiện đã quan sát.",
-            "Bằng chứng/giao tiếp: bản đầu và bản sửa/lý do mới lưu riêng, giọng tổng hợp công bằng với hai bên; AI tư vấn không thay được người đọc kiểm tra nghĩa và cấu trúc."
+            "Em nói rõ chỗ đã sửa hoặc lý do giữ câu, đồng thời trình bày công bằng với cả hai bên. Thầy giúp em kiểm tra nghĩa và cách ghép câu; góp ý AI chỉ để tham khảo."
           ],
           "exchange": { "group": "n1-synthesis-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N1:synthesis:task:5"] },
-          "rationale": "Biên tập dựa trên văn bản thật, không giả có phản hồi cá nhân thích ứng hay A/B chấp thuận. Giữ nguyên văn từng lượt chưa chấm để xem người học làm rõ nguồn và giới hạn ra sao.",
+          "rationale": "Em biên tập chính bản tổng hợp đã viết để làm rõ đâu là ý A/B, đâu là cách làm em đề nghị. Câu hỏi chung này không phải phản hồi riêng của A/B và không cho biết họ đã chấp thuận kế hoạch.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -447,10 +447,10 @@
             "Nguồn: C cần nhiều số nhưng không coi chỉ tác phẩm đông người mới có giá trị; D chấp nhận ghi số và muốn bổ sung cảm tưởng muộn; có điểm giao không đồng nghĩa hoàn toàn cùng trọng tâm.",
             "Thiết kế: cách kết hợp đầu kỳ/về sau đủ cụ thể, loại cảm tưởng và mốc sau hai tuần do người học tự chọn ghi là đề xuất; không tự đổi 数週間後 của D thành mốc cố định vốn đã nói.",
             "Giới hạn: giải thích tác dụng của từng loại căn cứ, tách số lượt khỏi mọi người nghe và cảm tưởng tự gửi khỏi toàn bộ khán giả; không kết luận nguyên nhân hoặc hiệu quả phổ quát khi chưa có dữ liệu.",
-            "Bằng chứng: giữ nguyên văn mới và trợ giúp đã dùng. Tự kiểm và AI chỉ tư vấn, không tự chấm ý nghĩa hoặc chứng minh ghi nhớ/chuyển giao bằng lịch ôn."
+            "Em thử tự viết bản tổng hợp mới và chỉ ra căn cứ cho lời mình. Thầy giúp em xem chỗ còn cần ôn; một bài làm và góp ý AI chưa cho biết em đã nhớ chắc hoặc dùng được cách tổng hợp ở mọi hoàn cảnh."
           ],
           "exchange": { "group": "n1-synthesis-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N1:synthesis:task:5", "teaching:v1:N1:synthesis:task:6"], "delay_hours": 24 },
-          "rationale": "Lượt giữ lại có đủ hai lập trường mới và vai/mục tiêu mới, không kèm văn bản học hoặc lời giải cũ. Lưu đáp án mới chưa đánh giá; người đọc cần xem nguyên văn để đánh giá giới hạn, không đếm mẫu nâng cao.",
+          "rationale": "Em tổng hợp hai lập trường mới cho nhóm làm chương trình âm thanh, không xem bản học cũ hay lời giải. Thầy giúp em xem cách ghi số liệu và cảm tưởng có hỗ trợ đúng mức kết luận em nêu không.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         }

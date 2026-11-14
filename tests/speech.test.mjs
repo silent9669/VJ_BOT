@@ -70,20 +70,28 @@ test('a Japanese-only button with no Japanese does not send an empty or foreign 
 });
 
 test('provider errors remain visible and do not silently switch the learner to another voice', async () => {
-  const s = speech(async () => Response.json({detail:'Add a Google Gemini API key in Settings.'}, {status:403}));
+  const detail = 'Add a Google Gemini API key in Settings.';
+  let requests = 0;
+  const s = speech(async () => {requests++; return Response.json({detail}, {status:403});});
   await s.context.playGeminiTTS('こんにちは。');
   assert.equal(s.audios.length, 0);
   assert.equal(s.visible(), true);
-  assert.equal(s.status(), 'Add a Google Gemini API key in Settings.');
+  assert.match(s.status(), /chưa phát.*âm thanh/i);
+  assert.ok(s.status().includes(detail));
+  assert.equal(requests, 1);
   s.context.stopSpeech();
   assert.equal(s.visible(), false);
 });
 
 test('missing audio is an error rather than a successful browser-voice fallback', async () => {
-  const s = speech(async () => Response.json({fallback:true}));
+  let requests = 0;
+  const s = speech(async () => {requests++; return Response.json({fallback:true});});
   await s.context.playGeminiTTS('こんにちは。');
   assert.equal(s.audios.length, 0);
-  assert.equal(s.status(), 'Không nhận được âm thanh giọng nói.');
+  assert.equal(s.visible(), true);
+  assert.match(s.status(), /chưa phát.*âm thanh/i);
+  assert.match(s.status(), /không nhận được âm thanh/i);
+  assert.equal(requests, 1);
 });
 
 test('the latest click aborts old work and ignores a late response even if cancellation is ignored', async () => {

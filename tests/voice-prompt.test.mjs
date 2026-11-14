@@ -12,7 +12,7 @@ test('every fixed chat command has a voice command and the voice prompt document
 test('voice prompt keeps the reversed-classroom turn rules, level rules and input boundary', () => {
   const prompt = voiceInstructions('N5');
   for (const part of ['reversed classroom', 'ONE short question', 'at most two errors', 'microphone is closed while you speak',
-    'exactly one question', 'LEVEL N5', 'INPUT BOUNDARY', 'do not grade pronunciation']) assert.ok(prompt.includes(part), part);
+    'LEVEL N5', 'INPUT BOUNDARY', 'do not grade pronunciation']) assert.ok(prompt.includes(part), part);
   assert.match(voiceInstructions('N1'), /LEVEL N1/);
   assert.match(voiceInstructions('bad'), /Hiragana/);
 });

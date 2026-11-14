@@ -2,7 +2,7 @@ import {cleanScreen, learnerSnapshot, parseTutorReply, reversedPrompt, tutorSche
 import {askAI} from './providers.js';
 import {catalogLesson, chatEnvelope, conversationScope, groundLesson, processingAllowed, resolveTaskReference, teacherCatalog, validFocusReference, validLessonReference, validTaskReference} from './tutor-context.js';
 import {claimTutorRequest, claimTutorScope, commitTutorTurn, nextTeachingState, releaseTutorClaim, renewTutorClaim, requestFingerprint, validTutorIntent} from './tutor-session.js';
-import {attributedReply, learningBoundary, learningQuery, retrieveLearning} from './learning-rag.js';
+import {learningBoundary, learningQuery, retrieveLearning} from './learning-rag.js';
 
 const LEVELS = new Set(['N5', 'N4', 'N3', 'N2', 'N1']);
 const json = (value, status = 200) => Response.json(value, {status, headers: {'Cache-Control': 'no-store'}});
@@ -12,14 +12,14 @@ async function resolveRequest(env, body) {
   const message = (body.message || '').trim();
   const intent = body.intent ?? (body.type === 'greeting' || !message ? 'start' : 'message');
   const requestId = body.request_id ?? crypto.randomUUID();
-  if (!validTutorIntent(intent)) return {response: failure('Thao tác với thầy không hợp lệ.')};
-  if (typeof requestId !== 'string' || !/^[a-f0-9-]{36}$/.test(requestId)) return {response: failure('Mã yêu cầu không hợp lệ.')};
+  if (!validTutorIntent(intent)) return {response: failure('Chưa gửi được câu hỏi. Em mở lại cuộc trò chuyện nhé.')};
+  if (typeof requestId !== 'string' || !/^[a-f0-9-]{36}$/.test(requestId)) return {response: failure('Chưa gửi được câu hỏi. Em mở lại cuộc trò chuyện nhé.')};
   const suppliedLesson = body.lesson ?? null, suppliedFocus = body.focus ?? null;
-  if (suppliedLesson !== null && !validLessonReference(suppliedLesson)) return {response: failure('Tham chiếu bài học không hợp lệ.')};
-  if (suppliedFocus !== null && (!suppliedLesson || !validFocusReference(suppliedFocus))) return {response: failure('Mục đang xem của bài học không hợp lệ.')};
+  if (suppliedLesson !== null && !validLessonReference(suppliedLesson)) return {response: failure('Chưa xác định được bài em đang hỏi. Em mở lại bài nhé.')};
+  if (suppliedFocus !== null && (!suppliedLesson || !validFocusReference(suppliedFocus))) return {response: failure('Em mở lại đúng câu muốn hỏi nhé.')};
   if (body.view !== undefined && (!['checks', 'exam'].includes(body.view) || !suppliedLesson)
-    || body.view === 'exam' && suppliedFocus?.kind !== 'question') return {response: failure('Màn hình bài học không hợp lệ.')};
-  if(body.task !== undefined && !validTaskReference(body.task))return {response:failure('Tham chiếu bài tập không hợp lệ.')};
+    || body.view === 'exam' && suppliedFocus?.kind !== 'question') return {response: failure('Em mở lại đúng câu muốn hỏi nhé.')};
+  if(body.task !== undefined && !validTaskReference(body.task))return {response:failure('Em mở lại đúng câu muốn hỏi nhé.')};
   const reference = suppliedLesson ? {id: suppliedLesson.id, level: suppliedLesson.level} : null;
   const focus = suppliedFocus ? {kind: suppliedFocus.kind, index: suppliedFocus.index} : null;
   const focusSpecified = Object.hasOwn(body, 'focus');
@@ -27,17 +27,17 @@ async function resolveRequest(env, body) {
   // either selector may continue the canonical item and view already in this session.
   const view = body.view ?? (focus ? 'checks' : null);
   const screen = cleanScreen(body.screen);
-  if (body.screen != null && !screen) return {response: failure('Ngữ cảnh màn hình không hợp lệ.')};
+  if (body.screen != null && !screen) return {response: failure('Chưa xác định được phần em đang xem. Em mở lại bài nhé.')};
   const channel = body.channel || 'chat';
-  if (!['chat', 'quick'].includes(channel)) return {response: failure('Kênh chat không hợp lệ.')};
+  if (!['chat', 'quick'].includes(channel)) return {response: failure('Chưa gửi được câu hỏi. Em mở lại cuộc trò chuyện nhé.')};
   const profile = await env.DB.prepare('SELECT level FROM profiles WHERE user_id=?').bind(body.user_id).first();
   const level = reference?.level || screen?.level || (LEVELS.has(profile?.level) ? profile.level : 'N5');
   const catalog = await teacherCatalog(env, level);
-  if (!catalog) return {response: failure('Chưa tải được danh mục bài học. Hãy thử lại sau.', 503)};
+  if (!catalog) return {response: failure('Chưa tải được bài. Em thử lại nhé.', 503)};
   const lesson = reference ? catalogLesson(catalog, reference) : null;
-  if (reference && !lesson) return {response: failure('Không tìm thấy bài học.')};
-  if(lesson && !processingAllowed(lesson))return {response:failure('Nguồn này không được phép gửi cho nhà cung cấp AI xử lý.',409)};
-  if (focus && !groundLesson(lesson, focus, view)) return {response: failure('Mục đã chọn không thuộc bài học này.')};
+  if (reference && !lesson) return {response: failure('Chưa tìm thấy bài này. Em chọn lại bài nhé.')};
+  if(lesson && !processingAllowed(lesson))return {response:failure('Tài liệu này hiện không được dùng để nhờ AI giải thích. Em chọn tài liệu khác nhé.',409)};
+  if (focus && !groundLesson(lesson, focus, view)) return {response: failure('Em mở lại đúng câu muốn hỏi nhé.')};
   const scope = conversationScope(channel, lesson, screen);
   const resolved={message,intent,requestId,reference,focus,focusSpecified,view,screen,level,catalog,lesson,scope,task:body.task};
   // Resolve omitted selectors against read-only session state before claiming/writing anything.
@@ -49,7 +49,7 @@ async function resolveRequest(env, body) {
     const selected=resolveTaskReference(lesson,current.focus,current.view,body.task,'hint');
     if(selected.error)return {response:failure(selected.error,selected.status)};
     resolved.task=selected.reference;
-  } else if(body.task !== undefined)return {response:failure('Tham chiếu bài tập cần gắn với một câu hỏi cụ thể.')};
+  } else if(body.task !== undefined)return {response:failure('Em chọn câu hỏi muốn nhờ thầy giúp nhé.')};
   return resolved;
 }
 
@@ -78,7 +78,7 @@ async function generateTurn(env, userId, request, session, token) {
     if(selected.error)return {response:failure(selected.error,selected.status)};
   }
   const lesson = request.lesson ? groundLesson(request.lesson, focus, view) : null;
-  if (request.lesson && !lesson) return {response: failure('Bài học đã đổi. Hãy chọn lại mục.', 409)};
+  if (request.lesson && !lesson) return {response: failure('Bài học đã đổi. Em chọn lại mục nhé.', 409)};
   const {history, historyAfter} = await dialogue(env, userId, request.scope, session, request.intent === 'restart' || changed);
   const learner = focus?.kind==='question'?{context:'task_only'}:await learnerSnapshot(env, userId, request.level, request.catalog);
   const teaching = {intent: request.intent, state: previous,
@@ -88,7 +88,7 @@ async function generateTurn(env, userId, request, session, token) {
   });
   const envelope = JSON.parse(chatEnvelope(request.message, lesson, request.screen, learner, history, teaching));
   envelope.reference.learning_retrieval = retrieval;
-  if(JSON.stringify(envelope).length>16000)return {response:failure('Hãy chọn một từ, một ví dụ hoặc một câu hỏi cụ thể để thầy giảng.',413)};
+  if(JSON.stringify(envelope).length>16000)return {response:failure('Em chọn một từ, một ví dụ hoặc một câu hỏi cụ thể để thầy giải thích nhé.',413)};
   const asked = await askAI(env, userId, {
     system: reversedPrompt(request.level, history.length) + '\n' + learningBoundary
       +(focus?.kind==='question'?'\nThis is a pre-answer canonical task. Offer only a small strategy or clarification. Never solve it, name the correct option, eliminate choices, reveal a transcript or accepted answers, or claim the source key is reviewed. No overview or examples are available as task evidence.':''),
@@ -97,9 +97,7 @@ async function generateTurn(env, userId, request, session, token) {
   }, request.override, request.profileId, {beforeGeneration: () => renewTutorClaim(env, userId, request.scope, request.requestId, token)});
   if (asked.response) return {response: asked.response};
   const result = parseTutorReply(asked.text, {intent: request.intent, previous});
-  if (!result) return {response: failure('Thầy trả về nội dung chưa đầy đủ hoặc không hợp lệ. Hãy thử lại.', 503)};
-  result.reply = attributedReply(result.reply, retrieval);
-  if(!result.reply)return {response:failure('Lời giảng kèm nguồn vượt giới hạn độ dài. Hãy thử lại.',503)};
+  if (!result) return {response: failure('Chưa nhận được lời giải thích đầy đủ. Em thử lại nhé.', 503)};
   const state = nextTeachingState(previous, result, request.intent, request.lesson, focus);
   if (view === 'exam') state.view = view;
   if(request.task)state.task=request.task;
@@ -109,7 +107,7 @@ async function generateTurn(env, userId, request, session, token) {
 export async function tutorChat(request, env) {
   const body = await request.json(), userId = body.user_id;
   const profileId = request.headers.get('X-VJBot-Profile') ?? undefined;
-  if (!userId) return failure('user_id required');
+  if (!userId) return failure('Em đăng nhập lại để tiếp tục nhé.');
   const resolved = await resolveRequest(env, body);
   if (resolved.response) return resolved.response;
   const {scope, requestId, lesson, intent, message, reference, focus, focusSpecified, view} = resolved;
@@ -124,12 +122,12 @@ export async function tutorChat(request, env) {
   if (claim.cached !== undefined) return json({reply: claim.cached, response: claim.cached,...(resolved.task?{task:resolved.task}:{})});
   try {
     const session = await claimTutorScope(env, userId, scope, claim.token);
-    if (!session) return failure('Một tin nhắn khác trong cuộc trò chuyện đang được trả lời. Hãy thử lại.', 409);
+    if (!session) return failure('Thầy đang trả lời câu trước. Em chờ một chút nhé.', 409);
     const generated = await generateTurn(env, userId, {...resolved, override: body.api_connection, profileId}, session, claim.token);
     if (generated.response) return generated.response;
     const reply = await commitTutorTurn(env, {userId, scope, requestId, token: claim.token, message, reply: generated.result.reply,
       state: generated.state, historyAfter: generated.historyAfter});
-    if (reply === null) return failure('Cuộc trò chuyện đã đổi trước khi câu trả lời hoàn tất. Hãy gửi tin nhắn mới.', 409);
+    if (reply === null) return failure('Cuộc trò chuyện đã đổi. Em gửi lại câu hỏi nhé.', 409);
     return json({reply, response: reply,...(resolved.task?{task:resolved.task}:{}), updated_topic: lesson ? {id: lesson.id, level: resolved.level, display: lesson.title, meaning_en: lesson.goal} : null});
   } finally {
     await releaseTutorClaim(env, userId, scope, requestId, claim.token);

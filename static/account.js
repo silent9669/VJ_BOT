@@ -56,11 +56,14 @@ async function apiFetch(path,options={}) {
       return Response.json({detail:'Quyền dùng AI đã đổi. Hãy gửi lại yêu cầu.',code:'api_profile_unavailable'},{status:409});
     const headers=new Headers(prepared.headers);
     headers.set('X-VJBot-Account',owner);
-    const response=await fetch(path,{...prepared,headers});
+    const response=await fetch(path,{...prepared,headers}).catch(error=>{
+      if(error.name==='TypeError')throw Object.assign(new Error('Không kết nối được với máy chủ. Kiểm tra mạng rồi thử lại; yêu cầu không được tự động gửi lại.'),{userFacing:true});
+      throw error;
+    });
     if(response.status===401){signedInUser=null;accountUnavailable=true;renderAccount();window.handleSessionExpired?.();openAccount('Phiên đăng nhập đã hết hạn. Đăng nhập lại để lưu tiến độ.');}
     return response;
   }
-  if(accountUnavailable){openAccount('Kết nối lại tài khoản trước khi lưu tiến độ.');return Response.json({detail:'Tài khoản chưa sẵn sàng.'},{status:503});}
+  if(accountUnavailable){openAccount('Chưa kiểm tra được phiên đăng nhập. Em tải lại trang hoặc đăng nhập lại nhé.');return Response.json({detail:'Tài khoản chưa sẵn sàng.'},{status:503});}
   openAccount('Đăng nhập để học và lưu tiến độ.');
   return Response.json({detail:'Cần đăng nhập.'},{status:401});
 }
@@ -103,7 +106,7 @@ async function prepareGoogleSignIn(){
     const config=await response.json();
     localAdminAvailable=config.local_admin===true;
     configureLoginFields();
-    if(!config.client_id){status.textContent='Google chưa được cấu hình. Em có thể dùng email.';return;}
+    if(!config.client_id){status.textContent='Đăng nhập Google hiện chưa dùng được. Em có thể đăng nhập bằng email.';return;}
     for(let i=0;i<40 && !window.google?.accounts?.id;i++)await new Promise(r=>setTimeout(r,100));
     if(!window.google?.accounts?.id)throw new Error('google');
     google.accounts.id.initialize({client_id:config.client_id,nonce:config.nonce,callback:async({credential})=>{
@@ -124,7 +127,7 @@ function configureLoginFields() {
   const local=localAdminAvailable && !registering;
   document.getElementById('auth-email').type=local?'text':'email';
   document.getElementById('auth-password').minLength=local?1:12;
-  const label=document.getElementById('auth-identity-label');if(label)label.textContent=local?'Email hoặc admin local':'Email';
+  const label=document.getElementById('auth-identity-label');if(label)label.textContent=local?'Email hoặc tài khoản quản trị cục bộ':'Email';
 }
 function setAuthMode(register) {
   registering=register;
@@ -173,7 +176,7 @@ async function setupAccount() {
     try {
       const response=await fetch(register?'/api/auth/register':'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('auth-name').value,email:document.getElementById('auth-email').value,password:document.getElementById('auth-password').value})});
       const data=await response.json();
-      if(!response.ok){status.textContent=data.detail || 'Không đăng nhập được.';return;}
+      if(!response.ok){status.textContent=data.detail || (register?'Chưa tạo được tài khoản. Em thử lại nhé.':'Chưa đăng nhập được. Em thử lại nhé.');return;}
       if(!sessionStorage.getItem('vjbot_return_route'))sessionStorage.setItem('vjbot_return_route','#dashboard');
       location.reload();
     }catch{status.textContent='Không kết nối được. Hãy thử lại.';}
@@ -181,7 +184,7 @@ async function setupAccount() {
   });
   document.getElementById('auth-logout').addEventListener('click',async()=>{
     try{const response=await fetch('/api/auth/logout',{method:'POST'});if(!response.ok)throw new Error('logout');signedInUser=null;renderAccount();sessionStorage.removeItem('vjbot_return_route');location.hash='#landing';location.reload();}
-    catch{status.textContent='Chưa đăng xuất được. Hãy thử lại.';}
+    catch{await openAccount();status.textContent='Chưa đăng xuất được. Em thử lại nhé.';}
   });
   try{
     const response=await fetch('/api/auth/session');

@@ -77,7 +77,7 @@ async function restoreAppRoute(){
 function officialResourceLesson(level,type,year='2018'){
   const main=jlptResources.resources.find(r=>r.id===`jlpt:${year}:${level}:${type}`);
   if(!main || !['V','G','R','L'].includes(type))return null;
-  return {id:main.id,title:`${level} · ${main.title} · ${year}`,sourceLabel:'JLPT · tài liệu chính thức',summary:'Làm bài trên tài liệu gốc, đối chiếu đáp án, rồi đánh dấu hoàn thành tại đây.',externalResources:jlptResources.resources.filter(r=>r.level===level && r.year===year && (r.id===main.id || /:(answer|sheet)$/.test(r.id) || (type==='L' && (r.kind==='audio' || r.id.endsWith(':script')))))};
+  return {id:main.id,title:`${level} · ${main.title} · ${year}`,sourceLabel:'JLPT · tài liệu chính thức',summary:'Làm bài trên tài liệu gốc, đối chiếu đáp án, rồi đánh dấu đã xem ở đây.',externalResources:jlptResources.resources.filter(r=>r.level===level && r.year===year && (r.id===main.id || /:(answer|sheet)$/.test(r.id) || (type==='L' && (r.kind==='audio' || r.id.endsWith(':script')))))};
 }
 function erinResourceLesson(lesson){
   return {id:lesson.id,title:lesson.title,lesson:lesson.number,sourceLabel:'Japan Foundation · Erin',summary:'Hội thoại, từ vựng và văn hóa tại Japan Foundation.',externalResources:lesson.resources};

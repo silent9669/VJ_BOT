@@ -9,32 +9,44 @@ const levels = ['N5', 'N4', 'N3', 'N2', 'N1'];
 function exampleData(example, source) {
   const tatoeba = /^https?:\/\/(?:www\.)?tatoeba\.org\/sentences\/show\/\d+(?:[/?#]|$)/i.test(example.source || '');
   const ungraded = source.includes('OpenJLPT') || tatoeba;
-  return {...example, provenance: {
-    source: tatoeba ? 'OpenJLPT / Tatoeba' : source,
-    ...(example.source ? {url: example.source} : {}),
-    ...(ungraded ? {sentence_level_certified: false,
-      level_basis: tatoeba ? 'target vocabulary, not sentence-level certification'
-        : 'lesson target, not sentence-level certification'} : {})
+  const {id,source_identity,source_gloss,...reference}=example;
+  return {...reference,...(id && !id.startsWith('openjlpt:')?{id}:{}),
+    ...(source_identity && !source_identity.startsWith('openjlpt:')?{source_identity}:{}),provenance:{
+    source:tatoeba?'OpenJLPT / Tatoeba':source,
+    ...(ungraded?{sentence_level_certified:false}:{})
   }};
 }
 
 function compactWord(word) {
-  return {jp: word.jp, reading: word.reading || word.ro || '', vi: word.vi || word.meaning_vi || ''};
+  return {id:word.id,jp:word.jp,reading:word.reading || word.ro || '',vi:word.vi || word.meaning_vi || '',
+    ...(word.localization?{localization:word.localization}:{}),
+    ...(word.processing_allowed!==undefined?{processing_allowed:word.processing_allowed}:{}),
+    ...(word.unavailable_reason?{unavailable_reason:word.unavailable_reason}:{})};
 }
 
-function catalogQuestions(context, item, level, skill) {
-  return Array.from(context.lessonQuestions(item, level, skill), task => ({
-    ...task, revision: createHash('sha256').update(context.taskRevisionSource(task), 'utf8').digest('hex')
-  }));
+function catalogQuestions(context,item,level,skill){
+  return Array.from(context.lessonQuestions(item,level,skill),task=>{
+    const compact={...task};
+    for(const field of ['instruction','passage','script_jp','target','parts','accepted_answers','explanation','example_indexes']){
+      const value=compact[field];
+      if(value==='' || Array.isArray(value) && !value.length)delete compact[field];
+    }
+    if(Object.values(compact.capabilities).every(value=>value===true))delete compact.capabilities;
+    // Serialization alone may omit defaults; task identity and revision semantics cannot change.
+    const original=context.taskRevisionSource(task);
+    if(context.taskRevisionSource(compact)!==original)throw new Error(`Catalog compaction changes task evidence: ${task.task_id}`);
+    return {...compact,revision:createHash('sha256').update(original,'utf8').digest('hex')};
+  });
 }
 
-function lessonData(context, item, level, skill, course, sourceCatalog) {
+function lessonData(context, item, level, skill, course, sourceCatalog, dict) {
   const unit = item.roleplay || course.units.find(unit => unit.id === item.lessonKey
     || item.id === `quiz-lesson:${level}:${unit.id}:review`);
   const source = item.source || item.sourceLabel || 'VJBot';
-  const words = Array.from(item.items || item.roleplay?.words || item.targetWords || [], word => ({
-    ...word, ...(word.examples ? {examples: Array.from(word.examples, example => exampleData(example, source))} : {})
-  }));
+  const words=Array.from(item.items || item.roleplay?.words || item.targetWords || [],word=>{
+    const {source_gloss,...reference}=word;
+    return {...reference,...(word.examples?{examples:Array.from(word.examples,example=>exampleData(example,source))}:{})};
+  });
   const examples = Array.from(item.examples || item.roleplay?.dialogue || [], example => exampleData(example, source));
   const questions = catalogQuestions(context, item, level, skill);
   const sources = [];
@@ -45,7 +57,8 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
   if (!sources.length) sources.push({id: source, title: source});
   const sourceIds = new Set(unit?.source_ids || []);
   for (const resource of item.resources || []) sourceIds.add(resource.id);
-  sources.push(...sourceCatalog.lessons.filter(resource => sourceIds.has(resource.id)));
+  sources.push(...sourceCatalog.lessons.filter(resource=>sourceIds.has(resource.id)).map(resource=>context.viResource(resource,dict)));
+  for(const resource of item.resources || [])if(!sources.some(source=>source.id===resource.id))sources.push(context.viResource(resource,dict));
   if(item.editorial)sources.push(...item.source_refs.map(reference=>({id:reference.chunk_id,title:reference.source_name,url:reference.url,role:reference.role})));
   const overview = {
     formula: item.formula || unit?.formula, explanation: item.explanation || item.summary, meaning_vi: item.meaning_vi,
@@ -53,10 +66,10 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
     common_errors:item.common_errors,prerequisites:item.prerequisites,support:item.support,
     guided_steps:item.guided_steps,
     passage: item.passage, translation: item.translation, script_jp: item.script_jp, script_vi: item.script_vi,
-    words: words.map(compactWord),
-    // Beginner tracks classify vocabulary, not the difficulty of attached corpus sentences.
-    examples: examples.filter(example => !['N5', 'N4'].includes(level)
-      || example.provenance.sentence_level_certified !== false).slice(0, 3),
+    words: words.map(compactWord).filter(word=>word.processing_allowed!==false && !word.unavailable_reason),
+    // Only the compact teaching preview omits unsafe support; full addressable slots remain intact.
+    examples: examples.filter(example=>example.processing_allowed!==false && !example.unavailable_reason
+      && (!['N5','N4'].includes(level) || example.provenance.sentence_level_certified!==false)).slice(0,3),
     task: item.production ? {prompt:questions[0]?.q,criteria:questions[0]?.criteria,model:questions[0]?.model,
       limitation:questions[0]?.explanation}:undefined, external_resources: item.externalResources
   };
@@ -67,7 +80,9 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
     goal: item.roleplay?.goal || item.summary || item.meaning_vi || '',
     overview, words, examples, questions, sources,
     ...(item.editorial?{authorship:item.authorship,review:item.review,eligibility:item.eligibility}:{}),
+    ...(item.localization?{localization:item.localization}:{}),
     ...(item.processing_allowed!==undefined?{processing_allowed:item.processing_allowed}:{}),
+    ...(item.unavailable_reason?{unavailable_reason:item.unavailable_reason}:{}),
     ...(item.capabilities?{capabilities:item.capabilities}:{}),
     ...(Number.isInteger(item.examIndex) ? {exam_questions:questions} : {}),
     reference_url: item.reference_url || unit?.reference_url
@@ -96,6 +111,7 @@ export async function buildTeacherCatalog() {
   const rubrics = JSON.parse(await readFile(new URL('course/kaiwa-rubrics.json', root), 'utf8'));
   if (rubrics.version !== 1 || !rubrics.scenarios) throw new Error('Invalid Kaiwa rubric catalog');
   const {practicalCourse, practicalSources} = vm.runInContext('({practicalCourse, practicalSources})', context);
+  const dict=await context.loadViDict();
   for (const level of levels) {
     await context.ensureLessons(level);
     const units = context.createStudyPlan(level);
@@ -106,7 +122,7 @@ export async function buildTeacherCatalog() {
       entries.push(...context.featureLessons(feature, level).map(item => ({item, skill: feature === 'flashcards' ? 'vocabulary' : feature === 'quiz' ? 'quiz' : 'listening'})));
     }
     const lessons = Object.fromEntries(entries.map(({item, skill}) => {
-      const data = lessonData(context, item, level, skill, practicalCourse, practicalSources);
+      const data = lessonData(context, item, level, skill, practicalCourse, practicalSources, dict);
       return [data.id, data];
     }));
     const items = Object.fromEntries(Object.values(lessons).flatMap(lesson =>

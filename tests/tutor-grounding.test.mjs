@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
 import {catalogLesson, chatEnvelope, groundLesson, validFocusReference} from '../src/tutor-context.js';
 
 const catalogs = await buildTeacherCatalog();
 const lesson = (id, level = 'N5') => catalogLesson(catalogs[level], {id, level});
+const sourceLessons = JSON.parse(readFileSync(new URL('../static/course/sources.json', import.meta.url), 'utf8')).lessons;
+const practical = JSON.parse(readFileSync(new URL('../static/course/practical.json', import.meta.url), 'utf8'));
 
 test('a word beyond the old preview is addressable without browser screen text', () => {
   const canonical = lesson('openjlpt:N5:vocabulary-group:1');
@@ -24,25 +27,25 @@ test('the tenth listening example retains its exact sentence and provenance', ()
   const canonical = lesson('listening:N5:1');
   assert.equal(canonical.examples.length, 10);
   const grounded = groundLesson(canonical, {kind: 'example', index: 9});
+  assert.equal(grounded.focus.index, 9);
   assert.equal(grounded.focus.item.jp, '赤いものもあれば白いのもある。');
   assert.equal(grounded.focus.item.source, 'https://tatoeba.org/sentences/show/142281');
+  assert.equal(grounded.focus.item.provenance.source, 'OpenJLPT / Tatoeba');
   assert.equal(grounded.focus.item.provenance.sentence_level_certified, false);
-  assert.equal(grounded.focus.item.provenance.level_basis, 'target vocabulary, not sentence-level certification');
 });
 
 test('authored grammar and VJBot examples are not falsely attributed to Tatoeba', () => {
   const grammar = groundLesson(lesson('openjlpt:N5:grammar:wa'), {kind: 'example', index: 0});
   assert.equal(grammar.focus.item.jp, '私は学生です。');
   assert.equal(grammar.focus.item.provenance.source, 'OpenJLPT');
-  assert.equal(grammar.focus.item.provenance.url, undefined);
+  assert.doesNotMatch(grammar.focus.item.source || '', /tatoeba\.org/i);
   assert.equal(grammar.focus.item.provenance.sentence_level_certified, false);
-  assert.equal(grammar.focus.item.provenance.level_basis, 'lesson target, not sentence-level certification');
   const corpus = groundLesson(lesson('listening:N5:1'), {kind: 'example', index: 9});
   assert.equal(corpus.focus.item.provenance.source, 'OpenJLPT / Tatoeba');
-  assert.equal(corpus.focus.item.provenance.url, 'https://tatoeba.org/sentences/show/142281');
+  assert.equal(corpus.focus.item.source, 'https://tatoeba.org/sentences/show/142281');
   const original = groundLesson(lesson('practical:v1:N5:introductions:situation'), {kind: 'example', index: 0});
   assert.equal(original.focus.item.provenance.source, 'VJBot');
-  assert.equal(original.focus.item.provenance.url, undefined);
+  assert.doesNotMatch(original.focus.item.source || '', /tatoeba\.org/i);
   assert.equal(original.focus.item.provenance.sentence_level_certified, undefined);
 });
 
@@ -95,11 +98,15 @@ test('practical introductions distinguish original VJBot teaching content from p
     'practical:v1:N5:introductions:production', 'kaiwa:practical:v1:N5:introductions']) {
     const grounded = groundLesson(lesson(id));
     const source = grounded.sources.find(source => source.id === 'irodori:starter:3');
-    assert.equal(source.title, 'Lesson 3 Nice to meet you.');
-    assert.equal(source.publisher, 'Japan Foundation');
-    assert.equal(source.page_url, 'https://www.irodori.jpf.go.jp/en/starter/pdf.html');
-    assert.equal(source.usage, 'External reference; textbook and audio remain on publisher site.');
-    assert.ok(grounded.sources.some(source => source.id === 'vjbot' && source.authorship.includes('VJBot original')));
+    const original = sourceLessons.find(source => source.id === 'irodori:starter:3');
+    assert.equal(source.sourceTitle, original.title);
+    assert.ok(typeof source.title === 'string' && source.title.trim());
+    for (const field of ['publisher', 'page_url', 'pdf_url', 'audio_page_url', 'usage']) {
+      assert.equal(source[field], original[field], field);
+    }
+    const authored = grounded.sources.find(source => source.id === 'vjbot');
+    assert.equal(authored.authorship, practical.authorship);
+    assert.equal(authored.level_note, practical.level_note);
   }
   const focused = groundLesson(lesson('practical:v1:N5:introductions:situation'), {kind: 'question', index: 0});
   assert.deepEqual(focused.focus.item.opts,lesson('practical:v1:N5:introductions:situation').questions[0].opts);
@@ -149,10 +156,21 @@ test('catalog overviews are structured data and model grounding has a whole-obje
       const grounded = groundLesson(canonical);
       assert.ok(grounded, canonical.id);
       assert.ok(JSON.stringify(grounded).length <= 48000, canonical.id);
-      assert.ok(canonical.questions.every(question => Object.hasOwn(question, 'explanation')), canonical.id);
+      for (const [index, question] of canonical.questions.entries()) {
+        assert.equal(question.source_position, index, canonical.id);
+        assert.equal(typeof (question.explanation ?? ''), 'string', question.task_id);
+      }
     }
     assert.ok(Object.values(catalog.items).every(label => typeof label === 'string'));
   }
+  const canonical = lesson('listening:N5:1'), focus = {kind: 'example', index: 9};
+  const base = groundLesson({...canonical, goal: ''}, focus);
+  const remaining = 48000 - JSON.stringify(base).length;
+  const atLimit = {...canonical, goal: 'x'.repeat(remaining)};
+  const grounded = groundLesson(atLimit, focus);
+  assert.equal(JSON.stringify(grounded).length, 48000);
+  assert.deepEqual(grounded.focus, base.focus, 'the bound must not truncate the selected sentence');
+  assert.equal(groundLesson({...atLimit, goal: atLimit.goal + 'x'}, focus), null);
 });
 
 test('teaching state stays quoted reference data and defaults to null', () => {

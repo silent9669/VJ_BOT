@@ -932,3 +932,33 @@ test('stale task revisions reject before tutor claims, history or provider calls
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM tutor_sessions').first()).n,0);
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,0);
 });
+
+test('new conversational prose keeps model line breaks and its actual length limit',async t=>{
+  const {env,send}=await authenticated(t);
+  const prose='Em dùng は để nêu chủ đề nhé.\n\n私は学生です。\n\nEm hiểu câu này thế nào?';
+  let result=structured(prose);
+  const calls=provider(t,()=>providerResponse(result));
+  await successful(await send({message:'Giải thích cách dùng は'}),prose);
+  assert.equal((await saved(env)).conversations.at(-1).content,prose);
+  result=structured('x'.repeat(4000));
+  await successful(await send({message:'Giải thích thêm'}),result.reply);
+  const before=await saved(env);
+  result=structured('x'.repeat(4001));
+  const oversized=await send({message:'Giải thích tiếp'});
+  assert.equal(oversized.status,503);assert.equal((await oversized.json()).reply,undefined);
+  assert.deepEqual(await saved(env),before);
+  assert.equal(calls.length,3);
+});
+
+test('completed historical source-prefixed chat replay remains unchanged without regeneration',async t=>{
+  const {env,send}=await authenticated(t);
+  const calls=provider(t,()=>providerResponse(structured('Lời giải thích mới.')));
+  const body={request_id:crypto.randomUUID(),message:'Giải thích は'};
+  await successful(await send(body),'Lời giải thích mới.');
+  const historical='Nguồn: Naoki [NK-123456789abc-1]\n\nLời giải thích đã lưu.';
+  await env.DB.prepare("UPDATE conversations SET content=? WHERE user_id=? AND request_id=? AND role='bot'")
+    .bind(historical,USER,body.request_id).run();
+  const before=await saved(env);
+  await successful(await send(body),historical);
+  assert.equal(calls.length,1);assert.deepEqual(await saved(env),before);
+});

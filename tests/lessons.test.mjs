@@ -4,12 +4,13 @@ import fs from 'node:fs/promises';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 const levels=['N5','N4','N3','N2','N1'];
-test('pinned lesson files are intact and every record has an identity, reading or meaning',async()=>{
+test('pinned LF source content is intact across checkout line endings and every record has an identity, reading or meaning',async()=>{
   const manifest=JSON.parse(await fs.readFile('static/openjlpt/manifest.json','utf8'));
   let total=0;
   for(const [file,count] of Object.entries(manifest.counts)){
     const raw=await fs.readFile('static/openjlpt/'+file),rows=JSON.parse(raw);
-    assert.equal(createHash('sha256').update(raw).digest('hex'),manifest.sha256[file]);
+    const sourceText=raw.toString('utf8').replace(/\r\n/g,'\n');
+    assert.equal(createHash('sha256').update(sourceText,'utf8').digest('hex'),manifest.sha256[file]);
     assert.equal(rows.length,count);total+=count;
     const ids=new Set();
     for(const row of rows){const id=row.id||row.character;assert.ok(id);assert.ok(!ids.has(id));ids.add(id);assert.ok(row.meaning||row.meanings?.length);}

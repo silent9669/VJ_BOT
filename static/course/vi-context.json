@@ -1,0 +1,583 @@
+{
+  "version": 1,
+  "review_basis": "AI source comparison against the explicitly documented localization audit section 9; not independent Japanese editorial approval or mastery evidence.",
+  "unresolved": "The audit also mentions conflicting numbers/names without record locators; no identities are inferred from that summary.",
+  "entries": [
+    {
+      "source_identity": "openjlpt:N5:vocabulary:a8b9eb425d",
+      "field": "meanings[0]",
+      "japanese": "軽い",
+      "english": "light",
+      "text": "nhẹ",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N5:vocabulary:e75777d218",
+      "field": "examples[0].en",
+      "japanese": "そうしてくださればとてもうれしい。",
+      "english": "I can't be sorry.",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Japanese expresses happiness if the other person does this, not inability to feel sorry."
+    },
+    {
+      "source_identity": "openjlpt:N5:vocabulary:28111455cd",
+      "field": "meanings[0]",
+      "japanese": "パーティー",
+      "english": "party",
+      "text": "bữa tiệc; buổi liên hoan",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N5:vocabulary:a1cda8cb11",
+      "field": "meanings[0]",
+      "japanese": "半分",
+      "english": "half minute",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source half minute does not match 半分."
+    },
+    {
+      "source_identity": "openjlpt:N5:vocabulary:0139a208fe",
+      "field": "examples[1].en",
+      "japanese": "両親とも生きているわけではない。",
+      "english": "Neither of my parents is alive.",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Japanese denies that both parents are alive; it does not establish that neither is alive."
+    },
+    {
+      "source_identity": "openjlpt:N5:kanji:中",
+      "field": "meanings[3]",
+      "japanese": "中",
+      "english": "mean",
+      "text": "ở giữa; trung tâm",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N4:vocabulary:f9a20b5203",
+      "field": "meanings[0]",
+      "japanese": "しかる",
+      "english": "a particular",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source a particular lacks a reliably established Japanese sense/reading."
+    },
+    {
+      "source_identity": "openjlpt:N4:vocabulary:a2962b07bc",
+      "field": "meanings[0]",
+      "japanese": "林",
+      "english": "woods",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source forester identifies a person rather than 林."
+    },
+    {
+      "source_identity": "openjlpt:N4:vocabulary:a2962b07bc",
+      "field": "meanings[1]",
+      "japanese": "林",
+      "english": "forester",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source forester identifies a person rather than 林."
+    },
+    {
+      "source_identity": "openjlpt:N4:kanji:明",
+      "field": "meanings[1]",
+      "japanese": "明",
+      "english": "light",
+      "text": "sáng; ánh sáng",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:771ae04338",
+      "field": "meanings[0]",
+      "japanese": "ダイヤ",
+      "english": "dyer",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source dyer conflicts with ダイヤ."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:771ae04338",
+      "field": "meanings[1]",
+      "japanese": "ダイヤ",
+      "english": "diagram",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source dyer conflicts with ダイヤ."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:771ae04338",
+      "field": "meanings[2]",
+      "japanese": "ダイヤ",
+      "english": "(railway) schedule",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source dyer conflicts with ダイヤ."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:771ae04338",
+      "field": "meanings[3]",
+      "japanese": "ダイヤ",
+      "english": "diamond",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source dyer conflicts with ダイヤ."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:60eed96a97",
+      "field": "meanings[0]",
+      "japanese": "直ちに",
+      "english": "at once",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source in person conflicts with 直ちに."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:60eed96a97",
+      "field": "meanings[1]",
+      "japanese": "直ちに",
+      "english": "immediately",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source in person conflicts with 直ちに."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:60eed96a97",
+      "field": "meanings[2]",
+      "japanese": "直ちに",
+      "english": "directly",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source in person conflicts with 直ちに."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:60eed96a97",
+      "field": "meanings[3]",
+      "japanese": "直ちに",
+      "english": "in person",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source in person conflicts with 直ちに."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:c03a75fe96",
+      "field": "meanings[0]",
+      "japanese": "熱中",
+      "english": "nuts!",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source nuts! is not an established meaning of 熱中."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:c03a75fe96",
+      "field": "meanings[1]",
+      "japanese": "熱中",
+      "english": "enthusiasm",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source nuts! is not an established meaning of 熱中."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:c03a75fe96",
+      "field": "meanings[2]",
+      "japanese": "熱中",
+      "english": "zeal",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source nuts! is not an established meaning of 熱中."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:c03a75fe96",
+      "field": "meanings[3]",
+      "japanese": "熱中",
+      "english": "mania",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source nuts! is not an established meaning of 熱中."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:e4b01b085c",
+      "field": "meanings[0]",
+      "japanese": "武器",
+      "english": "weapon",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source ordinance is not ordnance; the source gloss needs review."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:e4b01b085c",
+      "field": "meanings[1]",
+      "japanese": "武器",
+      "english": "arms",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source ordinance is not ordnance; the source gloss needs review."
+    },
+    {
+      "source_identity": "openjlpt:N3:vocabulary:e4b01b085c",
+      "field": "meanings[2]",
+      "japanese": "武器",
+      "english": "ordinance",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source ordinance is not ordnance; the source gloss needs review."
+    },
+    {
+      "source_identity": "openjlpt:N3:kanji:連",
+      "field": "meanings[1]",
+      "japanese": "連",
+      "english": "lead",
+      "text": "dẫn theo; dẫn dắt",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N3:kanji:連",
+      "field": "meanings[4]",
+      "japanese": "連",
+      "english": "party",
+      "text": "nhóm; đoàn người",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:5b1670aea6",
+      "field": "meanings[0]",
+      "japanese": "せめて",
+      "english": "offense",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source offense/method of attack conflicts with せめて."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:5b1670aea6",
+      "field": "meanings[1]",
+      "japanese": "せめて",
+      "english": "method of attack",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source offense/method of attack conflicts with せめて."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:34b4191f3c",
+      "field": "meanings[0]",
+      "japanese": "ダム",
+      "english": "dumb",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source dumb does not match Japanese ダム (dam)."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:69caece3b1",
+      "field": "meanings[0]",
+      "japanese": "だらしない",
+      "english": "slovenly",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source a slut changes the sense and register of だらしない."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:69caece3b1",
+      "field": "meanings[1]",
+      "japanese": "だらしない",
+      "english": "loose",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source a slut changes the sense and register of だらしない."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:69caece3b1",
+      "field": "meanings[2]",
+      "japanese": "だらしない",
+      "english": "a slut",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source a slut changes the sense and register of だらしない."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:b4e3b45b3f",
+      "field": "meanings[0]",
+      "japanese": "統計",
+      "english": "scattering",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source scattering/a scatter/dispersion does not match 統計 (statistics)."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:b4e3b45b3f",
+      "field": "meanings[1]",
+      "japanese": "統計",
+      "english": "a scatter",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source scattering/a scatter/dispersion does not match 統計 (statistics)."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:b4e3b45b3f",
+      "field": "meanings[2]",
+      "japanese": "統計",
+      "english": "dispersion",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source scattering/a scatter/dispersion does not match 統計 (statistics)."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:0aa9e30a0b",
+      "field": "meanings[0]",
+      "japanese": "ブラシ",
+      "english": "brushy",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source brushy is not an established gloss for ブラシ."
+    },
+    {
+      "source_identity": "openjlpt:N2:vocabulary:0aa9e30a0b",
+      "field": "meanings[1]",
+      "japanese": "ブラシ",
+      "english": "brush",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source brushy is not an established gloss for ブラシ."
+    },
+    {
+      "source_identity": "openjlpt:N2:kanji:党",
+      "field": "meanings[0]",
+      "japanese": "党",
+      "english": "party",
+      "text": "đảng",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N2:kanji:党",
+      "field": "meanings[1]",
+      "japanese": "党",
+      "english": "faction",
+      "text": "phe phái",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N2:kanji:党",
+      "field": "meanings[2]",
+      "japanese": "党",
+      "english": "clique",
+      "text": "bè phái",
+      "disposition": "contextual",
+      "why": "Japanese-bound sense selection; excludes unrelated senses of the shared English dictionary key."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:0e38a2be42",
+      "field": "examples[0].en",
+      "japanese": "新しい遺跡で未発掘はいくつだったのですか。",
+      "english": "How many new sites were uncovered?",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Japanese 未発掘 means not yet excavated, unlike English uncovered."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:dd75448626",
+      "field": "examples[0].en",
+      "japanese": "彼女はずっとナプキンを織り続けた。",
+      "english": "She folded napkins all the way.",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Japanese 織り describes weaving, not folding napkins."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:612aa8aa8b",
+      "field": "examples[0].en",
+      "japanese": "オンラインでお話しした方がよろしければそうします。",
+      "english": "If you need to go off-line, that is fine.",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Japanese offers to talk online if that is preferable, not to go off-line."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:a6da3499d8",
+      "field": "meanings[0]",
+      "japanese": "反",
+      "english": "roll of cloth (c. 10 yds.)",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source 245 acres conflicts with this unit record."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:a6da3499d8",
+      "field": "meanings[1]",
+      "japanese": "反",
+      "english": "245 acres",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source 245 acres conflicts with this unit record."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:a6da3499d8",
+      "field": "meanings[2]",
+      "japanese": "反",
+      "english": "300 tsubo",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source 245 acres conflicts with this unit record."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:ef477d1ab9",
+      "field": "examples[0].en",
+      "japanese": "新しい遺跡で未発掘はいくつだったのですか。",
+      "english": "How many new sites were uncovered?",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Japanese 未発掘 means not yet excavated, unlike English uncovered."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:ed2719ab9d",
+      "field": "meanings[0]",
+      "japanese": "ファン",
+      "english": "fan",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source fun conflicts with Japanese ファン."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:ed2719ab9d",
+      "field": "meanings[1]",
+      "japanese": "ファン",
+      "english": "fun",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source fun conflicts with Japanese ファン."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:054813c4c2",
+      "field": "meanings[0]",
+      "japanese": "兵器",
+      "english": "arms",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source ordinance is not ordnance; the source gloss needs review."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:054813c4c2",
+      "field": "meanings[1]",
+      "japanese": "兵器",
+      "english": "weapons",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source ordinance is not ordnance; the source gloss needs review."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:054813c4c2",
+      "field": "meanings[2]",
+      "japanese": "兵器",
+      "english": "ordinance",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source ordinance is not ordnance; the source gloss needs review."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:28bbcaef7c",
+      "field": "meanings[0]",
+      "japanese": "弁償",
+      "english": "next word",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source next word conflicts with 弁償."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:28bbcaef7c",
+      "field": "meanings[1]",
+      "japanese": "弁償",
+      "english": "compensation",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source next word conflicts with 弁償."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:28bbcaef7c",
+      "field": "meanings[2]",
+      "japanese": "弁償",
+      "english": "reparation",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source next word conflicts with 弁償."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:28bbcaef7c",
+      "field": "meanings[3]",
+      "japanese": "弁償",
+      "english": "indemnity",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source next word conflicts with 弁償."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:28bbcaef7c",
+      "field": "meanings[4]",
+      "japanese": "弁償",
+      "english": "reimbursement",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source next word conflicts with 弁償."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:97b08ab1d6",
+      "field": "meanings[0]",
+      "japanese": "本気",
+      "english": "seriousness",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source sanctity does not match 本気."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:97b08ab1d6",
+      "field": "meanings[1]",
+      "japanese": "本気",
+      "english": "truth",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source sanctity does not match 本気."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:97b08ab1d6",
+      "field": "meanings[2]",
+      "japanese": "本気",
+      "english": "sanctity",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source sanctity does not match 本気."
+    },
+    {
+      "source_identity": "openjlpt:N1:vocabulary:feb47e8478",
+      "field": "examples[0].en",
+      "japanese": "わが校は１９００年に設立されました。",
+      "english": "Our school was founded in 1990.",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Japanese specifies 1900 while the published English specifies 1990; no translated answer key is admitted."
+    },
+    {
+      "source_identity": "openjlpt:N1:kanji:鮎",
+      "field": "meanings[0]",
+      "japanese": "鮎",
+      "english": "freshwater trout",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source gloss smelt identifies a different fish; no corrected meaning key is established."
+    },
+    {
+      "source_identity": "openjlpt:N1:kanji:鮎",
+      "field": "meanings[1]",
+      "japanese": "鮎",
+      "english": "smelt",
+      "text": "Nghĩa đang được kiểm tra lại.",
+      "disposition": "unavailable",
+      "why": "Source gloss smelt identifies a different fish; no corrected meaning key is established."
+    }
+  ]
+}

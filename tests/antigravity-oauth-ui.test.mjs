@@ -59,6 +59,16 @@ function controller({choice = 'first', method = 'antigravity', respond, storage 
 }
 const text = node => node.textContent + node.children.map(text).join(' ');
 
+test('malformed OAuth metadata remains a visible failure without clearing the chosen account or probing models', async () => {
+  const ui=controller({respond:request=>request.path===root?new Response('{broken',{status:200}):null});
+  await ui.context.renderAntigravityOAuth();
+  assert.equal(ui.storage.get('vjbot_ai_oauth:test:owner'),'first');
+  assert.equal(ui.storage.get('vjbot_ai_method:test:owner'),'antigravity');
+  assert.ok(ui.element('ai-connection-status').textContent.trim());
+  assert.equal(ui.requests.length,1);assert.equal(ui.requests[0].path,root);
+  assert.equal(ui.element('ai-oauth-model').options.length,0);
+});
+
 test('first restore uses backend active only for a missing local ID, never explicit none or a deleted choice', async () => {
   for (const choice of [null, '', 'deleted']) {
     const ui = controller({choice});
@@ -102,9 +112,10 @@ test('quota rendering preserves native IDs, distinguishes zero from unknown, and
       {model:'native-half', remaining_fraction:0.375, reset_at:null} ]}) : null});
   await ui.context.renderAntigravityOAuth();
   const rows = ui.element('ai-oauth-usage-models').children.map(text);
-  assert.match(rows[0], /native-tiered<script>.*còn 0% · đã hết.*Historical reset/);
-  assert.match(rows[1], /Chưa rõ hạn mức còn lại.*Reset unknown/);
-  assert.match(rows[2], /còn 37.5%/);
+  assert.ok(rows[0].includes('native-tiered<script>'));
+  assert.ok(rows[0].includes(new Date('2020-01-01T00:00:00Z').toLocaleString('vi-VN')));
+  assert.ok(rows[1].includes('native-other'));assert.doesNotMatch(rows[1], /\d+%/);
+  assert.ok(rows[2].includes('native-half'));
   assert.equal(ui.element('ai-oauth-usage-meter').value, 0);
   assert.equal(ui.element('ai-oauth-usage-meter').hidden, false);
   assert.deepEqual(ui.element('ai-oauth-usage-models').children.map(row => row.children

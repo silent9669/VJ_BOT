@@ -666,3 +666,68 @@ Main's PR39 history, account menu, dark mode, mascot and iOS changes are otherwi
 
 This synchronization makes no new claim about model accuracy, prompt-injection resistance or learner outcomes. No live inference, account/provider/voice change, main-branch push, PR merge or deployment is authorized by this task.
 
+## 20. Whole-app teacher-language audit and localization integration
+
+### Scope and baseline
+
+After PR41 reached production as `5af5196f6f1aaca19f776ac9061ee299554fff3b`, the user rejected the generated reading instruction "Viết cách đọc bằng romaji theo nguồn" and the source-ID bibliography prepended to teacher replies. The user requested an application-wide audit before corrections, integration of the existing Vietnamese-localization branch with current main, one combined checked commit, Vietnamese spoken explanations, and separate lines for standalone Japanese examples/questions.
+
+The baseline audit worktree `fix/practice-plain-submit` at `4f1c287` has the same Git tree as that deployed main. Implementation starts independently at main in `C:/Users/TRI/VJ_BOT-teacher-language`, branch `fix/teacher-language-vietnamese`. The translation worktree remains read-only. Its actual localization delta is the three commits from `67b60f0` through `7e948de`, affecting 46 paths; its 102-path ancestry diff against main must not restore older learner layouts.
+
+### Evidence before corrections
+
+- The census traversed every canonical lesson/question collection in all five generated teacher catalogs: 3,953 lesson entries and 47,642 question rows, including canonical aliases and repeated material, not independently authored exercises. It inspected the 40 authored teaching packages, 20 practical units and the common generators, rather than treating a few screenshots as the complete inventory.
+- Central templates account for 140 romaji instructions, 7,931 kana instructions, 541 formula-reproduction tasks and 13,470 reading-choice prompts mentioning source notation. The formula question and instruction occur on the same tasks. These are occurrence counts, not a claim of that many distinct pedagogical defects. Another 13,220 dictation instructions are canonical model context, not directly displayed by the dedicated dictation interface.
+- The tutor audit followed all 11 assigned backend/frontend/source-view modules, including reply validation, persistence, completed-request replay, feedback receipts and TTS. `learning-rag.js` inserts the bibliography after model generation; three handlers consume it. Prompt-only formatting cannot remove it.
+- The product audit inspected 23 JS/HTML modules and three responsive stylesheets, covering navigation, saved marks, flashcards, speaking, exams, account/settings, API/OAuth, audio, source/privacy and administrator-only distinctions. It separated real English literals from legitimate identifiers and native/provider diagnostics.
+- Actual isolated Edge/Worker/in-memory-D1 navigation inspected dashboard, course/library selectors, chat, progress, flashcards, kanji, speaking, exams and settings, plus authored lessons at every level. Desktop and 390px mobile views corroborated the reported N3 recall instruction, English vocabulary meaning, compact/disclosed help and source-dependent learner text. External model access was disabled; no paid generation, real microphone or production learner-data write was used.
+- The localization draft contains 28,607 flat strings without a Japanese-specific sense key. Inspection confirmed party/党 versus パーティー, lead/連, mean/中 and light/明 versus 軽い. Published source contradictions and introduced translation ambiguity are different defects; complete dictionary lookup coverage establishes neither semantic correctness nor editorial approval.
+
+### Correction boundaries
+
+Use short teacher-to-student requests instead of source-format directions or evaluator/storage instructions. Preserve genuine semantic constraints, Japanese material, canonical identities, finite keys, option order, delayed-review safeguards and separate self-report/advisory evidence. Manual "seen" marks must not become verified completion. Cost, quota, privacy, failed-save and connection-ownership information remains truthful even when shortened.
+
+One shared `TEACHER_REPLY_STYLE` applies to new textual chat, hints, explanations and feedback. A standalone Japanese example/question starts its own line, separated from Vietnamese guidance; an inline particle or word remains inline. Existing escaping and newline rendering remain responsible for display. No script-language splitting heuristic rewrites model output or source translation fields.
+
+Spoken teaching has a separate policy: explanations, hints, correction reasons and guidance use natural Vietnamese at every level, including after Japanese learner turns. Actual Japanese practice exchanges and read-aloud transcripts remain Japanese. The realtime session and delegated reasoning share that policy. Verbatim TTS is not a translation service.
+
+Remove deterministic source and assessment-basis preambles from new conversational prose. Retain the existing source browser, immutable corpus locators/URLs, rights notes and original teaching evidence; do not add a new per-turn bibliography/storage migration to recreate the intrusive header elsewhere. Existing stored history and completed feedback receipts remain unchanged and may therefore retain historical headers. No inferred per-claim grounding or publisher permission is claimed.
+
+Known Japanese/English contradictions need exact record/field dispositions, not a global English replacement or guessed record quarantine. Browser and generated Worker catalogs use the same contextual projection. Original source bytes and candidate ordering stay separate from translated labels; indistinguishable localized choices must not silently change a numeric key or acquire an invented distractor.
+
+The four audit artifacts are session-local evidence: `course-inventory-audit.md`, `tutor-provenance-language-audit.md`, `static-ui-copy-audit.md` and `vietnamese-integration-audit.md`. Their recommendations are not evidence that every string was semantically approved. Original editorial and live-model acceptance limitations remain in force.
+
+### Verification findings and corrections
+
+The first combined build regenerated all five catalogs, then failed the actual Cloudflare asset limit: `teacher-N1.json` was 85,597,750 bytes (81.6 MiB), above 25 MiB; N3/N2 were also oversized. The Node suite chained after that build did not run. Repeated full Japanese/English/localization explanations and option provenance caused the expansion; task inventory truncation is not an acceptable repair.
+
+Scoped reviews identified two further contextual issues: merely counting 64 sidecar entries did not prove the required binding set was intact, and eight compound-formula tasks could display one formula while accepting only an older mistranslation. The correction must validate the exact binding inventory and align each current formula task with its visible reference. Historical answers remain bound to their old task revisions.
+
+The runtime review found first-success recall feedback hidden after a successful save, although retry-success behaved differently. Restore visibility only for acknowledged recall feedback, not the removed repeated verdict blocks for choice/writing. Privacy wording must describe current managed-admin routing and explicit Start before live microphone access. The live pre-start screen also must not announce an ended call before any call was started.
+
+The six authored JSON files contain 177 prose-cell changes. A recursive parsed comparison verified the same keys/order, non-prose values, task identities and Japanese sequences after three over-specific wording edits were corrected. The imported flat dictionary is byte-identical to its completed source-branch artifact. The 15 original OpenJLPT files and existing grammar dictionary match deployed Git content after LF normalization; the new Windows worktree checks them out as CRLF whereas the read-only baseline is LF. They are not edited or staged, and cross-worktree physical-byte identity is not claimed.
+
+Actual synthetic-only UI exercised the real Worker for chat and reference teaching: new replies contain no server source header; Japanese sentence breaks and an inline は survive rendering. Reload initially restored general history, not the lesson-scoped reply; selecting the actual lesson thread restored the new clean reply correctly. This is scope/persistence/rendering evidence, not proof that a real model follows the new language instructions.
+
+The regenerated compact artifacts now contain exactly the same 480/434/866/869/1,304 lesson entries and 4,931/4,447/10,451/10,517/17,296 question rows. Actual sizes are 6,406,752 / 5,975,145 / 15,202,098 / 14,978,781 / 25,485,720 bytes, all below 25 MiB. The successful Worker/static dry-run follows the failed oversized build; no deployment was performed.
+
+An all-question structural comparison found no unexpected changes to task/item IDs, modes, numeric answer positions, option counts, Japanese passages/scripts/targets/parts or source positions. Eight current formation-recall accepted strings intentionally change with their corresponding compound-formula display; historical evidence is not rewritten. Compact serialization verifies the same revision input before and after removing default-empty fields; it keeps all indexed task/example/word slots and every false capability mask.
+
+The contextual sidecar contains nine exact sense projections and 55 unavailable fields, not 64 approved translations. Existing ten exam quarantines remain. Exact bad-meaning gates affect 8/2/4/5/26 canonical task rows across N5–N1, including aliases; no new translated-choice collisions were found in this snapshot. A current-revision request for the contradictory ダム meaning returned 409 before inference. Separate pronunciation/dictation tasks remain addressable where their own evidence is sound.
+
+The full Node attempt after the successful build reached a 300-second deadline and cannot be reported as passed. A bounded diagnostic run completed with 248 passed, 24 failed and two cancelled tests: several assertions still pinned English/old copy or removed duplicate metadata, while some helper-consumer tests did not open the native help disclosure. The recording-replay case also needs its actual async lifecycle checked. These failures must be resolved with retained behavioral assertions, not suppressed or converted into unqualified success. Final outcomes are recorded below after correction.
+
+The corrected complete run (`npm run build` followed by `node --test --test-timeout=30000 --test-concurrency=2 tests/*.test.mjs`) completed in 82.64 seconds: build passed; 768 of 770 tests passed, two failed, none cancelled/skipped. The remaining failures were a VM-array prototype mismatch in an equality assertion and an assertion requiring a serialized empty array that is now omitted with the same semantic/revision default. Both fixtures were corrected without changing production behavior or weakening the candidate-identity/open-writing checks. Only these two regressions need rerunning; the other final-code results remain applicable.
+
+A fresh actual 390×844 browser session verified the final mobile live panel: an invitation to press Start, explicit microphone/provider/ten-minute privacy text, no automatic live-session request, and no horizontal overflow. The real isolated Worker also returned the synthetic teaching reply through the final lesson UI with `white-space: pre-wrap`, separate Japanese sentence, inline は, no raw source header and no repeated fine-print paragraph. This proves the request/rendering path, not real model compliance, audio quality or Japanese correctness.
+
+Windows checkout checks compare pinned LF source content after CRLF normalization. The original raw source and Japanese translation-table files were not edited or staged; the new checkout's physical CRLF bytes are not claimed byte-identical to the LF baseline.
+
+Final targeted command:
+
+```sh
+node --test --test-timeout=30000 --test-concurrency=2 --test-name-pattern="all generated candidates retain|authored open rewrites bind" tests/vietnamese-localization.test.mjs tests/worker.test.mjs
+```
+
+Observed: two tests passed, zero failures/cancellations/skips, 10.13 seconds. Combined evidence is the preceding 768 unchanged passing cases plus these two corrected regressions, not a second full 770-test run. No live-provider request, real voice/audio acceptance, production migration or deployment occurred. The 28,607 projected strings, Japanese content and model pedagogy are not claimed independently approved; original history remains unchanged.
+

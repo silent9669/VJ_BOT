@@ -30,7 +30,7 @@ async function readBody(request) {
         const {done, value} = await reader.read();
         if (done) break;
         size += value.byteLength;
-        if (size > 8192) throw oauthError('OAuth request is too large.', 413);
+        if (size > 8192) throw oauthError('Yêu cầu OAuth quá lớn.', 413);
         raw += decoder.decode(value, {stream:true});
       }
       raw += decoder.decode();
@@ -40,7 +40,7 @@ async function readBody(request) {
     const value = JSON.parse(raw || '{}');
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error();
     return value;
-  } catch { throw oauthError('Invalid OAuth request.', 400); }
+  } catch { throw oauthError('Yêu cầu OAuth không hợp lệ.', 400); }
 }
 
 function authorization(value) {
@@ -120,7 +120,7 @@ async function finish(request, env, owner, handle, config) {
     const saved = await env.DB.prepare(`INSERT OR IGNORE INTO ai_antigravity_connections(user_id,auth_id,gateway_url,prefix,login_id,state,updated_at,name)
       SELECT user_id,?,?,?,?, 'binding',?,? FROM ai_antigravity_oauth_states WHERE handle=? AND session_hash=? AND expires_at>?
       AND (SELECT count(*) FROM ai_antigravity_connections WHERE user_id=?)<20 RETURNING login_id`)
-      .bind(result.auth_id, config.baseUrl, prefix, handle, Date.now(), payload.name || 'Antigravity account', handle, await sessionHash(request), Date.now(), owner).first();
+      .bind(result.auth_id, config.baseUrl, prefix, handle, Date.now(), payload.name || 'Tài khoản Antigravity', handle, await sessionHash(request), Date.now(), owner).first();
     const row = await connectionFor(env, owner, id);
     if (!saved && (row?.auth_id !== result.auth_id || row?.state !== 'binding')) throw oauthError('Kết nối Antigravity đã đổi trong lúc đăng nhập.');
   } else {
@@ -131,7 +131,7 @@ async function finish(request, env, owner, handle, config) {
   }
   await requireStrictRouting(env);
   const patched = await gatewayRequest(env, '/credentials/fields', {method:'PATCH', body:{name:result.auth_id, prefix, request_retry:0}});
-  if (patched?.status !== 'ok') throw oauthError('The gateway did not confirm account isolation. Refresh to finish sign-in.', 503);
+  if (patched?.status !== 'ok') throw oauthError('Cổng kết nối chưa xác nhận việc tách riêng tài khoản. Hãy làm mới để hoàn tất đăng nhập.', 503);
   const activated = await env.DB.prepare("UPDATE ai_antigravity_connections SET state='active',updated_at=max(updated_at+1,?) WHERE user_id=? AND login_id=? AND auth_id=? AND state='binding' RETURNING login_id")
     .bind(Date.now(), owner, id, result.auth_id).first();
   if (!activated || !await activateConnection(env, owner, id)) throw oauthError('Kết nối Antigravity đã bị xóa trong lúc đăng nhập.');

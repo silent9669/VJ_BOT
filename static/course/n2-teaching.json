@@ -19,7 +19,7 @@
       "goal": "Xác định ngày hiệu lực, đối tượng và ngoại lệ trong thông báo.",
       "prerequisites": [],
       "support": [
-        { "term": "Đọc điều kiện theo phạm vi", "explanation": "Phân biệt hoạt động bị đổi với mọi cách sử dụng; nối các điều kiện bằng quan hệ đồng thời. Mốc tương đối phải có ngày quy chiếu, kể cả khi chuyển sang năm mới. Đây là cách đọc cần có trước khi tự viết, không phải danh sách từ khóa để chấm." },
+        { "term": "Đọc điều kiện theo phạm vi", "explanation": "Phân biệt hoạt động bị đổi với mọi cách sử dụng; nối các điều kiện bằng quan hệ đồng thời. Mốc tương đối phải có ngày quy chiếu, kể cả khi chuyển sang năm mới. Trước khi tự viết, em cần hiểu các ý này liên hệ với nhau ra sao, không chỉ nhớ từng từ riêng." },
         { "term": "貸し出し・申請・延長", "explanation": "貸し出し（かしだし）cho mượn; 申請（しんせい）đăng ký/xin phép; 延長（えんちょう）gia hạn. Đăng ký là hành động của người xin, không tự đồng nghĩa với đã được duyệt. Cần giữ riêng loại tài liệu, thủ tục và thời lượng." },
         { "term": "Thông báo và thư xác nhận", "explanation": "Thông báo có thể dùng cách nói trang trọng. Khi viết thư hỏi người phụ trách, em nên nêu điều đã biết rồi hỏi điểm còn chưa rõ. Không cần dùng kính ngữ cầu kỳ. Phần sửa câu bên dưới luyện viết theo các phần đã cho, khác với phần em tự viết thư." }
       ],
@@ -177,11 +177,11 @@
             "Căn cứ: tự xác định ngày hiệu lực theo lịch từ ngày phát hành và mốc tương đối; kiểm tra cả lần chuyển tháng/năm, không lấy ngày phát hành làm ngày hiệu lực hoặc suy quy định cũ.",
             "Nghĩa: tên tài liệu và tình trạng bản điện tử nhất quán; phân biệt đủ điều kiện loại tài liệu với việc chưa đăng ký; thời lượng một tuần không biến thành quyền gia hạn.",
             "Giao tiếp: có mục đích tự chọn, yêu cầu/hỏi cụ thể mà người phụ trách trả lời được; không suy từ ngừng cho mượn ra cấm mọi sử dụng hoặc tự bảo đảm được dùng tại chỗ.",
-            "Cấu trúc: quan hệ điều kiện, phủ định và đối tượng xin/hỏi rõ trong thư lịch sự; nhiều cách diễn đạt có thể đạt mục đích, không đòi một chuỗi hoặc từ khóa.",
-            "Tự kiểm: chỉ ra dữ kiện cho từng khẳng định, tách chỗ còn hỏi khỏi điều đã biết. Góp ý chính tả riêng; tự kiểm không phải chứng nhận nghĩa/ngữ pháp đúng."
+            "Cấu trúc: quan hệ điều kiện, phủ định và đối tượng xin/hỏi rõ trong thư lịch sự; em có thể chọn cách diễn đạt phù hợp mục đích của mình.",
+            "Tự kiểm: chỉ ra dữ kiện cho từng khẳng định, tách chỗ còn hỏi khỏi điều đã biết. Thầy góp ý chữ viết riêng với nghĩa và cách ghép câu."
           ],
           "exchange": { "group": "n2-policy-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
-          "rationale": "Giữ nguyên văn thư người học làm bằng chứng tự báo cáo chưa được chấm; không có khóa câu mẫu. Nhận xét AI chỉ mang tính tư vấn và phải đọc quan hệ thực tế trong câu, không suy đúng nghĩa từ có mặt ngày tháng hay từ phủ định.",
+          "rationale": "Em tự chọn mục đích và nội dung thư. Thầy giúp em đối chiếu từng lời khẳng định với thông báo và xem câu hỏi còn chờ thư viện trả lời đã rõ chưa; góp ý AI chỉ để tham khảo.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -197,10 +197,10 @@
             "Giới hạn: đối chiếu đúng điều kiện có/không có bản điện tử và trạng thái chưa đăng ký; ngày hiệu lực không bị đổi khi chỉnh văn phong.",
             "Hiệu đính: người đọc phân biệt được điều chắc từ thông báo và điểm còn hỏi; giải thích gắn với một đoạn thật, cho phép giữ nguyên câu vốn hợp lý.",
             "Cấu trúc/giao tiếp: thư sửa vẫn có yêu cầu rõ, lịch sự, không vô tình đảo phủ định hoặc xóa một điều kiện để viết ngắn hơn; chính tả được góp ý tách biệt.",
-            "Bằng chứng: nếu thiếu thư trước thì chưa thể nhận xét tính nối tiếp; không bịa đoạn trích hay coi nhận xét tư vấn là phê duyệt của thư viện."
+            "Dựa vào thư em vừa viết để trích và sửa, không bịa đoạn trích. Góp ý của thầy không phải lời thư viện chấp thuận yêu cầu."
           ],
           "exchange": { "group": "n2-policy-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N2:policy:task:5"] },
-          "rationale": "Lưu bản sửa và lý do mới riêng với thư ban đầu qua nhiệm vụ hiện có; không ghi đè nguyên văn trước đó hoặc suy rằng đơn đã được nộp. Cần đọc hai văn bản thật để nhận xét, không chấm bằng khớp từ.",
+          "rationale": "Em sửa chính lá thư đã viết và giải thích vì sao sửa hoặc giữ đoạn ấy. Thầy đối chiếu hai bản để giúp em làm rõ điều kiện và câu hỏi; bài tập không gửi đơn đến thư viện.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -216,10 +216,10 @@
             "Thời gian/phạm vi: ngày hiệu lực được neo đúng từ 20/2/2027; tách quyền xem nội bộ, cấm đăng lại ra ngoài và ngoại lệ video giới thiệu ngắn.",
             "Điều kiện: giữ đồng thời sự đồng ý của tất cả người tham gia trình bày và kiểm tra trước công bố; chưa có xác nhận không được kể như đã hoàn tất.",
             "Tự chọn và giao tiếp: có cách chuẩn bị do người học quyết định, hai việc cần xác nhận và câu hỏi về bản ghi cũ mà người phụ trách có thể trả lời; không tự mở rộng hoặc thu hẹp quy định.",
-            "Bằng chứng: đánh giá cần đọc nguyên văn mới và trợ giúp đã dùng; tự kiểm/AI tư vấn không xác nhận tự lực hay ghi nhớ. Thiếu dấu hoặc biến thể chữ hợp lệ không tự là sai điều kiện."
+            "Em tự viết thông báo mới trước khi xem lại bài cũ. Thầy góp ý chữ viết riêng với cách hiểu điều kiện; một bài làm chưa cho biết em đã nhớ chắc."
           ],
           "exchange": { "group": "n2-policy-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N2:policy:task:5", "teaching:v1:N2:policy:task:6"], "delay_hours": 24 },
-          "rationale": "Ngữ cảnh, vai, hoạt động và đối tượng ngoại lệ mới được cung cấp đầy đủ, không kèm thư/mẫu/lời giải cũ. Lưu nguyên văn đáp án mới; đủ khoảng cách phiên chỉ chứng minh lịch ôn, không chứng minh chuyển giao thực tế.",
+          "rationale": "Em vận dụng cách đọc điều kiện vào việc chuẩn bị công bố video. Hãy dùng thông báo mới trong bài, không xem lại thư hay lời giải cũ; góp ý AI chưa cho biết em đã dùng được cách đọc này ở mọi tình huống.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         }
@@ -396,7 +396,7 @@
             "Giao tiếp: báo cáo dễ kiểm tra, mức lịch sự nhất quán; lỗi chữ/số được góp ý theo ảnh hưởng cụ thể, không suy thành không hiểu mọi phép so sánh."
           ],
           "exchange": { "group": "n2-comparison-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
-          "rationale": "Lựa chọn ưu tiên và nhu cầu do người học quyết định, không có câu đáp án hay máy chấm ngữ nghĩa. Lưu nguyên văn đề xuất chưa được đánh giá; các phép tính là căn cứ tự đối chiếu, không đủ xác nhận toàn bộ lập luận đúng.",
+          "rationale": "Em tự chọn ưu tiên và nhu cầu của câu lạc bộ. Thầy giúp em kiểm tra cả phép tính lẫn cách nối lựa chọn với lý do; tính đúng chưa đủ nếu lời đề xuất không giải thích được đánh đổi.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -411,11 +411,11 @@
             "Nối tiếp: câu trích có thật, lời bổ sung dùng đúng ưu tiên và lựa chọn ban đầu; không dựng một đáp án cũ khác để phản biện.",
             "Lập luận: nói rõ đánh đổi thật của đề xuất; dưới giả sử 4 ngày kiểm tra lại tính khả thi trước ưu tiên chứ không mặc định phải đổi tên hãng.",
             "Phạm vi: phân biệt tình huống chính 6 ngày với giả sử 4 ngày và báo giá với kết quả; không gán thêm ưu thế chất lượng.",
-            "Tự sửa: chỉ ra chỗ làm rõ/sửa hoặc lý do giữ câu hợp lý; nhận xét phải đọc quan hệ lý do trong hai văn bản, không dựa vào từ khóa.",
-            "Bằng chứng: thiếu nguyên văn trước thì chưa nhận xét được tính nhất quán; bản bổ sung mới không được thay thế lịch sử đề xuất ban đầu."
+            "Tự sửa: chỉ ra chỗ cần làm rõ hoặc lý do giữ câu hợp lý, giải thích quan hệ giữa lựa chọn và lý do trong chính hai bản của em.",
+            "Dựa vào đề xuất ban đầu để viết phần bổ sung. Em nói rõ điều gì vẫn giữ và điều gì chỉ thay đổi trong giả sử, không kể lại như thể đề xuất cũ vốn đã khác."
           ],
           "exchange": { "group": "n2-comparison-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N2:comparison:task:5"] },
-          "rationale": "Giữ riêng hai lượt để kiểm tra điều kiện thay đổi tác động lên lựa chọn thật ra sao. AI tư vấn không phải xác nhận đơn đã được đặt hoặc người học đã thành thạo ra quyết định.",
+          "rationale": "Thầy đối chiếu phần bổ sung với đề xuất ban đầu để xem hạn thay đổi ảnh hưởng đến lựa chọn ra sao. Góp ý AI không xác nhận đơn đã được đặt hoặc em đã thành thạo việc ra quyết định.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -431,10 +431,10 @@
             "Kiểm tra xem từng phòng có đủ chỗ cho 30 khách không. Từ giờ được vào phòng đến 15時 phải có ít nhất 90 phút chuẩn bị; đừng tính thời gian đi bộ thành thời gian bày đồ.",
             "Lựa chọn mở: ưu tiên và lý do tổ chức tự chọn gắn được với phòng đề xuất; nêu lợi thế của phòng không chọn mà vẫn giữ đúng điều kiện bắt buộc.",
             "Giới hạn: hỏi về lối đi chưa biết, không kể đã đặt phòng; cùng có thiết bị không chứng minh toàn bộ chất lượng hoặc khả năng tiếp cận bằng nhau.",
-            "Bằng chứng: giữ nguyên văn mới và tình trạng trợ giúp để người đọc xem lập luận thực; đủ lịch ôn hoặc AI nhận xét không chứng minh giữ kiến thức tự lực."
+            "Em thử tự viết đề xuất mới và giải thích lựa chọn của mình. Thầy giúp em nhận ra chỗ lập luận còn thiếu; một lần làm bài chưa cho biết em đã nhớ chắc."
           ],
           "exchange": { "group": "n2-comparison-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N2:comparison:task:5", "teaching:v1:N2:comparison:task:6"], "delay_hours": 24 },
-          "rationale": "Dữ kiện mới đủ để lập luận, không cần văn bản nguồn cũ hoặc câu mẫu. Lưu đáp án mới như bằng chứng tự báo cáo chưa chấm; không dùng lượng từ/con số có mặt làm bộ chấm đúng nghĩa.",
+          "rationale": "Em lập luận bằng dữ kiện của hai phòng trong bài mới, không xem báo cáo nhà in cũ hay câu mẫu. Thầy giúp em xem các con số có thực sự hỗ trợ lựa chọn và đánh đổi em nêu không.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         }
@@ -608,10 +608,10 @@
             "Thiết kế tự chọn: hai mục đều có định nghĩa thao tác và đơn vị đủ để người khác ghi nhận; so trước/trong phải dùng cùng định nghĩa, không lấy số buổi họp thay cả hiệu quả.",
             "Quyết định có điều kiện: tiêu chí cân nhắc điều chỉnh do người học tự nêu và đánh dấu là đề nghị; không biến tiêu chí thành kết quả đã đạt.",
             "Lập luận/ngữ pháp: nguồn phát ngôn, thời và phạm vi phủ định thể hiện đúng quan hệ; không suy 'không bảo đảm tăng' ra 'chắc chắn không tăng' hoặc trước–sau thành chứng minh nhân quả tuyệt đối.",
-            "Giao tiếp: người nhận biết cần ghi gì và điều gì còn chờ nhóm quyết định. Tự kiểm có thể nêu chỗ chưa chắc; không có câu mẫu hay bộ từ khóa bảo đảm đúng."
+            "Giao tiếp: người nhận biết cần ghi gì và điều gì còn chờ nhóm quyết định. Khi tự kiểm, em cứ nêu rõ chỗ mình chưa chắc."
           ],
           "exchange": { "group": "n2-proposal-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
-          "rationale": "Nhiều cách đo và tiêu chí có thể hợp lý; lưu nguyên văn đề nghị chưa chấm, tách góp ý nghĩa/cấu trúc/chính tả. AI chỉ tư vấn trên lời thật, không phê duyệt kế hoạch hoặc xác nhận hiệu quả.",
+          "rationale": "Em có thể đề nghị nhiều cách đo hợp lý nếu nói rõ sẽ ghi gì và dùng kết quả ra sao. Thầy góp ý riêng về nghĩa, cách ghép câu và chữ viết; AI không phê duyệt kế hoạch hoặc xác nhận hiệu quả.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -627,10 +627,10 @@
             "Kiểm chứng: lựa chọn ghi nhận/giới hạn mới gắn với lượng việc và phép đo thực tế của người học, đủ cụ thể để người khác biết áp dụng ra sao.",
             "Giới hạn kết luận: nêu quan sát trước–sau có thể còn nguyên nhân khác; không khẳng định đã loại mọi yếu tố gây nhiễu hoặc hiệu quả đã có.",
             "Sửa có lý do: thay đoạn gây suy diễn hoặc giữ đoạn hợp lý kèm giải thích đối chiếu; không buộc tìm lỗi nếu câu gốc hợp lý.",
-            "Bằng chứng/giao tiếp: thiếu đề nghị trước thì chưa đánh giá nối tiếp; nguyên văn mới vẫn là tư vấn chưa thông qua, diễn đạt lịch sự và tách góp ý chính tả khỏi ý nghĩa."
+            "Dựa vào đề nghị ban đầu để bổ sung, giữ giọng lịch sự và nói rõ đây vẫn là cách làm chưa được nhóm thông qua. Thầy góp ý chữ viết riêng với lập luận."
           ],
           "exchange": { "group": "n2-proposal-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N2:proposal:task:5"] },
-          "rationale": "Lưu riêng bản mới/lý do, không thay lịch sử hoặc tự thêm kết quả. Cần đọc hai lượt để xem giới hạn suy luận thực sự được làm rõ; không dùng có từ 'khả năng' làm chứng nhận đúng nghĩa.",
+          "rationale": "Em đối chiếu đoạn bổ sung với cách đo đã đề nghị, giải thích vì sao cần giới hạn kết luận khi lượng việc thay đổi. Thầy giúp em xem lý do đã rõ chưa, không coi việc thêm một từ dè dặt là đủ và không tự thêm kết quả đo.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -646,10 +646,10 @@
             "Mốc và nguồn: giữ ngày hiện tại 1/5 trước ngày thử 8/5/2027, thời lượng một tuần, và tách dự đoán/lo ngại khỏi việc đã quyết định.",
             "Thiết kế: người học tự chọn phép ghi đủ hai mặt; có định nghĩa, đơn vị, điều kiện cân nhắc và yếu tố bối cảnh bổ sung, đều là đề xuất chưa thông qua.",
             "Suy luận: không kể dự kiến thành kết quả, không suy ít thời gian tìm hơn là chắc chắn mọi khách được lợi hoặc đủ để bỏ kiểm tra lối đi.",
-            "Bằng chứng: giữ nguyên văn mới và trợ giúp đã dùng; tiêu chí tự kiểm không tự chấm đúng nghĩa, đủ lịch ôn không chứng minh nhớ lâu hoặc tự lực."
+            "Em tự viết kế hoạch mới và xem chỗ nào còn chưa chắc. Thầy góp ý cách giải thích và chữ viết; một lần làm bài chưa cho biết em đã nhớ chắc."
           ],
           "exchange": { "group": "n2-proposal-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N2:proposal:task:5", "teaching:v1:N2:proposal:task:6"], "delay_hours": 24 },
-          "rationale": "Toàn bộ bối cảnh mới có trong lượt này, không cung cấp lời cũ/mô hình trả lời. Nguyên văn được giữ như bằng chứng chưa đánh giá; nhận xét AI không phải dữ liệu triển lãm đã được quan sát.",
+          "rationale": "Em dùng bối cảnh triển lãm mới để đề nghị cách ghi nhận, không xem lại kế hoạch họp cũ hay mẫu. AI chỉ góp ý bài viết, không cung cấp kết quả quan sát triển lãm.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         }

@@ -9,9 +9,12 @@ function lessonProgressIds(item,level,skill){
 }
 let practicalCourse=null,practicalSources=null,practicalLoad=null,courseChapters=null,jlptResources=null,erinResources=null;
 async function loadPracticalCourse(){
-  if(!practicalLoad)practicalLoad=Promise.all(['practical','sources','chapters','jlpt-resources','erin-resources'].map(async name=>{
+  if(!practicalLoad)practicalLoad=Promise.all([Promise.all(['practical','sources','chapters','jlpt-resources','erin-resources'].map(async name=>{
     const response=await fetch(`course/${name}.json`);if(!response.ok)throw new Error('course');return response.json();
-  })).then(([course,sources,chapters,resources,erin])=>{practicalCourse=course;practicalSources=sources;courseChapters=chapters;jlptResources=resources;erinResources=erin;}).catch(error=>{practicalLoad=null;throw error;});
+  })),loadViDict()]).then(([[course,sources,chapters,resources,erin],dict])=>{
+    practicalCourse=course;practicalSources={...sources,lessons:sources.lessons.map(resource=>viResource(resource,dict))};
+    courseChapters=chapters;jlptResources=resources;erinResources={...erin,lessons:erin.lessons.map(resource=>viResource(resource,dict))};
+  }).catch(error=>{practicalLoad=null;throw error;});
   return practicalLoad;
 }
 function installCourseKaiwa(){
@@ -24,7 +27,7 @@ function createStudyPlan(level){
   const step=(lesson,skill)=>({lesson,skill,ids:lessonProgressIds(lesson,level,skill)});
   if(level==='N5')units.push({id:'practical:kana',title:'Làm quen bảng chữ cái',goal:'Nhận diện cách đọc các chữ cơ bản trước khi bắt đầu hội thoại.',minutes:60,optional:true,steps:skills.kana.map(l=>step(l,'kana'))});
   const editorial=skills.grammar.filter(lesson=>lesson.editorial);
-  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chờ em duyệt',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Đọc ví dụ theo tình huống rồi tự viết câu.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
+  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chưa được duyệt độc lập',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Đọc ví dụ theo tình huống rồi tự viết câu.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
   for(const chapter of courseChapters.chapters.filter(c=>c.level===level)){
     const lessons=chapter.grammar_ids.map(id=>skills.grammar.find(l=>l.id===`openjlpt:${level}:grammar:${id}`));
     if(lessons.some(l=>!l))throw new Error('Thiếu nguồn của chương');

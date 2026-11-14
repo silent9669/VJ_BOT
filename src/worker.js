@@ -101,7 +101,7 @@ export default {
           }
           if(body.level && !['N5','N4','N3','N2','N1'].includes(body.level)) return jsonResponse({detail:'Cấp độ không hợp lệ'},400);
           for(const field of ['message','text','user_speech','prompt_jp','context','scenario_title']) {
-            if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Invalid '+field},400);
+            if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Trường dữ liệu không hợp lệ: '+field},400);
           }
           request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
         }
@@ -476,7 +476,7 @@ export default {
           return jsonResponse({
             status: 'ungraded', reason: 'empty_submission', score: null, rating: null,
             estimated_score: null, conclusion: 'empty',
-            feedback: 'No answer was submitted. Nothing has been assessed.',
+            feedback: 'Chưa gửi câu trả lời. Chưa có nội dung nào được đánh giá.',
             model_answer: '', criteria: [], user_text: '', scenario: scenario.title
           });
         }
@@ -536,6 +536,6 @@ export default {
         console.warn("Asset fetch error:", assetErr);
       }
     }
-    return new Response("Not Found", { status: 404 });
+    return new Response("Không tìm thấy trang.", { status: 404 });
   }
 };

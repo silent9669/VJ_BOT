@@ -76,7 +76,13 @@ class Element {
   closest(selector){for(let node=this;node;node=node.parentElement)if(node.matches(selector))return node;return null;}
   addEventListener(type,handler){(this.events[type]??=[]).push(handler);}
   dispatch(type,properties={}){const event={key:'',preventDefault(){},target:this,...properties};return Promise.all([this['on'+type]?.(event),...(this.events[type]||[]).map(fn=>fn(event))]);}
-  click(){return this.disabled?Promise.resolve():this.dispatch('click');}
+  async click(){
+    if(this.disabled)return;
+    await this.dispatch('click');
+    if(this.tagName==='SUMMARY' && this.parentElement?.tagName==='DETAILS'){
+      this.parentElement.open=!this.parentElement.open;await this.parentElement.dispatch('toggle');
+    }
+  }
   focus(){this.focused=true;return this.dispatch('focus');}
   scrollIntoView(){}
 }
@@ -320,6 +326,21 @@ test('SRS ordering retains canonical word identity without capturing either flas
   assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE A'),false);
   card.dataset.teacherWordId='not-in-this-lesson';assert.equal(b.c.teacherContext().focus,null);
 });
+test('no due flashcards shows an empty message outside the hidden rating controls',async()=>{
+  const b=lesson(),panel=b.element('panel-lesson');panel.id='panel-flashcards';
+  const review=b.add('flashcard-review','div',panel),controls=b.add('controls','div',review);controls.className='fc-controls-bar';
+  b.add('fc-counter','div',controls);b.add('flashcard-card','div',review);b.add('btn-fc-reveal','button',review);
+  const empty=b.add('fc-empty','p',review);empty.hidden=true;b.add('fc-rating-help','p',review);
+  const item={id:'words',items:[{id:'word-a',jp:'私',vi:'tôi'}]};
+  b.c.window.JLPT_DATA={curriculum:{N3:{skills:{vocabulary:[item]}}}};
+  b.c.ensureLessons=async()=>{};
+  b.c.apiFetch=async()=>Response.json({items:[{item_id:'word-a',next_review:'2999-01-01'}]});
+  vm.runInContext(app.slice(app.indexOf('let fcDeck ='),app.indexOf('// 11. KAIWA SPEAKING LAB CONTROLLER')),b.c);
+  await b.c.renderFlashcards('N3','words');
+  assert.equal(controls.hidden,true);assert.equal(b.element('flashcard-card').hidden,true);
+  assert.equal(empty.hidden,false);assert.ok(empty.textContent.trim());assert.equal(empty.closest('.fc-controls-bar'),null);
+  assert.equal(b.element('fc-rating-help').hidden,true);
+});
 function quiz(){
   const b=lesson(),panel=b.element('panel-lesson');panel.id='panel-quiz';
   const workspace=b.add('practice-workspace','div',panel),card=b.add('quiz-card','div',workspace);
@@ -435,7 +456,10 @@ test('managed administrator practice preserves canonical grading without reading
   };
   b.c.showLessonDetail({id:'practice',title:'Bài tập',drills:questions},'N3','grammar');
   await b.document.querySelector('[data-lesson-mode=practice]').click();
-  await b.document.querySelector('.practice-coach button').click();
+  const help=b.document.querySelector('.practice-coach');
+  await help.querySelector('button').click();assert.equal(events.length,0,'collapsed help cannot start a request');
+  await help.querySelector('summary').click();assert.equal(help.open,true);
+  await help.querySelector('button').click();
   assert.equal(sent[0].action,'hint');assert.equal(sent[0].item_id,'q0');assert.equal(sent[0].question_index,0);
   assert.equal(Object.hasOwn(sent[0],'answer_index'),false);
   assert.deepEqual(events.map(entry=>[entry.path,entry.body.event || entry.body.action]),
@@ -444,7 +468,8 @@ test('managed administrator practice preserves canonical grading without reading
   assert.match(sent[0].task.revision,/^[a-f0-9]{64}$/);
   await b.document.querySelectorAll('.practice-options input')[1].dispatch('change');
   await b.document.querySelector('.practice-session .practice-primary').click();
-  await b.document.querySelector('.practice-coach button').click();
+  const feedbackHelp=b.document.querySelector('.practice-coach');
+  await feedbackHelp.querySelector('summary').click();await feedbackHelp.querySelector('button').click();
   assert.equal(sent[1].answer_index,1);assert.equal(sent[1].action,'feedback');
   assert.deepEqual(events.map(entry=>entry.body.event || entry.body.action),['assist','hint','answer','assist','feedback']);
   assert.equal(events[2].body.answer_index,1);assert.equal(events[2].body.attempt_id,events[0].body.attempt_id);
@@ -464,8 +489,10 @@ test('submitting an answer cancels its old hint and rejects a late response with
   };
   b.c.showLessonDetail({id:'practice',title:'Bài tập',drills:[taskFixture()]},'N3','grammar');
   await b.document.querySelector('[data-lesson-mode=practice]').click();
-  const hint=b.document.querySelector('.practice-coach button').click();
-  await started.promise;
+  const help=b.document.querySelector('.practice-coach');await help.querySelector('summary').click();
+  const hint=help.querySelector('button').click();
+  await Promise.race([started.promise,hint]);assert.ok(request,'the disclosed hint must reach the coach request');
+  assert.equal(request.action,'hint');assert.equal(signal.aborted,false);
   await b.document.querySelector('.practice-options input').dispatch('change');
   await b.document.querySelector('.practice-session .practice-primary').click();
   assert.equal(signal.aborted,true);
@@ -486,9 +513,11 @@ test('role changes clear pending and completed coaching while unrelated voice ch
   };
   b.c.showLessonDetail({id:'practice',title:'Bài tập',drills:[taskFixture()]},'N3','grammar');
   await b.document.querySelector('[data-lesson-mode=practice]').click();
-  const button=b.document.querySelector('.practice-coach button'),output=b.document.querySelector('.practice-coach-reply');
+  const help=b.document.querySelector('.practice-coach');await help.querySelector('summary').click();
+  const button=help.querySelector('button'),output=help.querySelector('.practice-coach-reply');
   const hint=button.click();
-  await started.promise;
+  await Promise.race([started.promise,hint]);assert.ok(request,'the disclosed hint must reach the coach request');
+  assert.equal(request.action,'hint');
   listeners.get('vjbot-voice-changed')();
   assert.equal(signal.aborted,false);assert.equal(button.disabled,true);
   b.c.signedInUser.is_admin=true;listeners.get('vjbot-voice-changed')();
@@ -525,7 +554,10 @@ test('practice keeps passage, marked target and duplicate numbered parts without
   assert.equal(section.querySelectorAll('.practice-option')[1].dataset.state,'correct');
   assert.equal(section.querySelector('.practice-feedback').hidden,true);
   assert.equal(section.querySelector('.practice-feedback').textContent,'');
-  assert.equal(section.querySelectorAll('.practice-options input')[1].getAttribute('aria-label'),'2. あれ · đáp án đúng');
+  const markedInput=section.querySelectorAll('.practice-options input')[1],markedLabel=markedInput.getAttribute('aria-label');
+  assert.equal(markedInput.value,'1');assert.equal(markedInput.disabled,true);
+  assert.equal(markedLabel.split(' · ')[0],'2. あれ');assert.ok(markedLabel.length>'2. あれ'.length);
+  assert.notEqual(markedLabel,section.querySelector('.practice-options input').getAttribute('aria-label'));
   assert.equal(task.answer_index,1);assert.deepEqual(task.opts,['あれ','あれ','これ','それ']);
 });
 
@@ -787,7 +819,10 @@ test('switching accounts invalidates the whole mounted exchange before a new acc
   b.c.signedInUser={user_id:'B'};
   for(const handler of listeners.get('vjbot-account-ready')||[])handler({});
   assert.doesNotMatch(b.document.querySelector('.practice-session').textContent,/PRIVATE ACCOUNT A/);
-  assert.match(b.document.querySelector('.practice-session').textContent,/Tài khoản đã thay đổi/);
+  const section=b.document.querySelector('.practice-session');
+  assert.equal(section.children.length,1);assert.equal(section.children[0].getAttribute('role'),'status');
+  assert.notEqual(section.children[0].textContent.trim(),'');
+  assert.equal(section.querySelector('.practice-primary'),null);
   assert.equal(b.document.querySelector('.practice-session textarea'),null);assert.equal(sent.length,1);
 });
 
@@ -1094,11 +1129,60 @@ test('writing waits for answer persistence, surfaces AI failure once and retries
   input.value='  教師をしています。  ';await input.dispatch('input');await action.click();
   assert.equal(calls,0);assert.match(b.document.querySelector('.practice-feedback').textContent,/Save failed/);
   saved=true;await action.click();await firstCoach.promise;await new Promise(setImmediate);
-  assert.equal(calls,1);assert.match(b.document.querySelector('.practice-coach-reply').textContent,/Assessment unavailable/);
+  assert.equal(calls,1);assert.match(b.document.querySelector('.practice-coach .study-teacher-status').textContent,/Assessment unavailable/);
   assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'unknown');assert.equal(action.disabled,false);
   const coach=b.document.querySelector('.practice-coach button');assert.equal(coach.disabled,false);
   await coach.click();assert.equal(calls,2);assert.match(b.document.querySelector('.practice-coach-reply').textContent,/đúng nghề/);
   const requests=sent.filter(entry=>entry.path==='/api/practice/coach').map(entry=>entry.body);
   assert.equal(requests[0].response_text,'  教師をしています。  ');assert.deepEqual(requests[0],requests[1]);
   assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'unknown');
+});
+
+test('first successful recall save reveals the comparison, alternative forms and explanation only after acknowledgment',async()=>{
+  const pending=deferred(),started=deferred(),sent=[];
+  const b=lesson({apiFetch:async(_path,options)=>{
+    const body=JSON.parse(options.body);sent.push(body);started.resolve();return pending.promise;
+  }});
+  b.c.showLessonDetail({id:'recall-visible',title:'Luyện nhớ',drills:[{
+    mode:'recall',q:'Em viết lời chào nhé.',accepted_answers:['こんにちは。','こんにちは'],
+    explanation:'Đây là lời chào ban ngày.'
+  }]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.practice-session'),feedback=section.querySelector('.practice-feedback');
+  const input=section.querySelector('.practice-options input'),action=section.querySelector('.practice-primary');
+  input.value='こんにちは。';await input.dispatch('input');
+  const saving=action.click();await started.promise;
+  assert.equal(feedback.hidden,true);assert.equal(section.querySelector('.practice-sample'),null);
+  pending.resolve(Response.json({task:sent[0].task,assessment:{comparison:'source_match'}}));await saving;
+  assert.equal(feedback.hidden,false);
+  assert.equal(feedback.querySelector('.practice-sample').textContent,'こんにちは。');
+  assert.match(feedback.querySelector('.practice-variants').textContent,/こんにちは/);
+  assert.match(feedback.querySelector('.practice-reason').textContent,/Đây là lời chào ban ngày/);
+  assert.equal(sent.length,1);assert.equal(sent[0].response_text,'こんにちは。');
+});
+
+test('recall save retry replaces the error with visible source comparison without changing the submitted text',async()=>{
+  let available=false;const sent=[];
+  const b=lesson({apiFetch:async(_path,options)=>{
+    const body=JSON.parse(options.body);sent.push(body);
+    return available?Response.json({task:body.task,assessment:{comparison:'orthographic_difference'}})
+      :Response.json({detail:'Save unavailable'},{status:503});
+  }});
+  b.c.showLessonDetail({id:'recall-retry-visible',title:'Luyện nhớ',drills:[{
+    mode:'recall',q:'Em viết lời chào nhé.',accepted_answers:['こんにちは。','こんにちは'],
+    explanation:'Đây là lời chào ban ngày.'
+  }]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.practice-session'),feedback=section.querySelector('.practice-feedback');
+  const input=section.querySelector('.practice-options input'),action=section.querySelector('.practice-primary');
+  input.value=' こんにちは ';await input.dispatch('input');await action.click();
+  assert.equal(feedback.hidden,false);assert.match(feedback.textContent,/Save unavailable/);
+  assert.equal(section.querySelector('.practice-sample'),null);assert.equal(section.querySelector('.practice-variants'),null);
+  available=true;await action.click();
+  assert.equal(feedback.hidden,false);assert.doesNotMatch(feedback.textContent,/Save unavailable/);
+  assert.equal(feedback.querySelector('.practice-sample').textContent,'こんにちは');
+  assert.ok(feedback.querySelector('.practice-variants'));assert.ok(feedback.querySelector('.practice-reason'));
+  assert.equal(feedback.dataset.correct,'unknown');
+  assert.equal(sent.length,2);assert.equal(sent[0].attempt_id,sent[1].attempt_id);
+  assert.equal(sent[0].response_text,' こんにちは ');assert.deepEqual(sent[1],sent[0]);
 });

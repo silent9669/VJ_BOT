@@ -22,7 +22,7 @@
     time.textContent = when(thread.timestamp);
     head.append(title, time);
     const snippet = document.createElement('small');
-    snippet.textContent = (thread.last_role === 'user' ? 'Em: ' : '') + thread.snippet;
+    snippet.textContent = (thread.last_role === 'user' ? 'Em: ' : 'Thầy Lâm: ') + thread.snippet;
     button.append(head, snippet);
     button.onclick = () => open(thread);
     return button;
@@ -35,7 +35,7 @@
       chatLessonContext = {id: thread.lesson.id, level: thread.lesson.level};
       host.replaceChildren();host.hidden = false;
       const name = document.createElement('strong');name.textContent = `${thread.lesson.level} · ${thread.title}`;
-      const general = document.createElement('button');general.type = 'button';general.className = 'stage-btn';general.textContent = 'Chat chung';
+      const general = document.createElement('button');general.type = 'button';general.className = 'stage-btn';general.textContent = 'Trò chuyện chung';
       general.onclick = () => open({scope: 'chat', title: 'Trò chuyện chung'});
       host.append(name, general);
     } else {
@@ -46,7 +46,7 @@
   async function show() {
     if (busy()) return;
     list.replaceChildren();
-    const loading = document.createElement('p');loading.className = 'history-empty';loading.textContent = 'Đang tải…';list.append(loading);
+    const loading = document.createElement('p');loading.className = 'history-empty';loading.textContent = 'Đang tải các cuộc trò chuyện…';list.append(loading);
     dialog.showModal();list.tabIndex = -1;list.focus({preventScroll: true});
     try {
       const response = await apiFetch('/api/history/threads');
@@ -54,7 +54,7 @@
       const threads = await response.json();
       list.replaceChildren(...(threads.length ? threads.map(row) : [Object.assign(document.createElement('p'), {className: 'history-empty', textContent: 'Chưa có cuộc trò chuyện nào.'})]));
     } catch {
-      list.replaceChildren(Object.assign(document.createElement('p'), {className: 'history-empty', textContent: 'Chưa tải được lịch sử.'}));
+      list.replaceChildren(Object.assign(document.createElement('p'), {className: 'history-empty', textContent: 'Chưa tải được lịch sử. Em đóng rồi mở lại Lịch sử để thử nhé.'}));
     }
   }
   el('btn-chat-history').addEventListener('click', show);

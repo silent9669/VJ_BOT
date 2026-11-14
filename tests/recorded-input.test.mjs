@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
-function recording({microphone,reply,supported=true,noRecognition=false,playPromise,mimeType='audio/webm;codecs=opus',setupFailure}={}) {
+function recording({microphone,reply,supported=true,noRecognition=false,playPromise,replayFailure=false,mimeType='audio/webm;codecs=opus',setupFailure}={}) {
   const tracks=[{stopped:false,stop(){this.stopped=true;}}],stream={getTracks:()=>tracks},requests=[],timers=new Map(),events={},errors=[],audios=[];
   const button={textContent:'Ghi âm',events:{},listeners:{},attributes:{},addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);this.events[name]=fn;},setAttribute(name,value){this.attributes[name]=value;}};
   const input={value:'入力',focus(){},dispatchEvent(){}},status={},playback={hidden:true,style:{},events:{},listeners:{},addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);this.events[name]=fn;}};
@@ -20,7 +20,7 @@ function recording({microphone,reply,supported=true,noRecognition=false,playProm
     apiFetch:async(path,options)=>{const body=JSON.parse(options.body);requests.push({path,body,signal:options.signal});return reply?reply(body):Response.json(body.action?{supported}:{text:'こんにちは'});},
     setTimeout:fn=>{timers.set(timers.size+1,fn);return timers.size;},clearTimeout:id=>timers.delete(id),
     URL:{createObjectURL:()=> 'blob:recording',revokeObjectURL(){revoked++;}},Audio:class {
-      constructor(){audios.push(this);}play(){return playPromise || Promise.resolve();}pause(){this.paused=true;}removeAttribute(){}load(){}
+      constructor(){audios.push(this);}play(){return playPromise || (replayFailure?Promise.reject(new Error('blocked replay')):Promise.resolve());}pause(){this.paused=true;}removeAttribute(){}load(){}
     },
     location:{hash:'#kaiwa'},signedInUser:{user_id:'owner'},
     document:{addEventListener(){}},addEventListener(name,fn){events[name]=fn;}});
@@ -97,14 +97,16 @@ test('recorded owner and route guards reject a late transcript before lifecycle 
 for(const setupFailure of ['constructor','start'])test(`recorded ${setupFailure} failure releases microphone without fallback`,async()=>{
   const h=recording({setupFailure});await h.controller.toggle();
   assert.equal(h.tracks[0].stopped,true);assert.equal(h.recognition,undefined);assert.equal(h.controller.active,false);
-  assert.match(h.status.textContent,/recorder.*failed/);assert.equal(h.requests.length,1);
+  assert.ok(h.status.textContent.trim());assert.equal(h.errors.length,1);assert.equal(h.input.value,'入力');assert.equal(h.requests.length,1);
 });
 test('actual recording MIME survives upload and replay failure remains visible',async()=>{
-  const h=recording({mimeType:'audio/mp4',playPromise:Promise.resolve()});
+  const h=recording({mimeType:'audio/mp4',replayFailure:true});
   await h.controller.toggle();await h.controller.toggle();await tick();
-  assert.equal(h.requests[1].body.mime_type,'audio/mp4');assert.match(h.status.textContent,/văn bản/);
-  h.context.Audio=class {play(){return Promise.reject(new Error('blocked replay'));}pause(){}removeAttribute(){}load(){}};
-  await h.playback.events.click();assert.match(h.status.textContent,/blocked replay/);assert.equal(h.input.value,'入力 こんにちは');
+  assert.equal(h.requests[1].body.mime_type,'audio/mp4');assert.equal(h.input.value,'入力 こんにちは');assert.equal(h.button.attributes['aria-busy'],'false');
+  await h.playback.events.click();
+  assert.match(h.status.textContent,/không phát.*bản ghi/i);assert.equal(h.status.hidden,false);
+  assert.equal(h.audios.length,1);assert.equal(h.audios[0].paused,true);assert.equal(h.input.value,'入力 こんにちは');
+  assert.equal(h.requests.length,2);assert.equal(h.recognition,undefined);
 });
 test('late replay failures cannot overwrite a newer capture',async()=>{
   let reject;const h=recording({playPromise:new Promise((_done,fail)=>{reject=fail;})});

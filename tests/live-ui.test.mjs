@@ -16,7 +16,7 @@ function liveUI({microphone,reply}={}) {
     return elements.get(id);
   };
   const channel={readyState:'open',events:{},sent:[],closed:false,addEventListener(name,fn){this.events[name]=fn;},send(value){this.sent.push(JSON.parse(value));},close(){this.closed=true;},emit(event){this.events.message({data:JSON.stringify(event)});}};
-  let peer;
+  let peer,permissions=0;
   class Peer {
     constructor(){peer=this;this.events={};this.iceGatheringState='complete';this.connectionState='connected';}
     addTrack(){}addEventListener(name,fn){this.events[name]=fn;}removeEventListener(){}
@@ -28,11 +28,11 @@ function liveUI({microphone,reply}={}) {
   }
   const context=vm.createContext({console,Date,JSON,setInterval,clearInterval,setTimeout,clearTimeout,AbortController,
     RTCPeerConnection:Peer,MediaStream:class{},signedInUser:{user_id:'email:admin',is_admin:true},activeCurriculumLevel:'N5',
-    location:{hash:'#classroom'},navigator:{mediaDevices:{getUserMedia:microphone || (async()=>stream)}},
+    location:{hash:'#classroom'},navigator:{mediaDevices:{getUserMedia:()=>{permissions++;return microphone?microphone():Promise.resolve(stream);}}},
     apiFetch:async(path,options)=>{requests.push({path,body:JSON.parse(options.body),signal:options.signal});return reply?reply():Response.json({model:'gpt-live-1',voice:'shida',id:'live_test',sdp:'answer',greeting:'こんにちは'});},
     document:{getElementById:element,createElement:()=>element('node_'+elements.size),querySelector:element,querySelectorAll:()=>[]},addEventListener:(name,fn)=>{windowEvents[name]=fn;}});
   context.window=context;vm.runInContext(readFileSync('static/live-transcript.js','utf8'),context);vm.runInContext(readFileSync('static/live.js','utf8'),context);
-  return {context,element,channel,tracks,requests,stream,peer:()=>peer,windowEvents};
+  return {context,element,channel,tracks,requests,stream,peer:()=>peer,permissions:()=>permissions,windowEvents};
 }
 const captions=(ui,role)=>ui.element('live-transcript').children.filter(row=>row.className==='live-turn '+role).map(row=>row.children[1].textContent).join('');
 
@@ -78,14 +78,25 @@ test('an account change during live setup discards the answer and releases the m
   assert.equal(ui.peer().answer,undefined);assert.equal(ui.peer().closed,true);assert.equal(ui.tracks[0].stopped,true);
 });
 
-test('one Voice action starts continuous audio and captions; returning to text closes the session',async()=>{
+test('opening live shows the panel without requesting a microphone until explicit Start',async()=>{
   const ui=liveUI();
+  ui.context.stopLiveConversation();
+  const cleanupStatus=ui.element('live-status').textContent;
   await ui.context.openLiveConversation();
+  assert.equal(ui.element('classroom-voice').hidden,false);assert.equal(ui.element('classroom-text').hidden,true);
+  assert.equal(ui.permissions(),0);assert.equal(ui.requests.length,0);assert.equal(ui.peer(),undefined);
+  assert.ok(ui.element('live-status').textContent.trim());
+  assert.notEqual(ui.element('live-status').textContent,cleanupStatus);
+  await ui.element('live-start').events.click();
   try{
-    assert.equal(ui.element('classroom-voice').hidden,false);assert.equal(ui.element('classroom-text').hidden,true);assert.equal(ui.requests.length,1);
+    assert.equal(ui.permissions(),1);assert.equal(ui.requests.length,1);
     for(const [type,delta] of [['session.input_transcript.delta','こんにちは'],['session.output_transcript.delta','こんにちは。'],['session.input_transcript.delta','学生です'],['session.output_transcript.delta','何年生ですか？']])ui.channel.emit({type,delta,start_ms:100,end_ms:200});
     assert.equal(captions(ui,'assistant'),'こんにちは。何年生ですか？');assert.equal(captions(ui,'user'),'こんにちは学生です');
     ui.context.stopLiveConversation();assert.equal(ui.tracks[0].enabled,false);ui.channel.emit({type:'session.closed'});assert.equal(ui.peer().closed,true);
+    const endedStatus=ui.element('live-status').textContent;
+    await ui.context.openLiveConversation();
+    assert.equal(ui.element('live-status').textContent,endedStatus);
+    assert.equal(ui.permissions(),1);assert.equal(ui.requests.length,1);
   }finally{ui.windowEvents.pagehide();}
 });
 
@@ -94,7 +105,7 @@ test('free accounts cannot start a live conversation through the Voice action',a
 });
 
 test('switching accounts during an active call disables the mic and clears the previous transcript',async()=>{
-  const ui=liveUI();await ui.context.openLiveConversation();
+  const ui=liveUI();await ui.context.openLiveConversation();await ui.element('live-start').events.click();
   ui.channel.emit({type:'session.input_transcript.delta',delta:'私の話',start_ms:0,end_ms:400});
   ui.context.signedInUser={user_id:'email:other-admin',is_admin:true};ui.context.checkLiveAccount();
   assert.equal(ui.tracks[0].enabled,false);assert.equal(ui.element('live-transcript').children.length,0);
@@ -111,7 +122,7 @@ test('waveform measures microphone and teacher media and releases its audio grap
     createMediaStreamSource(){const source={connect(){},disconnect(){this.disconnected=true;}};sources.push(source);return source;}
   };
   ui.context.Uint8Array=Uint8Array;ui.context.getComputedStyle=()=>({color:'#325d43'});ui.context.requestAnimationFrame=()=>5;ui.context.cancelAnimationFrame=id=>{cancelled=id===5;};
-  await ui.context.openLiveConversation();
+  await ui.context.openLiveConversation();await ui.element('live-start').events.click();
   ui.peer().events.track({track:{}});assert.equal(sources.length,2);assert.ok(lines>0);
   ui.windowEvents.pagehide();assert.equal(closed,true);assert.equal(cancelled,true);assert.ok(sources.every(source=>source.disconnected));assert.equal(ui.tracks[0].stopped,true);
 });
@@ -119,9 +130,12 @@ test('waveform measures microphone and teacher media and releases its audio grap
 test('blocked autoplay offers an explicit audio action and a late playback rejection stays closed',async()=>{
   const ui=liveUI();let fail=true;
   ui.element('live-audio').play=async()=>{if(fail)throw new Error('autoplay blocked');};
-  await ui.context.openLiveConversation();ui.peer().events.track({track:{}});await new Promise(resolve=>setImmediate(resolve));
+  await ui.context.openLiveConversation();await ui.element('live-start').events.click();ui.peer().events.track({track:{}});await new Promise(resolve=>setImmediate(resolve));
   assert.equal(ui.element('live-play-audio').hidden,false);
+  ui.element('live-mute').events.click();const mutedStatus=ui.element('live-status').textContent;
   fail=false;await ui.element('live-play-audio').events.click();assert.equal(ui.element('live-play-audio').hidden,true);
+  assert.equal(ui.tracks[0].enabled,false);assert.equal(ui.element('live-stage').dataset.turn,'muted');
+  assert.equal(ui.element('live-status').textContent,mutedStatus);
   let reject;ui.element('live-audio').play=()=>new Promise((_resolve,fail)=>{reject=fail;});ui.peer().events.track({track:{}});
   ui.windowEvents.pagehide();reject(new Error('closed'));await new Promise(resolve=>setImmediate(resolve));
   assert.equal(ui.element('live-play-audio').hidden,true);assert.match(ui.element('live-status').textContent,/kết thúc/);

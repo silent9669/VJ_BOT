@@ -65,8 +65,8 @@ async function resolveConnection(env, userId, override, profileId, speech = fals
   return {source: 'own', protocol: own.protocol, baseUrl: base.url, apiKey, models: [own.model]};
 }
 
-export const NO_AI = 'Thêm API key và chọn model trong Cài đặt để chat với thầy Lâm.';
-export const REKEY = 'Không giải mã được API key đã lưu. Hãy nhập lại trong Cài đặt.';
+export const NO_AI = 'Thêm khóa API và chọn mô hình trong Cài đặt để trò chuyện với thầy Lâm.';
+export const REKEY = 'Không giải mã được khóa API đã lưu. Hãy nhập lại trong Cài đặt.';
 const providerFailure = provider => !provider || provider.error === 'no_model'
   ? json({detail: NO_AI, code: 'no_ai'}, 403)
   : provider.error === 'rekey' ? json({detail: REKEY, code: 'rekey'}, 409)
@@ -154,13 +154,13 @@ async function publicProfile(env, userId, row) {
 async function saveProfile(env, userId, data, existing, requireModel = false) {
   const base = connectionBase(data.protocol, data.base_url);
   if (base.error) return {response: json({detail: base.error}, 400)};
-  if (!(modelOk(data.model) || (!requireModel && data.model === ''))) return {response: json({detail: 'Tên model không hợp lệ.'}, 400)};
+  if (!(modelOk(data.model) || (!requireModel && data.model === ''))) return {response: json({detail: 'Tên mô hình không hợp lệ.'}, 400)};
   const name = data.name === undefined ? existing?.name || 'API' : data.name;
   if (typeof name !== 'string' || !name.trim() || name.length > 80 || /[\x00-\x1f\x7f]/.test(name)) return {response: json({detail: 'Tên cấu hình không hợp lệ.'}, 400)};
   const replacingKey = data.api_key !== undefined && data.api_key !== '';
-  if (replacingKey && !keyOk(data.api_key)) return {response: json({detail: 'API key không hợp lệ.'}, 400)};
+  if (replacingKey && !keyOk(data.api_key)) return {response: json({detail: 'Khóa API không hợp lệ.'}, 400)};
   if (!replacingKey && (!existing || existing.protocol !== data.protocol || existing.base_url !== base.url)) {
-    return {response: json({detail: 'Hãy nhập API key cho URL và loại API này. Khóa đã lưu không chuyển sang địa chỉ khác được.'}, 400)};
+    return {response: json({detail: 'Hãy nhập khóa API cho URL và loại API này. Khóa đã lưu không chuyển sang địa chỉ khác được.'}, 400)};
   }
   const apiKey = replacingKey ? data.api_key : await unseal(env, userId, existing.key_enc);
   if (!apiKey) return {response: json({detail: REKEY, code: 'rekey'}, 409)};
@@ -172,7 +172,7 @@ async function saveProfile(env, userId, data, existing, requireModel = false) {
   if (hasHistory) {
     if (!Array.isArray(data.models) || data.models.length > 1000 || data.models.some(m => !modelOk(m) || m.includes(apiKey))
       || !(data.checked_at === null || (Number.isSafeInteger(data.checked_at) && data.checked_at >= 0 && data.checked_at <= Date.now() + 60000))
-      || (data.models.length && data.checked_at === null)) return {response: json({detail: 'Lịch sử model không hợp lệ.'}, 400)};
+      || (data.models.length && data.checked_at === null)) return {response: json({detail: 'Lịch sử mô hình không hợp lệ.'}, 400)};
     // Client observations are not access guarantees. Stale/forged connection identities cannot replace good history.
     if (identity && data.connection_id === identity) {
       models = JSON.stringify([...new Set(data.models)]);
@@ -223,7 +223,7 @@ export async function aiRoute(request, env, url) {
       configured:Boolean(env.OPENAI_API_KEY), models:ADMIN_MODELS, voices:LIVE_VOICES});
     if (method === 'PUT') {
       const data = await body(request);
-      if (!data || !await saveAdminAISettings(env,user.user_id,data)) return json({detail:'Model, mức suy luận hoặc giọng nói không hợp lệ.'},400);
+      if (!data || !await saveAdminAISettings(env,user.user_id,data)) return json({detail:'Mô hình, mức suy luận hoặc giọng nói không hợp lệ.'},400);
       return json({ok:true,settings:await adminAISettings(env,user.user_id)});
     }
     return json({detail:'Phương thức không được phép'},405);

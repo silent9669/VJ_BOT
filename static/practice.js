@@ -33,40 +33,43 @@ function mountPracticeCoach(section, container, lesson, question, index, result,
   const area=document.createElement('details');area.className='practice-coach';area.setAttribute('aria-label','Học cùng thầy Lâm');area.setAttribute('data-teacher-exclude','');
   const toggle=document.createElement('summary');toggle.textContent='Hỏi thầy Lâm';
   const button=document.createElement('button');button.type='button';
-  button.textContent=result ? result.correct===null?'Thầy nhận xét câu em viết':result.correct?'Thầy giải thích giúp em nhé':'Thầy giúp em sửa nhé' : 'Thầy gợi ý cho em nhé';
-  const output=document.createElement('p');output.className='practice-coach-reply';output.setAttribute('role','status');output.hidden=true;
-  const ask=document.createElement('button');ask.type='button';ask.textContent='Em vẫn chưa hiểu';ask.hidden=true;
+  button.textContent=result ? question.mode==='choice'?'Thầy giải thích câu này nhé':'Thầy xem câu em viết nhé' : 'Thầy gợi ý cho em nhé';
+  const status=document.createElement('p');status.className='study-teacher-status';status.setAttribute('role','status');
+  const output=document.createElement('p');output.className='practice-coach-reply';output.hidden=true;
+  const ask=document.createElement('button');ask.type='button';ask.textContent='Hỏi thêm';
   const content=document.createElement('div');content.className='practice-help-content';
-  content.append(button,output,ask);area.append(toggle,content);section.querySelector('.practice-actions').before(area);
+  content.append(button,status,output,ask);area.append(toggle,content);section.querySelector('.practice-actions').before(area);
+  const operation={current:null};
   let owner=practiceCoachIdentity();
-  const conversation=globalThis.mountTeacherConversation?.(content,{trigger:ask,lesson,focus:{kind:'question',index},task:question,
-    isCurrent:()=>area.isConnected && !container.hidden && practiceCoachIdentity()===owner});
+  const conversation=globalThis.mountTeacherConversation?.(content,{trigger:ask,lesson,focus:{kind:'question',index},task:question,operation,
+    isCurrent:()=>area.isConnected && area.open && !container.hidden && practiceCoachIdentity()===owner && presentation.isCurrent?.()!==false});
   ask.onclick=()=>conversation?.open();
   const teaching=document.createElement('details'),teachingTitle=document.createElement('summary'),teachingHost=document.createElement('div');
   teaching.className='practice-teaching';teachingTitle.textContent=question.mode==='choice'?'Hiểu đề và các lựa chọn':'Hiểu đề bài';
   teaching.append(teachingTitle,teachingHost);content.append(teaching);
-  const releaseTeaching=globalThis.mountStudyTeacher?.(teachingHost,{...presentation,lesson,focus:{kind:'question',index},task:question,
+  const releaseTeaching=globalThis.mountStudyTeacher?.(teachingHost,{...presentation,lesson,focus:{kind:'question',index},task:question,operation,
+    onFollowup:()=>conversation?.open(),
     isCurrent:()=>area.isConnected && area.open && teaching.open && !container.hidden && presentation.isCurrent?.()!==false});
-  area.addEventListener('toggle',()=>{if(area.isConnected && !area.open){cancelPracticeCoach();conversation?.clear();}});
+  area.addEventListener('toggle',()=>{if(area.isConnected && !area.open){operation.current?.abort();cancelPracticeCoach();conversation?.clear();}});
   const refresh=()=>{
-    if(!area.isConnected){if(practiceCoachRefresh===refresh)practiceCoachRefresh=null;return;}
+    if(!area.isConnected){operation.current?.abort();if(practiceCoachRefresh===refresh)practiceCoachRefresh=null;return;}
     const identity=practiceCoachIdentity();
-    if(identity===owner)return;
-    owner=identity;cancelPracticeCoach();conversation?.clear();
-    output.textContent='';output.hidden=true;ask.hidden=true;
+    if(identity===owner && !container.hidden && presentation.isCurrent?.()!==false)return;
+    owner=identity;operation.current?.abort();cancelPracticeCoach();conversation?.clear();
+    status.textContent='';output.textContent='';output.hidden=true;
     button.disabled=false;button.setAttribute('aria-busy','false');
   };
   practiceCoachRefresh=refresh;
   button.onclick=async()=>{
-    if(button.disabled)return;
+    if(button.disabled || operation.current || !area.isConnected || !area.open || container.hidden || presentation.isCurrent?.()===false)return;
     const identity=practiceCoachIdentity(), action=result?'feedback':'hint';
-    if(identity===null){output.hidden=false;output.textContent='Không đọc được cài đặt AI. Mở Cài đặt để chọn lại tài khoản.';return;}
+    if(identity===null){status.textContent='Chưa kết nối được với AI. Em mở Cài đặt để chọn lại nhé.';return;}
     cancelPracticeCoach();
-    const controller=new AbortController();practiceCoachRequest=controller;
-    controller.signal.addEventListener('abort',()=>{button.disabled=false;button.setAttribute('aria-busy','false');output.textContent='Đã dừng phản hồi AI. Bấm lại nếu muốn hỏi câu này.';},{once:true});
+    const controller=new AbortController();practiceCoachRequest=controller;operation.current=controller;
+    controller.signal.addEventListener('abort',()=>{if(operation.current===controller)operation.current=null;button.disabled=false;button.setAttribute('aria-busy','false');status.textContent='Đã dừng. Em có thể hỏi lại khi cần.';},{once:true});
     const current=()=>practiceCoachRequest===controller&&!controller.signal.aborted
-      &&area.isConnected&&!container.hidden&&practiceCoachIdentity()===identity;
-    button.disabled=true;button.setAttribute('aria-busy','true');output.hidden=false;output.textContent='Thầy đang xem câu này cùng em…';
+      &&area.isConnected&&area.open&&!container.hidden&&practiceCoachIdentity()===identity&&presentation.isCurrent?.()!==false;
+    button.disabled=true;button.setAttribute('aria-busy','true');output.hidden=true;status.textContent=result && question.mode==='writing'?'Thầy đang đọc bài em viết…':'Thầy đang xem câu này cùng em…';
     try{
       const attempt=taskAttempt(lesson,question,index);
       await recordTaskEvent(attempt,'assist',{help:result?'chat':'hint'});
@@ -83,16 +86,17 @@ function mountPracticeCoach(section, container, lesson, question, index, result,
         ?data.source_correct===null && data.assessment?.comparison==='unassessed'
         :data.answer_index===question.answer_index && data.correct===result.correct);
       if(data.item_id!==question.item_id || data.action!==action || typeof data.reply!=='string' || !data.reply.trim()
-        || data.task?.id!==task.id || data.task?.revision!==task.revision || !resultMatches)throw new Error('Câu hỏi hoặc đáp án đã thay đổi. Mở lại bài để hỏi AI.');
-      output.textContent=data.reply;ask.hidden=!conversation;
+        || data.task?.id!==task.id || data.task?.revision!==task.revision || !resultMatches)throw new Error('Câu hỏi hoặc đáp án đã thay đổi. Em mở lại câu này trước khi hỏi nhé.');
+      output.textContent=data.reply;output.hidden=false;status.textContent='';
     }catch(error){
-      if(current())output.textContent=error.name==='TimeoutError'?'AI phản hồi quá lâu. Bấm lại nếu muốn thử; kết quả bài làm được giữ nguyên.':error.message||'AI tạm thời chưa trả lời.';
+      if(current())status.textContent=error.name==='TimeoutError'?'Chưa nhận được lời giải thích. Bài em đã gửi vẫn còn; em có thể thử lại.':error.message||'AI tạm thời chưa trả lời.';
     }finally{
+      if(operation.current===controller)operation.current=null;
       if(practiceCoachRequest===controller){practiceCoachRequest=null;button.disabled=false;button.setAttribute('aria-busy','false');}
     }
   };
   if(result?.saved && question.mode==='writing' && question.criteria?.length){area.open=true;void button.onclick();}
-  return ()=>{cancelPracticeCoach();releaseTeaching?.();if(practiceCoachRefresh===refresh)practiceCoachRefresh=null;conversation?.cleanup();area.remove();};
+  return ()=>{operation.current?.abort();cancelPracticeCoach();releaseTeaching?.();if(practiceCoachRefresh===refresh)practiceCoachRefresh=null;conversation?.cleanup();area.remove();};
 }
 for(const event of ['hashchange','popstate','pagehide','vjbot-account-ready'])globalThis.addEventListener?.(event,()=>{cancelPracticeCoach();practiceCoachRefresh?.();practiceRunRefresh?.();});
 globalThis.addEventListener?.('vjbot-voice-changed',()=>practiceCoachRefresh?.());
@@ -101,8 +105,8 @@ globalThis.addEventListener?.('storage',event=>{
 });
 
 function taskAssessmentMessage(assessment,matched){
-  if(assessment?.comparison==='orthographic_difference')return 'Cách trình bày khác mẫu, chẳng hạn dấu câu hoặc khoảng trắng.';
-  return matched?'Khớp một cách viết mẫu.':'Câu của em khác mẫu tham khảo; chưa thể kết luận sai nghĩa hay ngữ pháp.';
+  if(assessment?.comparison==='orthographic_difference')return 'Câu của em chỉ khác mẫu ở cách viết, như dấu câu hoặc khoảng trắng.';
+  return matched?'Câu này khớp một cách viết mẫu.':'Câu của em khác bài mẫu; chưa thể kết luận sai nghĩa hay ngữ pháp.';
 }
 function practiceTaskIndices(item,questions,{reference=false}={}){
   if(Number.isInteger(item.reviewQuestionIndex) && item.reviewQuestionIndex>=0 && item.reviewQuestionIndex<questions.length)return [item.reviewQuestionIndex];
@@ -122,7 +126,7 @@ function renderPracticeSession(container,item,level,skill){
   const invalidateRun=()=>{
     if(!section.isConnected || currentRun())return false;
     cancelPracticeCoach();savedResponses.clear();section.replaceChildren();
-    const message=document.createElement('p');message.setAttribute('role','status');message.textContent='Tài khoản đã thay đổi. Mở lại bài để bắt đầu phiên riêng; câu viết của tài khoản cũ đã ẩn.';
+    const message=document.createElement('p');message.setAttribute('role','status');message.textContent='Tài khoản đã đổi. Em mở lại bài để tiếp tục nhé.';
     section.append(message);completion.hidden=true;
     return true;
   };
@@ -133,7 +137,7 @@ function renderPracticeSession(container,item,level,skill){
     if(round.index===round.indices.length){
       delete section.dataset.teacherQuestion;globalThis.setTeacherFocus?.(null);
       section.innerHTML=`<div class="practice-result"><h3 tabindex="-1">${review?'Kết quả lượt ôn':'Kết quả lượt luyện'}</h3>
-        ${round.indices.length-round.blocked-round.unassessed>0?`<p class="practice-score">${round.correct}<span> / ${round.indices.length-round.blocked-round.unassessed} câu đúng đáp án hoặc khớp mẫu${review?' khi ôn':''}</span></p>`:''}
+        ${round.indices.length-round.blocked-round.unassessed>0?`<p class="practice-score">${round.correct}<span> / ${round.indices.length-round.blocked-round.unassessed} câu khớp đáp án hoặc mẫu có sẵn${review?' khi ôn':''}</span></p>`:''}
         <p>${round.indices.length-round.blocked-round.unassessed>0?'Các câu được kiểm tra bằng đáp án hoặc mẫu có sẵn. ':''}${round.unassessed?`${round.unassessed} câu tự viết đã lưu, chưa chấm đúng/sai. `:''}Lượt luyện này chưa xác nhận mức thành thạo. Nhận xét AI chỉ để tham khảo.</p>
         ${round.blocked?`<p>${round.blocked} câu đang tạm ngừng, chưa tính vào kết quả.</p>`:''}
         <div class="practice-result-actions"></div></div>`;
@@ -142,7 +146,7 @@ function renderPracticeSession(container,item,level,skill){
         const retry=document.createElement('button');retry.type='button';retry.textContent=`Ôn ${round.missed.length} câu chưa khớp`;
         retry.onclick=()=>{round=createPracticeRound(questions,round.missed);review=true;show(true);};actions.append(retry);
       }
-      const restart=document.createElement('button');restart.type='button';restart.textContent='Làm lại chuỗi này';
+      const restart=document.createElement('button');restart.type='button';restart.textContent='Luyện lại phần này';
       restart.onclick=renderPracticeSessionAfterReset;actions.append(restart);
       if(item.reference_task_ids?.length && !scopedReview){
         const reference=document.createElement('button');reference.type='button';reference.textContent='Luyện nhớ theo mẫu';
@@ -161,14 +165,17 @@ function renderPracticeSession(container,item,level,skill){
     const attempt=taskAttempt(lesson,question,originalIndex,'checks',true);attempt.sessionId=sessionId;
     if(!container.hidden)globalThis.setTeacherFocus?.({kind:'question',index:originalIndex});
     const stage=item.guided_steps?.find(step=>step.task_ids.includes(question.task_id));
+    const readingRecall=question.mode==='recall' && question.task_id?.includes(':question:recall:reading:');
+    const formationRecall=question.mode==='recall' && question.task_id?.endsWith(':question:recall:formation');
+    const recallHeading=readingRecall?'Cách đọc':formationRecall?'Cách ghép câu':null;
     const previous=(question.exchange?.prior_task_ids || []).map(id=>savedResponses.get(id)).filter(value=>typeof value==='string');
     section.innerHTML=`<div class="practice-meter"><span>${review?'Luyện lại':'Luyện tập'}</span><span>${round.index+1} / ${round.indices.length}</span>
       <progress value="${round.index}" max="${round.indices.length}" aria-label="Câu đã xem"></progress></div>
       ${stage?`<aside class="task-stage"><h3>${escapeHtml(stage.title)}</h3><p>${escapeHtml(stage.note)}</p><p lang="ja">${escapeHtml(stage.example.jp)}</p><details><summary>Cách đọc và nghĩa của ví dụ</summary><p lang="ja">${escapeHtml(stage.example.reading)}</p><p>${escapeHtml(stage.example.vi)}</p></details></aside>`:''}
       ${previous.length?`<aside data-teacher-exclude><strong>${['accept','refuse'].includes(question.exchange.stage)?'Lời mời em vừa viết trong phiên này':'Câu em viết ở bước trước trong phiên này'}</strong>${previous.map(text=>`<p lang="ja">${escapeHtml(text)}</p>`).join('')}</aside>`:''}
       ${question.exchange?.partner_reply?`<p class="task-partner" lang="ja">${escapeHtml(question.exchange.partner_reply)}</p><p>Đây là lời đáp soạn sẵn để em luyện tiếp.</p>`:''}
-      <fieldset><legend tabindex="-1">${escapeHtml(taskInstruction(question) || (question.mode==='writing'?'Viết câu trả lời của em':question.mode==='recall'?'Viết lại theo yêu cầu':'Chọn một đáp án'))}</legend>
-      ${taskPromptHtml({...question,instruction:''})}<div class="practice-options"></div></fieldset>
+      <fieldset><legend tabindex="-1">${escapeHtml(recallHeading || taskInstruction(question) || (question.mode==='writing'?'Viết câu trả lời của em':question.mode==='recall'?'Câu trả lời của em':'Chọn một đáp án'))}</legend>
+      ${taskPromptHtml({...question,instruction:recallHeading?question.instruction:''})}<div class="practice-options"></div></fieldset>
       ${question.criteria?.length?`<section class="task-writing-criteria"${question.exchange?.stage==='delayed'?' hidden':''}><h4>Thầy sẽ xem những điểm này</h4><ul>${question.criteria.map(text=>`<li>${escapeHtml(text)}</li>`).join('')}</ul></section>`:''}
       <div class="practice-feedback" role="status" hidden></div><div class="practice-actions"><button type="button" class="practice-primary" disabled>${question.mode==='writing'?'Gửi thầy nhận xét':'Kiểm tra'}</button></div>`;
     const options=section.querySelector('.practice-options'),action=section.querySelector('.practice-primary'),feedback=section.querySelector('.practice-feedback');
@@ -186,6 +193,8 @@ function renderPracticeSession(container,item,level,skill){
     const optionTexts=[];
     const renderFeedback=()=>{
       if(question.mode==='choice' || question.mode==='writing'){feedback.replaceChildren();feedback.hidden=true;return;}
+      if(!pending?.saved){feedback.replaceChildren();feedback.hidden=true;return;}
+      feedback.hidden=false;
       const result=document.createElement('p');result.textContent=taskAssessmentMessage(pending?.assessment,pending?.correct);
       feedback.replaceChildren(result);
       const answers=question.accepted_answers || [];
@@ -234,7 +243,7 @@ function renderPracticeSession(container,item,level,skill){
     let removeCoach=mountPracticeCoach(section,container,lesson,question,originalIndex,null,presentation);
     async function save(){
       if(!currentRun()){invalidateRun();return;}
-      action.disabled=true;action.textContent='Đang gửi…';
+      action.disabled=true;action.textContent='Đang lưu câu trả lời…';
       try{
         const receipt=await recordTaskEvent(attempt,'answer',question.mode==='choice'?{answer_index:selected}:{response_text:selected});
         if(!section.isConnected)return;
@@ -250,7 +259,7 @@ function renderPracticeSession(container,item,level,skill){
         action.onclick=()=>{round.next();show(true);};action.focus();
       }catch(error){
         if(!section.isConnected)return;
-        feedback.hidden=false;feedback.textContent='Chưa gửi được câu trả lời. '+error.message;action.textContent='Thử lại';action.disabled=false;action.onclick=save;action.focus();
+        feedback.hidden=false;feedback.textContent=error.message || 'Chưa lưu được câu trả lời. Em thử lại nhé.';action.textContent='Thử lại';action.disabled=false;action.onclick=save;action.focus();
       }
     }
     action.onclick=async()=>{
@@ -261,10 +270,10 @@ function renderPracticeSession(container,item,level,skill){
         input.disabled=true;
         if(question.mode==='choice'){
           input.closest('label').dataset.state=index===question.answer_index?'correct':index===selected?'incorrect':'idle';
-          input.setAttribute('aria-label',`${index+1}. ${optionTexts[index].textContent}${index===selected?' · em đã chọn':''}${index===question.answer_index?' · đáp án đúng':''}`);
+          input.setAttribute('aria-label',`${index+1}. ${optionTexts[index].textContent}${index===selected?' · em đã chọn':''}${index===question.answer_index?' · đáp án có sẵn':''}`);
         }
       });
-      feedback.hidden=false;feedback.textContent='Đang gửi…';
+      feedback.hidden=true;feedback.textContent='';
       section.querySelector('progress').value=round.index+1;await save();
     };
     if(focus){section.querySelector('legend').focus();section.scrollIntoView({block:'nearest'});}

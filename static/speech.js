@@ -47,7 +47,7 @@ function audioDataUrl(data) {
 function speechStatus(message, active = false) {
   document.getElementById('speech-notice').hidden = !message;
   document.getElementById('speech-status').textContent = message;
-  document.getElementById('speech-stop').textContent = active ? 'Dừng' : 'Bỏ qua';
+  document.getElementById('speech-stop').textContent = active ? 'Dừng' : 'Đóng';
 }
 
 function stopSpeech() {
@@ -127,7 +127,7 @@ async function playGeminiTTS(text, options = {}) {
   } catch (error) {
     if (!current()) return;
     stopSpeech();
-    speechStatus(error.name === 'NotAllowedError' ? 'Trình duyệt chặn phát âm thanh. Bấm Nghe lại.' : error.message || 'Không đọc được lúc này. Hãy thử lại.');
+    speechStatus(error.name === 'NotAllowedError' ? 'Trình duyệt chặn phát âm thanh. Bấm Nghe lại.' : 'Chưa phát được âm thanh. Em bấm Nghe để thử lại nhé.' + (error.message ? ' Chi tiết kết nối: ' + error.message : ''));
   }
 }
 

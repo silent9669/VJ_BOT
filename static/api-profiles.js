@@ -9,7 +9,7 @@
   const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/tts', '/api/stt', '/api/ai/test'];
   const encoder = new TextEncoder(), decoder = new TextDecoder('utf-8', {fatal: true});
   const unavailable = () => problem('Kết nối API trên thiết bị không dùng được. Mở cài đặt API để lưu lại hoặc chọn kết nối khác.', 'unavailable');
-  const storageError = () => problem('Bộ nhớ trình duyệt không dùng được. Hãy cho phép lưu trữ của trang và dùng trình duyệt có IndexedDB và Web Crypto; kết nối chưa được lưu.', 'storage');
+  const storageError = () => problem('Trình duyệt chưa lưu được kết nối. Em cho phép trang lưu dữ liệu rồi thử lại nhé. Chi tiết lưu trữ: cần IndexedDB và Web Crypto.', 'storage');
   let opening = null, voiceVersion = 0;
 
   function problem(message, code = 'invalid') { return Object.assign(new Error(message), {code}); }
@@ -33,7 +33,7 @@
     const host = url.hostname;
     if (text.length > 200 || url.protocol !== 'https:' || url.username || url.password || url.search || url.hash
       || !host.includes('.') || host.includes(':') || /^[\d.]+$/.test(host) || BLOCKED.test(host)) {
-      throw problem('URL API phải là HTTPS công khai, không kèm thông tin đăng nhập, query, fragment hay địa chỉ IP.');
+      throw problem('Dùng địa chỉ API công khai bắt đầu bằng HTTPS, không kèm thông tin đăng nhập, địa chỉ IP hay phần sau dấu ? hoặc #.');
     }
     return url.origin + url.pathname.replace(/\/+$/, '').replace(SUFFIX[protocol], '');
   }
@@ -281,8 +281,8 @@
     const speech = path === '/api/tts' || path === origin + '/api/tts';
     const revision = voiceVersion;
     const selected = speech ? voice(owner) : active(owner);
-    if (speech && (!selected || selected.scope === 'none')) throw problem('No voice profile selected. Choose a voice account in Settings.');
-    if (selected?.scope === 'none') throw problem('No API profile selected. Choose a profile in API settings before continuing.');
+    if (speech && (!selected || selected.scope === 'none')) throw problem('Chưa chọn kết nối đọc thành tiếng. Hãy chọn tài khoản trong phần Âm thanh của Cài đặt.');
+    if (selected?.scope === 'none') throw problem('Chưa chọn kết nối API. Hãy chọn kết nối trong cài đặt API trước khi tiếp tục.');
     if (speech && selected?.scope === 'platform' && selected.id === 'openai') {
       const headers = new Headers(options.headers);
       headers.set('X-VJBot-Profile', 'platform_openai');

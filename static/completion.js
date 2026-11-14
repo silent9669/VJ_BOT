@@ -9,7 +9,7 @@ function activityId(item,level,skill){return item.completionId || item.id || `le
 function mountCompletion(host,activity,loaded=false){
   host.replaceChildren();host.classList.add('completion-control');
   const button=document.createElement('button'),status=document.createElement('output');button.type='button';status.setAttribute('aria-live','polite');
-  const draw=()=>{const done=completionRecords.has(activity.activity_id);button.textContent=done?'Bỏ dấu đã xem':'Tự đánh dấu đã xem';button.setAttribute('aria-pressed',String(done));button.title='Dấu ghi nhớ cá nhân, không xác nhận em đã thành thạo bài học.';};
+  const draw=()=>{const done=completionRecords.has(activity.activity_id);button.textContent=done?'Bỏ dấu đã xem':'Đánh dấu đã xem';button.setAttribute('aria-pressed',String(done));button.title='Dấu ghi nhớ cá nhân, không xác nhận em đã thành thạo bài học.';};
   draw();button.disabled=true;host.append(button,status);
   async function refresh(){
     try{await loadCompletions();draw();button.disabled=false;status.textContent='';}
@@ -26,7 +26,7 @@ function mountCompletion(host,activity,loaded=false){
       completionVersion++;
       if(pending)completionRecords.set(activity.activity_id,activity);else completionRecords.delete(activity.activity_id);
       pending=null;draw();status.textContent='Đã lưu.';window.dispatchEvent(new CustomEvent('completion-changed'));
-    }catch{status.textContent='Chưa lưu được. Bấm lại để thử lại.';}
+    }catch{status.textContent='Chưa lưu được dấu đã xem. Em bấm lại để thử nhé.';}
     finally{button.disabled=false;}
   };
 }
@@ -40,5 +40,5 @@ function showCompletedActivities(host){
       const title=document.createElement('span');title.textContent=`${item.level} · ${item.title}`;
       const control=document.createElement('div');row.append(title,control);host.append(row);mountCompletion(control,item,true);
     }
-  }).catch(()=>{host.textContent='Chưa tải được danh sách bài đã đánh dấu. Em hãy mở lại trang để thử lại.';});
+  }).catch(()=>{host.textContent='Chưa tải được các bài em đã đánh dấu. Em tải lại trang để thử lại nhé.';});
 }

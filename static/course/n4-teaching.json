@@ -49,26 +49,26 @@
         {
           "id": "teaching:v1:N4:late:task:5", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Đóng vai người nhắn cho bạn đang đợi ở một cuộc hẹn do em tự chọn. Tự quyết định hoạt động, lý do chậm, mức trễ ước lượng và việc sẽ làm khi đến; viết 2–3 câu tiếng Nhật lịch sự để bạn biết có thể đợi ra sao. Không dùng địa chỉ, tên hay lịch thật; không có sẵn câu hoặc động từ để chép.",
-          "criteria": ["Nghĩa: có lý do, độ trễ ước lượng và hành động sau khi đến phù hợp cuộc hẹn tự chọn; không nhầm độ trễ với giờ đến.", "Cấu trúc: tự nối nguyên nhân với kết quả và nêu quan hệ khi đến rồi làm gì; xem hình thức riêng với việc có hiểu được ý hay không.", "Giao tiếp: báo chậm và xin lỗi vừa đủ, không tự coi bạn đã đồng ý đợi hoặc chuyển chỗ.", "Chính tả: kana/kanji hợp lệ, khoảng trắng hay thiếu 。 được góp ý riêng; chưa chắc về nghĩa/cấu trúc thì nêu điều cần làm rõ, không suy ra sai chỉ vì khác chuỗi."],
+          "criteria": ["Nghĩa: có lý do, độ trễ ước lượng và hành động sau khi đến phù hợp cuộc hẹn tự chọn; không nhầm độ trễ với giờ đến.", "Cấu trúc: tự nối nguyên nhân với kết quả và nêu quan hệ khi đến rồi làm gì; xem hình thức riêng với việc có hiểu được ý hay không.", "Giao tiếp: báo chậm và xin lỗi vừa đủ, không tự coi bạn đã đồng ý đợi hoặc chuyển chỗ.", "Em có thể dùng kana hoặc kanji phù hợp. Thầy góp ý riêng về chữ viết, nghĩa và cách ghép câu; nếu chưa rõ ý, thầy sẽ hỏi lại."],
           "exchange": {"group": "n4-late-cycle-v2", "stage": "produce", "prior_task_ids": []},
-          "rationale": "Nội dung do người học chọn. Lưu nguyên văn như bằng chứng tự báo cáo chưa được chấm nghĩa; nhận xét AI chỉ tư vấn, không có khóa chuỗi hoặc chứng nhận thành thạo.",
+          "rationale": "Em tự chọn nội dung tin nhắn. Thầy góp ý xem lời báo có rõ lý do, mức trễ và việc sẽ làm không; đây là luyện viết, không phải xác nhận cuộc hẹn thật.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:late:task:6", "mode": "writing", "skill": "writing", "objective": "communication",
           "passage": "Lời bạn hư cấu do AI soạn sẵn, không phải chat trực tiếp: これからどうしますか。\nKana: これからどうしますか。\nNghĩa: Từ bây giờ bạn định làm thế nào? Câu này chưa chấp nhận đợi hay đổi điểm hẹn.",
           "prompt": "Đọc lại chính tin em đã gửi ở lượt trước. Trả lời bạn bằng 1–2 câu: giữ việc còn thực hiện được, làm rõ phương án tiếp theo và xin xác nhận nếu cần thay đổi cuộc hẹn. Có thể giữ nguyên kế hoạch nếu vẫn phù hợp; không tự tạo một cuộc hẹn khác hoặc nói như đã đến rồi.",
-          "criteria": ["Nối tiếp: phương án liên quan đúng hoạt động, lý do và ước lượng trong tin đã lưu; nếu đổi chi tiết phải báo rõ chi tiết đổi.", "Nghĩa: phân biệt việc sẽ làm với việc đã xong, không biến câu hỏi của bạn thành lời chấp thuận.", "Cấu trúc/giao tiếp: lời đáp ngắn lịch sự đủ để bạn quyết định; nhiều cách diễn đạt được chấp nhận về mặt tư vấn.", "Thiếu tin gốc thì chưa thể nhận xét tính nhất quán; không bịa lượt trước. Góp ý chính tả tách khỏi nghĩa và cấu trúc."],
+          "criteria": ["Nối tiếp: phương án liên quan đúng hoạt động, lý do và ước lượng trong tin đã lưu; nếu đổi chi tiết phải báo rõ chi tiết đổi.", "Nghĩa: phân biệt việc sẽ làm với việc đã xong, không biến câu hỏi của bạn thành lời chấp thuận.", "Cấu trúc/giao tiếp: lời đáp ngắn lịch sự đủ để bạn quyết định; nhiều cách diễn đạt được chấp nhận về mặt tư vấn.", "Dựa vào tin em vừa viết để trả lời, không tự thêm một cuộc trao đổi trước đó. Thầy góp ý riêng về chữ viết, nghĩa và cách ghép câu."],
           "exchange": {"group": "n4-late-cycle-v2", "stage": "respond", "prior_task_ids": ["teaching:v1:N4:late:task:5"], "partner_reply": "これからどうしますか。"},
-          "rationale": "So sánh với lời thật của cùng phiên, không đối chiếu câu mẫu. Phương án và sự đồng ý vẫn là hư cấu, chưa phải cuộc hẹn được thực hiện.",
+          "rationale": "Thầy đối chiếu lời đáp với tin em vừa viết, không yêu cầu chép câu mẫu. Kế hoạch vẫn thuộc tình huống đóng vai, chưa phải cuộc hẹn thật.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:late:task:7", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Ở phiên ôn sau, không xem bài cũ: em phụ giúp một buổi sinh hoạt thư viện hư cấu nhưng sẽ tới muộn. Tự chọn trở ngại, mức trễ và một cách để người phụ trách sắp xếp phần việc trước khi em đến. Viết 2–3 câu tiếng Nhật lịch sự; đây là báo để điều phối công việc, không phải hẹn đi chơi. Không dùng thông tin thật.",
-          "criteria": ["Nghĩa: thông báo lý do và độ trễ do em chọn, nêu việc người phụ trách có thể sắp xếp và việc em sẽ làm sau khi đến.", "Chuyển giao: lời báo hướng tới người điều phối và phần việc chung, không chỉ đổi tên trong tin nhắn hẹn bạn.", "Cấu trúc/giao tiếp: quan hệ nguyên nhân và thời gian rõ, đề nghị không tự coi là đã được chấp thuận; không bắt một câu duy nhất.", "Bằng chứng: giữ câu mới và trợ giúp thực tế riêng; lỗi chữ tách khỏi lỗi nghĩa/cấu trúc, góp ý AI và đủ lịch ôn không chứng minh nhớ lâu hoặc tự lực."],
+          "criteria": ["Nghĩa: thông báo lý do và độ trễ do em chọn, nêu việc người phụ trách có thể sắp xếp và việc em sẽ làm sau khi đến.", "Chuyển giao: lời báo hướng tới người điều phối và phần việc chung, không chỉ đổi tên trong tin nhắn hẹn bạn.", "Cấu trúc/giao tiếp: quan hệ nguyên nhân và thời gian rõ, đề nghị không tự coi là đã được chấp thuận; không bắt một câu duy nhất.", "Em thử tự viết trước để biết chỗ nào còn cần ôn. Thầy góp ý riêng về chữ viết, nghĩa và cách ghép câu."],
           "exchange": {"group": "n4-late-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N4:late:task:5", "teaching:v1:N4:late:task:6"], "delay_hours": 24},
-          "rationale": "Ôn chuyển vai/mục đích ở phiên khác sau ít nhất 24 giờ của cả hai lượt cha cùng phiên trước và cùng revision; không cung cấp văn bản cũ, mẫu hoặc khóa đáp án.",
+          "rationale": "Ở buổi ôn sau, em tập báo trễ để người phụ trách sắp xếp việc chung. Em viết lời mới mà không xem lại tin cũ hay câu mẫu; góp ý của AI chỉ giúp em xem lại bài.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         }
       ]
@@ -112,26 +112,26 @@
         {
           "id": "teaching:v1:N4:leave:task:5", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Trong nhóm tổ chức sự kiện hư cấu, em cần xin nghỉ một buổi. Tự chọn buổi nghỉ, lý do không riêng tư và một việc phải bàn giao, kèm cách chuyển và hạn hoàn tất hợp lý. Viết 2–3 câu tiếng Nhật lịch sự hỏi người phụ trách; không nói như đã được phép và không dùng dữ liệu công việc hay sức khỏe thật.",
-          "criteria": ["Nghĩa: tự chọn rõ buổi xin nghỉ và việc/cách/hạn bàn giao tương thích, không lẫn hạn với khoảng thời gian kéo dài.", "Chức năng: thực sự xin phép, không chỉ thông báo quyết định đã nghỉ; lý do không tự tạo thành chấp thuận.", "Cấu trúc: lời hỏi và lời hứa có quan hệ thời gian dễ hiểu; góp ý hình thức riêng với mức đáp ứng nội dung.", "Chính tả góp ý riêng; nhiều cách diễn đạt phù hợp được nhận xét có điều kiện, không đối chiếu một câu hoặc suy ra đúng ngữ nghĩa từ việc đã nộp."],
+          "criteria": ["Nghĩa: tự chọn rõ buổi xin nghỉ và việc/cách/hạn bàn giao tương thích, không lẫn hạn với khoảng thời gian kéo dài.", "Chức năng: thực sự xin phép, không chỉ thông báo quyết định đã nghỉ; lý do không tự tạo thành chấp thuận.", "Cấu trúc: lời hỏi và lời hứa có quan hệ thời gian dễ hiểu; góp ý hình thức riêng với mức đáp ứng nội dung.", "Em có thể diễn đạt theo nhiều cách, miễn người phụ trách hiểu lời xin và kế hoạch bàn giao. Thầy góp ý chữ viết riêng với nội dung."],
           "exchange": {"group": "n4-leave-cycle-v2", "stage": "produce", "prior_task_ids": []},
-          "rationale": "Tự chọn nội dung trong bối cảnh giả định. Lưu nguyên văn, tự báo cáo/chưa đánh giá nghĩa; AI chỉ tư vấn, không duyệt nghỉ hoặc xác nhận thành thạo.",
+          "rationale": "Em tự chọn nội dung lời xin trong tình huống giả định. AI chỉ góp ý tiếng Nhật, không duyệt nghỉ hoặc xác nhận việc bàn giao đã hoàn tất.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:leave:task:6", "mode": "writing", "skill": "writing", "objective": "communication",
           "passage": "Người phụ trách hư cấu, lời AI soạn sẵn: 引き継ぎの予定をもう一度教えてください。その後で返事をします。\nKana: ひきつぎのよていをもういちどおしえてください。そのあとでへんじをします。\nNghĩa: Hãy cho tôi biết lại kế hoạch bàn giao. Sau đó tôi sẽ trả lời.",
           "prompt": "Dùng chính lời xin nghỉ ở lượt trước, trả lời lại kế hoạch bàn giao: việc, cách chuyển và hạn. Nếu phát hiện thiếu hoặc mâu thuẫn, sửa rõ chi tiết đó; nếu đã đủ, giữ kế hoạch và xác nhận. Không đổi sang việc khác hoặc coi câu hỏi là đã cho phép nghỉ.",
-          "criteria": ["Nối tiếp: đối chiếu đúng việc/cách/hạn em đã viết; chỉnh sửa có lý do hoặc giữ bản hợp lý, không bắt buộc giả vờ bản đầu sai.", "Nghĩa: lời đáp cung cấp đủ thông tin để người phụ trách cân nhắc, chưa tuyên bố đơn đã được duyệt.", "Cấu trúc/giao tiếp: hạn hoàn thành và buổi nghỉ rõ, lịch sự phù hợp vai; không bắt một mẫu duy nhất.", "Không có bản gốc thì chưa thể nhận xét nối tiếp; AI không bịa kế hoạch. Chính tả không thay cho đánh giá nghĩa/cấu trúc."],
+          "criteria": ["Nối tiếp: đối chiếu đúng việc/cách/hạn em đã viết; chỉnh sửa có lý do hoặc giữ bản hợp lý, không bắt buộc giả vờ bản đầu sai.", "Nghĩa: lời đáp cung cấp đủ thông tin để người phụ trách cân nhắc, chưa tuyên bố đơn đã được duyệt.", "Cấu trúc/giao tiếp: hạn hoàn thành và buổi nghỉ rõ, lịch sự phù hợp vai; không bắt một mẫu duy nhất.", "Dựa vào kế hoạch em vừa viết, không tự thêm việc bàn giao chưa nêu. Thầy góp ý riêng về chữ viết và cách diễn đạt kế hoạch."],
           "exchange": {"group": "n4-leave-cycle-v2", "stage": "respond", "prior_task_ids": ["teaching:v1:N4:leave:task:5"], "partner_reply": "引き継ぎの予定をもう一度教えてください。その後で返事をします。"},
-          "rationale": "Lời hỏi tĩnh không khẳng định biết nội dung riêng của người học. Góp ý dựa vào bản thật, không cấp phép nghỉ hoặc chấm bằng chuỗi.",
+          "rationale": "Câu hỏi soạn sẵn chỉ mời em nhắc rõ kế hoạch, chưa phải lời cho phép nghỉ. Thầy góp ý dựa vào lời xin em đã viết.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:leave:task:7", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Phiên ôn sau, không xem bài cũ: ở câu lạc bộ học tập hư cấu, em muốn xin giáo viên cho về sớm một buổi nhưng vẫn hoàn thành phần bài nhóm. Tự chọn buổi, lý do chung, phần bài và cách/hạn chuyển cho nhóm. Viết 2–3 câu tiếng Nhật xin phép; không khai lý lịch hay hoàn cảnh thật.",
-          "criteria": ["Nghĩa: xin về sớm và tự nêu cách hoàn tất/chuyển phần bài nhóm với hạn khả thi, thay vì chỉ báo sẽ vắng.", "Chuyển giao: điều chỉnh lời xin và trách nhiệm sang giáo viên/nhóm học, không chỉ lặp đơn nghỉ của người tổ chức sự kiện.", "Cấu trúc/giao tiếp: hỏi quyền làm việc đó, phân biệt hạn hoàn tất với thời gian nghỉ; không giả định đã được đồng ý.", "Lưu câu mới và trợ giúp thực tế; chính tả tách khỏi nghĩa/cấu trúc, góp ý AI và lịch 24 giờ không chứng minh tự lực hay ghi nhớ."],
+          "criteria": ["Nghĩa: xin về sớm và tự nêu cách hoàn tất/chuyển phần bài nhóm với hạn khả thi, thay vì chỉ báo sẽ vắng.", "Chuyển giao: điều chỉnh lời xin và trách nhiệm sang giáo viên/nhóm học, không chỉ lặp đơn nghỉ của người tổ chức sự kiện.", "Cấu trúc/giao tiếp: hỏi quyền làm việc đó, phân biệt hạn hoàn tất với thời gian nghỉ; không giả định đã được đồng ý.", "Em thử viết lời xin mới trước khi xem lại bài cũ. Thầy giúp em kiểm tra nội dung và góp ý chữ viết riêng."],
           "exchange": {"group": "n4-leave-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N4:leave:task:5", "teaching:v1:N4:leave:task:6"], "delay_hours": 24},
-          "rationale": "Chuyển mục đích từ nghỉ/bàn giao sự kiện sang xin về sớm/trách nhiệm nhóm học. Cần cả hai cha cùng revision, cùng phiên trước khác phiên hiện tại, đều ít nhất 24 giờ; không cấp mẫu hoặc câu cũ.",
+          "rationale": "Em tập xin về sớm và nói rõ trách nhiệm với nhóm học, thay cho việc xin nghỉ ở sự kiện. Buổi ôn này em tự viết, không xem lại câu cũ hay mẫu; góp ý AI chỉ để tham khảo.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         }
       ]
@@ -175,25 +175,25 @@
         {
           "id": "teaching:v1:N4:clinic:task:5", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Chỉ đóng vai ở phòng khám tưởng tượng, không kể sức khỏe của em hay người thật: tự tạo một nhân vật có một triệu chứng nhẹ và mốc bắt đầu, rồi chọn một điều về thủ tục tiếp nhận mà nhân vật chưa hiểu. Viết 2–3 câu tiếng Nhật để nhân vật báo tình trạng và hỏi lại thủ tục. Không hỏi cách chữa, liều thuốc hoặc cung cấp dữ liệu cá nhân; không có sẵn câu trả lời để chép.",
-          "criteria": ["Nghĩa: triệu chứng và mốc bắt đầu do em tạo nhất quán; thêm một câu hỏi thực sự làm rõ thủ tục, không tự đoán chỉ dẫn.", "Cấu trúc: phân biệt mốc bắt đầu và tình trạng hiện tại, diễn đạt câu hỏi đủ rõ; nhận xét hình thức riêng với việc truyền đạt được ý.", "Giới hạn: toàn bộ hư cấu, không chẩn đoán hoặc khuyên điều trị, không biến vai người học thành bệnh nhân thật.", "Chính tả tách khỏi nghĩa/cấu trúc; không có khóa chuỗi, chưa rõ ý thì hỏi lại thay vì kết luận đúng/sai ngữ nghĩa."],
+          "criteria": ["Nghĩa: triệu chứng và mốc bắt đầu do em tạo nhất quán; thêm một câu hỏi thực sự làm rõ thủ tục, không tự đoán chỉ dẫn.", "Cấu trúc: phân biệt mốc bắt đầu và tình trạng hiện tại, diễn đạt câu hỏi đủ rõ; nhận xét hình thức riêng với việc truyền đạt được ý.", "Giới hạn: toàn bộ hư cấu, không chẩn đoán hoặc khuyên điều trị, không biến vai người học thành bệnh nhân thật.", "Em viết rõ điều nhân vật muốn hỏi. Thầy góp ý riêng về nghĩa, cách ghép câu và chữ viết; nếu chưa hiểu ý em, thầy sẽ hỏi lại."],
           "exchange": {"group": "n4-clinic-cycle-v2", "stage": "produce", "prior_task_ids": []},
-          "rationale": "Luyện báo và hỏi lại bằng tiếng Nhật, lưu nguyên văn tự báo cáo/chưa đánh giá. AI chỉ tư vấn ngôn ngữ, không xử lý chăm sóc y tế hoặc xác nhận năng lực.",
+          "rationale": "Em luyện báo tình trạng và hỏi lại thủ tục bằng tiếng Nhật trong chuyện tưởng tượng. AI chỉ góp ý ngôn ngữ, không khám bệnh hay đưa lời khuyên chăm sóc y tế.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:clinic:task:6", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Xem lại đúng lời nhân vật em vừa viết. Viết bản làm rõ 2–3 câu: giữ nguyên triệu chứng/mốc bắt đầu đã chọn, và hỏi lại điều thủ tục chưa hiểu sao cho người ở quầy biết cần giải thích gì. Nếu bản đầu đã rõ, giữ câu phù hợp rồi thêm một câu tiếng Việt giải thích em đã kiểm tra sự nhất quán nào. Không bắt buộc tạo lỗi; không thêm chẩn đoán, điều trị hay thông tin thật.",
-          "criteria": ["Nối tiếp: bản sửa/giữ phải dựa trên câu đã lưu, bảo toàn nhân vật, tình trạng và mốc, không viết một ca bệnh mới.", "Nghĩa: câu hỏi phân định điều chưa hiểu thay vì gán lời giải chưa được quầy cung cấp; không yêu cầu hoặc tự đưa chỉ dẫn y tế.", "Cấu trúc: sửa chỗ thực sự cần làm rõ hoặc giữ bản đúng kèm giải thích kiểm tra; không ép người học nhận một lỗi không có.", "Thiếu lượt gốc thì chưa đánh giá được revision; tách góp ý chính tả/ý/cấu trúc, nhận xét AI không phải xác nhận y tế."],
+          "criteria": ["Nối tiếp: bản sửa/giữ phải dựa trên câu đã lưu, bảo toàn nhân vật, tình trạng và mốc, không viết một ca bệnh mới.", "Nghĩa: câu hỏi phân định điều chưa hiểu thay vì gán lời giải chưa được quầy cung cấp; không yêu cầu hoặc tự đưa chỉ dẫn y tế.", "Cấu trúc: sửa chỗ thực sự cần làm rõ hoặc giữ bản đúng kèm giải thích kiểm tra; không ép người học nhận một lỗi không có.", "Dựa vào câu em vừa viết để làm rõ ý. Thầy góp ý riêng về chữ viết và cách diễn đạt; nhận xét này không phải kết luận y tế."],
           "exchange": {"group": "n4-clinic-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N4:clinic:task:5"]},
-          "rationale": "Tự rà soát có căn cứ trên nguyên văn trước, không đóng vai bác sĩ phản hồi hoặc suy ra sức khỏe thật; không chấm bằng chuỗi.",
+          "rationale": "Em rà lại đúng lời nhân vật vừa nói. Thầy giúp em làm rõ câu tiếng Nhật, không đóng vai bác sĩ đã khám hoặc suy ra sức khỏe của người thật.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:clinic:task:7", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Phiên ôn sau không xem mẫu: tại quầy mượn dụng cụ của một câu lạc bộ hư cấu, em báo một vấn đề với món đồ đã mượn và thời điểm bắt đầu nhận thấy nó, rồi hỏi lại một điều chưa hiểu về thủ tục trả đồ. Tự chọn đồ/vấn đề/thời điểm/câu hỏi, viết 2–3 câu tiếng Nhật lịch sự. Đây không phải bối cảnh y tế và không dùng dữ liệu thật.",
-          "criteria": ["Nghĩa: tự chọn vấn đề và mốc bắt đầu quan sát, hỏi để làm rõ thủ tục trả thay vì tự coi đã được giải quyết.", "Chuyển giao: vận dụng báo tình trạng/thời điểm và hỏi lại vào đồ vật/quầy câu lạc bộ, không lặp bệnh cảnh hoặc xin tư vấn y tế.", "Cấu trúc/giao tiếp: quan hệ thời gian rõ, người ở quầy hiểu cần giải thích điều gì; nhiều cách diễn đạt có thể phù hợp.", "Bằng chứng: câu mới và trợ giúp được giữ riêng, lỗi chữ không tự chứng minh lỗi nghĩa; lịch ôn/góp ý AI không xác nhận tự lực hoặc ghi nhớ."],
+          "criteria": ["Nghĩa: tự chọn vấn đề và mốc bắt đầu quan sát, hỏi để làm rõ thủ tục trả thay vì tự coi đã được giải quyết.", "Chuyển giao: vận dụng báo tình trạng/thời điểm và hỏi lại vào đồ vật/quầy câu lạc bộ, không lặp bệnh cảnh hoặc xin tư vấn y tế.", "Cấu trúc/giao tiếp: quan hệ thời gian rõ, người ở quầy hiểu cần giải thích điều gì; nhiều cách diễn đạt có thể phù hợp.", "Em thử tự viết lời báo và câu hỏi mới. Thầy góp ý riêng về chữ viết, ý muốn nói và cách ghép câu."],
           "exchange": {"group": "n4-clinic-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N4:clinic:task:5", "teaching:v1:N4:clinic:task:6"], "delay_hours": 24},
-          "rationale": "Chuyển chức năng ngôn ngữ sang tình huống phi y tế; không cung cấp câu cũ/mẫu. Cả hai cha cùng revision phải ở một phiên trước khác phiên này và đều đủ 24 giờ.",
+          "rationale": "Em dùng cách báo tình trạng, nêu thời điểm và hỏi lại trong việc trả dụng cụ, không còn ở phòng khám. Hãy viết lời mới mà không xem câu cũ hay mẫu; AI chỉ góp ý ngôn ngữ.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         }
       ]
@@ -237,26 +237,26 @@
         {
           "id": "teaching:v1:N4:booking:task:5", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Đóng vai gọi một quán ăn hư cấu. Tự chọn ngày, giờ/buổi và nhóm 2–5 người rồi viết 1–2 câu tiếng Nhật lịch sự hỏi đặt bàn. Các chi tiết do em quyết định; chưa có nhân viên xác nhận. Không dùng tên, số điện thoại hoặc đặt chỗ thật, không chép một câu mẫu.",
-          "criteria": ["Nghĩa: người nhận xác định được ngày, giờ/buổi và số người tự chọn; không tự đổi mong muốn thành đặt bàn thành công.", "Cấu trúc: biểu thị thời điểm và quy mô nhóm đủ rõ, góp ý trợ từ riêng với khả năng hiểu nội dung.", "Giao tiếp: lời yêu cầu/hỏi lịch sự, cho quán quyền kiểm tra và trả lời.", "Chính tả/cách đọc được góp ý riêng; không bắt một chuỗi, không suy ra đúng ngữ nghĩa từ việc đã nộp."],
+          "criteria": ["Nghĩa: người nhận xác định được ngày, giờ/buổi và số người tự chọn; không tự đổi mong muốn thành đặt bàn thành công.", "Cấu trúc: biểu thị thời điểm và quy mô nhóm đủ rõ, góp ý trợ từ riêng với khả năng hiểu nội dung.", "Giao tiếp: lời yêu cầu/hỏi lịch sự, cho quán quyền kiểm tra và trả lời.", "Em có thể dùng những cách nói khác nhau để hỏi đặt bàn. Thầy góp ý chữ viết và cách đọc riêng với nội dung yêu cầu."],
           "exchange": {"group": "n4-booking-cycle-v2", "stage": "produce", "prior_task_ids": []},
-          "rationale": "Nội dung tự chọn, không có đáp án chuỗi. Lưu nguyên văn chưa được chấm nghĩa; AI chỉ tư vấn, không thực hiện hoặc xác nhận đặt bàn.",
+          "rationale": "Em tự chọn yêu cầu đặt bàn và cách nói. AI chỉ góp ý tiếng Nhật, không gọi quán hoặc xác nhận có chỗ.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:booking:task:6", "mode": "writing", "skill": "writing", "objective": "communication",
           "passage": "Nhân viên hư cấu do AI soạn sẵn: まだ予約は確定していません。別の時間でもよろしいですか。\nKana: まだよやくはかくていしていません。べつのじかんでもよろしいですか。\nNghĩa: Việc đặt chỗ chưa được xác nhận. Một giờ khác có được không? Nhân viên chưa nêu giờ thay thế còn trống.",
           "prompt": "Dựa vào chính yêu cầu đặt bàn em vừa viết, chọn một giờ khác phù hợp và hỏi xem có đặt được không; giữ nguyên ngày và số người. Hoặc nếu không đổi giờ được, nói rõ giới hạn ấy và hỏi còn cách nào phù hợp. Không tuyên bố có chỗ hay đặt thành công khi nhân viên chưa xác nhận.",
-          "criteria": ["Nối tiếp: giữ ngày và số người từ bản thật, phân biệt giờ cũ với phương án tự chọn hoặc nêu rõ không thể đổi.", "Nghĩa: hỏi khả năng của phương án thay vì coi câu hỏi tĩnh là thông báo giờ trống/đặt xong.", "Cấu trúc/giao tiếp: lời đáp lịch sự, giới hạn hoặc thời gian mới rõ; có nhiều đáp án hợp lý.", "Không có bản đặt đầu thì không đánh giá được nối tiếp; không tự bịa ngày/số khách. Chính tả tách khỏi nghĩa/cấu trúc."],
+          "criteria": ["Nối tiếp: giữ ngày và số người từ bản thật, phân biệt giờ cũ với phương án tự chọn hoặc nêu rõ không thể đổi.", "Nghĩa: hỏi khả năng của phương án thay vì coi câu hỏi tĩnh là thông báo giờ trống/đặt xong.", "Cấu trúc/giao tiếp: lời đáp lịch sự, giới hạn hoặc thời gian mới rõ; có nhiều đáp án hợp lý.", "Dựa vào ngày và số khách trong lời hỏi ban đầu, không tự thêm một lượt đặt bàn khác. Thầy góp ý chữ viết riêng với nội dung."],
           "exchange": {"group": "n4-booking-cycle-v2", "stage": "respond", "prior_task_ids": ["teaching:v1:N4:booking:task:5"], "partner_reply": "まだ予約は確定していません。別の時間でもよろしいですか。"},
-          "rationale": "Lời tĩnh chỉ mở câu hỏi, không bịa tình trạng chỗ trống của giờ người học chọn. Chỉ nhận xét theo nguyên văn trước; không có khóa chuỗi.",
+          "rationale": "Câu hỏi soạn sẵn chưa cho biết giờ nào còn chỗ. Em đáp dựa trên yêu cầu ban đầu; thầy giúp em làm rõ phương án muốn hỏi.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:booking:task:7", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Phiên ôn sau không xem lại bài: em đại diện nhóm học muốn dùng một phòng sinh hoạt ở thư viện hư cấu. Tự chọn ngày, giờ bắt đầu/kết thúc và số người, rồi hỏi người quản lý xem có thể dùng phòng không. Nêu thêm một giờ dự phòng nếu giờ đầu không được. Viết 2–3 câu tiếng Nhật; chưa có xác nhận và không đặt phòng thật.",
-          "criteria": ["Nghĩa: yêu cầu nêu ngày, khoảng dùng phòng và số người tự chọn, giờ dự phòng được đánh dấu là điều kiện chứ không phải lịch đã chốt.", "Chuyển giao: đáp ứng nhu cầu phòng học và thời lượng sử dụng, không chỉ thay tên nhà hàng trong câu đặt bàn.", "Cấu trúc/giao tiếp: phân biệt mong muốn với quyền sử dụng đã được xác nhận; lời hỏi lịch sự, thời gian không mâu thuẫn.", "Giữ câu mới/trợ giúp thực tế; góp ý chữ riêng, AI và lịch ôn không chứng nhận đúng nghĩa, tự lực hoặc thành thạo."],
+          "criteria": ["Nghĩa: yêu cầu nêu ngày, khoảng dùng phòng và số người tự chọn, giờ dự phòng được đánh dấu là điều kiện chứ không phải lịch đã chốt.", "Chuyển giao: đáp ứng nhu cầu phòng học và thời lượng sử dụng, không chỉ thay tên nhà hàng trong câu đặt bàn.", "Cấu trúc/giao tiếp: phân biệt mong muốn với quyền sử dụng đã được xác nhận; lời hỏi lịch sự, thời gian không mâu thuẫn.", "Em tự viết yêu cầu mới trước khi xem lại bài cũ. Thầy góp ý riêng về chữ viết và cách diễn đạt ngày, giờ, số người."],
           "exchange": {"group": "n4-booking-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N4:booking:task:5", "teaching:v1:N4:booking:task:6"], "delay_hours": 24},
-          "rationale": "Chuyển từ dịch vụ ăn uống sang xin sử dụng không gian chung có thời lượng. Cần cả hai cha cùng revision trong một phiên trước khác phiên này, đều đủ 24 giờ; không hiện mẫu/câu cũ.",
+          "rationale": "Em chuyển sang hỏi dùng phòng sinh hoạt, nên cần nói rõ cả khoảng thời gian sử dụng. Không xem lại câu cũ hay mẫu; góp ý AI không phải xác nhận đặt phòng.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         }
       ]
@@ -304,15 +304,15 @@
         {
           "id": "teaching:v1:N4:instructions:task:5", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Em hướng dẫn người mới trong buổi thủ công hư cấu. Tự chọn hai thao tác đơn giản phải theo thứ tự, và một thông tin/dụng cụ có thể thiếu khiến người mới cần hỏi trước khi làm tiếp. Viết 2–3 câu tiếng Nhật nêu thứ tự và người/nơi hỗ trợ khi thiếu; không chọn máy nguy hiểm hay thao tác y tế, không dùng câu mẫu có sẵn.",
-          "criteria": ["Nghĩa: hai thao tác tự chọn có lý do cần làm trước–sau, nhánh thiếu thông tin/dụng cụ chỉ áp dụng khi điều kiện ấy xảy ra.", "Cấu trúc: tự diễn đạt hoàn tất trước rồi làm sau, không nhầm đồng thời; điều kiện và người/nơi hỏi đủ rõ.", "Giao tiếp: người mới biết lúc nào có thể tiếp tục và lúc nào phải hỏi, không buộc đoán hoặc báo xong khi còn thiếu.", "Góp ý hình thức/chính tả tách khỏi logic; chưa đủ thông tin thì nêu điều cần làm rõ, không chấm nghĩa theo chuỗi."],
+          "criteria": ["Nghĩa: hai thao tác tự chọn có lý do cần làm trước–sau, nhánh thiếu thông tin/dụng cụ chỉ áp dụng khi điều kiện ấy xảy ra.", "Cấu trúc: tự diễn đạt hoàn tất trước rồi làm sau, không nhầm đồng thời; điều kiện và người/nơi hỏi đủ rõ.", "Giao tiếp: người mới biết lúc nào có thể tiếp tục và lúc nào phải hỏi, không buộc đoán hoặc báo xong khi còn thiếu.", "Em kiểm tra xem người mới có hiểu thứ tự và chỗ cần hỏi không. Thầy góp ý riêng về nội dung, cách ghép câu và chữ viết."],
           "exchange": {"group": "n4-instructions-cycle-v2", "stage": "produce", "prior_task_ids": []},
-          "rationale": "Tự tạo chỉ dẫn an toàn trong đóng vai; nguyên văn là bằng chứng chưa đánh giá nghĩa, nhận xét AI chỉ tư vấn, không chứng nhận quy trình thực tế.",
+          "rationale": "Em tự viết chỉ dẫn an toàn trong tình huống đóng vai. AI chỉ góp ý cách diễn đạt, không xác nhận quy trình có thể áp dụng ngoài đời.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         },
         {
           "id": "teaching:v1:N4:instructions:task:6", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Rà soát chính quy trình em đã viết. Tự chọn nhánh có đủ thông tin/dụng cụ hoặc nhánh đang thiếu đúng điều em đã nêu; viết một câu tiếng Việt nói em chọn nhánh nào, rồi 1–2 câu tiếng Nhật làm rõ người mới làm gì tiếp theo. Giữ thứ tự gốc nếu hợp lý; nếu phải sửa, nói rõ điểm sửa và không tuyên bố đã có câu trả lời từ người hỗ trợ.",
-          "criteria": ["Nối tiếp: nhánh phải ứng với đúng điều kiện trong chỉ dẫn đã lưu, không tạo một quy trình mới để tránh kiểm tra.", "Nghĩa: đủ điều kiện thì tiếp tục theo đúng thứ tự, thiếu thì hỏi trước bước phụ thuộc; không gán là đã được giải đáp chỉ vì đã hỏi.", "Cấu trúc/giao tiếp: người mới biết bước kế tiếp và điểm cần dừng; bản đầu đúng có thể giữ và giải thích kiểm tra, không ép có lỗi.", "Thiếu nguyên văn trước thì chưa nhận xét được logic nối tiếp; góp ý chính tả/cấu trúc/ý riêng, không có đáp án chuỗi."],
+          "criteria": ["Nối tiếp: nhánh phải ứng với đúng điều kiện trong chỉ dẫn đã lưu, không tạo một quy trình mới để tránh kiểm tra.", "Nghĩa: đủ điều kiện thì tiếp tục theo đúng thứ tự, thiếu thì hỏi trước bước phụ thuộc; không gán là đã được giải đáp chỉ vì đã hỏi.", "Cấu trúc/giao tiếp: người mới biết bước kế tiếp và điểm cần dừng; bản đầu đúng có thể giữ và giải thích kiểm tra, không ép có lỗi.", "Dựa vào chỉ dẫn em vừa viết để nói bước tiếp theo. Thầy góp ý chữ viết và cách ghép câu riêng với việc thứ tự có hợp lý không."],
           "exchange": {"group": "n4-instructions-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N4:instructions:task:5"]},
           "rationale": "Rà một nhánh của chính sản phẩm người học, không giả mạo đối tác biết thông tin cá nhân hoặc kiểm tra máy thật.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
@@ -320,9 +320,9 @@
         {
           "id": "teaching:v1:N4:instructions:task:7", "mode": "writing", "skill": "writing", "objective": "communication",
           "prompt": "Phiên ôn sau không xem bài: em để lời nhắn cho bạn mới đến câu lạc bộ sách hư cấu, hướng dẫn hai việc khi trả sách và cách hỏi nếu thiếu thông tin cần để trả. Tự chọn các bước, thông tin thiếu và người/nơi hỏi. Viết 2–3 câu tiếng Nhật lịch sự, không sao chép hoạt động thủ công hoặc đưa dữ liệu người mượn thật.",
-          "criteria": ["Nghĩa: bước trả sách có thứ tự rõ và nhánh hỏi phù hợp đúng thông tin tự chọn bị thiếu.", "Chuyển giao: hướng dẫn người mới qua lời nhắn về trả sách, không chỉ đổi tên vật trong bài thủ công.", "Cấu trúc/giao tiếp: phân biệt trước–sau với đồng thời, không cho tiếp tục bước cần thông tin chưa có; nhiều cách diễn đạt hợp lý.", "Lưu câu mới/trợ giúp thực tế, góp ý chữ riêng với logic/cấu trúc; lịch ôn và AI không xác nhận tự lực hoặc nhớ lâu."],
+          "criteria": ["Nghĩa: bước trả sách có thứ tự rõ và nhánh hỏi phù hợp đúng thông tin tự chọn bị thiếu.", "Chuyển giao: hướng dẫn người mới qua lời nhắn về trả sách, không chỉ đổi tên vật trong bài thủ công.", "Cấu trúc/giao tiếp: phân biệt trước–sau với đồng thời, không cho tiếp tục bước cần thông tin chưa có; nhiều cách diễn đạt hợp lý.", "Em thử viết chỉ dẫn trả sách mới mà không xem bài cũ. Thầy góp ý riêng về thứ tự, cách ghép câu và chữ viết."],
           "exchange": {"group": "n4-instructions-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N4:instructions:task:5", "teaching:v1:N4:instructions:task:6"], "delay_hours": 24},
-          "rationale": "Chuyển sang lời nhắn phục vụ người mượn sách. Cả hai cha cùng revision phải thuộc một phiên trước khác phiên này và đều đủ 24 giờ; không hiện bài cũ hoặc mẫu.",
+          "rationale": "Em tập để lời nhắn giúp người mới trả sách và biết hỏi ai khi thiếu thông tin. Hãy tự viết mà không xem bài cũ hay mẫu; góp ý của AI chỉ để em xem lại cách diễn đạt.",
           "assessment_basis": "ai_authored_provisional_not_verified", "scored": false
         }
       ]

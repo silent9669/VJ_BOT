@@ -54,14 +54,19 @@ function fixture(options={}) {
 test('permission rejection is visible and manual entry remains available',async()=>{
   const f=fixture({permission:Promise.reject(Object.assign(new Error('denied'),{name:'NotAllowedError'}))});
   await f.start();
-  assert.match(f.status(),/permission|denied/i);
+  assert.match(f.status(),/quyền.*micro/i);
+  assert.equal(f.element('kaiwa-mic-status').hidden,false);
   assert.equal(f.element('btn-kaiwa-mic').attributes['aria-pressed'],'false');
   assert.equal(f.element('kaiwa-manual-input').disabled,false);
   assert.equal(f.recorders.length,0);
 });
 for(const setupFailure of ['constructor','start'])test(`recorder ${setupFailure} failure releases the acquired stream`,async()=>{
   const f=fixture({setupFailure});await f.start();
-  assert.match(f.status(),/record.*failed|recorder/i);
+  assert.match(f.status(),/ghi âm.*không thành công/i);
+  assert.doesNotMatch(f.status(),/chép lời|phát lại/i);
+  assert.equal(f.element('kaiwa-mic-status').hidden,false);
+  assert.equal(f.element('kaiwa-manual-input').disabled,false);
+  assert.equal(f.recognizers.length,0);
   assert.equal(f.defaultStream.track.stops,1);
   assert.equal(f.element('btn-kaiwa-mic').attributes['aria-pressed'],'false');
 });
@@ -106,7 +111,10 @@ test('navigation cancels recording callbacks and removes completed replay resour
 });
 test('replay rejection is visible and stale replay rejection cannot overwrite newer capture',async()=>{
   const f=fixture({replayFailure:true});await f.start();await f.start();f.recorders[0].data();f.recorders[0].finish();await f.replay();
-  assert.match(f.status(),/playback blocked/);
+  assert.match(f.status(),/không phát lại.*bản ghi/i);
+  assert.doesNotMatch(f.status(),/chép lời/i);
+  assert.equal(f.element('kaiwa-mic-status').hidden,false);
+  assert.equal(f.audios[0].paused,true);
   const playback=deferred(),g=fixture({playPromise:playback.promise});await g.start();await g.start();g.recorders[0].data();g.recorders[0].finish();
   const replay=g.replay();await g.start();playback.reject(new Error('obsolete'));await replay;
   assert.doesNotMatch(g.status(),/obsolete/);assert.equal(g.audios[0].paused,true);
@@ -130,8 +138,14 @@ test('explicit browser controller stops and account changes discard delayed reco
 });
 test('browser permission and recognition setup errors remain visible',async()=>{
   const f=fixture({noRecorder:true});await f.start();f.recognizers[0].onerror({error:'not-allowed'});f.recognizers[0].end();
-  assert.match(f.status(),/permission|denied/i);
-  const g=fixture({recognitionFailure:true});await g.start();assert.match(g.status(),/recognition setup failed/);
+  assert.match(f.status(),/quyền.*micro/i);
+  assert.equal(f.element('kaiwa-mic-status').hidden,false);
+  const g=fixture({recognitionFailure:true});await g.start();
+  assert.match(g.status(),/chép lời.*không thành công/i);
+  assert.doesNotMatch(g.status(),/quyền|phát lại/i);
+  assert.equal(g.element('kaiwa-mic-status').hidden,false);
+  assert.equal(g.defaultStream.track.stops,1);
+  assert.equal(g.element('btn-kaiwa-mic').attributes['aria-pressed'],'false');
 });
 test('one chat Voice action opens continuous Live without legacy capture or dictation',async()=>{
   const f=fixture(),voice=f.element('btn-voice-input');
@@ -175,7 +189,9 @@ test('owner or route changes invalidate a pending stream even before lifecycle e
 
 test('missing recorder permits explicit browser transcription without a recording permission request',()=>{
   const f=fixture({noRecorder:true});f.start();
-  assert.equal(f.permissions,0);assert.equal(f.recognizers.length,1);assert.match(f.status(),/chỉ chép lời/i);
+  assert.equal(f.permissions,0);assert.equal(f.recognizers.length,1);
+  assert.match(f.status(),/chép lời.*trình duyệt/i);assert.match(f.status(),/không có bản ghi/i);
+  assert.equal(f.blobs.length,0);assert.equal(f.element('btn-kaiwa-play-user').hidden,true);
   f.recognizers[0].result('入力');assert.equal(f.element('kaiwa-manual-input').value,'入力');
 });
 

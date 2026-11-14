@@ -79,6 +79,20 @@ test('a closed voice session finishes translations while navigation and new acco
   b.add('user','stale',2000);assert.equal(b.host.children.length,0);
 });
 
+test('deliberate translation cancellation is distinct from failure, preserves captions and retries only on request',async()=>{
+  const failed=transcript(()=>Response.json({detail:'quota'},{status:429}));
+  failed.add('user','はい。',0);await failed.flush();const failureMessage=vi(failed.host.children[0]);
+  failed.api.stop();assert.equal(vi(failed.host.children[0]),failureMessage);
+  let release;const b=transcript(body=>new Promise(resolve=>{release=()=>resolve(Response.json({translations:body.segments.map(s=>({id:s.id,text_vi:'late'}))}));}));
+  b.add('user','はい。',0);await b.flush();b.api.stop();const row=b.host.children[0];
+  assert.equal(b.requests[0].signal.aborted,true);assert.equal(text(row),'はい。');
+  assert.ok(vi(row).trim());assert.notEqual(vi(row),failureMessage);assert.equal(row.children[3].hidden,false);
+  assert.equal(b.timers.size,0);assert.equal(b.requests.length,1);
+  release();await new Promise(resolve=>setImmediate(resolve));assert.notEqual(vi(row),'late');
+  row.children[3].events.click();await b.flush();assert.equal(b.requests.length,2);
+  release();await new Promise(resolve=>setImmediate(resolve));assert.equal(vi(row),'late');
+});
+
 test('long conversations retain bounded rows with unique identifiers and split at the input limit',async()=>{
   const b=transcript();for(let i=0;i<305;i++)b.add('user','あ'.repeat(700),i*2000,i*2000+500,'id'+i);
   assert.equal(b.host.children.length,300);await b.flush();

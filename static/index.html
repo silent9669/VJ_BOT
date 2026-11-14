@@ -16,13 +16,13 @@
   <!-- Open Graph & Social Cards -->
   <meta name="color-scheme" content="light">
   <meta property="og:title" content="VJBot · Học tiếng Nhật cùng thầy Lâm">
-  <meta property="og:description" content="Luyện JLPT N5–N1 theo lớp học đảo ngược: thầy Lâm hỏi, em tự trả lời. Dùng API AI của chính bạn.">
+  <meta property="og:description" content="Luyện JLPT N5–N1: thầy Lâm hỏi, em tự trả lời. Dùng kết nối AI của em.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vjbot.dangphuc.me/">
   <meta property="og:image" content="https://vjbot.dangphuc.me/assets/logo-vj-8bit.svg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="VJBot · Học tiếng Nhật cùng thầy Lâm">
-  <meta name="twitter:description" content="Luyện JLPT N5–N1 theo lớp học đảo ngược cùng thầy Lâm.">
+  <meta name="twitter:description" content="Luyện JLPT N5–N1: thầy Lâm hỏi, em tự trả lời.">
 
   <!-- 8-bit Pixel Mascot Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg?v=3">
@@ -60,7 +60,7 @@
         <button type="button" id="sidebar-close" aria-label="Đóng menu">×</button>
       </header>
       <div class="sidebar-user-card"><button id="level-chip" data-level="N5" type="button" aria-label="Đổi trình độ JLPT"><span id="level-chip-text">JLPT N5</span><span aria-hidden="true">⌄</span></button><span id="streak-counter" class="sidebar-streak">0 ngày</span></div>
-      <nav class="sidebar-nav" aria-label="Điều hướng chính"><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Bài học</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="dashboard" id="tab-btn-dashboard"><span class="nav-label">Học tập</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum"><span class="nav-label">Khóa học</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom"><span class="nav-label">Thầy Lâm</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery"><span class="nav-label">Tiến độ</span></button></section><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Luyện tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards"><span class="nav-label">Thẻ nhớ</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Kanji</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa"><span class="nav-label">Luyện nói</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz"><span class="nav-label">Luyện thi</span></button></section></nav>
+      <nav class="sidebar-nav" aria-label="Điều hướng chính"><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Bài học</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="dashboard" id="tab-btn-dashboard"><span class="nav-label">Học tập</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum"><span class="nav-label">Khóa học</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom"><span class="nav-label">Thầy Lâm</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery"><span class="nav-label">Tiến độ</span></button></section><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Luyện tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards"><span class="nav-label">Thẻ nhớ</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Hán tự</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa"><span class="nav-label">Luyện nói</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz"><span class="nav-label">Luyện thi</span></button></section></nav>
       <div class="sidebar-companion" id="sidebar-companion"></div>
       <footer class="sidebar-footer"><div class="sidebar-utilities"><button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden><span class="nav-label">Quản trị</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings"><span class="nav-label">Cài đặt</span></button></div><a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn học liệu ↗</a><button type="button" class="sidebar-account" id="sidebar-account"><span class="sidebar-account-initial" id="sidebar-account-initial" aria-hidden="true">A</span><span class="sidebar-account-copy"><strong id="sidebar-account-name">Tài khoản</strong><span id="sidebar-account-role"></span></span></button></footer>
     </aside>
@@ -85,17 +85,17 @@
 
         <!-- Topbar Quick Assistant Summon Button -->
         <div class="topbar-center">
-          <button type="button" class="topbar-summon-btn" id="btn-topbar-summon" aria-label="Hỏi thầy Lâm" title="Hỏi thầy Lâm bất cứ lúc nào (⌘K)">
+          <button type="button" class="topbar-summon-btn" id="btn-topbar-summon" aria-label="Hỏi thầy Lâm" title="Hỏi thầy Lâm bất cứ lúc nào (Ctrl+K / ⌘K)">
             <img class="summon-mascot" src="assets/lam/pixel/display/south.png" width="26" height="44" alt="">
             <span class="summon-text">Hỏi thầy Lâm</span>
-            <kbd class="sketch-kbd">⌘K</kbd>
+            <kbd class="sketch-kbd">Ctrl+K / ⌘K</kbd>
           </button>
         </div>
 
         <div class="topbar-right">
           <div class="chrome-status-pill">
             <span class="status-indicator"></span>
-            <span id="sensei-state-tag">Thầy Lâm: sẵn sàng</span>
+            <span id="sensei-state-tag">Thầy Lâm</span>
           </div>
           <div class="topbar-auth" id="topbar-auth-section">
             <div id="account-menu" class="account-menu" role="menu" aria-label="Tài khoản" hidden>
@@ -166,7 +166,7 @@
 
               <div class="stage-sensei-info">
                 <h3 class="stage-sensei-name" id="stage-sensei-name">Thầy Lâm</h3>
-                <p class="stage-sensei-role" id="stage-sensei-role">Tiếng Nhật · Lớp học đảo ngược</p>
+                <p class="stage-sensei-role" id="stage-sensei-role">Tiếng Nhật · Thầy hỏi, em trả lời</p>
               </div>
 
               <!-- Active Topic Card -->
@@ -249,8 +249,10 @@
                   <button type="button" data-command="hint" disabled>Gợi ý</button><button type="button" data-command="repeat" disabled>Nhắc lại</button><button type="button" data-command="slower" disabled>Nói chậm</button><button type="button" data-command="situation" disabled>Tình huống</button><button type="button" data-command="check" disabled>Sửa câu</button><button type="button" data-command="explain" disabled>Tự giải thích</button><button type="button" data-command="summary" disabled>Tóm tắt</button>
                 </div>
                 <audio id="live-audio" autoplay playsinline aria-label="Giọng nói AI của thầy Lâm"></audio>
-                <p id="live-status" role="status">Giọng nói AI · Micro chỉ bật khi em bắt đầu.</p>
-                <div class="live-controls"><button type="button" class="public-cta" id="live-start">Bắt đầu nói</button><button type="button" class="stage-btn" id="live-play-audio" hidden>Bật âm thanh</button><button type="button" class="stage-btn" id="live-mute" aria-pressed="false" hidden disabled>Tắt micro</button><button type="button" class="stage-btn" id="live-end" hidden disabled>Kết thúc</button></div>
+                <p class="ai-field-hint" id="live-privacy">Giọng thầy là giọng AI. Khi em bắt đầu, micro gửi âm thanh đến OpenAI. Mỗi cuộc trò chuyện tối đa 10 phút.</p>
+                <details class="lesson-disclosure"><summary>Về bản chép lời</summary><p>Bản chép lời được gửi riêng đến OpenAI để dịch. Lời nói, thời gian gần đúng và bản dịch chỉ ở trang này, không lưu vào lịch sử hay tiến độ.</p></details>
+                <p id="live-status" role="status">Micro chỉ bật khi em bấm Bắt đầu nói.</p>
+                <div class="live-controls"><button type="button" class="public-cta" id="live-start" aria-describedby="live-privacy">Bắt đầu nói</button><button type="button" class="stage-btn" id="live-play-audio" hidden>Bật âm thanh</button><button type="button" class="stage-btn" id="live-mute" aria-pressed="false" hidden disabled>Tắt micro</button><button type="button" class="stage-btn" id="live-end" hidden disabled>Kết thúc</button></div>
               </section>
               <div id="classroom-text" class="classroom-text">
               <!-- Messages Scroll Stage -->
@@ -277,11 +279,11 @@
 
               <!-- Quick Response Chips with Furigana Toggle & Bookmark -->
               <div id="chat-ai-gate" class="chat-ai-gate" hidden>
-                <h2 id="chat-gate-title">Kết nối API để chat với thầy Lâm</h2>
-                <button type="button" class="public-cta" id="chat-gate-open">Thêm API</button>
+                <h2 id="chat-gate-title">Kết nối AI để trò chuyện với thầy Lâm</h2>
+                <button type="button" class="public-cta" id="chat-gate-open">Thêm kết nối</button>
               </div>
               <div class="chat-chips-bar" id="chat-prompt-chips">
-                <button type="button" class="prompt-chip" id="btn-bookmark-topic" title="Lưu chủ đề này vào Sổ tay điểm yếu"> Lưu</button>
+                <button type="button" class="prompt-chip" id="btn-bookmark-topic" title="Lưu chủ đề để ôn lại">Lưu chủ đề</button>
                 <button type="button" class="prompt-chip" id="btn-ask-hint"> Gợi ý</button>
                 <button type="button" class="prompt-chip" id="btn-ask-explain"> Tự giải thích</button>
                 <button type="button" class="prompt-chip" id="btn-ask-example"> Tình huống</button>
@@ -292,8 +294,8 @@
 
               <!-- Chat Input Bar -->
               <form class="chat-input-bar" id="chat-form" onsubmit="return false;">
-                <button type="button" class="chat-audio-btn" id="btn-voice-input" aria-label="Voice · Trò chuyện trực tiếp" title="Trò chuyện liên tục bằng giọng nói">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3v18M7 7v10M17 7v10M3 10v4M21 10v4"/></svg><span id="mic-icon">Voice</span>
+                <button type="button" class="chat-audio-btn" id="btn-voice-input" aria-label="Trò chuyện trực tiếp với thầy Lâm" title="Trò chuyện liên tục bằng giọng nói">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3v18M7 7v10M17 7v10M3 10v4M21 10v4"/></svg><span id="mic-icon">Nói trực tiếp</span>
                 </button>
                 <textarea id="chat-input" class="sketch-input chat-text-input" rows="1" maxlength="6000" placeholder="Nhắn cho thầy Lâm…" aria-label="Tin nhắn cho thầy Lâm"></textarea>
                 <button type="submit" id="btn-send-message" class="sketch-btn-cta chat-send-btn" aria-label="Gửi">
@@ -349,7 +351,7 @@
             <section id="study-plan" aria-label="Lộ trình học"></section>
             <div id="lesson-library" hidden>
             <!-- Lessons Grid -->
-            <div class="lesson-toolbar"><label class="lesson-search">Tìm bài học<input type="search" id="lesson-search" placeholder="Từ, mẫu câu, nghĩa…"></label><label class="lesson-status">Tiến độ<select id="lesson-status"><option value="all">Tất cả</option><option value="todo">Chưa hoàn thành</option><option value="done">Đã hoàn thành</option></select></label></div>
+            <div class="lesson-toolbar"><label class="lesson-search">Tìm bài học<input type="search" id="lesson-search" placeholder="Từ, mẫu câu, nghĩa…"></label><label class="lesson-status">Dấu đã xem<select id="lesson-status"><option value="all">Tất cả</option><option value="todo">Chưa đánh dấu</option><option value="done">Đã đánh dấu</option></select></label></div>
             <p id="lesson-count" class="lesson-count" aria-live="polite"></p><div class="curriculum-grid" id="curriculum-list">
               <!-- Rendered dynamically via app.js & jlpt-data.js -->
             </div><button type="button" id="lesson-load-more" class="stage-btn" hidden>Xem thêm 24 bài</button>
@@ -420,13 +422,15 @@
               <button type="button" class="stage-btn" id="btn-fc-reveal" aria-controls="flashcard-card" aria-expanded="false">Xem nghĩa</button>
               <p id="fc-face-status" class="task-accessible-target" role="status">Đang xem mặt chữ, nghĩa được che</p>
 
+              <p id="fc-empty" class="lesson-count" role="status" hidden></p>
+              <p id="fc-rating-help">Em tự thấy mình nhớ từ này thế nào?</p>
               <!-- SRS Controls -->
               <div class="fc-controls-bar">
-                <div class="fc-counter-pill" id="fc-counter">Thẻ 1 / 15</div>
+                <div class="fc-counter-pill" id="fc-counter">Đang tải thẻ…</div>
                 <div class="fc-srs-btns">
                   <button type="button" class="srs-btn srs-again" id="fc-btn-again"> Chưa nhớ</button>
-                  <button type="button" class="srs-btn srs-good" id="fc-btn-good"> Tạm nhớ</button>
-                  <button type="button" class="srs-btn srs-easy" id="fc-btn-easy"> Thuộc lòng</button>
+                  <button type="button" class="srs-btn srs-good" id="fc-btn-good"> Nhớ chưa chắc</button>
+                  <button type="button" class="srs-btn srs-easy" id="fc-btn-easy"> Nhớ dễ</button>
                 </div>
                 <div class="fc-nav-btns">
                   <button type="button" class="fc-nav-btn" id="fc-btn-prev">← Trước</button>
@@ -483,26 +487,29 @@
                      Nghe lại giọng em
                   </button>
                 </div>
+                <p class="ai-field-hint">Em có thể ghi âm để điền câu trả lời. Xem lại chữ trước khi gửi; thầy nhận xét câu trả lời, không chấm phát âm.</p>
+                <details class="lesson-disclosure"><summary>Ghi âm và quyền riêng tư</summary><p>Bản ghi được gửi qua máy chủ đến nhà cung cấp của kết nối trò chuyện đã chọn để chép lời. Tài khoản quản trị dùng OpenAI máy chủ. Nếu dùng chép lời của trình duyệt, âm thanh có thể được dịch vụ của trình duyệt xử lý. Em có thể gõ câu trả lời thay vì dùng micro.</p></details>
                 <p id="kaiwa-error" role="alert" hidden></p>
               </div>
 
               <div id="kaiwa-completion"></div><!-- Model-assisted estimates, never official grades -->
               <div class="kaiwa-result-card" id="kaiwa-result-card" aria-describedby="kaiwa-advisory-notice" hidden>
                 <div class="result-header">
-                  <span class="result-badge">ĐIỂM LUYỆN TẬP ƯỚC TÍNH</span>
+                  <span class="result-badge">Nhận xét bài luyện</span>
                   <div class="result-score-wrap">
                     <span id="kaiwa-score-val" role="status">Chưa chấm</span>
                   </div>
                 </div>
                 <div class="result-body">
-                  <p id="kaiwa-advisory-notice">Điểm ước tính từ nhận xét của AI, không phải điểm chính thức. Máy chủ tính hoàn thành nhiệm vụ 50%, ngữ pháp 30%, diễn đạt 20%. Thiếu yêu cầu thì không đạt. Nhận xét và ví dụ của AI vẫn có thể sai.</p>
+                  <p id="kaiwa-advisory-notice">AI nhận xét câu em đã viết và có thể nhầm. Điểm này chỉ để tham khảo.</p>
+                  <details class="lesson-disclosure"><summary>Cách tính điểm tham khảo</summary><p>Nội dung theo yêu cầu: 50%; ngữ pháp: 30%; diễn đạt: 20%. Câu trả lời còn thiếu yêu cầu sẽ được ghi nhận là chưa đầy đủ.</p></details>
                   <div class="result-feedback-section">
                     <h4>Tiêu chí của câu hỏi</h4>
                     <p id="kaiwa-feedback-text" role="status" aria-live="polite"></p>
                     <ul id="kaiwa-criteria" aria-label="Đánh giá theo tiêu chí"></ul>
                   </div>
                   <div class="result-model-section">
-                    <h4>Ví dụ của AI (chưa kiểm chứng)</h4>
+                    <h4>Một cách trả lời khác (AI gợi ý)</h4>
                     <div class="model-sentence-row">
                       <p id="kaiwa-model-text"></p>
                       <button type="button" class="card-audio-btn" id="btn-kaiwa-model-tts">Nghe</button>
@@ -542,7 +549,7 @@
               <!-- Exam Timer & Status Bar -->
               <div class="exam-status-bar">
                 <div class="exam-progress-info">
-                  <span id="quiz-q-num">Câu 1 / 4</span> • <span id="quiz-q-type">Mondai 1: Cách đọc Kanji</span>
+                  <span id="quiz-q-num">Đang tải câu hỏi…</span> • <span id="quiz-q-type"></span>
                 </div>
                 <div class="exam-timer-box">
                   <span>⏱ Còn lại:</span>
@@ -582,9 +589,9 @@
               <div class="result-trophy"></div>
               <h3 class="result-title">Kết quả bài luyện</h3>
               <div class="final-score-display">
-                <span id="quiz-final-score-val">100%</span>
+                <span id="quiz-final-score-val">—</span>
               </div>
-              <p id="quiz-result-praise">Xuất sắc! Em đã nắm rất vững phần này.</p>
+              <p id="quiz-result-praise">Kết quả sẽ hiện sau khi em làm bài.</p>
               <div id="quiz-completion"></div><div class="result-actions">
                 <button type="button" class="sketch-btn-cta" id="btn-quiz-restart">Làm lại đề này</button>
                 <button type="button" class="stage-btn" id="btn-quiz-to-classroom">Vào lớp hỏi thầy Lâm</button>
@@ -613,7 +620,7 @@
               <div class="mastery-kpi-card">
 
                 <div class="kpi-info">
-                  <span class="kpi-label">Lượt trả lời</span>
+                  <span class="kpi-label">Lượt trả lời đã lưu</span>
                   <strong class="kpi-val" id="mastery-answers-count">0</strong>
                 </div>
               </div>
@@ -632,9 +639,9 @@
                 </div>
               </div>
             </div>
-            <details id="mastery-legacy" class="mastery-legacy" hidden><summary>Lịch sử trước đây</summary><p id="mastery-evidence-summary"></p><p>Tỷ lệ so với đáp án lúc đó: <strong id="mastery-accuracy-rate"></strong></p></details>
+            <details id="mastery-legacy" class="mastery-legacy" hidden><summary>Lịch sử trước đây</summary><p id="mastery-evidence-summary"></p><p>Đối chiếu với đáp án ở thời điểm làm bài: <strong id="mastery-accuracy-rate"></strong></p></details>
 
-            <section class="completed-section"><h2>Bài đã hoàn thành</h2><div id="completed-activities"></div></section>
+            <section class="completed-section"><h2>Bài em đã đánh dấu</h2><p>Em tự đánh dấu để nhớ mình đã xem bài nào.</p><div id="completed-activities"></div></section>
             <!-- Weak Spots Revision Section -->
             <div class="weak-spots-card">
               <h3> Cần ôn lại</h3>
@@ -655,7 +662,7 @@
 
         <!-- TAB 7: SETTINGS, GEMINI KEY & MASCOTS -->
         <section class="tab-panel" id="panel-admin" hidden>
-          <div class="settings-container admin-layout"><header class="workspace-heading"><h1>Quản trị</h1><a class="stage-btn" href="#settings/admin">Model &amp; giọng nói ↗</a></header>
+          <div class="settings-container admin-layout"><header class="workspace-heading"><h1>Quản trị</h1><a class="stage-btn" href="#settings/admin">Mô hình và giọng nói ↗</a></header>
             <p id="admin-ai-status" class="admin-ai-status" role="status"></p>
             <div id="admin-stats" class="admin-stats" aria-live="polite"></div>
             <div class="settings-card admin-members">
@@ -670,14 +677,14 @@
         </section>
         <section class="tab-panel" id="panel-settings" hidden>
           <div class="settings-container settings-layout"><h1>Cài đặt</h1>
-            <nav class="settings-nav" aria-label="Mục cài đặt"><button type="button" data-settings="account" data-target="settings-account-card" aria-current="true">Tài khoản</button><button type="button" data-settings="api" data-target="ai-card" id="settings-api-nav">Kết nối AI</button><button type="button" data-settings="admin" data-target="settings-admin-ai" id="settings-admin-nav" hidden>Model AI</button><button type="button" data-settings="sound" data-target="settings-sound-card">Âm thanh</button><button type="button" data-settings="data" data-target="settings-danger-card">Dữ liệu</button></nav>
+            <nav class="settings-nav" aria-label="Mục cài đặt"><button type="button" data-settings="account" data-target="settings-account-card" aria-current="true">Tài khoản</button><button type="button" data-settings="api" data-target="ai-card" id="settings-api-nav">Kết nối AI</button><button type="button" data-settings="admin" data-target="settings-admin-ai" id="settings-admin-nav" hidden>Model AI và giọng nói</button><button type="button" data-settings="sound" data-target="settings-sound-card">Âm thanh</button><button type="button" data-settings="data" data-target="settings-danger-card">Dữ liệu</button></nav>
             <div class="settings-stack">
               <section class="settings-card" id="settings-admin-ai" hidden>
-                <header class="card-head"><h2 class="card-title">Model AI</h2></header>
+                <header class="card-head"><h2 class="card-title">Model AI và giọng nói</h2></header>
                 <form id="admin-ai-form" class="admin-ai-form">
-                  <div class="settings-field"><label for="admin-text-model">Model văn bản</label><select id="admin-text-model" required></select></div>
+                  <div class="settings-field"><label for="admin-text-model">Mô hình văn bản</label><select id="admin-text-model" required></select></div>
                   <div class="settings-field"><label for="admin-reasoning">Mức suy luận</label><select id="admin-reasoning"></select></div>
-                  <div class="settings-field"><label for="admin-live-voice">Giọng GPT-Live</label><select id="admin-live-voice"></select></div>
+                  <div class="settings-field"><label for="admin-live-voice">Giọng hội thoại trực tiếp (GPT-Live)</label><select id="admin-live-voice"></select></div>
                   <div class="admin-model-preview"><img src="assets/lam/pixel/display/south.png" width="28" height="48" alt=""><span id="admin-model-preview">Đang tải cấu hình…</span></div>
                   <div class="card-actions"><button type="submit" class="public-cta" id="admin-ai-save">Lưu cài đặt</button><a class="stage-btn" href="#classroom">Vào lớp</a></div>
                   <p id="admin-ai-message" role="status"></p>
@@ -691,15 +698,15 @@
               <section class="settings-card ai-settings-card" id="ai-card">
                 <header class="card-head"><h2 class="card-title">Kết nối AI</h2></header>
                 <p id="ai-source" class="ai-source" role="status"></p>
-                <section class="ai-current" aria-label="Cấu hình chat hiện tại">
-                  <div class="ai-current-heading"><span class="ai-current-dot" aria-hidden="true"></span><span class="status-pill" id="ai-pill" data-state="none">Chưa chọn tài khoản</span></div>
-                  <strong id="ai-current-model">Chọn một tài khoản để bắt đầu</strong>
-                  <p class="ai-field-hint" id="ai-current-hint">Model chat đã lưu sẽ hiện ở đây.</p>
+                <section class="ai-current" aria-label="Kết nối trò chuyện hiện tại">
+                  <div class="ai-current-heading"><span class="ai-current-dot" aria-hidden="true"></span><span class="status-pill" id="ai-pill" data-state="none">Chưa chọn kết nối</span></div>
+                  <strong id="ai-current-model">Chọn một kết nối để bắt đầu</strong>
+                  <p class="ai-field-hint" id="ai-current-hint">Model trò chuyện đã lưu sẽ hiện ở đây.</p>
                   <button type="button" class="public-cta" id="ai-chat" hidden>Vào lớp với thầy Lâm <span aria-hidden="true">↗</span></button>
                 </section>
                 <div class="ai-saved-connections">
-                  <div class="ai-section-heading"><label for="ai-profile-list">API cá nhân</label><button type="button" class="stage-btn" id="ai-add-connection">+ Thêm kết nối</button></div>
-                  <select id="ai-profile-list" aria-describedby="ai-profile-hint"><option value="">Chọn API đã lưu</option></select>
+                  <div class="ai-section-heading"><label for="ai-profile-list">Kết nối AI cá nhân</label><button type="button" class="stage-btn" id="ai-add-connection">+ Thêm kết nối</button></div>
+                  <select id="ai-profile-list" aria-describedby="ai-profile-hint"><option value="">Chọn kết nối đã lưu</option></select>
                   <p class="ai-field-hint" id="ai-profile-hint" hidden></p>
                   <p id="ai-connection-status" role="status" aria-live="polite"></p>
                 </div>
@@ -708,10 +715,10 @@
                   <div id="ai-oauth-pending" class="ai-form" hidden>
                     <div class="ai-actions"><a id="ai-oauth-continue" class="public-cta" target="_blank" rel="noopener noreferrer">Tiếp tục với Google</a><button type="button" class="stage-btn" id="ai-oauth-cancel">Hủy đăng nhập</button></div>
                     <p class="ai-field-hint">Tự kiểm tra quyền của tài khoản Google. Kết nối cổng bên thứ ba này không cấp quyền dùng Gemini API hay giọng đọc.</p>
-                    <details><summary>Trang gọi lại không mở?</summary><p class="ai-field-hint">Với cổng từ xa, dán địa chỉ localhost cuối cùng sau khi đăng nhập Google. Không dán mật khẩu hay API key.</p><label>Địa chỉ gọi lại<input type="url" id="ai-oauth-callback-url" autocomplete="off" spellcheck="false"></label><button type="button" class="stage-btn" id="ai-oauth-callback-submit">Gửi địa chỉ</button></details>
+                    <details><summary>Trang gọi lại không mở?</summary><p class="ai-field-hint">Với cổng từ xa, dán địa chỉ localhost cuối cùng sau khi đăng nhập Google. Không dán mật khẩu hay khóa API.</p><label>Địa chỉ gọi lại<input type="url" id="ai-oauth-callback-url" autocomplete="off" spellcheck="false"></label><button type="button" class="stage-btn" id="ai-oauth-callback-submit">Gửi địa chỉ</button></details>
                   </div>
                   <div id="ai-oauth-selection" class="ai-form" hidden>
-                    <div class="ai-section-heading"><label for="ai-oauth-model">Model chat</label><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-refresh">Tải lại model</button></div>
+                    <div class="ai-section-heading"><label for="ai-oauth-model">Model trò chuyện</label><button type="button" class="stage-btn ai-quiet-button" id="ai-oauth-refresh">Tải lại model</button></div>
                     <select id="ai-oauth-model" aria-describedby="ai-oauth-model-hint"></select>
                     <p class="ai-field-hint" id="ai-oauth-model-hint"></p>
                     <div class="ai-actions ai-model-apply"><button type="button" class="public-cta" id="ai-oauth-use" disabled>Thử và lưu model</button></div>
@@ -733,7 +740,7 @@
                 </section>
                 <form id="ai-form" class="ai-form" autocomplete="off">
                   <fieldset class="ai-step">
-                    <legend>Model chat</legend>
+                    <legend>Model trò chuyện</legend>
                     <label id="ai-models" hidden>Model đã kiểm tra trước đó<select id="ai-model-list" aria-describedby="ai-selection-hint" disabled></select></label>
                     <input id="ai-model" type="hidden" maxlength="100">
                     <p class="ai-field-hint" id="ai-selection-hint">Chỉ liệt kê model đã thử. Tình trạng có thể thay đổi.</p>
@@ -742,10 +749,10 @@
                   </fieldset>
                   <details id="ai-api-manage" class="ai-disclosure"><summary>Cài đặt kết nối</summary>
                   <fieldset class="ai-step ai-profile-step">
-                    <legend id="ai-api-editor-title">Kết nối bằng API key</legend>
+                    <legend id="ai-api-editor-title">Kết nối bằng khóa API</legend>
                     <div id="ai-profile-edit">
                     <div class="ai-profile-fields">
-                      <label>Tên gọi tài khoản<input id="ai-profile-name" maxlength="80" autocomplete="off" placeholder="Gemini hoặc Groq của em"></label>
+                      <label>Tên kết nối<input id="ai-profile-name" maxlength="80" autocomplete="off" placeholder="Gemini hoặc Groq của em"></label>
                       <label>Nơi lưu<select id="ai-profile-storage" aria-describedby="ai-profile-storage-hint"><option value="local">Chỉ trên thiết bị này</option><option value="server">Tài khoản của em trên máy chủ</option></select></label>
                     </div>
                     <details class="ai-storage-note"><summary>Lưu trữ và riêng tư</summary><p class="ai-field-hint" id="ai-profile-storage-hint">Khóa trên thiết bị được mã hóa trong trình duyệt này và không đồng bộ. Máy chủ chỉ nhận khóa khi gửi yêu cầu AI. Trình duyệt bị xâm nhập vẫn có thể đọc được khóa.</p></details>
@@ -758,8 +765,8 @@
                     <div class="segmented" role="group" aria-label="Loại API" id="ai-segments"><button type="button" data-protocol="openai" aria-pressed="true">OpenAI-compatible</button><button type="button" data-protocol="anthropic" aria-pressed="false">Claude</button><button type="button" data-protocol="gemini" aria-pressed="false">Gemini</button></div>
                     <label>URL gốc<input id="ai-base" type="url" inputmode="url" maxlength="200" spellcheck="false" aria-describedby="ai-url-hint"></label>
                     <p class="ai-field-hint" id="ai-url-hint">Dùng URL gốc của API nhà cung cấp, không phải trang web hay trang chat.</p>
-                    <div class="ai-field"><label for="ai-key">API key</label><div class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="ai-key-hint"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Hiện API key">Hiện</button></div></div>
-                    <p class="ai-field-hint" id="ai-key-hint">Được mã hóa và lưu trên máy chủ. Đừng dán khóa vào khung chat.</p>
+                    <div class="ai-field"><label for="ai-key">Khóa API</label><div class="auth-password-wrap"><input id="ai-key" type="password" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="ai-key-hint"><button type="button" id="ai-key-toggle" aria-pressed="false" aria-label="Hiện khóa API">Hiện</button></div></div>
+                    <p class="ai-field-hint" id="ai-key-hint">Khóa được lưu ở nơi em chọn. Đừng dán khóa vào khung trò chuyện.</p>
                     </div>
                   </fieldset>
                   <div class="ai-actions"><button type="button" class="public-cta" id="ai-profile-save">Lưu kết nối</button><button type="button" class="stage-btn" id="ai-api-back" hidden>Hủy</button></div>
@@ -790,11 +797,11 @@
                   </form>
                 </dialog>
                 <dialog id="ai-add-dialog" class="ai-add-dialog" aria-labelledby="ai-add-title" aria-describedby="ai-add-description">
-                  <div class="ai-add-heading"><div><p class="ai-eyebrow">Thêm tài khoản</p><h2 id="ai-add-title">Em muốn kết nối bằng cách nào?</h2></div><button type="button" class="stage-btn" id="ai-add-close" aria-label="Đóng">Đóng</button></div>
-                  <p id="ai-add-description">Các tài khoản đã lưu vẫn được giữ. Chọn cách thêm tài khoản tiếp theo.</p>
+                  <div class="ai-add-heading"><div><p class="ai-eyebrow">Thêm kết nối</p><h2 id="ai-add-title">Em muốn kết nối bằng cách nào?</h2></div><button type="button" class="stage-btn" id="ai-add-close" aria-label="Đóng">Đóng</button></div>
+                  <p id="ai-add-description">Các kết nối đã lưu vẫn được giữ. Em chọn cách thêm kết nối tiếp theo.</p>
                   <div class="ai-connect-options">
-                    <button type="button" id="ai-profile-new"><span class="ai-connect-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4.5"></circle><path d="m11.2 11.2 9.3 9.3M17 17l3-3M14 14l3-3"></path></svg></span><strong>Dùng API key</strong><span>Dán URL và khóa của nhà cung cấp.</span><small>OpenAI-compatible · Gemini · Claude</small><b aria-hidden="true">→</b></button>
-                    <button type="button" id="ai-method-oauth"><span class="ai-connect-icon" aria-hidden="true">G</span><strong>Đăng nhập với Google</strong><span>Kết nối tài khoản Antigravity.</span><small>OAuth · Không cần dán API key</small><b aria-hidden="true">→</b></button>
+                    <button type="button" id="ai-profile-new"><span class="ai-connect-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4.5"></circle><path d="m11.2 11.2 9.3 9.3M17 17l3-3M14 14l3-3"></path></svg></span><strong>Dùng khóa API</strong><span>Dán URL và khóa của nhà cung cấp.</span><small>OpenAI-compatible · Gemini · Claude</small><b aria-hidden="true">→</b></button>
+                    <button type="button" id="ai-method-oauth"><span class="ai-connect-icon" aria-hidden="true">G</span><strong>Đăng nhập với Google</strong><span>Kết nối tài khoản Antigravity.</span><small>OAuth · Không cần dán khóa API</small><b aria-hidden="true">→</b></button>
                   </div>
                 </dialog>
 
@@ -807,7 +814,7 @@
                   <form id="speech-key-form" class="ai-voice-form" autocomplete="off" aria-label="Thêm tài khoản giọng nói" hidden>
                     <label for="speech-key-provider">Nhà cung cấp giọng nói<select id="speech-key-provider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI chính thức</option></select></label>
                     <div class="ai-profile-fields"><label for="speech-key-name">Tên gọi tài khoản<input id="speech-key-name" maxlength="80" required autocomplete="off" placeholder="Tài khoản giọng nói của em"></label><label for="speech-key-storage">Nơi lưu<select id="speech-key-storage" aria-describedby="speech-key-privacy"><option value="local">Chỉ trên thiết bị này</option><option value="server" id="speech-key-server" disabled>Tài khoản của em trên máy chủ</option></select></label></div>
-                    <div class="ai-field"><label for="speech-key">API key giọng nói</label><div class="auth-password-wrap"><input id="speech-key" type="password" required minlength="8" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="speech-key-privacy speech-key-status"><button type="button" id="speech-key-toggle" aria-pressed="false" aria-label="Hiện API key giọng nói">Hiện</button></div></div>
+                    <div class="ai-field"><label for="speech-key">Khóa API giọng nói</label><div class="auth-password-wrap"><input id="speech-key" type="password" required minlength="8" maxlength="512" autocomplete="off" spellcheck="false" aria-describedby="speech-key-privacy speech-key-status"><button type="button" id="speech-key-toggle" aria-pressed="false" aria-label="Hiện khóa API giọng nói">Hiện</button></div></div>
                     <p id="speech-key-privacy" class="ai-field-hint">Thiết bị: mã hóa trong trình duyệt này, không đồng bộ. Máy chủ: mã hóa theo tài khoản VJBot của em. Máy chủ nhận khóa khi gửi yêu cầu giọng nói.</p>
                     <div class="ai-actions"><button type="submit" class="public-cta" id="speech-key-save">Lưu tài khoản giọng nói</button><button type="button" class="stage-btn" id="speech-key-cancel">Hủy</button></div>
                     <p id="speech-key-status" class="ai-field-hint" role="status" aria-live="polite"></p>
@@ -911,12 +918,12 @@
           <span>Chuyển tiếp hội thoại tự nhiên • Giao tiếp công việc cơ bản</span>
         </button>
         <button type="button" class="picker-opt-btn" data-level="N2">
-          <strong>JLPT N2 (Cao cấp)</strong>
-          <span>Thành thạo công sở, đàm phán &amp; đọc hiểu báo chí Nhật Bản</span>
+          <strong>JLPT N2</strong>
+          <span>Luyện đọc bài báo, theo dõi lập luận và diễn đạt ý kiến.</span>
         </button>
         <button type="button" class="picker-opt-btn" data-level="N1">
-          <strong>JLPT N1 (Thượng cấp)</strong>
-          <span>Báo chí, học thuật, hợp đồng thương mại chuyên sâu</span>
+          <strong>JLPT N1</strong>
+          <span>Luyện đọc nội dung phức tạp, hiểu hàm ý và sắc thái.</span>
         </button>
       </div>
     </div>
