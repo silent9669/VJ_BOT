@@ -142,8 +142,8 @@ function setAuthMode(register) {
   document.getElementById(register?'auth-name':'auth-email').focus();
 }
 async function setupAccount() {
-  document.getElementById('btn-topbar-account').addEventListener('click',()=>openAccount());
-  document.getElementById('sidebar-account')?.addEventListener('click',()=>{window.closeAppSidebar?.();openAccount();});
+  document.getElementById('btn-topbar-account').addEventListener('click',()=>signedInUser?window.toggleAccountMenu?.():openAccount());
+  document.getElementById('sidebar-account')?.addEventListener('click',()=>{window.closeAppSidebar?.();signedInUser?window.toggleAccountMenu?.():openAccount();});
   document.getElementById('auth-close').addEventListener('click',()=>document.getElementById('auth-dialog').close());
   const dialog=document.getElementById('auth-dialog'),password=document.getElementById('auth-password'),toggle=document.getElementById('auth-password-toggle'),meter=document.getElementById('auth-meter');
   password.addEventListener('input',()=>{

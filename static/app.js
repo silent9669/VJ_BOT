@@ -414,6 +414,10 @@ function renderBubble(role, content) {
   return row;
 }
 
+function markLevel(level){
+  const chip=document.getElementById('level-chip');if(chip)chip.dataset.level=level;
+  document.querySelectorAll('.picker-opt-btn').forEach(button=>{if(button.dataset.level===level)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');});
+}
 let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null,chatHistoryScope=null;
 function chatHistoryPath() {
   const lesson=chatLessonContext || globalThis.teacherContext?.()?.lesson;
@@ -1528,6 +1532,7 @@ function setupEventListeners() {
         if(!response.ok)throw new Error("save");
         activeCurriculumLevel = lvl;
         document.getElementById("level-chip-text").textContent = `JLPT ${lvl}`;
+        markLevel(lvl);
         status.textContent="";
         if (levelPicker) levelPicker.hidden = true;
         if(location.hash.startsWith('#curriculum/'))openLevelCourse(lvl);else restoreAppRoute();
@@ -1806,6 +1811,7 @@ function setupEventListeners() {
       const chipText = document.getElementById("level-chip-text");
       if (chipText && prof.level) {
         chipText.textContent = `JLPT ${prof.level}`;
+        markLevel(prof.level);
         activeCurriculumLevel = prof.level;
       }
     }

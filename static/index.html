@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f7f8f6">
+  <script>try{var t=localStorage.getItem('vjbot_theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;if(t==='dark')document.querySelector('meta[name=theme-color]').content='#121413'}catch(e){}</script>
   <meta name="apple-mobile-web-app-title" content="VJBot">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="format-detection" content="telephone=no">
@@ -44,6 +45,7 @@
   <link rel="stylesheet" href="refinements.css">
   <link rel="stylesheet" href="compact.css"><link rel="stylesheet" href="workbench.css">
   <link rel="stylesheet" href="ios.css">
+  <link rel="stylesheet" href="dark.css">
 </head>
 <body data-page="landing">
   <a href="#main-content" class="skip-link">Đến nội dung chính</a>
@@ -57,7 +59,7 @@
         <button type="button" id="sidebar-toggle" aria-label="Thu gọn menu" aria-controls="app-sidebar" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v14H4zM9 5v14M15 9l-3 3 3 3"/></svg></button>
         <button type="button" id="sidebar-close" aria-label="Đóng menu">×</button>
       </header>
-      <div class="sidebar-user-card"><button id="level-chip" type="button" aria-label="Đổi trình độ JLPT"><span id="level-chip-text">JLPT N5</span><span aria-hidden="true">⌄</span></button><span id="streak-counter" class="sidebar-streak">0 ngày</span></div>
+      <div class="sidebar-user-card"><button id="level-chip" data-level="N5" type="button" aria-label="Đổi trình độ JLPT"><span id="level-chip-text">JLPT N5</span><span aria-hidden="true">⌄</span></button><span id="streak-counter" class="sidebar-streak">0 ngày</span></div>
       <nav class="sidebar-nav" aria-label="Điều hướng chính"><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Bài học</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="dashboard" id="tab-btn-dashboard"><span class="nav-label">Học tập</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum"><span class="nav-label">Khóa học</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom"><span class="nav-label">Thầy Lâm</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery"><span class="nav-label">Tiến độ</span></button></section><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Luyện tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards"><span class="nav-label">Thẻ nhớ</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Kanji</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa"><span class="nav-label">Luyện nói</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz"><span class="nav-label">Luyện thi</span></button></section></nav>
       <div class="sidebar-companion" id="sidebar-companion"></div>
       <footer class="sidebar-footer"><div class="sidebar-utilities"><button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden><span class="nav-label">Quản trị</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings"><span class="nav-label">Cài đặt</span></button></div><a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn học liệu ↗</a><button type="button" class="sidebar-account" id="sidebar-account"><span class="sidebar-account-initial" id="sidebar-account-initial" aria-hidden="true">A</span><span class="sidebar-account-copy"><strong id="sidebar-account-name">Tài khoản</strong><span id="sidebar-account-role"></span></span></button></footer>
@@ -96,6 +98,12 @@
             <span id="sensei-state-tag">Thầy Lâm: sẵn sàng</span>
           </div>
           <div class="topbar-auth" id="topbar-auth-section">
+            <div id="account-menu" class="account-menu" role="menu" aria-label="Tài khoản" hidden>
+              <div class="account-menu-head"><span id="account-menu-initial" aria-hidden="true">A</span><div><strong id="account-menu-name">Tài khoản</strong><small id="account-menu-role"></small></div></div>
+              <div class="account-menu-theme" role="group" aria-label="Giao diện"><button type="button" role="menuitemradio" data-theme-choice="light">Sáng</button><button type="button" role="menuitemradio" data-theme-choice="dark">Tối</button></div>
+              <button type="button" role="menuitem" id="account-menu-settings">Cài đặt</button>
+              <button type="button" role="menuitem" id="account-menu-logout" class="danger">Đăng xuất</button>
+            </div>
             <button type="button" class="topbar-account-btn" id="btn-topbar-account" title="Tài khoản học viên" aria-label="Tài khoản">
               <span class="account-avatar-wrap">
                 <img id="topbar-user-avatar" src="assets/lam/teacher.svg" alt="Ảnh đại diện" class="account-avatar-img pixel-sprite">
@@ -992,6 +1000,7 @@
   <script src="refinements.js"></script>
   <script src="admin-ai.js"></script>
   <script src="chat-history.js"></script>
+  <script src="account-menu.js"></script>
   <script src="live-transcript.js"></script>
   <script src="live.js"></script>
 
