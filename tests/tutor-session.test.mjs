@@ -6,6 +6,7 @@ import worker from '../src/worker.js';
 import {hashToken} from '../src/auth.js';
 import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
 import {claimTutorRequest, claimTutorScope, clearTutorConversation, commitTutorTurn, releaseTutorClaim, renewTutorClaim} from '../src/tutor-session.js';
+import {taskEvidence} from '../src/tutor-context.js';
 
 const catalogs = await buildTeacherCatalog();
 const USER = 'google:tutor-acceptance';
@@ -19,7 +20,7 @@ const migrations = [
   '0010_chat_requests.sql', '0011_ai_providers.sql', '0012_profile_identity.sql',
   '0013_identity_backfill.sql', '0014_api_profiles.sql', '0015_conversation_scope.sql',
   '0016_google_ai_oauth.sql', '0017_antigravity_oauth.sql', '0018_antigravity_accounts.sql',
-  '0019_tutor_sessions.sql','0020_admin_grants.sql','0021_admin_ai_preferences.sql'
+  '0019_tutor_sessions.sql','0020_admin_grants.sql','0021_admin_ai_preferences.sql','0022_task_attempt_evidence.sql'
 ];
 
 function database(t) {
@@ -77,9 +78,12 @@ async function authenticated(t) {
     return request;
   }
   const request = await addUser(USER, 'a'.repeat(64));
-  const send = (body, userId = USER) => worker.fetch(clients.get(userId)('/api/chat', {
-    request_id: crypto.randomUUID(), ...body
-  }), env);
+  const send = (body, userId = USER) => {
+    const selected=body.focus?.kind==='question'?catalogs[body.lesson?.level]?.lessons[body.lesson?.id]?.[body.view==='exam'?'exam_questions':'questions']?.[body.focus.index]:null;
+    return worker.fetch(clients.get(userId)('/api/chat', {
+      request_id:crypto.randomUUID(),...(selected?{task:{id:selected.task_id,revision:selected.revision}}:{}),...body
+    }),env);
+  };
   return {env, request, send, addUser};
 }
 
@@ -338,10 +342,10 @@ test('quick requests ground word five, listening example nine and question three
     assert.equal(grounded.id, id);
     assert.equal(grounded.focus.kind, kind);
     assert.equal(grounded.focus.index, index);
-    assert.deepEqual(grounded.focus.item, canonical[field][index]);
+    assert.deepEqual(grounded.focus.item, kind==='question'?taskEvidence(canonical[field][index]):canonical[field][index]);
     if (kind === 'question') {
-      assert.deepEqual(grounded.focus.examples, canonical.questions[index].example_indexes.map(item => canonical.examples[item]));
-      assert.ok(grounded.focus.item.opts.includes(grounded.focus.item.ans));
+      assert.equal(grounded.focus.examples,undefined);
+      assert.equal(grounded.focus.item.answer_index,undefined);
     }
     assert.deepEqual(teachingState(await saved(env, USER, 'quick:' + route)).focus, focus);
   }
@@ -350,52 +354,43 @@ test('quick requests ground word five, listening example nine and question three
   assert.equal(calls[2].envelope.reference.lesson.focus.item.item_id, 'sentences:N5:1:3');
 });
 
-test('exam follow-ups use original option positions, retain the view across turns and bind retries to it', async t => {
-  const {env, send} = await authenticated(t);
-  const canonical = Object.values(catalogs.N5.lessons).find(entry => entry.exam_questions?.length > 5 && entry.exam_questions.some((question, index) =>
-    entry.questions[index] && JSON.stringify(question.opts) !== JSON.stringify(entry.questions[index].opts)
-      && question.opts.indexOf(question.ans) !== entry.questions[index].opts.indexOf(entry.questions[index].ans)));
-  assert.ok(canonical, 'real exam and normalized checks have different correct-option positions');
-  const index = canonical.exam_questions.findIndex((question, index) => canonical.questions[index]
-    && question.opts.indexOf(question.ans) !== canonical.questions[index].opts.indexOf(canonical.questions[index].ans));
-  const lesson = {id: canonical.id, level: 'N5'}, focus = {kind: 'question', index};
-  const screen = {route: 'study/exam-view', title: 'Hỏi về câu thi', level: 'N5', text: ''};
-  const body = {request_id: crypto.randomUUID(), channel: 'quick', lesson, focus, view: 'exam', screen, message: 'Em đọc các lựa chọn thế nào?'};
-  let result = structured('Em hãy so sánh các lựa chọn.', 'probe', 'Em thấy điểm khác nhau nào?');
-  const calls = provider(t, () => providerResponse(result));
-  await successful(await send(body), result.reply);
-  const selected = () => calls.at(-1).envelope.reference.lesson.focus.item;
-  assert.deepEqual(selected(), canonical.exam_questions[index]);
-  assert.notDeepEqual(selected().opts, canonical.questions[index].opts);
-  const snapshot = await saved(env, USER, 'quick:' + screen.route);
-  await successful(await send(body), result.reply);
-  assert.equal(calls.length, 1);
-  assert.equal((await send({...body, view: 'checks'})).status, 409);
-  assert.equal((await send({...body, view: undefined})).status, 409);
-  assert.deepEqual(await saved(env, USER, 'quick:' + screen.route), snapshot);
-  result = structured('Em xem lại sự khác nhau ấy nhé.', 'hint');
-  await successful(await send({channel: 'quick', lesson, screen, intent: 'hint', message: 'Thầy gợi ý thêm nhé.'}), result.reply);
-  assert.deepEqual(selected(), canonical.exam_questions[index]);
-  assert.equal(calls.at(-1).envelope.reference.teaching.state.probe, teachingState(snapshot).probe);
-  result = structured('Ta xem phần luyện trong bài.', 'probe', 'Em thử đọc câu luyện nhé?');
-  await successful(await send({...body, request_id: crypto.randomUUID(), view: 'checks'}), result.reply);
-  assert.deepEqual(selected(), canonical.questions[index]);
-  assert.equal(calls.at(-1).envelope.reference.teaching.state, null);
-  const last = canonical.exam_questions.length - 1;
-  assert.ok(last >= 5);
-  await successful(await send({...body, request_id: crypto.randomUUID(), focus: {kind: 'question', index: last}}), result.reply);
-  assert.deepEqual(selected(), canonical.exam_questions[last]);
-  result = structured('Which part of this lesson shall we practise?', 'clarify', null);
-  const {view, ...overview} = body;
-  await successful(await send({...overview, request_id: crypto.randomUUID(), focus: null}), result.reply);
-  const reference = calls.at(-1).envelope.reference;
-  assert.equal(reference.lesson.focus, null);
-  assert.equal(Object.hasOwn(reference.lesson, 'view'), false);
-  assert.equal(reference.teaching.state, null);
-  const cleared = teachingState(await saved(env, USER, 'quick:' + screen.route));
-  assert.equal(cleared.focus, null);
-  assert.equal(cleared.probe, null);
-  assert.equal(Object.hasOwn(cleared, 'view'), false);
+test('exam follow-ups preserve canonical task positions, view, revision and isolated focus state',async t=>{
+  const {env,send}=await authenticated(t);
+  const canonical=Object.values(catalogs.N5.lessons).find(entry=>entry.exam_questions?.length>5);
+  assert.ok(canonical);
+  const index=0,lesson={id:canonical.id,level:'N5'},focus={kind:'question',index};
+  const selectedTask=canonical.exam_questions[index],task={id:selectedTask.task_id,revision:selectedTask.revision};
+  assert.deepEqual(canonical.questions.map(q=>q.task_id),canonical.exam_questions.map(q=>q.task_id));
+  const screen={route:'study/exam-view',level:'N5'};
+  const body={request_id:crypto.randomUUID(),channel:'quick',lesson,focus,view:'exam',task,screen,message:'Em đọc các lựa chọn thế nào?'};
+  let result=structured('Em hãy so sánh các lựa chọn.','probe','Em thấy điểm khác nhau nào?');
+  const calls=provider(t,()=>providerResponse(result));
+  await successful(await send(body),result.reply);
+  const selected=()=>calls.at(-1).envelope.reference.lesson.focus.item;
+  assert.deepEqual(selected(),taskEvidence(selectedTask));
+  const snapshot=await saved(env,USER,'quick:'+screen.route);
+  await successful(await send(body),result.reply);assert.equal(calls.length,1);
+  assert.equal((await send({...body,view:'checks'})).status,409);
+  assert.equal((await send({...body,view:undefined})).status,409);
+  assert.deepEqual(await saved(env,USER,'quick:'+screen.route),snapshot);
+  result=structured('Em xem lại sự khác nhau ấy nhé.','hint');
+  await successful(await send({channel:'quick',lesson,task,screen,intent:'hint',message:'Thầy gợi ý thêm nhé.'}),result.reply);
+  assert.deepEqual(selected(),taskEvidence(selectedTask));
+  assert.equal(calls.at(-1).envelope.reference.teaching.state.probe,teachingState(snapshot).probe);
+  result=structured('Ta xem phần luyện trong bài.','probe','Em thử đọc câu luyện nhé?');
+  await successful(await send({...body,request_id:crypto.randomUUID(),view:'checks'}),result.reply);
+  assert.deepEqual(selected(),taskEvidence(canonical.questions[index]));
+  assert.equal(calls.at(-1).envelope.reference.teaching.state,null);
+  const last=canonical.exam_questions.length-1,lastTask=canonical.exam_questions[last];
+  await successful(await send({...body,request_id:crypto.randomUUID(),focus:{kind:'question',index:last},task:{id:lastTask.task_id,revision:lastTask.revision}}),result.reply);
+  assert.deepEqual(selected(),taskEvidence(lastTask));
+  result=structured('Which part of this lesson shall we practise?','clarify',null);
+  const {view,task:oldTask,...overview}=body;
+  await successful(await send({...overview,request_id:crypto.randomUUID(),focus:null}),result.reply);
+  const reference=calls.at(-1).envelope.reference;
+  assert.equal(reference.lesson.focus,null);assert.equal(Object.hasOwn(reference.lesson,'view'),false);assert.equal(reference.teaching.state,null);
+  const cleared=teachingState(await saved(env,USER,'quick:'+screen.route));
+  assert.equal(cleared.focus,null);assert.equal(cleared.probe,null);assert.equal(Object.hasOwn(cleared,'view'),false);
 });
 
 test('invalid exam views and forged question answer fields fail before inference or persistence', async t => {
@@ -920,4 +915,20 @@ test('an unverified generated probe is quoted only as fallible continuity data, 
   assert.equal(last.envelope.reference.teaching.state.probe, probe);
   assert.equal(last.envelope.reference.teaching.probe_source, 'unverified_model_output');
   assert.equal(last.envelope.reference.history.some(turn => turn.role === 'assistant'), false);
+});
+
+test('stale task revisions reject before tutor claims, history or provider calls',async t=>{
+  const {env,send}=await authenticated(t),calls=provider(t,()=>providerResponse(structured('unused')));
+  const canonical=Object.values(catalogs.N5.lessons).find(entry=>entry.questions?.some(q=>q.mode==='choice'&&!q.unavailable_reason));
+  const index=canonical.questions.findIndex(q=>q.mode==='choice'&&!q.unavailable_reason),question=canonical.questions[index];
+  for(const task of [undefined,{id:question.task_id,revision:'0'.repeat(64)}]) {
+    const response=await send({lesson:{id:canonical.id,level:'N5'},focus:{kind:'question',index},task,message:'Gợi ý'});
+    assert.equal(response.status,409);
+  }
+  const malformed=await send({lesson:{id:canonical.id,level:'N5'},focus:{kind:'question',index},task:null,message:'Gợi ý'});
+  assert.equal(malformed.status,400);
+  assert.equal(calls.length,0);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM tutor_requests').first()).n,0);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM tutor_sessions').first()).n,0);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,0);
 });

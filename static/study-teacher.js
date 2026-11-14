@@ -24,7 +24,7 @@
   }
 
   globalThis.studyTarget = (key,element,source) => ({key,element,source:String(source ?? '')});
-  globalThis.mountTeacherConversation = (host,{trigger,lesson,focus=null,view='checks',isCurrent=()=>true}) => {
+  globalThis.mountTeacherConversation = (host,{trigger,lesson,focus=null,view='checks',task=null,isCurrent=()=>true}) => {
     const box=document.createElement('section');box.className='study-teacher-chat';box.hidden=true;
     box.setAttribute('aria-label','Hỏi thầy Lâm');box.setAttribute('data-teacher-exclude','');
     const heading=document.createElement('strong');heading.textContent='Em muốn hỏi thầy điều gì?';
@@ -43,6 +43,7 @@
     const route=`study/${crypto.randomUUID()}`;box.id=route.replace('/','-');
     trigger.setAttribute('aria-controls',box.id);trigger.setAttribute('aria-expanded','false');
     let controller=null,failed=null,ticket=null,disposed=false;
+    const attempt=focusedTaskAttempt(lesson,focus,view,task);
     const live=()=>!disposed && box.isConnected && !box.hidden && isCurrent() && ticket===identity();
     function controls(busy=false){
       input.readOnly=busy || Boolean(failed);send.disabled=busy || Boolean(failed);retry.disabled=busy;
@@ -67,18 +68,29 @@
       if(controller || !live() || retrying && !failed || !retrying && failed)return;
       const text=input.value.trim();if(!retrying && !text){input.focus();return;}
       if(text.length>6000){status.textContent='Em viết câu hỏi trong 6.000 ký tự nhé.';return;}
-      const request=retrying?failed:{body:JSON.stringify({message:text,lesson,focus,view,channel:'quick',intent:'message',
-        screen:{route,title:'Hỏi thầy Lâm',level:lesson.level,text:''},request_id:crypto.randomUUID()}),text};
+      const request=retrying?failed:{body:null,text};
       const owner=ticket,requestController=new AbortController();controller=requestController;controls(true);
       status.textContent='Thầy đang đọc câu hỏi của em…';
       const current=()=>controller===requestController && !requestController.signal.aborted && live() && owner===ticket;
       try{
+        if(!request.body){
+          const body={message:request.text,lesson,focus,view,channel:'quick',intent:'message',
+            screen:{route,title:'Hỏi thầy Lâm',level:lesson.level,text:''},request_id:crypto.randomUUID()};
+          if(focus?.kind==='question'){
+            if(!attempt)throw new Error('Chưa xác định đúng phiên bản câu hỏi. Mở lại bài.');
+            await recordTaskEvent(attempt,'assist',{help:'chat'});
+            body.task=await taskReference(attempt.task);request.task=body.task;
+          }
+          request.body=JSON.stringify(body);
+        }
+        if(!current())return;
         const response=await apiFetch('/api/chat',{method:'POST',signal:AbortSignal.any([requestController.signal,AbortSignal.timeout(35000)]),
           headers:{'Content-Type':'application/json'},body:request.body});
         const data=await response.json();if(!current())return;
         if(!response.ok)throw new Error(data.detail || 'Chưa gửi được câu hỏi. Em gửi lại cho thầy nhé.');
         const reply=data.reply || data.response;
         if(typeof reply!=='string' || !reply.trim())throw new Error('Chưa nhận được câu trả lời. Em gửi lại cho thầy nhé.');
+        if(request.task && (data.task?.id!==request.task.id || data.task?.revision!==request.task.revision))throw new Error('Phản hồi thuộc phiên bản câu hỏi khác. Mở lại bài.');
         message('Em',request.text);message('Thầy Lâm',reply);failed=null;input.value='';status.textContent='';
       }catch(error){
         if(current()){failed=request;status.textContent=error.name==='TimeoutError'?'Kết nối hơi lâu. Em bấm gửi lại cho thầy nhé.':error.message || 'Chưa kết nối được với thầy.';}
@@ -102,26 +114,34 @@
     active.add(entry);
     return {open,clear,cleanup};
   };
-  globalThis.mountStudyTeacher = (host,{lesson,focus=null,view='checks',targets=[],isCurrent=()=>true,revealWhen=()=>true,onApply=()=>{}}) => {
+  globalThis.mountStudyTeacher = (host,{lesson,focus=null,view='checks',task=null,targets=[],isCurrent=()=>true,revealWhen=()=>true,onApply=()=>{}}) => {
     const panel=document.createElement('aside');panel.className='study-teacher';panel.setAttribute('aria-label','Học cùng thầy Lâm');panel.setAttribute('data-teacher-exclude','');
     const heading=document.createElement('strong');heading.className='study-teacher-title';heading.textContent='Cùng thầy Lâm hiểu bài';
     const button=teacherButton('Nhờ thầy giảng bài');
     const status=document.createElement('p');status.className='study-teacher-status';status.setAttribute('role','status');
     const output=document.createElement('p');output.className='study-teacher-reply';output.hidden=true;
-    panel.append(heading,button,status,output);host.append(panel);
+    const generated=document.createElement('section');generated.className='study-generated-fields';generated.hidden=true;
+    generated.setAttribute('aria-label','Bản diễn giải được tạo từ nguyên văn');
+    const compare=teacherButton('Xem bản gốc');compare.hidden=true;
+    panel.append(heading,button,status,output,compare,generated);host.append(panel);
     const bindings=targets.filter(target=>target.element && target.source.trim()).map(target=>({...target}));
-    let controller=null,ticket=null,translated=null,disposed=false;
+    let controller=null,ticket=null,translated=null,disposed=false,showingGenerated=false;
+    const attempt=focusedTaskAttempt(lesson,focus,view,task);
     const live=()=>!disposed && panel.isConnected && !panel.hidden && isCurrent();
-    const conversation=mountTeacherConversation(panel,{trigger:button,lesson,focus,view,isCurrent:live});
+    const conversation=mountTeacherConversation(panel,{trigger:button,lesson,focus,view,task,isCurrent:live});
     function restore() {
       for(const target of bindings)if(translated && target.element.textContent===translated.get(target.key))target.element.textContent=target.source;
       onApply(null);
+      showingGenerated=false;compare.textContent='Xem bản diễn giải AI';
+      generated.hidden=true;
     }
     function clear(message='') {
       controller?.abort();controller=null;ticket=null;
       restore();translated=null;conversation.clear();
       output.textContent='';output.hidden=true;status.textContent=message;
+      generated.replaceChildren();generated.hidden=true;
       button.disabled=false;button.setAttribute('aria-busy','false');button.textContent='Nhờ thầy giảng bài';
+      compare.hidden=true;
     }
     const entry={refresh(){
       if(!panel.isConnected){cleanup();return;}
@@ -129,6 +149,16 @@
       if(ticket && (!live() || identity()!==ticket))clear('Đã dừng phần giải thích cũ. Bấm lại cho mục đang học.');
     }};
     function cleanup(){if(disposed)return;clear();conversation.cleanup();disposed=true;active.delete(entry);panel.remove();}
+    compare.onclick=()=>{
+      if(!translated || !live())return;
+      if(showingGenerated){restore();status.textContent='Đang xem nội dung gốc.';}
+      else{
+        for(const target of bindings)target.element.textContent=translated.get(target.key);
+        showingGenerated=true;compare.textContent='Xem bản gốc';onApply(translated);
+        generated.hidden=!generated.children.length;
+        status.textContent='Đang xem bản diễn giải AI, chưa được thẩm định độc lập.';
+      }
+    };
     button.onclick=async()=>{
       if(controller || !live())return;
       if(translated){conversation.open();return;}
@@ -139,13 +169,21 @@
       button.disabled=true;button.setAttribute('aria-busy','true');status.textContent='Thầy đang xem bài của em…';
       const current=()=>controller===request && !request.signal.aborted && live() && identity()===owner;
       try {
+        let reference=null;
+        if(focus?.kind==='question'){
+          if(!attempt)throw new Error('Chưa xác định đúng phiên bản câu hỏi. Mở lại bài.');
+          await recordTaskEvent(attempt,'assist',{help:'translation'});
+          reference=await taskReference(attempt.task);
+        }
+        if(!current())return;
         const response=await apiFetch('/api/practice/coach',{method:'POST',signal:AbortSignal.any([request.signal,AbortSignal.timeout(35000)]),
-          headers:{'Content-Type':'application/json'},body:JSON.stringify({lesson,focus,view,action:'teach'})});
+          headers:{'Content-Type':'application/json'},body:JSON.stringify({lesson,focus,view,action:'teach',...(reference?{task:reference}:{})})});
         const data=await response.json();
         if(!current())return;
         if(!response.ok)throw new Error(data.detail || 'AI chưa soạn được phần học. Nội dung gốc được giữ nguyên.');
         if(data.action!=='teach' || !same(data.lesson,lesson) || !same(data.focus,focus) || data.view!==view
           || typeof data.reply!=='string' || !data.reply.trim() || data.reply.length>2000 || !Array.isArray(data.fields) || data.fields.length>64)throw new Error('Phần AI không khớp mục đang học. Nội dung gốc được giữ nguyên.');
+        if(reference && (data.task?.id!==reference.id || data.task?.revision!==reference.revision))throw new Error('Bài đã đổi phiên bản. Mở lại trước khi dùng AI.');
         const fields=new Map();
         for(const field of data.fields){
           if(!field || typeof field.key!=='string' || typeof field.source!=='string' || typeof field.text!=='string'
@@ -158,8 +196,18 @@
         }
         translated=new Map([...fields].map(([key,field])=>[key,field.text]));
         for(const target of bindings)target.element.textContent=translated.get(target.key);
+        generated.replaceChildren();
+        const bound=new Set(bindings.map(target=>target.key));
+        for(const field of fields.values())if(!bound.has(field.key) && field.text!==field.source){
+          const original=document.createElement('p');original.lang='ja';original.textContent=field.source;
+          const translation=document.createElement('p');translation.textContent=field.text;
+          const label=document.createElement('strong');label.textContent='Diễn giải AI từ nguyên văn · chưa thẩm định';
+          generated.append(label,original,translation);
+        }
+        generated.hidden=!generated.children.length;
+        showingGenerated=true;compare.hidden=false;compare.textContent='Xem bản gốc';
         onApply(translated);
-        output.textContent=data.reply;output.hidden=false;status.textContent='';
+        output.textContent=data.reply;output.hidden=false;status.textContent='Diễn giải AI để tham khảo; không thay đổi đáp án hoặc điểm.';
         button.textContent='Em vẫn chưa hiểu';
       } catch(error) {
         if(current()){status.textContent=error.name==='TimeoutError'?'Kết nối hơi lâu. Em nhờ thầy thử lại nhé.':error.message || 'Chưa nhận được phần giảng bài.';button.textContent='Nhờ thầy thử lại';}
@@ -230,11 +278,10 @@
     if(!question || !descriptor)return;
     const host=document.createElement('div');document.getElementById('quiz-card').append(host);
     const buttons=[...document.querySelectorAll('#quiz-options-grid .quiz-option-label')];
-    document.getElementById('quiz-question-sentence').textContent=descriptor.drills[index].q;
-    document.getElementById('quiz-instruction').textContent='Chọn một đáp án; AI có thể giúp diễn giải Việt–Nhật trước khi chọn.';
-    const cleanup=mountStudyTeacher(host,{lesson:buildLessonContext(descriptor,activeQuizLevel,'reading'),focus:{kind:'question',index},view:'exam',
-      targets:[studyTarget('question:q',document.getElementById('quiz-question-sentence'),descriptor.drills[index].q),
-        ...buttons.map((element,i)=>studyTarget(`question:option:${i}`,element,question.options[i]))],
+    const task=lessonQuestions(descriptor,activeQuizLevel,'reading')[index];
+    if(!task || task.unavailable_reason){host.remove();return;}
+    const cleanup=mountStudyTeacher(host,{lesson:buildLessonContext(descriptor,activeQuizLevel,'reading'),focus:{kind:'question',index},view:'exam',task,
+      targets:buttons.map((element,i)=>studyTarget(`question:option:${i}`,element,task.opts[i])),
       isCurrent:()=>examQuestionIdx===index && currentExamQuestions[index]===question && !document.getElementById('quiz-card').hidden});
     releaseQuiz=()=>{cleanup();host.remove();};
   };

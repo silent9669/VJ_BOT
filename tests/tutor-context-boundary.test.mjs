@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cleanScreen, parseTutorReply, tutorSchema} from '../src/prompt.js';
-import {chatEnvelope, conversationScope, groundLesson} from '../src/tutor-context.js';
+import {chatEnvelope, conversationScope, groundLesson, taskEvidence} from '../src/tutor-context.js';
 
 const actions = ['probe', 'hint', 'feedback', 'explanation', 'clarify', 'summary', 'solution'];
 const expected = {
@@ -69,16 +69,16 @@ test('learner history retains only the latest twelve bounded user turns without 
 test('canonical exam questions beyond the check preview remain selected by exam view and exact focus', () => {
   const lesson = {id: 'exam:N5', level: 'N5', title: 'Exam', goal: 'Practise', overview: {},
     sources: [], reference_url: '', examples: [{jp: '例です。'}],
-    questions: Array.from({length: 5}, (_, index) => ({id: `check-${index}`, example_indexes: []})),
-    exam_questions: Array.from({length: 20}, (_, index) => ({id: `exam-${index}`, example_indexes: [0]}))};
+    questions:Array.from({length:5},(_,index)=>({task_id:`exam:N5:question:${index}`,item_id:`check-${index}`,mode:'choice',q:`Check ${index}`,opts:['a','b'],answer_index:0,example_indexes:[]})),
+    exam_questions:Array.from({length:20},(_,index)=>({task_id:`exam:N5:exam:${index}`,item_id:`exam-${index}`,mode:'choice',q:`Exam ${index}`,opts:['a','b'],answer_index:0,example_indexes:[0]}))};
   const focus = {kind: 'question', index: 19};
   const grounded = groundLesson(lesson, focus, 'exam');
   assert.equal(grounded.view, 'exam');
-  assert.deepEqual(grounded.focus, {...focus, item: lesson.exam_questions[19], examples: [lesson.examples[0]]});
+  assert.deepEqual(grounded.focus, {...focus, item:taskEvidence(lesson.exam_questions[19])});
   assert.equal(groundLesson(lesson, focus, 'checks'), null);
   assert.equal(groundLesson(lesson, {kind: 'word', index: 0}, 'exam'), null);
   assert.equal(groundLesson(lesson, {...focus, index: 20}, 'exam'), null);
-  assert.equal(groundLesson(lesson, {kind: 'question', index: 0}).focus.item, lesson.questions[0]);
+  assert.deepEqual(groundLesson(lesson, {kind: 'question', index: 0}).focus.item, taskEvidence(lesson.questions[0]));
   const envelope = JSON.parse(chatEnvelope('Explain this question.', grounded, {route: 'exam/N5', level: 'N5'}, {}, []));
   assert.deepEqual(envelope.reference.lesson, grounded);
   assert.equal(envelope.reference.context_status, 'canonical_lesson');

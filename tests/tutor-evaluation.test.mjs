@@ -32,7 +32,13 @@ test('every authored case resolves its canonical lesson and exact selected item'
     assert.ok(lesson, item.id);
     const grounded = groundLesson(lesson, item.focus);
     assert.ok(grounded, item.id);
-    if (item.focus) assert.deepEqual(grounded.focus.item, lesson[{word: 'words', example: 'examples', question: 'questions'}[item.focus.kind]][item.focus.index]);
+    if(item.focus){
+      const selected=lesson[{word:'words',example:'examples',question:'questions'}[item.focus.kind]][item.focus.index];
+      if(item.focus.kind==='question'){
+        assert.equal(grounded.focus.item.task_id,selected.task_id);assert.deepEqual(grounded.focus.item.opts,selected.opts);
+        for(const key of ['answer_index','accepted_answers','explanation'])assert.equal(Object.hasOwn(grounded.focus.item,key),false,key);
+      }else assert.deepEqual(grounded.focus.item,selected);
+    }
   }
   const corpus = cases.find(item => item.id === 'corpus-difficulty');
   const selected = groundLesson(catalogs.N5.lessons[corpus.lesson.id], corpus.focus).focus.item;
@@ -113,7 +119,7 @@ test('successful recording binds actual plain replies to each sequential case an
     requests.push(body);
     await Promise.resolve();
     active--;
-    return Response.json({reply: `Retained response ${requests.length}`, response: `Retained response ${requests.length}`});
+    return Response.json({reply:`Retained response ${requests.length}`,response:`Retained response ${requests.length}`,...(body.task?{task:body.task}:{})});
   };
   let clock = 0;
   const result = await runEvaluation(liveArgs(output), {env: environment, fetchImpl,
@@ -137,6 +143,8 @@ test('successful recording binds actual plain replies to each sequential case an
       assert.deepEqual(Object.keys(request.screen).sort(), ['level', 'route']);
       assert.deepEqual(request.lesson, item.lesson);
       assert.deepEqual(request.focus, item.focus);
+      if(item.focus?.kind==='question'){assert.deepEqual(request.task,retained.task);assert.equal(request.task.id.includes(item.lesson.id),true);assert.match(request.task.revision,/^[a-f0-9]{64}$/);}
+      else assert.equal(request.task,undefined);
       assert.equal(request.message, step.message);
       assert.equal(request.intent, step.intent);
       assert.equal(recorded.step_id, step.id);
@@ -174,7 +182,8 @@ test('live start pacing accounts for request duration and spans case boundaries 
       assert.ok(options.signal instanceof AbortSignal);
       assert.equal(options.signal.aborted, false);
       clock += starts.length === 2 ? 4500 : 100;
-      return Response.json({reply: 'Synthetic transport fixture; semantic review still required.'});
+      const body=JSON.parse(options.body);
+      return Response.json({reply:'Synthetic transport fixture; semantic review still required.',...(body.task?{task:body.task}:{})});
     }
   });
   assert.equal(starts.length, cases.reduce((sum, item) => sum + item.steps.length, 0));
@@ -195,6 +204,7 @@ test('HTTP errors and malformed API payloads do not count as recorded teaching r
     ['empty', Response.json({reply: ''}), 200, 'INVALID_RESPONSE'],
     ['json', new Response('not JSON'), 200, 'INVALID_RESPONSE'],
     ['wire', Response.json({reply: {action: 'hint'}}), 200, 'INVALID_RESPONSE'],
+    ['task-mismatch', Response.json({reply:'A reply for another task',task:{id:'another-task',revision:'f'.repeat(64)}}), 200, 'INVALID_RESPONSE'],
     ['redirect', new Response(null, {status: 302, headers: {Location: 'https://example.com'}}), 302, 'HTTP_ERROR'],
     ['secret', Response.json({reply: `Do not retain ${cookie}`}), 200, 'SECRET_IN_RESPONSE']
   ]) {

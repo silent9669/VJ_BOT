@@ -46,39 +46,31 @@ test('authored grammar and VJBot examples are not falsely attributed to Tatoeba'
   assert.equal(original.focus.item.provenance.sentence_level_certified, undefined);
 });
 
-test('question focus retains authored answers, options and the associated sentence', () => {
-  const canonical = lesson('sentences:N5:1');
-  assert.equal(canonical.questions.length, 5);
-  const grounded = groundLesson(canonical, {kind: 'question', index: 3});
-  assert.equal(grounded.focus.item.q, 'Chọn bản dịch: 夏の通学服は白と青のチェックです。');
-  assert.equal(grounded.focus.item.item_id, 'sentences:N5:1:3');
-  assert.deepEqual(grounded.focus.item, canonical.questions[3]);
-  assert.ok(grounded.focus.item.opts.includes(grounded.focus.item.ans));
-  assert.equal(grounded.focus.examples.length, 1);
-  assert.equal(grounded.focus.examples[0].jp, '夏の通学服は白と青のチェックです。');
-  assert.equal(grounded.focus.examples[0].source, 'https://tatoeba.org/sentences/show/187219');
-  assert.equal(grounded.focus.item.ans, grounded.focus.examples[0].vi);
-  assert.equal(catalogs.N5.items[grounded.focus.item.item_id], grounded.focus.item.q);
+test('question focus retains the complete task stimulus and original options without solution aliases', () => {
+  const canonical=lesson('sentences:N5:1'),grounded=groundLesson(canonical,{kind:'question',index:3});
+  assert.equal(canonical.questions.length,canonical.examples.length);
+  assert.equal(grounded.focus.item.passage,'夏の通学服は白と青のチェックです。');
+  assert.equal(grounded.focus.item.item_id,'sentences:N5:1:3');
+  assert.equal(grounded.focus.item.task_id,canonical.questions[3].task_id);
+  assert.deepEqual(grounded.focus.item.opts,canonical.questions[3].opts);
+  for(const key of ['ans','answer_index','accepted_answers','explanation','example_indexes'])assert.equal(Object.hasOwn(grounded.focus.item,key),false,key);
+  assert.equal(Object.hasOwn(grounded.focus,'examples'),false);
+  assert.equal(Object.hasOwn(grounded,'overview'),false);
+  assert.equal(catalogs.N5.items[grounded.focus.item.item_id],grounded.focus.item.q);
 });
 
-test('full feature exams ground their twentieth authored question without expanding ordinary lesson checks', () => {
-  const canonical = lesson('test:N5:mixed:N5:1');
-  assert.equal(canonical.questions.length, 20);
-  assert.equal(canonical.examples.length, 20);
-  const grounded = groundLesson(canonical, {kind: 'question', index: 19});
-  const original = lesson('sentences:N5:1').questions[4];
-  assert.equal(grounded.focus.item.q, 'Chọn bản dịch: お前はまだ「青い」な。');
-  assert.equal(grounded.focus.item.item_id, 'exam-N5:mixed:N5:1-q20');
-  assert.equal(grounded.focus.item.ans, original.ans);
-  assert.deepEqual(grounded.focus.item.opts, original.opts);
-  assert.equal(grounded.focus.item.explanation, original.ans);
-  assert.ok(grounded.focus.item.example_indexes.includes(19));
-  assert.ok(grounded.focus.examples.some(example => example.jp === grounded.focus.item.q));
-  assert.equal(catalogs.N5.items[grounded.focus.item.item_id], grounded.focus.item.q);
-  assert.equal(groundLesson(canonical, {kind: 'question', index: 20}), null);
-  assert.equal(groundLesson(canonical, {kind: 'example', index: 20}), null);
-  assert.equal(lesson('sentences:N5:1').questions.length, 5);
-  assert.equal(lesson('test:N5:practical:v1:N5:introductions:review').questions.length, 5);
+test('full feature exams and ordinary practice retain the complete task inventory without fake examples', () => {
+  const canonical=lesson('test:N5:mixed:N5:1'),task=canonical.questions[19];
+  assert.equal(canonical.questions.length,20);assert.equal(canonical.examples.length,0);
+  const grounded=groundLesson(canonical,{kind:'question',index:19});
+  assert.equal(grounded.focus.item.q,task.q);assert.equal(grounded.focus.item.item_id,'exam-N5:mixed:N5:1-q20');
+  assert.equal(grounded.focus.item.task_id,task.task_id);assert.deepEqual(grounded.focus.item.opts,task.opts);
+  for(const key of ['ans','answer_index','accepted_answers','explanation'])assert.equal(Object.hasOwn(grounded.focus.item,key),false,key);
+  assert.equal(Object.hasOwn(grounded.focus,'examples'),false);
+  assert.equal(groundLesson(canonical,{kind:'question',index:20}),null);
+  assert.equal(groundLesson(canonical,{kind:'example',index:0}),null);
+  assert.equal(lesson('sentences:N5:1').questions.length,10);
+  assert.equal(lesson('test:N5:practical:v1:N5:introductions:review').questions.length,3);
 });
 
 test('focus requires exactly a supported kind and nonnegative integer index within canonical bounds', () => {
@@ -91,7 +83,7 @@ test('focus requires exactly a supported kind and nonnegative integer index with
     if (invalid !== null && invalid !== undefined) assert.equal(groundLesson(canonical, invalid), null);
   }
   assert.ok(validFocusReference({kind: 'example', index: 9}));
-  for (const focus of [{kind: 'example', index: 10}, {kind: 'question', index: 5}, {kind: 'word', index: 999}]) {
+  for (const focus of [{kind: 'example', index: 10}, {kind: 'question', index: canonical.questions.length}, {kind: 'word', index: 999}]) {
     assert.equal(groundLesson(canonical, focus), null);
   }
   assert.equal(groundLesson(null, {kind: 'example', index: 0}), null);
@@ -110,19 +102,26 @@ test('practical introductions distinguish original VJBot teaching content from p
     assert.ok(grounded.sources.some(source => source.id === 'vjbot' && source.authorship.includes('VJBot original')));
   }
   const focused = groundLesson(lesson('practical:v1:N5:introductions:situation'), {kind: 'question', index: 0});
-  assert.equal(focused.focus.item.ans, 'Nhân viên công ty');
-  assert.equal(focused.focus.item.explanation, 'An phủ định 学生 và nói 会社員です.');
-  assert.equal(focused.focus.examples[0].provenance.source, 'VJBot');
+  assert.deepEqual(focused.focus.item.opts,lesson('practical:v1:N5:introductions:situation').questions[0].opts);
+  assert.ok(focused.focus.item.passage.includes('会社員です。'));
+  assert.equal(Object.hasOwn(focused.focus.item,'answer_index'),false);
+  assert.equal(Object.hasOwn(focused.focus.item,'explanation'),false);
+  assert.equal(Object.hasOwn(focused.focus,'examples'),false);
 });
 
-test('production targets preserve the complete prompt, model, question and criteria', () => {
+test('written production keeps its prompt model and criteria separate from the canonical spoken question', () => {
   const grounded = groundLesson(lesson('practical:v1:N5:introductions:production'));
   assert.equal(grounded.overview.task.prompt, 'Viết lời tự giới thiệu của chính bạn: tên, quê quán và nghề nghiệp.');
   assert.equal(grounded.overview.task.model, 'はじめまして。私はリンです。ベトナムから来ました。学生です。よろしくお願いします。');
-  assert.equal(grounded.overview.task.question_jp, 'はじめまして。お名前とお仕事を教えてください。');
+  assert.equal(Object.hasOwn(grounded.overview.task,'question_jp'),false);
   assert.deepEqual(grounded.overview.task.criteria, ['Có tên của bạn', 'Có quê quán và nghề nghiệp', 'Có lời chào mở đầu hoặc kết thúc']);
-  const kaiwa = groundLesson(lesson('kaiwa:practical:v1:N5:introductions'));
-  assert.deepEqual(kaiwa.overview.task, grounded.overview.task);
+  const canonical = lesson('kaiwa:practical:v1:N5:introductions');
+  const kaiwa = groundLesson(canonical);
+  assert.equal(Object.hasOwn(kaiwa.overview,'task'),false,'spoken grounding must not inherit broader written requirements or model');
+  const index=canonical.examples.findIndex(example=>example.jp==='はじめまして。お名前とお仕事を教えてください。');
+  const spoken=groundLesson(canonical,{kind:'example',index});
+  assert.equal(spoken.focus.item.jp,'はじめまして。お名前とお仕事を教えてください。');
+  assert.equal(spoken.focus.item.vi,'','missing spoken gloss must not become the different written prompt');
 });
 
 test('beginner overviews omit ungraded corpus sentences while retaining actual lesson targets', () => {

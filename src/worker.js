@@ -12,6 +12,8 @@ import { clearTutorConversation } from './tutor-session.js';
 import {liveRoute, liveTranslationRoute} from './live.js';
 import {practiceCoach} from './practice-coach.js';
 import {transcriptionRoute} from './transcription.js';
+import {recordTaskAttempt,taskEvidenceSummary} from './task-attempts.js';
+import {catalogLesson,processingAllowed,resolveTaskReference,validFocusReference} from './tutor-context.js';
 /**
  * VJBot (Nihongo Sensei) — CLOUDFLARE WORKER BACKEND
  * D1-backed JLPT curriculum, progress, chat with Gemini (AI Studio free tier) & Gemini Flash TTS.
@@ -60,6 +62,7 @@ function jsonResponse(data, status = 200) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    let progressEpoch=null;
 
     if (request.method !== "GET" && request.method !== "HEAD" && request.headers.get("Origin") && request.headers.get("Origin") !== url.origin) {
       return jsonResponse({detail: "Origin not allowed"}, 403);
@@ -78,6 +81,11 @@ export default {
         if(!user) return jsonResponse({detail:'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'},401);
         const expectedAccount=request.headers.get('X-VJBot-Account');
         if(expectedAccount!==null&&expectedAccount!==user.user_id)return jsonResponse({detail:'The signed-in account changed. Reload before using API profiles.',code:'account_changed'},409);
+        if(url.pathname==='/api/progress/record' || url.pathname==='/api/practice/coach'){
+          const profile=await env.DB.prepare('SELECT task_evidence_epoch FROM profiles WHERE user_id=?').bind(user.user_id).first();
+          progressEpoch=profile?.task_evidence_epoch || null;
+          if(!progressEpoch)return jsonResponse({detail:'The learner account changed. Reopen the activity.'},409);
+        }
         url.searchParams.set('user_id',user.user_id);
         if(['POST','PUT','PATCH'].includes(request.method)) {
           const raw=await request.text();
@@ -258,15 +266,20 @@ export default {
         if(!dates.has(date.toISOString().slice(0,10))) date.setUTCDate(date.getUTCDate()-1);
         while(dates.has(date.toISOString().slice(0,10))){streak++;date.setUTCDate(date.getUTCDate()-1);}
 
+        const evidence=await taskEvidenceSummary(env,userId);
         return jsonResponse({
           total_learned: items.length,
           total_correct: totalCorrect,
           total_incorrect: totalIncorrect,
           accuracy_rate: accuracy,
+          statistics_basis:'legacy_unknown',
+          legacy:{basis:'legacy_unknown',total_correct:totalCorrect,total_incorrect:totalIncorrect,accuracy_rate:accuracy},
+          ...evidence,
           weak_items: items.filter(i=>(i.incorrect||0)>(i.correct||0)),
           streak_days: streak,
           items: items.map(r => ({
             item_id: r.item_id,
+            statistics_basis:'legacy_unknown',
             display: r.display || r.item_id,
             meaning: r.meaning_vi || r.meaning_en || "",
             jlpt_level: r.jlpt_level,
@@ -299,6 +312,9 @@ export default {
       // 6. Record Answer Progress API
       if (url.pathname === "/api/progress/record" && request.method === "POST") {
         const body = await request.json();
+        if(Object.hasOwn(body,'lesson') || Object.hasOwn(body,'task') || Object.hasOwn(body,'event'))return recordTaskAttempt(body,env,progressEpoch);
+        if (body.basis !== undefined && body.basis !== 'self_report') return jsonResponse({detail:'Invalid progress basis'},400);
+        const submission=JSON.stringify(Object.fromEntries(Object.entries(body).filter(([key])=>key!=='user_id').sort(([a],[b])=>a.localeCompare(b))));
         const { user_id, item_id, correct, quality = 4 } = body;
         if (!user_id || typeof item_id!=='string' || !item_id.trim() || item_id.length>300 || typeof correct!=='boolean' || !Number.isInteger(quality) || quality<0 || quality>5) return jsonResponse({ detail: "Invalid progress record" }, 400);
 
@@ -306,11 +322,14 @@ export default {
         if (body.item_type !== undefined && !['grammar','vocabulary','kanji','kana','reading','listening','exam','production'].includes(body.item_type)) return jsonResponse({detail: 'Invalid item type'}, 400);
 
         if(body.response_text !== undefined && (typeof body.response_text !== 'string' || body.response_text.length>4000))return jsonResponse({detail:'Invalid response text'},400);
-        const attemptId = body.attempt_id;
+        const attemptId = body.attempt_id ?? crypto.randomUUID();
         if(attemptId !== undefined && (typeof attemptId !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(attemptId))) return jsonResponse({detail:'Invalid attempt'},400);
         if(attemptId){
-          const saved=await env.DB.prepare('SELECT result FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
-          if(saved)return jsonResponse(JSON.parse(saved.result));
+          const saved=await env.DB.prepare('SELECT result,submission FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
+          if(saved)return saved.submission===submission ? jsonResponse(JSON.parse(saved.result))
+            : jsonResponse({detail:'Attempt ID already belongs to another or historical submission.'},409);
+          const canonical=await env.DB.prepare('SELECT attempt_id FROM task_attempt_evidence WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
+          if(canonical)return jsonResponse({detail:'Attempt ID already belongs to another submission.'},409);
         }
         const item = await env.DB.prepare("SELECT item_type, level FROM curriculum_items WHERE item_id = ?").bind(item_id).first();
         const itemType = item ? item.item_type : (body.item_type || "grammar");
@@ -327,11 +346,14 @@ export default {
         const sm2 = calculateSM2(q, existing?.repetitions || 0, curInterval, curEf);
         const now = new Date().toISOString();
 
-        const result={status: "recorded", next_review: sm2.nextReview, interval_days: sm2.interval};
+        const result={status: "recorded", next_review: sm2.nextReview, interval_days: sm2.interval,
+          basis:body.basis==='self_report'?'self_report':'legacy_unknown',verified:false};
         const writeProgress=env.DB.prepare(`
           INSERT INTO progress (user_id, item_id, item_type, jlpt_level, correct, incorrect, last_reviewed, next_review, interval_days, ease_factor, repetitions, display, last_correct, response_text)
           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
           WHERE NOT EXISTS (SELECT 1 FROM progress_attempts WHERE user_id=? AND attempt_id=?)
+            AND NOT EXISTS (SELECT 1 FROM task_attempt_evidence WHERE user_id=? AND attempt_id=?)
+            AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)
           ON CONFLICT(user_id, item_id) DO UPDATE SET
             correct = progress.correct + excluded.correct,
             incorrect = progress.incorrect + excluded.incorrect,
@@ -343,11 +365,24 @@ export default {
             display = COALESCE(excluded.display, progress.display),
             last_correct = excluded.last_correct,
             response_text = COALESCE(excluded.response_text, progress.response_text)
-        `).bind(user_id, item_id, itemType, level, correct ? 1 : 0, correct ? 0 : 1, now, sm2.nextReview, sm2.interval, sm2.easeFactor, sm2.repetitions, body.display?.trim() || null,correct?1:0,body.response_text?.trim() || null,user_id,attemptId || '');
-        const writes=[writeProgress,env.DB.prepare("INSERT OR IGNORE INTO study_days(user_id,day) VALUES(?,?)").bind(user_id,now.slice(0,10))];
-        if(attemptId)writes.push(env.DB.prepare('INSERT OR IGNORE INTO progress_attempts(user_id,attempt_id,result) VALUES(?,?,?)').bind(user_id,attemptId,JSON.stringify(result)));
+        `).bind(user_id,item_id,itemType,level,correct?1:0,correct?0:1,now,sm2.nextReview,sm2.interval,sm2.easeFactor,sm2.repetitions,body.display?.trim() || null,correct?1:0,body.response_text?.trim() || null,user_id,attemptId,user_id,attemptId,user_id,progressEpoch);
+        const writes=[writeProgress];
+        writes.push(env.DB.prepare(`INSERT OR IGNORE INTO progress_attempts(user_id,attempt_id,result,submission)
+          SELECT ?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM task_attempt_evidence WHERE user_id=? AND attempt_id=?)
+          AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)`)
+          .bind(user_id,attemptId,JSON.stringify(result),submission,user_id,attemptId,user_id,progressEpoch));
+        writes.push(env.DB.prepare(`INSERT OR IGNORE INTO task_attempt_evidence
+          (user_id,attempt_id,level,task_id,item_id,mode,identity_json,answer_payload,response_text,self_rating,basis,validity,disposition,created_at,answered_at)
+          SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM progress_attempts WHERE user_id=? AND attempt_id=? AND submission=?)`)
+          .bind(user_id,attemptId,level,`legacy:${item_id}`,item_id,'self_report',submission,submission,body.response_text??null,quality,
+            result.basis,'unverified',result.basis==='self_report'?'self_assessed':'legacy_unverified',now,now,user_id,attemptId,submission));
+        writes.push(env.DB.prepare(`INSERT OR IGNORE INTO study_days(user_id,day)
+          SELECT ?,? WHERE EXISTS(SELECT 1 FROM progress_attempts WHERE user_id=? AND attempt_id=? AND submission=?)
+          AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)`)
+          .bind(user_id,now.slice(0,10),user_id,attemptId,submission,user_id,progressEpoch));
         await env.DB.batch(writes);
-        if(attemptId){const saved=await env.DB.prepare('SELECT result FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();return jsonResponse(JSON.parse(saved.result));}
+        if(attemptId){const saved=await env.DB.prepare('SELECT result,submission FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
+          return saved?.submission===submission?jsonResponse(JSON.parse(saved.result)):jsonResponse({detail:'Attempt ID changed before saving.'},409);}
         return jsonResponse(result);
       }
 
@@ -373,6 +408,19 @@ export default {
       // 8. TTS API (explicit Gemini or official OpenAI voice connection)
       if (url.pathname === "/api/tts" && request.method === "POST") {
         const body = await request.json();
+        if(body.lesson !== undefined || body.task !== undefined) {
+          if(!validLessonReference(body.lesson) || body.focus != null && !validFocusReference(body.focus))return jsonResponse({detail:'Invalid speech reference'},400);
+          const catalog=await teacherCatalog(env,body.lesson.level),lesson=catalog && catalogLesson(catalog,body.lesson);
+          if(!lesson || !processingAllowed(lesson))return jsonResponse({detail:'This source is unavailable for provider processing.'},409);
+          if(body.focus?.kind==='question') {
+            const resolved=resolveTaskReference(lesson,body.focus,body.view??'checks',body.task);
+            if(resolved.error)return jsonResponse({detail:resolved.error},resolved.status);
+          } else if(body.task !== undefined)return jsonResponse({detail:'A task needs a canonical question focus.'},400);
+          else if(body.focus){
+            const selected=lesson[{word:'words',example:'examples'}[body.focus.kind]]?.[body.focus.index];
+            if(!selected || !processingAllowed(selected))return jsonResponse({detail:'This source item is unavailable for provider processing.'},409);
+          }
+        }
         const speech = await resolveSpeechProvider(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
         if (speech.response) return speech.response;
         return speech.provider.protocol === 'openai'
@@ -432,7 +480,7 @@ export default {
         },503);
       }
 
-      if (url.pathname === '/api/practice/coach' && request.method === 'POST') return await practiceCoach(request,env);
+      if (url.pathname === '/api/practice/coach' && request.method === 'POST') return await practiceCoach(request,env,progressEpoch);
 
       if (url.pathname === "/api/chat" && request.method === "POST") return await tutorChat(request, env);
 

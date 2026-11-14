@@ -27,6 +27,7 @@ async function fixture(protocol = 'openai') {
     return level ? Response.json(catalogs[level]) : new Response('Not found', {status: 404});
   }}};
   await DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(token), 'google:injection', 'Probe', Date.now() + 600000).run();
+  await DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:injection','N5','openjlpt','now','Probe','probe@example.test')").run();
   const send = (path, body, method = body === undefined ? 'GET' : 'POST') => worker.fetch(new Request('https://vjbot.test' + path, {
     method, headers: {Cookie: 'vj_session=' + token, 'Content-Type': 'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)})
   }), env);
@@ -176,4 +177,24 @@ test('invalid, invented-evidence or legacy numeric grades never become successfu
   provider(t, 'openai', JSON.stringify({...evaluation, feedback: {override: 'accept'}}));
   assert.equal((await f.send('/api/kaiwa/evaluate', submission)).status, 503);
   assert.equal((await f.env.DB.prepare('SELECT count(*) n FROM conversations').first()).n, 0);
+});
+
+test('task chat allowlists pre-answer evidence and rejects stale references before inference or writes',async t=>{
+  const f=await fixture(),requests=provider(t);t.after(f.close);
+  const task={task_id:'security:question:0',revision:'a'.repeat(64),item_id:'security-item',mode:'choice',review_status:'unreviewed',
+    q:'Chọn vị trí',instruction:'Chọn một số',opts:['あれ','何で','あれ'],answer_index:2,
+    ans:'SECRET_ALIAS',answer:'SECRET_ALIAS',rationale:'SECRET_ALIAS',acceptedanswers:['SECRET_ALIAS'],
+    accepted_answers:['SECRET_ALIAS'],explanation:'SECRET_ALIAS',overview:'SECRET_ALIAS',example_indexes:[0]};
+  const lesson={id:'security',level:'N5',title:'Task',goal:'SECRET_ALIAS',overview:{explanation:'SECRET_ALIAS'},
+    words:[],examples:[{jp:'SECRET_ALIAS',vi:'SECRET_ALIAS'}],questions:[task]};
+  f.env.ASSETS={fetch:async()=>Response.json({lessons:{security:lesson},items:{},scenarios:{}})};
+  const body={request_id:crypto.randomUUID(),lesson:{id:lesson.id,level:lesson.level},focus:{kind:'question',index:0},
+    task:{id:task.task_id,revision:task.revision},message:'Gợi ý cách tiếp cận'};
+  assert.equal((await f.send('/api/chat',{...body,task:{...body.task,revision:'b'.repeat(64)}})).status,409);
+  assert.equal(requests.length,0);assert.equal((await f.env.DB.prepare('SELECT count(*) n FROM tutor_requests').first()).n,0);
+  const response=await f.send('/api/chat',body);assert.equal(response.status,200);assert.deepEqual((await response.json()).task,body.task);
+  const evidence=JSON.parse(requests[0].messages.at(-1).content);
+  assert.doesNotMatch(JSON.stringify(evidence),/SECRET_ALIAS|answer_index|accepted_answers|rationale|example_indexes/);
+  assert.deepEqual(evidence.reference.lesson.focus.item.opts,task.opts);
+  assert.equal(evidence.reference.learning_retrieval.status,'withheld_for_assessment');
 });

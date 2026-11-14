@@ -31,7 +31,7 @@ import { readFileSync } from 'node:fs';
 import { hashToken } from '../src/auth.js';
 function database() {
   const db=new DatabaseSync(':memory:');
-  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql','0014_api_profiles.sql','0015_conversation_scope.sql','0016_google_ai_oauth.sql','0017_antigravity_oauth.sql','0018_antigravity_accounts.sql','0019_tutor_sessions.sql','0020_admin_grants.sql','0021_admin_ai_preferences.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
+  for(const migration of ['0001_base.sql','0002_sessions.sql','0003_srs_repetitions.sql','0004_progress_display.sql','0005_progress_attempts.sql','0006_learning_responses.sql','0007_completions.sql','0008_exam_attempts.sql','0009_password_accounts.sql','0010_chat_requests.sql','0011_ai_providers.sql','0012_profile_identity.sql','0013_identity_backfill.sql','0014_api_profiles.sql','0015_conversation_scope.sql','0016_google_ai_oauth.sql','0017_antigravity_oauth.sql','0018_antigravity_accounts.sql','0019_tutor_sessions.sql','0020_admin_grants.sql','0021_admin_ai_preferences.sql','0022_task_attempt_evidence.sql','0023_learning_sessions.sql'])db.exec(readFileSync('migrations/'+migration,'utf8'));
   const prepare=sql=>{let params=[];return {bind(...values){params=values;return this;},async first(){return db.prepare(sql).get(...params)||null;},async all(){return {results:db.prepare(sql).all(...params)};},async run(){db.prepare(sql).run(...params);return {success:true};}};};
   return {prepare,exec:sql=>db.exec(sql),batch:statements=>Promise.all(statements.map(s=>s.run()))};
 }
@@ -41,9 +41,10 @@ async function withApi(env,request,extra={}){
   const r=await worker.fetch(new Request('https://vjbot.test/api/ai/settings',{method:'PUT',headers:request('/api/ai/settings').headers,body:JSON.stringify({protocol:'openai',base_url:'https://api.example.com/v1',model:'m1',api_key:'sk-test-12345678',...extra})}),env);
   assert.equal(r.status,200);
 }
-async function authenticated() {
+async function authenticated({profile=true}={}) {
   const DB=database(),token='a'.repeat(64);
   await DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(token),'google:qa','QA',Date.now()+60000).run();
+  if(profile)await DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','qa@example.test')").run();
   return {env:{DB,ASSETS:teacherAssets},request:(path,body)=>new Request('https://vjbot.test'+path,{headers:{Cookie:'vj_session='+token,'Content-Type':'application/json'},...(body?{method:'POST',body:JSON.stringify(body)}:{})})};
 }
 test('malformed and forged Google credentials cannot create accounts',async()=>{
@@ -96,6 +97,7 @@ test('generated exercise labels survive requests and stay private to each accoun
   const {env,request}=await authenticated();
   const otherToken='b'.repeat(64);
   await env.DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(otherToken),'google:other','Other',Date.now()+60000).run();
+  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:other','N5','openjlpt','now','Other','other@example.test')").run();
   const other=(path,body)=>new Request('https://vjbot.test'+path,{headers:{Cookie:'vj_session='+otherToken,'Content-Type':'application/json'},...(body?{method:'POST',body:JSON.stringify(body)}:{})});
   for(const [make,display] of [[request,'Cách đọc của あ?'],[other,'Private other label']]){
     const response=await worker.fetch(make('/api/progress/record',{item_id:'kana:Hiragana:あ',display,correct:false,item_type:'kana',level:'N5'}),env);
@@ -124,6 +126,8 @@ test('retrying an answer after a lost response records it only once',async()=>{
   const first=await (await worker.fetch(request('/api/progress/record',body),env)).json();
   const repeated=await (await worker.fetch(request('/api/progress/record',body),env)).json();
   assert.deepEqual(repeated,first);
+  assert.equal(first.basis,'legacy_unknown');assert.equal(first.verified,false);
+  assert.equal((await worker.fetch(request('/api/progress/record',{...body,correct:false}),env)).status,409);
   const record=await env.DB.prepare('SELECT correct,repetitions FROM progress').first();
   assert.equal(record.correct,1);assert.equal(record.repetitions,1);
   body.attempt_id='attempt-retry-0002';
@@ -131,6 +135,7 @@ test('retrying an answer after a lost response records it only once',async()=>{
   assert.equal((await env.DB.prepare('SELECT correct FROM progress').first()).correct,2);
   await worker.fetch(request('/api/account/delete',{}),env);
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM progress_attempts').first()).n,0);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM task_attempt_evidence').first()).n,0);
 });
 
 
@@ -292,7 +297,7 @@ test('admin status needs a Google row, a verified email in the current ADMIN_EMA
   await recordAdminLogin(env,'google:qa','Owner@Example.test');assert.equal(await isAdmin(env,'google:qa'),false);
   env.ADMIN_EMAILS='owner@example.test';await recordAdminLogin(env,'google:qa','Owner@Example.test');assert.equal(await isAdmin(env,'google:qa'),true);
   await env.DB.prepare("INSERT INTO admins VALUES('email:pw','owner@example.test','now')").run();assert.equal(await isAdmin(env,'email:pw'),false);
-  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','owner@example.test')").run();
+  await env.DB.prepare("INSERT OR REPLACE INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','owner@example.test')").run();
   assert.equal((await (await worker.fetch(request('/api/auth/session'),env)).json()).user.is_admin,true);
   const overview=await (await worker.fetch(request('/api/admin/overview'),env)).json();assert.equal(typeof overview.users,'number');assert.ok(Array.isArray(overview.top));
   env.ADMIN_EMAILS='';assert.equal(await isAdmin(env,'google:qa'),false);assert.equal((await worker.fetch(request('/api/admin/overview'),env)).status,403);
@@ -304,7 +309,7 @@ test('admins manage users: list, search, detail and every action; others are ref
   assert.equal((await get('/api/admin/users')).status,403);assert.equal((await post('/api/admin/user',{id:'x',action:'delete'})).status,403);
   const {recordAdminLogin}=await import('../src/admin.js');await recordAdminLogin(env,'google:qa','owner@example.test');
   const now=new Date().toISOString();
-  await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name) VALUES('google:qa','N5','openjlpt',?,'QA')").bind(now).run();
+  await env.DB.prepare("INSERT OR REPLACE INTO profiles(user_id,level,track,updated_at,name) VALUES('google:qa','N5','openjlpt',?,'QA')").bind(now).run();
   await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email,created_at,last_login) VALUES('google:alice','N4','openjlpt',?,'Alice Nguyen','alice@example.test',?,?)").bind(now,now,now).run();
   await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name) VALUES('legacy-guest-1','N5','openjlpt',?,NULL)").bind(now).run();
   await env.DB.prepare("INSERT INTO conversations(user_id,role,content,timestamp) VALUES('google:alice','user','xin chào',?),('google:alice','bot','chào em',?)").bind(now,now).run();
@@ -321,7 +326,12 @@ test('admins manage users: list, search, detail and every action; others are ref
   assert.equal((await post('/api/admin/user',{id:'google:alice',action:'set_level',level:'N2'})).status,200);
   assert.equal((await (await get('/api/admin/user?id=google:alice')).json()).level,'N2');
   assert.equal((await post('/api/admin/user',{id:'google:alice',action:'clear_chat'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM conversations WHERE user_id='google:alice'").first()).n,0);
+  await env.DB.prepare(`INSERT INTO task_attempt_evidence(user_id,attempt_id,task_id,item_id,mode,identity_json,created_at)
+    VALUES('google:alice','admin-reset-evidence','task','item','choice','[]','now')`).run();
   assert.equal((await post('/api/admin/user',{id:'google:alice',action:'reset_progress'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM completions WHERE user_id='google:alice'").first()).n,0);
+  assert.equal((await env.DB.prepare("SELECT count(*) n FROM task_attempt_evidence WHERE user_id='google:alice'").first()).n,0);
+  await env.DB.prepare(`INSERT INTO task_attempt_evidence(user_id,attempt_id,task_id,item_id,mode,identity_json,created_at)
+    VALUES('google:alice','admin-delete-evidence','task','item','choice','[]','now')`).run();
   assert.equal((await post('/api/admin/user',{id:'google:alice',action:'revoke_sessions'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM sessions WHERE user_id='google:alice'").first()).n,0);
   await env.DB.prepare("INSERT INTO ai_providers(user_id,id,name,protocol,base_url,model,key_enc,key_last4,updated_at) VALUES('google:alice','alice-api','API','openai','https://api.example.com/v1','m','x','1234',?)").bind(now).run();
   assert.equal((await post('/api/admin/user',{id:'google:alice',action:'remove_api'})).status,200);assert.equal((await env.DB.prepare("SELECT count(*) n FROM ai_providers WHERE user_id='google:alice'").first()).n,0);
@@ -329,17 +339,18 @@ test('admins manage users: list, search, detail and every action; others are ref
   assert.equal((await post('/api/admin/user',{id:'google:qa',action:'delete'})).status,400);
   assert.equal((await post('/api/admin/user',{id:'google:alice',action:'delete'})).status,200);
   assert.equal((await env.DB.prepare("SELECT count(*) n FROM profiles WHERE user_id='google:alice'").first()).n,0);assert.equal((await get('/api/admin/user?id=google:alice')).status,404);
+  assert.equal((await env.DB.prepare("SELECT count(*) n FROM task_attempt_evidence WHERE user_id='google:alice'").first()).n,0);
 });
 
 
 test('Google accounts without a stored name and email must sign in again; email accounts are backfilled',async()=>{
-  const {env,request}=await authenticated();
+  const {env,request}=await authenticated({profile:false});
   await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('google:qa','N5','openjlpt','now')").run();
   const response=await worker.fetch(request('/api/auth/session'),env);
   assert.equal((await response.json()).user,null);assert.match(response.headers.get('set-cookie'),/vj_session=;.*Max-Age=0/);
   assert.equal((await env.DB.prepare('SELECT count(*) n FROM sessions').first()).n,0);
   const again=await authenticated();
-  await again.env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','qa@example.test')").run();
+  await again.env.DB.prepare("INSERT OR REPLACE INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','qa@example.test')").run();
   assert.equal((await (await worker.fetch(again.request('/api/auth/session'),again.env)).json()).user.user_id,'google:qa');
   const db=again.env.DB;
   await db.prepare("INSERT INTO password_accounts(user_id,email,name,password_hash,salt,created_at) VALUES('email:p1','p1@example.test','Pham','h','s','now')").run();
@@ -353,7 +364,7 @@ test('Google accounts without a stored name and email must sign in again; email 
 test('admins can purge old anonymous profiles without touching real accounts',async()=>{
   const {env,request}=await authenticated();env.ADMIN_EMAILS='owner@example.test';
   const post=path=>worker.fetch(request(path,{}),env),run=sql=>env.DB.prepare(sql).run();
-  await run("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','owner@example.test')");
+  await run("INSERT OR REPLACE INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:qa','N5','openjlpt','now','QA','owner@example.test')");
   await run("INSERT INTO profiles(user_id,level,track,updated_at,name,email) VALUES('google:keep','N5','openjlpt','now','Keep','k@example.test')");
   await run("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('g1','N5','openjlpt','now'),('g2','N5','openjlpt','now')");
   await run("INSERT INTO conversations(user_id,role,content,timestamp) VALUES('g1','user','hi','now'),('google:keep','user','hi','now')");
@@ -815,7 +826,7 @@ test('admins automatically use server OpenAI while free users cannot access the 
 test('admin role grants support registered accounts, take effect immediately and revoke shared access',async()=>{
   const {env,request}=await authenticated();env.OPENAI_API_KEY='sk-server-only-test';
   const now=new Date().toISOString();
-  for(const id of ['google:qa','email:learner','legacy-guest'])await env.DB.prepare('INSERT INTO profiles(user_id,level,track,updated_at) VALUES(?,?,?,?)').bind(id,'N5','openjlpt',now).run();
+  for(const id of ['google:qa','email:learner','legacy-guest'])await env.DB.prepare('INSERT OR REPLACE INTO profiles(user_id,level,track,updated_at) VALUES(?,?,?,?)').bind(id,'N5','openjlpt',now).run();
   const learnerToken='c'.repeat(64);
   await env.DB.prepare('INSERT INTO sessions VALUES(?,?,?,?)').bind(await hashToken(learnerToken),'email:learner','Learner',Date.now()+60000).run();
   const learner=(path,body)=>new Request('https://vjbot.test'+path,{headers:{Cookie:'vj_session='+learnerToken,'Content-Type':'application/json'},...(body?{method:'POST',body:JSON.stringify(body)}:{})});
@@ -964,19 +975,19 @@ test('practice hints omit the authored key and feedback resolves the exact canon
     return Response.json({choices:[{message:{content:JSON.stringify({reply:'Hãy nhìn chức năng của trợ từ trong câu này.'})}}]});
   };
   try{
-    const base={lesson,question_index:1,item_id:question.item_id};
+    const base={lesson,question_index:1,item_id:question.item_id,task:{id:question.task_id,revision:question.revision}};
     const hint=await worker.fetch(request('/api/practice/coach',{...base,action:'hint'}),env);
     assert.equal(hint.status,200);assert.equal((await hint.json()).answer,undefined);
     assert.equal(Object.hasOwn(calls[0],'authored_answer'),false);
     assert.equal(Object.hasOwn(calls[0],'authored_explanation'),false);
     assert.equal(Object.hasOwn(calls[0],'submission'),false);
-    const wrong=question.opts.findIndex(option=>option!==question.ans);
+    const wrong=(question.answer_index+1)%question.opts.length;
     const response=await worker.fetch(request('/api/practice/coach',{...base,action:'feedback',answer_index:wrong}),env),body=await response.json();
-    assert.equal(response.status,200);assert.equal(body.correct,false);assert.equal(body.answer,question.ans);
-    assert.equal(calls[1].submission,question.opts[wrong]);assert.equal(calls[1].authored_answer,question.ans);
-    const right=await worker.fetch(request('/api/practice/coach',{...base,action:'feedback',answer_index:question.opts.indexOf(question.ans)}),env);
+    assert.equal(response.status,200);assert.equal(body.correct,false);assert.equal(body.answer_index,question.answer_index);assert.equal(body.basis,'source_advisory');assert.equal(body.verified,false);
+    assert.equal(calls[1].submission,question.opts[wrong]);assert.equal(calls[1].authored_answer,question.opts[question.answer_index]);
+    const right=await worker.fetch(request('/api/practice/coach',{...base,action:'feedback',answer_index:question.answer_index}),env);
     assert.equal(right.status,200);assert.equal((await right.json()).correct,true);
-    assert.equal(calls[2].correct,true);
+    assert.equal(calls[2].source_correct,true);
     assert.equal((await env.DB.prepare('SELECT count(*) n FROM progress').first()).n,0);
     assert.equal((await env.DB.prepare('SELECT count(*) n FROM conversations').first()).n,0);
   }finally{globalThis.fetch=original;}
@@ -987,9 +998,9 @@ test('practice coaching rejects forged questions, answer keys and out-of-range s
   await withApi(env,request);let calls=0;
   globalThis.fetch=async()=>{calls++;throw new Error('Unexpected generation');};
   const lesson={id:'practical:v1:N5:introductions:situation',level:'N5'},question=teacherCatalogs.N5.lessons[lesson.id].questions[0];
-  const base={lesson,question_index:0,item_id:question.item_id,action:'hint'};
+  const base={lesson,question_index:0,item_id:question.item_id,task:{id:question.task_id,revision:question.revision},action:'hint'};
   try{
-    for(const change of [{item_id:'forged'},{question_index:999},{answer:'forged'},{action:'hint',answer_index:0},{action:'feedback',answer_index:999},{lesson:{id:'unknown',level:'N5'}}]){
+    for(const change of [{item_id:'forged'},{task:{id:question.task_id,revision:'0'.repeat(64)}},{question_index:999},{answer:'forged'},{action:'hint',answer_index:0},{action:'feedback',answer_index:999},{lesson:{id:'unknown',level:'N5'}}]){
       const response=await worker.fetch(request('/api/practice/coach',{...base,...change}),env);
       assert.ok([400,409].includes(response.status));
     }
@@ -1007,7 +1018,7 @@ test('practice coaching refuses model-authored grades and malformed replies rath
   try{
     for(const content of [JSON.stringify({reply:'Fake grade',correct:true}),JSON.stringify({reply:''}),'not json']){
       globalThis.fetch=async()=>Response.json({choices:[{message:{content}}]});
-      const response=await worker.fetch(request('/api/practice/coach',{lesson,question_index:0,item_id:question.item_id,action:'feedback',answer_index:0}),env);
+      const response=await worker.fetch(request('/api/practice/coach',{lesson,question_index:0,item_id:question.item_id,task:{id:question.task_id,revision:question.revision},action:'feedback',answer_index:0}),env);
       assert.equal(response.status,503);assert.equal((await response.json()).correct,undefined);
     }
   }finally{globalThis.fetch=original;}
@@ -1242,4 +1253,373 @@ test('missing or mismatched question rubrics fail before inference instead of gu
     assert.match((await response.json()).detail,/rubric is unavailable/);
   }
   assert.equal(calls,0);
+});
+
+test('canonical progress remains source advisory while legacy and self-report are honestly labeled on readback',async()=>{
+  const {env,request}=await authenticated(),lesson={id:'practical:v1:N5:introductions:situation',level:'N5'};
+  const question=teacherCatalogs.N5.lessons[lesson.id].questions[0];
+  const body={lesson,view:'checks',question_index:0,task:{id:question.task_id,revision:question.revision},attempt_id:'canonical-progress-001',event:'answer',answer_index:question.answer_index};
+  const result=await (await worker.fetch(request('/api/progress/record',body),env)).json();
+  assert.equal(result.source_correct,true);assert.equal(result.basis,'source_advisory');assert.equal(result.verified,false);
+  await worker.fetch(request('/api/progress/record',{item_id:'manual-card',correct:true,basis:'self_report'}),env);
+  const data=await (await worker.fetch(request('/api/progress'),env)).json();
+  assert.equal(data.statistics_basis,'legacy_unknown');assert.equal(data.total_correct,1);assert.equal(data.verified.answered,0);
+  assert.equal(data.source_advisory.correct,1);assert.equal(data.self_report.answered,1);
+  assert.equal(data.evidence.find(row=>row.task_id===question.task_id).answer_index,question.answer_index);
+  assert.equal((await worker.fetch(request('/api/progress/record',{...body,task:{id:question.task_id,revision:'f'.repeat(64)}}),env)).status,409);
+  await worker.fetch(request('/api/account/delete',{}),env);
+  assert.equal((await env.DB.prepare('SELECT count(*) n FROM task_attempt_evidence').first()).n,0);
+});
+
+test('reference teaching and read-aloud refuse restricted words and nested examples before any provider call',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;let calls=0;
+  const lesson={id:'restricted-reference',level:'N3',title:'Reference',overview:{},examples:[],
+    words:[{jp:'先生',vi:'teacher',processing_allowed:false},{jp:'学生',vi:'student',examples:[{jp:'秘密です。',vi:'restricted',processing_allowed:false}]}],questions:[]};
+  env.ASSETS={fetch:async()=>Response.json({lessons:{[lesson.id]:lesson},items:{},scenarios:{}})};
+  globalThis.fetch=async()=>{calls++;throw new Error('Restricted content reached a provider');};
+  try{
+    const reference={lesson:{id:lesson.id,level:'N3'},focus:{kind:'word',index:0}};
+    assert.equal((await worker.fetch(request('/api/tts',{...reference,text:'先生'}),env)).status,409);
+    for(const index of [0,1])assert.equal((await worker.fetch(request('/api/practice/coach',{...reference,focus:{kind:'word',index},action:'teach'}),env)).status,409);
+    assert.equal(calls,0);
+  }finally{globalThis.fetch=original;}
+});
+
+for(const [level,lessonId] of [
+  ['N5'],['N4'],['N3'],['N2'],['N1'],
+  ...['introductions','ordering','time','transport','shopping','asking-help'].map(key=>['N5',`teaching:v1:N5:${key}`])
+])test(`AI-authored ${lessonId || level} tasks bind source context, hints and submissions without creating verified assessment`,async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;await withApi(env,request);
+  const lesson=lessonId?teacherCatalogs[level].lessons[lessonId]:Object.values(teacherCatalogs[level].lessons).find(lesson=>lesson.authorship==='ai_authored');
+  const questionIndex=lesson.questions.findIndex(question=>question.mode==='choice'),question=lesson.questions[questionIndex];
+  const reference={lesson:{id:lesson.id,level},view:'checks',task:{id:question.task_id,revision:question.revision}};
+  const evidence=[];
+  globalThis.fetch=async(url,options)=>{
+    evidence.push(JSON.parse(JSON.parse(options.body).messages.at(-1).content));
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Đối chiếu điều kiện và dữ kiện của đúng ngữ cảnh rồi giải thích lựa chọn của em.'})}}]});
+  };
+  try{
+    let response=await worker.fetch(request('/api/practice/coach',{...reference,question_index:questionIndex,item_id:question.item_id,action:'hint'}),env);
+    assert.equal(response.status,200);assert.equal(Object.hasOwn(evidence[0],'authored_answer'),false);
+    assert.equal(evidence[0].question.passage,question.passage || '');
+    for(const key of ['answer_index','accepted_answers','explanation'])assert.equal(Object.hasOwn(evidence[0].question,key),false,key);
+    assert.ok(!JSON.stringify(evidence[0]).includes(question.explanation));
+    const wrongIndex=(question.answer_index+1)%question.opts.length;
+    const attempt={...reference,question_index:questionIndex,attempt_id:`${level}-package-answer-0001`,event:'answer',answer_index:wrongIndex};
+    response=await worker.fetch(request('/api/progress/record',attempt),env);assert.equal(response.status,200);
+    const recorded=await response.json();assert.equal(recorded.basis,'source_advisory');assert.equal(recorded.source_correct,false);assert.equal(recorded.verified,false);
+    response=await worker.fetch(request('/api/practice/coach',{...reference,question_index:questionIndex,item_id:question.item_id,action:'feedback',answer_index:wrongIndex}),env);
+    const feedback=await response.json();assert.equal(response.status,200);assert.equal(feedback.correct,false);assert.equal(feedback.verified,false);
+    assert.equal(evidence[1].submission_index,wrongIndex);assert.equal(evidence[1].authored_explanation,question.explanation);
+    const textIndex=lesson.questions.findIndex(question=>question.mode==='recall'),text=lesson.questions[textIndex];
+    response=await worker.fetch(request('/api/progress/record',{...reference,task:{id:text.task_id,revision:text.revision},question_index:textIndex,
+      attempt_id:`${level}-package-recall-0001`,event:'answer',response_text:text.accepted_answers[0]}),env);
+    assert.equal(response.status,200);assert.equal((await response.json()).basis,'source_advisory');
+    const progress=await(await worker.fetch(request('/api/progress'),env)).json();
+    assert.equal(progress.verified.answered,0);assert.equal(progress.source_advisory.answered,2);
+    assert.equal(progress.source_advisory.incorrect,1);assert.equal(progress.source_advisory.correct,1);
+    assert.equal((await worker.fetch(request('/api/practice/coach',{...reference,task:{...reference.task,revision:'f'.repeat(64)},question_index:questionIndex,action:'hint'}),env)).status,409);
+    assert.equal(evidence.length,2,'a stale revision never reaches the provider');
+  }finally{globalThis.fetch=original;}
+});
+
+async function learningCycleFixture() {
+  const {env,request}=await authenticated();await withApi(env,request);
+  const revision='d'.repeat(64),group='n5-invitation-test';
+  const base={revision,mode:'writing',objective:'communication',q:'自分で活動を選んで書いてください。',
+    instruction:'Chọn nội dung của em.',review_status:'unreviewed',criteria:['Nêu hoạt động phù hợp với tình huống.','Dùng cách mời lịch sự.'],
+    answer:'SECRET_ALIAS',acceptedanswers:['SECRET_ALIAS'],model:'SECRET_MODEL'};
+  const questions=['invite','accept','refuse','delayed'].map((stage,index)=>({...base,task_id:`cycle:${stage}`,item_id:`cycle-item-${index}`,
+    exchange:{group,stage,prior_task_ids:stage==='invite'?[]:stage==='delayed'?['cycle:invite','cycle:accept','cycle:refuse']:['cycle:invite'],
+      ...(stage==='delayed'?{delay_hours:24}:{}),...(stage==='accept'?{partner_reply:'いいですね。何時に会いますか。'}:stage==='refuse'?{partner_reply:'すみません、明日はちょっと。'}:{})}}));
+  questions[0].model='';
+  questions.push({...base,task_id:'cycle:recall',item_id:'cycle-item-4',mode:'recall',objective:'structure',accepted_answers:['水を二本飲みました。']});
+  questions.push({...base,task_id:'cycle:choice',item_id:'cycle-item-5',mode:'choice',objective:'meaning',
+    q:'番号で選んでください。',opts:['本','鉛筆','本'],answer_index:2});
+  const lesson={id:'cycle-lesson',level:'N5',questions,exam_questions:questions};
+  env.ASSETS={fetch:async req=>new URL(req.url).pathname==='/course/teacher-N5.json'
+    ?Response.json({lessons:{[lesson.id]:lesson},items:{},scenarios:{}}):new Response('Not found',{status:404})};
+  const session_id='learning-cycle-session-0001';
+  const reference=index=>({lesson:{id:lesson.id,level:lesson.level},view:'checks',question_index:index,
+    task:{id:questions[index].task_id,revision},item_id:questions[index].item_id,session_id,attempt_id:`learning-cycle-attempt-000${index}`});
+  const answer=(index,response_text,extra={})=>{
+    const {item_id,...body}=reference(index);return {...body,event:'answer',response_text,...extra};
+  };
+  return {env,request,lesson,reference,answer};
+}
+
+test('bound exchange feedback uses raw same-session learner answers and persists advisory evidence idempotently',async()=>{
+  const {env,request,reference,answer}=await learningCycleFixture(),original=globalThis.fetch,calls=[];
+  globalThis.fetch=async(_url,options)=>{
+    const wire=JSON.parse(options.body);calls.push({system:wire.messages[0].content,evidence:JSON.parse(wire.messages.at(-1).content)});
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Ý nghĩa: em đã chọn công viên. Cấu trúc: cần xem cách nối giờ hẹn; chính tả không đủ để kết luận ngữ pháp. Em hãy thêm giờ cụ thể.'})}}]});
+  };
+  try{
+    const invitation='  一緒に公園へ行きませんか。  ',acceptance='三時に駅で会いましょう。';
+    assert.equal((await worker.fetch(request('/api/progress/record',answer(0,invitation)),env)).status,200);
+    const pending=answer(1,acceptance);delete pending.response_text;pending.event='assist';pending.help='hint';
+    assert.equal((await worker.fetch(request('/api/progress/record',pending),env)).status,200);
+    const hint=await worker.fetch(request('/api/practice/coach',{...reference(1),action:'hint'}),env);
+    assert.equal(hint.status,200);assert.doesNotMatch(JSON.stringify(calls[0].evidence),/SECRET|authored_answer|authored_explanation|"submission"/);
+    assert.equal(calls[0].evidence.exchange.prior_responses[0].response_text,invitation);
+    assert.equal(Object.hasOwn(calls[0].evidence,'criteria'),false,'pre-answer hints cannot receive post-answer writing criteria');
+    assert.equal((await worker.fetch(request('/api/progress/record',answer(1,acceptance)),env)).status,200);
+    assert.equal((await worker.fetch(request('/api/progress/record',answer(0,'別のセッションの回答。',
+      {attempt_id:'learning-other-invite-0001',session_id:'learning-other-session-0001'})),env)).status,200);
+    assert.equal((await worker.fetch(request('/api/progress/record',answer(0,'後の回答。',
+      {attempt_id:'learning-later-invite-0001'})),env)).status,200);
+    await env.DB.prepare('UPDATE task_attempt_evidence SET answered_at=? WHERE attempt_id=?')
+      .bind(new Date(Date.now()+3600000).toISOString(),'learning-later-invite-0001').run();
+    const body={...reference(1),action:'feedback',response_text:acceptance};
+    const response=await worker.fetch(request('/api/practice/coach',body),env),feedback=await response.json();
+    assert.equal(response.status,200);assert.equal(feedback.source_correct,null);assert.equal(feedback.correct,null);
+    assert.equal(feedback.basis,'self_report');assert.equal(feedback.verified,false);assert.equal(feedback.assessment.comparison,'unassessed');
+    assert.equal(feedback.assessment.submitted_text,acceptance);assert.equal(feedback.session_id,body.session_id);assert.ok(feedback.feedback_at);
+    const evidence=calls[1].evidence;assert.equal(evidence.submission,acceptance);
+    assert.equal(evidence.exchange.prior_responses.length,1);assert.equal(evidence.exchange.prior_responses[0].response_text,invitation);
+    assert.equal(evidence.exchange.partner_reply,'いいですね。何時に会いますか。');
+    assert.match(calls[1].system,/meaning, structure and orthography/);assert.match(calls[1].system,/uncertain/);
+    assert.deepEqual(await(await worker.fetch(request('/api/practice/coach',body),env)).json(),feedback);
+    assert.equal(calls.length,2,'a receipt retry does not generate a different feedback');
+    const row=await env.DB.prepare('SELECT * FROM task_attempt_evidence WHERE attempt_id=?').bind(body.attempt_id).first();
+    assert.equal(row.response_text,acceptance);assert.equal(row.basis,'self_report');assert.equal(row.help_mask,1);
+    assert.equal(row.assistance,'assisted');assert.equal(row.post_answer_help_mask,8);assert.deepEqual(JSON.parse(row.feedback_json),feedback);
+    const progress=await(await worker.fetch(request('/api/progress'),env)).json();
+    const saved=progress.evidence.find(row=>row.attempt_id===body.attempt_id);
+    assert.equal(saved.session_id,body.session_id);assert.equal(saved.feedback_at,feedback.feedback_at);assert.deepEqual(JSON.parse(saved.feedback_json),feedback);
+    assert.ok(saved.created_at);assert.ok(saved.answered_at);
+  }finally{globalThis.fetch=original;}
+});
+
+test('bound feedback rejects forged text, wrong session, cross-account attempts and injected prior context before inference',async()=>{
+  const {env,request,reference,answer}=await learningCycleFixture(),original=globalThis.fetch;let calls=0;
+  globalThis.fetch=async()=>{calls++;throw new Error('Unexpected provider request');};
+  try{
+    assert.equal((await worker.fetch(request('/api/progress/record',answer(0,'公園へ行きませんか。')),env)).status,200);
+    const base={...reference(0),action:'feedback',response_text:'公園へ行きませんか。'};
+    for(const change of [{response_text:'公園へ行きません。'},{session_id:'learning-other-session-0001'},
+      {attempt_id:'not-owned-attempt-0001'},{task:{...base.task,revision:'e'.repeat(64)}},{prior_responses:['forged history']},{session_id:'bad'}]) {
+      assert.ok([400,409].includes((await worker.fetch(request('/api/practice/coach',{...base,...change}),env)).status));
+    }
+    await env.DB.prepare(`INSERT INTO task_attempt_evidence
+      (user_id,attempt_id,lesson_id,level,task_id,item_id,revision,view,question_index,mode,identity_json,account_epoch,answer_payload,response_text,basis,created_at,answered_at,session_id)
+      SELECT 'another-user','other-account-attempt-0001',lesson_id,level,task_id,item_id,revision,view,question_index,mode,identity_json,account_epoch,answer_payload,response_text,basis,created_at,answered_at,'foreign-context-session-0001'
+      FROM task_attempt_evidence WHERE user_id='google:qa' AND attempt_id=?`).bind(base.attempt_id).run();
+    assert.equal((await worker.fetch(request('/api/practice/coach',{...base,attempt_id:'other-account-attempt-0001',user_id:'another-user'}),env)).status,409);
+    assert.equal((await worker.fetch(request('/api/practice/coach',{...reference(1),action:'feedback',response_text:'三時です。',attempt_id:undefined,session_id:'learning-other-session-0001'}),env)).status,409);
+    assert.equal((await worker.fetch(request('/api/practice/coach',{...reference(1),action:'hint',
+      attempt_id:undefined,session_id:'foreign-context-session-0001'}),env)).status,409,'another account cannot supply prior invitation text');
+    const {item_id,...choice}=reference(5);
+    assert.equal((await worker.fetch(request('/api/progress/record',{...choice,event:'answer',answer_index:0}),env)).status,200);
+    assert.equal((await worker.fetch(request('/api/practice/coach',{...reference(5),action:'feedback',answer_index:2}),env)).status,409,
+      'equal option labels do not authorize changing the original selected index');
+    assert.equal(calls,0);assert.equal((await env.DB.prepare('SELECT count(*) n FROM task_attempt_evidence WHERE feedback_json IS NOT NULL').first()).n,0);
+  }finally{globalThis.fetch=original;}
+});
+
+test('feedback assessment distinguishes cosmetics from negation and quantities without changing literal source outcomes',async()=>{
+  const {env,request,reference}=await learningCycleFixture(),original=globalThis.fetch,evidence=[];
+  globalThis.fetch=async(_url,options)=>{
+    evidence.push(JSON.parse(JSON.parse(options.body).messages.at(-1).content));
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Chỉ đối chiếu chuỗi nguồn; cần xem riêng ý nghĩa, cấu trúc và chính tả trước khi sửa.'})}}]});
+  };
+  try{
+    const {attempt_id,...base}=reference(4);
+    for(const [response_text,comparison] of [['  水 を二本飲みました  ','orthographic_difference'],
+      ['水を二本飲みませんでした。','different_reference'],['水を三本飲みました。','different_reference']]) {
+      const response=await worker.fetch(request('/api/practice/coach',{...base,action:'feedback',response_text}),env),body=await response.json();
+      assert.equal(response.status,200);assert.equal(body.source_correct,false);assert.equal(body.assessment.comparison,comparison);
+      assert.equal(body.assessment.submitted_text,response_text);assert.equal(body.assessment.semantic_verified,false);assert.equal(body.verified,false);
+      assert.deepEqual(evidence.at(-1).authored_answer,['水を二本飲みました。']);
+    }
+  }finally{globalThis.fetch=original;}
+});
+
+for(const transition of ['reset','delete','recreate'])test(`late advisory feedback cannot write across account ${transition}`,async()=>{
+  const {env,request,reference,answer}=await learningCycleFixture(),original=globalThis.fetch;
+  const submission=answer(0,'最初の回答です。'),body={...reference(0),action:'feedback',response_text:submission.response_text};
+  assert.equal((await worker.fetch(request('/api/progress/record',submission),env)).status,200);
+  globalThis.fetch=async()=>{
+    if(transition==='reset') {
+      await env.DB.prepare("UPDATE profiles SET task_evidence_epoch=lower(hex(randomblob(16))) WHERE user_id='google:qa'").run();
+      await env.DB.prepare("DELETE FROM task_attempt_evidence WHERE user_id='google:qa'").run();
+    } else {
+      await env.DB.prepare("DELETE FROM profiles WHERE user_id='google:qa'").run();
+      if(transition==='recreate')await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('google:qa','N5','test','now')").run();
+    }
+    if(transition!=='delete')assert.equal((await worker.fetch(request('/api/progress/record',{...submission,response_text:'新しいアカウントの回答です。'}),env)).status,200);
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'遅れた助言です。'})}}]});
+  };
+  try{
+    assert.equal((await worker.fetch(request('/api/practice/coach',body),env)).status,409);
+    const row=await env.DB.prepare('SELECT * FROM task_attempt_evidence WHERE user_id=? AND attempt_id=?').bind('google:qa',body.attempt_id).first();
+    if(transition==='delete')assert.equal(row,null);
+    else {assert.equal(row.response_text,'新しいアカウントの回答です。');assert.equal(row.feedback_json,null);assert.equal(row.feedback_at,null);assert.equal(row.post_answer_help_mask,0);assert.equal(row.basis,'self_report');}
+  }finally{globalThis.fetch=original;}
+});
+
+test('failed bound feedback never stores a canned semantic verdict or changes the answer basis',async()=>{
+  const {env,request,reference,answer}=await learningCycleFixture(),original=globalThis.fetch;
+  assert.equal((await worker.fetch(request('/api/progress/record',answer(0,'公園へ行きませんか。')),env)).status,200);
+  globalThis.fetch=async()=>Response.json({choices:[{message:{content:JSON.stringify({reply:'偽の採点',correct:true})}}]});
+  try{
+    assert.equal((await worker.fetch(request('/api/practice/coach',{...reference(0),action:'feedback',response_text:'公園へ行きませんか。'}),env)).status,503);
+    const row=await env.DB.prepare('SELECT * FROM task_attempt_evidence WHERE attempt_id=?').bind(reference(0).attempt_id).first();
+    assert.equal(row.feedback_json,null);assert.equal(row.source_correct,null);assert.equal(row.basis,'self_report');assert.equal(row.post_answer_help_mask,0);
+  }finally{globalThis.fetch=original;}
+});
+
+test('delayed eligibility requires one complete due prior session and withholds all older answer text',async()=>{
+  const {env,request,reference,answer}=await learningCycleFixture(),original=globalThis.fetch,calls=[];
+  globalThis.fetch=async(_url,options)=>{
+    calls.push(JSON.parse(JSON.parse(options.body).messages.at(-1).content));
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Hãy tự chọn hoạt động trong tình huống mới; chưa có điểm số xác minh.'})}}]});
+  };
+  try{
+    const later={...reference(3),session_id:'learning-cycle-later-0001',action:'hint',attempt_id:undefined};
+    assert.equal((await worker.fetch(request('/api/practice/coach',later),env)).status,409);
+    for(const index of [0,1,2])assert.equal((await worker.fetch(request('/api/progress/record',answer(index,`古い回答${index}。`)),env)).status,200);
+    assert.equal((await worker.fetch(request('/api/practice/coach',later),env)).status,409,'not yet due');
+    await env.DB.prepare('UPDATE task_attempt_evidence SET answered_at=?').bind(new Date(Date.now()-25*3600000).toISOString()).run();
+    await env.DB.prepare("UPDATE task_attempt_evidence SET session_id='split-prior-session-0001' WHERE task_id='cycle:refuse'").run();
+    assert.equal((await worker.fetch(request('/api/practice/coach',later),env)).status,409,'cannot assemble a cycle from different sessions');
+    await env.DB.prepare("UPDATE task_attempt_evidence SET session_id=? WHERE task_id='cycle:refuse'").bind(reference(0).session_id).run();
+    const response=await worker.fetch(request('/api/practice/coach',later),env);
+    assert.equal(response.status,200);assert.equal(calls.length,1);assert.deepEqual(calls[0].exchange.prior_responses,[]);
+    assert.doesNotMatch(JSON.stringify(calls[0]),/古い回答|SECRET|authored_answer|authored_explanation|"submission"/);
+  }finally{globalThis.fetch=original;}
+});
+
+test('account invalidation during RAG retrieval prevents feedback inference with or without a bound attempt',async()=>{
+  for(const bound of [true,false]){
+    const {env,request,reference,answer}=await learningCycleFixture(),original=globalThis.fetch;
+    const submission=answer(0,'一緒に勉強しませんか。');
+    assert.equal((await worker.fetch(request('/api/progress/record',submission),env)).status,200);
+    const originalAssets=env.ASSETS;let invalidated=false,calls=0;
+    env.ASSETS={fetch:async assetRequest=>{
+      if(new URL(assetRequest.url).pathname==='/course/learning-corpus.json'&&!invalidated){
+        invalidated=true;await env.DB.prepare("UPDATE profiles SET task_evidence_epoch=lower(hex(randomblob(16))) WHERE user_id='google:qa'").run();
+      }
+      return originalAssets.fetch(assetRequest);
+    }};
+    globalThis.fetch=async()=>{calls++;throw new Error('Invalidated feedback must not reach the provider');};
+    try{
+      const {attempt_id,...unbound}=reference(0),body={...(bound?reference(0):unbound),action:'feedback',response_text:submission.response_text};
+      assert.equal((await worker.fetch(request('/api/practice/coach',body),env)).status,409);
+      assert.equal(invalidated,true);assert.equal(calls,0);
+    }finally{globalThis.fetch=original;}
+  }
+});
+
+for(const transition of ['reset','delete','recreate'])test(`legacy unbound feedback cannot return successful stale text after account ${transition}`,async()=>{
+  const {env,request,reference}=await learningCycleFixture(),original=globalThis.fetch;
+  const {attempt_id,...base}=reference(0);
+  globalThis.fetch=async()=>{
+    if(transition==='reset')await env.DB.prepare("UPDATE profiles SET task_evidence_epoch=lower(hex(randomblob(16))) WHERE user_id='google:qa'").run();
+    else {
+      await env.DB.prepare("DELETE FROM profiles WHERE user_id='google:qa'").run();
+      if(transition==='recreate')await env.DB.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('google:qa','N5','test','now')").run();
+    }
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'STALE PRIVATE FEEDBACK'})}}]});
+  };
+  try{
+    const response=await worker.fetch(request('/api/practice/coach',{...base,action:'feedback',response_text:'一緒に勉強しませんか。'}),env);
+    assert.equal(response.status,409);assert.doesNotMatch(await response.text(),/STALE PRIVATE FEEDBACK/);
+  }finally{globalThis.fetch=original;}
+});
+
+for(const level of ['N5','N4','N3','N2','N1'])test(`${level} authored open cycles preserve actual text, require current-session continuation and gate heldout review before inference`,async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;await withApi(env,request);
+  const lessons=Object.values(teacherCatalogs[level].lessons).filter(lesson=>lesson.authorship==='ai_authored');
+  const upstream=[];
+  globalThis.fetch=async(_url,options)=>{
+    const wire=JSON.parse(options.body);upstream.push(JSON.parse(wire.messages.at(-1).content));
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Đây là phản hồi giả lập để kiểm tra ranh giới dữ liệu, không đánh giá chất lượng tiếng Nhật.'})}}]});
+  };
+  try{
+    for(const [lessonNumber,lesson] of lessons.entries()){
+      const index=lesson.questions.findIndex(task=>['produce','invite'].includes(task.exchange?.stage)),root=lesson.questions[index];
+      const nextIndex=lesson.questions.findIndex(task=>['respond','revise','accept'].includes(task.exchange?.stage)),next=lesson.questions[nextIndex];
+      const laterIndex=lesson.questions.findIndex(task=>task.exchange?.stage==='delayed'),later=lesson.questions[laterIndex];
+      assert.ok(root && next && later,lesson.id);
+      const session_id=`all-level-${level}-session-${String(lessonNumber).padStart(4,'0')}`;
+      const reference=position=>({lesson:{id:lesson.id,level},view:'checks',question_index:position,session_id,
+        task:{id:lesson.questions[position].task_id,revision:lesson.questions[position].revision}});
+      const body=(position,text)=>({...reference(position),attempt_id:`all-level-${level}-${String(lessonNumber).padStart(4,'0')}-${position}-answer`,event:'answer',response_text:text});
+      assert.equal((await worker.fetch(request('/api/progress/record',body(nextIndex,'まだ前の回答がない。')),env)).status,409);
+      const raw=`  自分で選んだ内容${lessonNumber}をここに書きます。  `;
+      let response=await worker.fetch(request('/api/progress/record',body(index,raw)),env),saved=await response.json();
+      assert.equal(response.status,200,JSON.stringify(saved));assert.equal(saved.response_text,raw);
+      assert.equal(saved.source_correct,null);assert.equal(saved.verified,false);
+      const revised=`${lessonNumber}の自分の回答を確認し、必要な条件を明確にしました。`;
+      response=await worker.fetch(request('/api/progress/record',body(nextIndex,revised)),env);assert.equal(response.status,200);
+      const newSession={...reference(laterIndex),session_id:session_id+'-later'};
+      if(lessonNumber===0){
+        const before=upstream.length;
+        assert.equal((await worker.fetch(request('/api/practice/coach',{...newSession,action:'hint'}),env)).status,409);
+        assert.equal(upstream.length,before,'not-due task never reaches inference');
+      }
+      if(lessonNumber===0){
+        response=await worker.fetch(request('/api/practice/coach',{...reference(nextIndex),action:'feedback',response_text:revised,
+          attempt_id:body(nextIndex,revised).attempt_id}),env);
+        const feedback=await response.json();assert.equal(response.status,200,JSON.stringify(feedback));
+        assert.equal(feedback.source_correct,null);assert.equal(upstream.at(-1).exchange.prior_responses[0].response_text,raw);
+      }
+      // This changes only the isolated test database; it proves state, not real retention.
+      for(const requiredId of later.exchange.prior_task_ids){
+        const requiredIndex=lesson.questions.findIndex(task=>task.task_id===requiredId);
+        if(requiredIndex!==index && requiredIndex!==nextIndex)assert.equal((await worker.fetch(request('/api/progress/record',body(requiredIndex,'別の仮定の分岐にも返答します。')),env)).status,200);
+      }
+      await env.DB.prepare('UPDATE task_attempt_evidence SET answered_at=? WHERE lesson_id=? AND session_id=?')
+        .bind(new Date(Date.now()-25*3600000).toISOString(),lesson.id,session_id).run();
+      if(lessonNumber===0){
+        response=await worker.fetch(request('/api/practice/coach',{...newSession,action:'hint'}),env);
+        assert.equal(response.status,200);assert.deepEqual(upstream.at(-1).exchange.prior_responses,[]);
+        assert.ok(!JSON.stringify(upstream.at(-1)).includes(raw),'heldout inference receives no old response');
+      }
+      response=await worker.fetch(request('/api/progress/record',{...body(laterIndex,'別の状況で新しく自分の考えを書きます。'),session_id:newSession.session_id}),env);
+      assert.equal(response.status,200);assert.equal((await response.json()).basis,'self_report');
+    }
+    const summary=await(await worker.fetch(request('/api/progress'),env)).json();
+    assert.equal(summary.verified.answered,0);assert.ok(summary.self_report.answered>=lessons.length*3);
+  }finally{globalThis.fetch=original;}
+});
+
+test('every quarantined original source slot rejects answer and teaching before provider use without dropping exam coverage',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;await withApi(env,request);let calls=0,blocked=0;
+  globalThis.fetch=async()=>{calls++;throw new Error('Quarantine reached provider');};
+  try{
+    for(const [level,catalog] of Object.entries(teacherCatalogs))for(const lesson of Object.values(catalog.lessons)){
+      if(!lesson.exam_questions)continue;
+      for(const [index,task] of lesson.questions.entries())if(task.review_status==='quarantined'){
+        blocked++;
+        const reference={lesson:{id:lesson.id,level},view:'exam',task:{id:task.task_id,revision:task.revision}};
+        assert.equal((await worker.fetch(request('/api/progress/record',{...reference,question_index:index,
+          attempt_id:`quarantined-slot-${level}-${blocked}`,event:'answer',answer_index:task.answer_index}),env)).status,409);
+        assert.equal((await worker.fetch(request('/api/practice/coach',{...reference,question_index:index,action:'hint'}),env)).status,409);
+        assert.equal((await worker.fetch(request('/api/practice/coach',{...reference,focus:{kind:'question',index},action:'teach'}),env)).status,409);
+      }
+    }
+    assert.equal(blocked,10);assert.equal(calls,0);
+    assert.equal((await(await worker.fetch(request('/api/progress'),env)).json()).source_advisory.answered,0);
+  }finally{globalThis.fetch=original;}
+});
+
+test('feedback accepts bounded full-length current and actual prior writing without duplicating submitted text in model evidence',async()=>{
+  const {env,request,reference,answer}=await learningCycleFixture(),original=globalThis.fetch,evidence=[];
+  globalThis.fetch=async(_url,options)=>{
+    evidence.push(JSON.parse(JSON.parse(options.body).messages.at(-1).content));
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'Phản hồi giả lập cho văn bản dài, không phải chấm ngữ nghĩa.'})}}]});
+  };
+  try{
+    const prior='前'.repeat(4000),current='今'.repeat(4000);
+    assert.equal((await worker.fetch(request('/api/progress/record',answer(0,prior)),env)).status,200);
+    assert.equal((await worker.fetch(request('/api/progress/record',answer(1,current)),env)).status,200);
+    const response=await worker.fetch(request('/api/practice/coach',{...reference(1),action:'feedback',response_text:current}),env);
+    const feedback=await response.json();assert.equal(response.status,200,JSON.stringify(feedback));
+    assert.equal(feedback.assessment.submitted_text,current,'public receipt retains original response diagnostics');
+    assert.equal(evidence[0].submission,current);assert.equal(evidence[0].exchange.prior_responses[0].response_text,prior);
+    assert.equal(Object.hasOwn(evidence[0].assessment,'submitted_text'),false);
+    assert.equal((JSON.stringify(evidence[0]).match(new RegExp(current,'g')) || []).length,1);
+  }finally{globalThis.fetch=original;}
 });
