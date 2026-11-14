@@ -1623,3 +1623,17 @@ test('feedback accepts bounded full-length current and actual prior writing with
     assert.equal((JSON.stringify(evidence[0]).match(new RegExp(current,'g')) || []).length,1);
   }finally{globalThis.fetch=original;}
 });
+
+test('history threads list the general chat and each lesson thread for the signed-in learner only',async()=>{
+  const {env,request}=await authenticated();
+  const lessonId=Object.keys(teacherCatalogs.N5.lessons)[0],now=new Date().toISOString();
+  await env.DB.prepare("INSERT INTO conversations(user_id,role,content,timestamp,context_key) VALUES('google:qa','user','xin chào','"+now+"','chat'),('google:qa','bot','Chào em',?,'chat'),('google:qa','user','bài này',?,?),('google:other','user','không phải của em',?,'chat'),('google:qa','user','cũ',?,'legacy')").bind(now,now,'lesson:N5:'+lessonId,now,now).run();
+  const response=await worker.fetch(request('/api/history/threads?user_id=google:other'),env);
+  assert.equal(response.status,200);
+  const threads=await response.json();
+  assert.deepEqual(threads.map(t=>t.scope).sort(),['chat','lesson:N5:'+lessonId].sort());
+  const general=threads.find(t=>t.scope==='chat'),lesson=threads.find(t=>t.lesson);
+  assert.equal(general.count,2);assert.equal(general.snippet,'Chào em');assert.equal(general.title,'Trò chuyện chung');
+  assert.deepEqual(lesson.lesson,{level:'N5',id:lessonId});assert.equal(lesson.title,teacherCatalogs.N5.lessons[lessonId].title);
+  assert.equal((await worker.fetch(new Request('https://vjbot.test/api/history/threads'),env)).status,401);
+});

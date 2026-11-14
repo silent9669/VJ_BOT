@@ -45,7 +45,7 @@ button, a, [role="button"], summary, label, select { touch-action: manipulation;
 button, [role="button"] { -webkit-touch-callout: none; }
 img { -webkit-user-drag: none; }
 @supports (height: 100dvh) {
-  body, .app-shell, .app-sidebar, #progress-panel { min-height: 100dvh; }
+  body, .app-shell, .app-main, .app-sidebar, #progress-panel { min-height: 100dvh; }
 }
 /* iOS Safari zooms the page when a focused field is under 16px. */
 @media (pointer: coarse) {
@@ -78,6 +78,7 @@ img { -webkit-user-drag: none; }
 @media (max-width: 768px) {
   .lesson-footer { bottom: var(--bar-h); background: var(--glass) !important; -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border-top: .5px solid var(--glass-hair); }
   .sketch-canvas, .tab-panel { padding-bottom: calc(var(--bar-h) + 24px) !important; }
+  .sketch-canvas { min-height: calc(100dvh - 56px) !important; }
   .sensei-floating-dock { bottom: calc(var(--bar-h) + 10px) !important; }
   .speech-player { bottom: calc(var(--bar-h) + 16px); }
   .speech-notice { inset: auto 16px calc(var(--bar-h) + 16px); }
@@ -201,8 +202,10 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
 
 /* Chat fills the space between the top bar and the (taller, safe-area aware) tab bar. */
 @media (max-width: 768px) {
-  #panel-classroom .classroom-chat-window { height: calc(100dvh - 76px - var(--bar-h)); }
-  body:has(#classroom-voice:not([hidden]) #live-end:not([hidden])) #panel-classroom .classroom-chat-window { height: calc(100dvh - 76px); }
+  #panel-classroom .classroom-chat-window { height: calc(100dvh - 72px - var(--bar-h)); }
+  .sketch-canvas:has(#panel-classroom.active), #panel-classroom.tab-panel { padding-bottom: 0 !important; }
+  body:has(#panel-classroom.active) { overscroll-behavior-y: none; }
+  body:has(#classroom-voice:not([hidden]) #live-end:not([hidden])) #panel-classroom .classroom-chat-window { height: calc(100dvh - 72px); }
 }
 
 /* Voice: whole-turn stamps, turn indicator, quick commands */
@@ -289,8 +292,8 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
   #app-sidebar #level-chip { flex: 1; min-height: 40px; padding: 0 14px; border: .5px solid var(--glass-hair); border-radius: 12px; background: #fff; font-size: 15px; font-weight: 600; justify-content: space-between; }
   #app-sidebar .sidebar-streak { flex: none; padding: 0 12px; line-height: 40px; border-radius: 12px; background: rgba(50, 93, 67, .1); color: var(--accent, #325d43); font-size: 13px; font-weight: 600; }
   #app-sidebar .sidebar-nav { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 10px 0; -webkit-overflow-scrolling: touch; }
-  #app-sidebar .sidebar-group-label { margin: 14px 12px 6px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
-  #app-sidebar .sidebar-nav-item { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px !important; border-radius: 12px !important; font-size: 16px; text-align: left; }
+  #app-sidebar .sidebar-group-label { margin: 10px 12px 4px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--muted); }
+  #app-sidebar .sidebar-nav-item { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px !important; border-radius: 12px !important; font-size: 16px; text-align: left; }
   #app-sidebar .sidebar-nav-item.active { background: rgba(50, 93, 67, .12) !important; color: var(--accent, #325d43); font-weight: 600; border: 0 !important; box-shadow: none !important; }
   #app-sidebar .sidebar-companion { flex: none !important; min-height: 0; padding: 6px 10px 0 !important; }
   #app-sidebar #lam-walker { position: static !important; display: flex; align-items: center; gap: 12px; width: 100%; height: auto; padding: 8px 12px; border: .5px solid var(--glass-hair); border-radius: 14px; background: #fff; transform: none !important; }
@@ -299,3 +302,56 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
   #app-sidebar .sidebar-footer { padding: 6px 10px calc(10px + var(--sa-b)) !important; flex: none; }
   #app-sidebar .sidebar-sources { padding: 6px 12px; font-size: 13px; }
 }
+
+/* Login divider: one line each side of the word, never through it. */
+.auth-divider { position: static !important; display: flex; align-items: center; gap: 12px; margin: 18px 0 14px; color: var(--muted); font-size: 13px; }
+.auth-divider::before, .auth-divider::after { content: ''; position: static !important; flex: 1; height: 1px; background: var(--line, rgba(60, 60, 67, .2)); }
+
+/* History sheet */
+.history-sheet { width: min(100vw, 520px); max-width: 100vw; max-height: 78dvh; margin: auto auto 0; padding: 0; border: 0; border-radius: 22px 22px 0 0; overflow: hidden; }
+.history-sheet::backdrop { background: rgba(20, 24, 21, .32); }
+.history-sheet[open] { display: flex; flex-direction: column; }
+.history-sheet > header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 8px; flex: none; }
+.history-sheet h2 { margin: 0; font-size: 20px; }
+.history-sheet header button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: rgba(120, 120, 128, .16); font-size: 20px; line-height: 1; color: var(--ink); }
+#chat-history-list { overflow-y: auto; padding: 4px 12px calc(14px + var(--sa-b)); -webkit-overflow-scrolling: touch; }
+.history-row { display: flex; flex-direction: column; gap: 3px; width: 100%; padding: 12px 12px; border: 0; border-bottom: .5px solid var(--glass-hair, rgba(60, 60, 67, .2)); border-radius: 12px; background: none; text-align: left; color: var(--ink); }
+.history-row > span { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.history-row strong { font-size: 16px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-row time { flex: none; font-size: 12px; color: var(--muted); }
+.history-row small { font-size: 14px; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.history-row[aria-current=true] { background: rgba(50, 93, 67, .1); }
+.history-empty { margin: 24px 0; text-align: center; color: var(--muted); }
+#chat-history-list:focus{outline:0}
+
+/* Filter rows: label above field, both columns start on the same line. */
+@media (max-width: 768px) {
+  .lesson-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 140px; gap: 10px; align-items: end; }
+  .lesson-toolbar > label { margin: 0; }
+  .lesson-toolbar > label { display: flex !important; flex-direction: column; gap: 6px; font-size: 13px !important; font-weight: 600; line-height: 1.2; }
+  .lesson-toolbar input, .lesson-toolbar select { width: 100%; height: 46px; margin: 0; box-sizing: border-box; padding: 0 14px; border: .5px solid var(--glass-hair, rgba(60, 60, 67, .29)) !important; border-radius: 12px; background-color: #fff; font-size: 16px !important; font-weight: 400; }
+}
+
+/* Lesson footer: the main action on top, the others share the second row. */
+@media (max-width: 768px) {
+  .lesson-footer { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px; }
+  .lesson-footer > * { min-width: 0; min-height: 46px; }
+  .lesson-footer .modal-practice-btn { grid-column: 1 / -1; order: -1; }
+  .lesson-footer > .stage-btn:last-child:nth-child(2) { grid-column: 1 / -1; }
+}
+/* Reveal panels (reading, meaning) ease open instead of jumping. */
+@media (prefers-reduced-motion: no-preference) {
+  details[open] > :not(summary) { animation: reveal .28s cubic-bezier(.32, .72, 0, 1); }
+  @keyframes reveal { from { opacity: 0; transform: translateY(-6px); } }
+}
+
+/* The floating avatar replaces the drawer card, so every menu row fits without scrolling. */
+@media (max-width: 899px) { #app-sidebar .sidebar-companion { display: none !important; } }
+
+/* Account / sign-in sheet: sized to its content, round close button, no ring on the programmatic focus. */
+@media (max-width: 768px) {
+  #auth-dialog[open] { display: block !important; padding-bottom: var(--sa-b) !important; height: fit-content !important; min-height: 0 !important; max-height: 88dvh; margin: auto auto 0 !important; border-radius: 22px 22px 0 0 !important; }
+  #auth-close { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0 !important; border-radius: 50% !important; background: rgba(120, 120, 128, .16) !important; color: var(--ink); font-size: 20px; line-height: 1; }
+}
+dialog :focus:not(:focus-visible) { outline: 0; }
+#auth-close:focus-visible { outline: 0; }
