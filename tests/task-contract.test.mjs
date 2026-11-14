@@ -150,35 +150,45 @@ test('catalog uses the same complete canonical inventory and SHA256 revisions in
   assert.equal(writing.length,1);assert.equal(writing[0].mode,'writing');
 });
 
-test('committed N5 packages use the existing curriculum and canonical tasks without invented scoring authority',async()=>{
-  const c=context(),source=JSON.parse(readFileSync('static/course/n5-teaching.json','utf8'));
-  await c.loadPracticalCourse();await c.ensureLessons('N5');
-  const units=c.createStudyPlan('N5'),unit=units.find(unit=>unit.id==='n5-teaching:v1'),seen=new Set();
-  assert.equal(unit.steps.length,source.lessons.length);
-  const catalogs=await buildTeacherCatalog();
-  for(const step of unit.steps){
-    const authored=source.lessons.find(lesson=>lesson.id===step.lesson.id),tasks=c.lessonQuestions(step.lesson,'N5','grammar'),canonical=catalogs.N5.lessons[authored.id];
-    for(const prerequisite of authored.prerequisites)assert.ok(seen.has(prerequisite),prerequisite);
-    seen.add(authored.id);assert.equal(tasks.length,authored.tasks.length);
-    assert.equal(canonical.authorship,'ai_authored');assert.equal(canonical.review.human_approved,false);
-    assert.equal(canonical.eligibility.scored_assessment,false);assert.equal(canonical.eligibility.mastery_credit,false);
-    assert.deepEqual(canonical.overview.common_errors,authored.common_errors);
-    for(const reference of authored.source_refs)assert.ok(canonical.sources.some(source=>source.id===reference.chunk_id && source.role==='background_reference_not_approval'));
-    for(const [index,task] of tasks.entries()){
-      const original=authored.tasks[index];
-      assert.equal(task.task_id,original.id);assert.equal(task.item_id,original.id);assert.equal(task.source_position,index);
-      assert.equal(task.explanation,original.rationale);assert.equal(task.review_status,'unreviewed');assert.equal(task.unavailable_reason,'');
-      assert.equal(canonical.questions[index].revision,hash(c,task));
-      if(original.mode==='choice'){
-        assert.deepEqual(plain(task.opts),original.options.map(option=>option.text));
-        assert.equal(original.options[task.answer_index].id,original.answer_option_id);
-      }else{
-        assert.equal(task.mode,'recall');assert.equal(task.answer_index,null);
-        assert.deepEqual(plain(task.accepted_answers),original.accepted_variants);
+test('all-level draft packages preserve canonical context, authored IDs, explicit variants and non-scored boundaries',async()=>{
+  const c=context(),catalogs=await buildTeacherCatalog(),practical=JSON.parse(readFileSync('static/course/practical.json','utf8')),taskIds=new Set();
+  await c.loadPracticalCourse();
+  for(const level of ['N5','N4','N3','N2','N1']){
+    const source=JSON.parse(readFileSync(`static/course/${level.toLowerCase()}-teaching.json`,'utf8'));
+    await c.ensureLessons(level);
+    const unit=c.createStudyPlan(level).find(unit=>unit.id===`${level.toLowerCase()}-teaching:v1`),seen=new Set();
+    assert.equal(unit.steps.length,source.lessons.length);
+    for(const step of unit.steps){
+      const authored=source.lessons.find(lesson=>lesson.id===step.lesson.id),tasks=c.lessonQuestions(step.lesson,level,'grammar'),canonical=catalogs[level].lessons[authored.id];
+      for(const prerequisite of authored.prerequisites)assert.ok(seen.has(prerequisite),prerequisite);
+      seen.add(authored.id);assert.equal(tasks.length,authored.tasks.length);
+      assert.equal(canonical.authorship,'ai_authored');assert.equal(canonical.review.human_approved,false);
+      assert.equal(canonical.eligibility.scored_assessment,false);assert.equal(canonical.eligibility.mastery_credit,false);
+      assert.deepEqual(canonical.overview.common_errors,authored.common_errors);
+      assert.deepEqual(canonical.examples.map(example=>example.context),authored.examples.map(example=>example.context));
+      for(const reference of authored.source_refs){
+        assert.ok(canonical.sources.some(source=>source.id===reference.chunk_id && source.role==='background_reference_not_approval'));
+        if(level!=='N5')assert.ok(practical.units.some(unit=>unit.id===reference.chunk_id && unit.level===level));
+      }
+      for(const [index,task] of tasks.entries()){
+        const original=authored.tasks[index];
+        assert.equal(taskIds.has(original.id),false,`a progress identity cannot belong to two draft tasks: ${original.id}`);taskIds.add(original.id);
+        assert.equal(task.task_id,original.id);assert.equal(task.item_id,original.id);assert.equal(task.source_position,index);
+        assert.equal(task.passage,original.passage || '');assert.equal(task.instruction,original.instruction || '');
+        assert.equal(task.explanation,original.rationale);assert.equal(task.review_status,'unreviewed');assert.equal(task.unavailable_reason,'');
+        assert.equal(canonical.questions[index].revision,hash(c,task));
+        if(original.mode==='choice'){
+          assert.deepEqual(plain(task.opts),original.options.map(option=>option.text));
+          assert.equal(new Set(original.options.map(option=>option.id)).size,original.options.length,'original option identities must remain unambiguous');
+          assert.equal(original.options[task.answer_index].id,original.answer_option_id);
+        }else{
+          assert.equal(task.mode,'recall');assert.equal(task.answer_index,null);
+          assert.deepEqual(plain(task.accepted_answers),original.accepted_variants);
+        }
       }
     }
+    assert.equal(seen.size,level==='N5'?20:practical.units.filter(unit=>unit.level===level).length);
   }
-  assert.equal(seen.size,20);
 });
 
 test('curriculum attempted coverage requires a current revision and never becomes manual completion or verified mastery',()=>{
@@ -189,4 +199,23 @@ test('curriculum attempted coverage requires a current revision and never become
   const state=c.studyStepState(step,new Map(),evidence,revisions);
   assert.equal(state.submitted,1);assert.equal(state.complete,false);assert.equal(state.reviewed,0);
   assert.equal(c.studyStepState(step,new Map(),evidence).submitted,0);
+});
+
+test('draft admission rejects falsely approved or cross-level packages and remains explicitly retryable',async()=>{
+  const c=context(),original=JSON.parse(readFileSync('static/course/n5-teaching.json','utf8'));
+  for(const change of [
+    source=>source.human_approved=true,
+    source=>source.lessons[0].review.human_approved=true,
+    source=>source.lessons[0].level='N1',
+    source=>source.lessons[0].eligibility.mastery_credit=true,
+    source=>source.lessons[0].eligibility.scored_assessment=true
+  ]){
+    const source=structuredClone(original);change(source);
+    c.fetch=async()=>({ok:true,json:async()=>source});
+    await assert.rejects(c.ensureLessons('N5'),/giới hạn sử dụng/);
+    assert.equal(c.window.JLPT_DATA.curriculum.N5.skills.grammar.some(lesson=>lesson.editorial),false);
+  }
+  c.fetch=async path=>({ok:true,json:async()=>JSON.parse(readFileSync('static/'+path,'utf8'))});
+  await c.ensureLessons('N5');
+  assert.equal(c.window.JLPT_DATA.curriculum.N5.skills.grammar.filter(lesson=>lesson.editorial).length,original.lessons.length);
 });

@@ -62,7 +62,7 @@ test('practical roadmaps follow authored goals and link only verified source rec
       assert.ok(context.window.JLPT_DATA.exams[level][unit.examIndex].questions.length);
       assert.equal(unit.exam.questions.length,3);assert.ok(unit.exam.questions.every(q=>q.passage && q.explanation));
     }
-    const chapters=units.filter(u=>u.type==='grammar' && u.id!=='n5-teaching:v1');assert.equal(chapters.length,8);
+    const chapters=units.filter(u=>u.type==='grammar' && u.id!==`${level.toLowerCase()}-teaching:v1`);assert.equal(chapters.length,8);
     for(const chapter of chapters)assert.ok(chapter.steps.every(s=>s.lesson.source==='OpenJLPT' && s.ids.length));
     const step=units.find(u=>!u.optional).steps[0];
     const records=new Map(step.ids.map(id=>[id,{correct:0,incorrect:1,last_correct:0}]));

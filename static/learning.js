@@ -3,21 +3,24 @@ const lessonLoads = new Map();
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-async function loadN5Teaching(){
-  const response=await fetch('course/n5-teaching.json');
-  if(!response.ok)throw new Error('Không tải được bộ bài N5 Việt–Nhật. Hãy thử lại.');
+async function loadTeachingDrafts(level){
+  const response=await fetch(`course/${level.toLowerCase()}-teaching.json`);
+  if(!response.ok)throw new Error(`Không tải được bộ bài ${level} Việt–Nhật. Hãy thử lại.`);
   const source=await response.json();
   if(source.version!==1 || source.human_approved!==false || !Array.isArray(source.lessons)
-    || source.lessons.some(lesson=>lesson.level!=='N5' || lesson.eligibility?.reference_display!==true
-      || lesson.eligibility?.provider_teaching!=='advisory_only' || lesson.eligibility?.scored_assessment!==false
-      || lesson.eligibility?.mastery_credit!==false || !Array.isArray(lesson.tasks)))throw new Error('Bộ bài N5 chưa có cấu trúc và giới hạn sử dụng phù hợp.');
+    || source.lessons.some(lesson=>lesson.level!==level || lesson.review?.human_approved!==false
+      || lesson.eligibility?.reference_display!==true || lesson.eligibility?.provider_teaching!=='advisory_only'
+      || lesson.eligibility?.scored_assessment!==false || lesson.eligibility?.mastery_credit!==false
+      || !Array.isArray(lesson.tasks)))throw new Error(`Bộ bài ${level} chưa có cấu trúc và giới hạn sử dụng phù hợp.`);
   const titles=new Map(source.lessons.map(lesson=>[lesson.id,lesson.title]));
   return [...source.lessons].sort((a,b)=>a.order-b.order).map(lesson=>({
-    ...lesson,lesson:lesson.order,editorial:true,source:'AI-authored N5 study drafts',sourceLabel:'VJBot · AI biên soạn · tham khảo',language:'vi',
+    ...lesson,lesson:lesson.order,editorial:true,source:`AI-authored ${level} study drafts`,sourceLabel:'VJBot · AI biên soạn · chờ bạn duyệt',language:'vi',
     meaning_vi:lesson.goal,summary:lesson.goal,prerequisite_titles:lesson.prerequisites.map(id=>titles.get(id)),
     examples:lesson.examples.map(example=>({...example,ro:example.reading})),
     drills:lesson.tasks.map(task=>({
       task_key:task.id,item_id:task.id,source_identity:task.id,q:task.prompt,
+      instruction:task.instruction || '',passage:task.passage || '',
+      requires_passage:Boolean(task.passage),skill:task.skill || 'grammar',
       mode:task.mode==='short_text'?'recall':task.mode,
       opts:task.mode==='choice'?task.options.map(option=>option.text):[],
       answer_index:task.mode==='choice'?task.options.findIndex(option=>option.id===task.answer_option_id):null,
@@ -28,7 +31,7 @@ async function loadN5Teaching(){
 }
 async function ensureLessons(level) {
   if (!lessonLoads.has(level)) lessonLoads.set(level, (async () => {
-    const editorial=level==='N5'?await loadN5Teaching():[];
+    const editorial=await loadTeachingDrafts(level);
     const [vocab,grammar,kanji] = await Promise.all(['vocab','grammar','kanji'].map(async kind => {
       const response = await fetch(`openjlpt/${kind}-${level.toLowerCase()}.json`);
       if(!response.ok) throw new Error('Không tải được bài học. Hãy thử lại.');

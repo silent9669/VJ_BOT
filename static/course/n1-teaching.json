@@ -1,0 +1,315 @@
+{
+  "version": 1,
+  "status": "ai_draft",
+  "authorship": "VJBot AI-authored teaching drafts; not publisher text or official JLPT exercises.",
+  "rights_basis": "original_ai_authored",
+  "publisher_permission_independently_verified": false,
+  "human_approved": false,
+  "level_note": "N1 is a study-track estimate, not official JLPT certification. These are focused advanced reading and writing drafts, not full-length examination passages or a complete syllabus.",
+  "integration_status": "draft_for_user_review",
+  "normalization_policy": "Explicit task-bound variants; not exhaustive grammar judgments.",
+  "editorial_reviews": [{"review_kind":"independent_ai_not_human","reviewer":"ReviewN2N1Teaching","scope":"All two N1 lessons, ten tasks, eight examples and six common errors against the original VJBot practical units.","findings_resolved":["The online-application example now retains the source beneficiary qualifier 多くの人 and matches Japanese/Vietnamese modality; its reading was updated consistently."],"decision":"The identified beneficiary-scope/translation issue was corrected. Draft remains advisory and requires user quality review before merge.","human_approved":false}],
+  "lessons": [
+    {
+      "id": "teaching:v1:N1:argument",
+      "revision": 1,
+      "order": 1,
+      "level": "N1",
+      "title": "Phân tích lập luận: giới hạn suy diễn và hỗ trợ có điều kiện",
+      "goal": "Tách lập luận chính khỏi ví dụ và nêu giới hạn của kết luận.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": { "status": "ai_draft", "human_approved": false },
+      "eligibility": { "reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false },
+      "source_refs": [
+        {
+          "chunk_id": "practical:v1:N1:argument",
+          "url": "#curriculum/N1/lesson/reading/practical%3Av1%3AN1%3Aargument%3Asituation",
+          "source_name": "VJBot · Phân tích luận điểm và phản biện",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn nội bộ: VJBot · Phân tích luận điểm và phản biện [practical:v1:N1:argument]. Bài giảng AI chưa có phê duyệt của con người; ví dụ trong lập luận không phải dữ liệu khảo sát đã đo.",
+      "formula": "Pからといって、必ずしもQとはいえない。必要なのは、Aことではなく、Bことである。",
+      "explanation": "Lập bản đồ lập luận theo thứ tự nhượng bộ → bác bước suy diễn quá mạnh → minh họa → kết luận có giới hạn. Người viết chấp nhận thống nhất thủ tục có ích trong việc giảm chênh lệch xử lý, nhưng không chấp nhận suy từ 'thống nhất' ra 'tối ưu cho từng người'. Ví dụ chỉ nhận hồ sơ trực tuyến minh họa rằng lợi ích và gánh nặng có thể phân bố khác nhau; nó không đưa số liệu, không khẳng định mọi dịch vụ trực tuyến đều gây hại, và không tự chứng minh giải pháp hỗ trợ đã thành công. ～となりうる giữ mức khả năng. Vì thế, kết luận không phải bỏ tiêu chuẩn chung, cũng không phải trao quyền tự quyết vô hạn: cần nêu rõ điều kiện bổ sung hỗ trợ và kiểm chứng tác dụng. Trong ～からといって、必ずしも～とはいえない, điều bị bác là tính đủ của tiền đề để bảo đảm kết luận, không nhất thiết là bản thân tiền đề hay mọi trường hợp của kết luận. Một phản biện mới cần tự ghi là khả năng hoặc đề xuất; không gán nó thành dữ kiện trong bài.",
+      "examples": [
+        {
+          "id": "teaching:v1:N1:argument:example:0",
+          "context": "Chấp nhận một lợi ích mà không suy ra kết luận cho mọi người dùng",
+          "jp": "手続きが統一されているからといって、必ずしもすべての利用者にとって最善であるとはいえません。",
+          "reading": "てつづきがとういつされているからといって、かならずしもすべてのりようしゃにとってさいぜんであるとはいえません。",
+          "vi": "Không thể nói rằng chỉ vì thủ tục được thống nhất thì nhất thiết nó đã là tối ưu cho tất cả người sử dụng.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N1:argument:example:1",
+          "context": "Nêu hai tác động có thể khác nhau của cùng một thiết kế thủ tục",
+          "jp": "オンライン申請への一本化は、多くの人の待ち時間を減らす一方で、機器の操作に不慣れな人には新たな負担となりえます。",
+          "reading": "おんらいんしんせいへのいっぽんかは、おおくのひとのまちじかんをへらすいっぽうで、ききのそうさにふなれなひとにはあらたなふたんとなりえます。",
+          "vi": "Việc chỉ nhận hồ sơ trực tuyến giảm thời gian chờ cho nhiều người, nhưng có thể tạo gánh nặng mới cho người chưa quen thao tác thiết bị.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N1:argument:example:2",
+          "context": "Xác định điều cần làm mà không đẩy quyền tự quyết thành không giới hạn",
+          "jp": "必要なのは、現場の裁量を無制限に広げることではなく、支援を加える条件を明示し、その効果を検証することです。",
+          "reading": "ひつようなのは、げんばのさいりょうをむせいげんにひろげることではなく、しえんをくわえるじょうけんをめいじし、そのこうかをけんしょうすることです。",
+          "vi": "Điều cần thiết không phải mở rộng vô hạn quyền tự quyết tại chỗ, mà là nêu rõ điều kiện bổ sung hỗ trợ và kiểm chứng tác dụng của nó.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N1:argument:example:3",
+          "context": "Phản biện mới, được đánh dấu là khả năng chứ không giả làm kết quả có trong nguồn",
+          "jp": "ただし、支援の条件が複雑すぎれば、必要な人が支援を受けにくくなる可能性もあります。",
+          "reading": "ただし、しえんのじょうけんがふくざつすぎれば、ひつようなひとがしえんをうけにくくなるかのうせいもあります。",
+          "vi": "Tuy nhiên, nếu điều kiện hỗ trợ quá phức tạp, cũng có khả năng người cần hỗ trợ lại khó tiếp cận nó.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "オンライン申請の例は、すべてのオンラインサービスが利用者に不利益を与えることを証明している。",
+          "correction": "この例は、同じ手続きでも利用者によって利益と負担が異なりうることを示している。",
+          "reason": "Một ví dụ về khả năng tác động khác nhau không đủ chứng minh kết luận phổ quát về mọi dịch vụ. Không đổi うる thành khẳng định tất yếu."
+        },
+        {
+          "problem": "筆者は、現場の判断を優先し、共通基準を廃止すべきだと主張している。",
+          "correction": "筆者は、共通基準を保ちつつ、支援を加える条件を明示し、その効果を検証すべきだと主張している。",
+          "reason": "Bài giữ tiêu chuẩn chung; ～ではなく loại phương án mở rộng quyền tự quyết vô hạn, không loại mọi tiêu chuẩn."
+        },
+        {
+          "problem": "「統一されているからといって最善とはいえない」は、統一された手続きには一切価値がないという意味だ。",
+          "correction": "統一には利点があるが、それだけでは全員にとって最善だと結論づけられないという意味だ。",
+          "reason": "Phân biệt bác suy luận quá mạnh với phủ định tuyệt đối lợi ích của tiền đề."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "teaching:v1:N1:argument:task:0",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。例えば、オンライン申請への一本化は、多くの人の待ち時間を減らす一方、機器の操作に不慣れな人には新たな負担となりうる。したがって、共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
+          "prompt": "Trong chuỗi lập luận, ví dụ về đăng ký trực tuyến làm cầu nối như thế nào giữa câu nhượng bộ đầu bài và kết luận cuối bài? Chọn phương án giữ đúng cả chức năng ví dụ lẫn giới hạn kết luận.",
+          "options": [
+            { "id": "option:0", "text": "統一が人によって異なる負担を生みうることを示し、共通基準の下で条件付きの支援を設ける必要性につないでいる。" },
+            { "id": "option:1", "text": "条件付きの支援の効果が実証された事例を示し、その実績を根拠に共通基準との両立を結論づけている。" },
+            { "id": "option:2", "text": "一人にでも負担となる統一は認められないことを示し、共通基準を廃止する結論につないでいる。" }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Ví dụ phá bước nhảy từ lợi ích chung sang tối ưu cho từng người bằng cách đối chiếu các nhóm chịu tác động khác nhau. Nó chưa báo cáo thành công của hỗ trợ đã triển khai, nên không phải 実証された事例. Kết luận vẫn giữ chuẩn chung và yêu cầu điều kiện hỗ trợ cùng kiểm chứng, không đặt quy tắc cứ một người có gánh nặng là phải bỏ toàn bộ chuẩn chung.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:argument:task:1",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。例えば、オンライン申請への一本化は、多くの人の待ち時間を減らす一方、機器の操作に不慣れな人には新たな負担となりうる。したがって、共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
+          "prompt": "Một người đọc nói: 「支援を加えれば、すべての利用者の負担が必ずなくなることまで本文で証明された。」 Chọn phản biện đánh trúng chỗ vượt quá bằng chứng, không phủ định điều tác giả thực sự thừa nhận.",
+          "options": [
+            { "id": "option:0", "text": "統一が有効だという記述はないので、議論はすべて無効である。" },
+            { "id": "option:1", "text": "支援の効果は検証すべき対象であり、全員の負担が必ずなくなるという結果までは示されていない。" },
+            { "id": "option:2", "text": "一人でも負担を感じる可能性があれば、共通基準は必ず廃止しなければならない。" }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "検証する必要がある xác định việc cần kiểm tra, không báo cáo thành công đã được chứng minh. 'Có thể tạo gánh nặng cho một nhóm' và 'hỗ trợ chắc chắn xóa mọi gánh nặng cho mọi người' có lượng từ và mức chắc chắn hoàn toàn khác nhau. Tác giả vẫn thừa nhận lợi ích của thống nhất, nên không cần phủ định lợi ích đó để bác cách đọc quá mức.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:argument:task:2",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。例えば、オンライン申請への一本化は、多くの人の待ち時間を減らす一方、機器の操作に不慣れな人には新たな負担となりうる。したがって、共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
+          "prompt": "Ba kế hoạch sau đều là đề xuất MỚI, không phải sự kiện đã xảy ra. Kế hoạch nào triển khai được đồng thời chuẩn chung, điều kiện hỗ trợ minh bạch và kiểm chứng, thay vì chỉ nhắc lại khẩu hiệu của bài?",
+          "options": [
+            { "id": "option:0", "text": "担当者がその場の印象だけで対象者と審査基準を変え、記録は残さない。" },
+            { "id": "option:1", "text": "平均待ち時間さえ短くなれば、申請を完了できない利用者がいても支援は検討しない。" },
+            { "id": "option:2", "text": "審査基準は共通に保ち、操作に困る利用者への入力支援の条件を公開する。利用状況と申請完了の状況を記録し、支援の効果を検証する。" }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "Phương án này giữ tiêu chuẩn xét duyệt chung, công khai điều kiện hỗ trợ nhập liệu và đề xuất ghi nhận kết quả để kiểm chứng. Hai phương án còn lại lần lượt mở rộng tùy tiện hoặc bỏ qua nhóm có khó khăn. Cách ghi nhận và hỗ trợ cụ thể là đề xuất ứng dụng mới của bài tập, chưa phải phương án đã được tác giả triển khai hay xác nhận thành công.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:argument:task:3",
+          "mode": "short_text",
+          "skill": "grammar",
+          "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。オンライン申請への一本化も、利用者によって利益と負担が異なりうる。",
+          "prompt": "Viết lại ý sau bằng ～からといって、必ずしも～とはいえない, không đổi thành khẳng định rằng thống nhất luôn có hại: 「手続きは統一されている。しかし、それだけでは、すべての利用者にとって最善だとは断定できない。」 Ràng buộc: mở câu bằng 手続きが; dùng dạng trạng thái bị động của 統一する; trong kết luận giữ すべての利用者にとって và đổi 最善だ sang 最善である. Một câu thể thường, đặt 、 trước 必ずしも và 。 cuối câu; không thêm hoặc thay từ ngoài các biến đổi đã yêu cầu.",
+          "accepted_variants": [
+            "手続きが統一されているからといって、必ずしもすべての利用者にとって最善であるとはいえない。"
+          ],
+          "rationale": "からといって bác tính đủ của lý do 'đã thống nhất'; 必ずしも và phủ định ở cuối giữ mức 'không thể bảo đảm tối ưu cho tất cả'. Có thể viết tự nhiên bằng とは限らない ở ngữ cảnh mở, nhưng bài này yêu cầu khuôn とはいえない và các cụm cố định; đáp án tham chiếu không kết luận khuôn khác sai.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:argument:task:4",
+          "mode": "short_text",
+          "skill": "reading",
+          "passage": "共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
+          "prompt": "Hiệu đính câu gán sai quan điểm: 「筆者は、現場の裁量を無制限に広げるべきだと述べている。」 Giữ đầu 「筆者は、」 và cuối 「べきだと述べている。」; thay toàn bộ nội dung ở giữa bằng hai hành động theo thứ tự 「支援の条件を明示する」 rồi 「その効果を検証する」. Nối hành động đầu bằng し、; hành động sau dùng すべき hoặc するべき. Không thêm từ khác. Nộp một câu hoàn chỉnh.",
+          "accepted_variants": [
+            "筆者は、支援の条件を明示し、その効果を検証すべきだと述べている。",
+            "筆者は、支援の条件を明示し、その効果を検証するべきだと述べている。"
+          ],
+          "rationale": "～ではなく loại chính điều bản tóm tắt sai đã gán cho tác giả. Cần khôi phục cả công khai điều kiện và kiểm chứng tác dụng; すべき và するべき đều được ghi nhận trong khuôn này. Câu tóm tắt mở có thể dùng nhiều cách khác, nhưng ở đây phải giữ đầu/cuối và hai hành động đã yêu cầu; không dùng danh sách hẹp này để bác mọi biến thể diễn đạt khác.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "teaching:v1:N1:synthesis",
+      "revision": 1,
+      "order": 2,
+      "level": "N1",
+      "title": "Tổng hợp hai lập trường mà không xóa khác biệt hoặc bịa kết quả",
+      "goal": "Tìm điểm đồng thuận, khác biệt và đề xuất kết hợp có điều kiện.",
+      "prerequisites": ["teaching:v1:N1:argument"],
+      "authorship": "ai_authored",
+      "review": { "status": "ai_draft", "human_approved": false },
+      "eligibility": { "reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false },
+      "source_refs": [
+        {
+          "chunk_id": "practical:v1:N1:synthesis",
+          "url": "#curriculum/N1/lesson/reading/practical%3Av1%3AN1%3Asynthesis%3Asituation",
+          "source_name": "VJBot · Tổng hợp hai quan điểm",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn nội bộ: VJBot · Tổng hợp hai quan điểm [practical:v1:N1:synthesis]. Bản tổng hợp và kế hoạch ứng dụng là nội dung AI soạn; không phải kết quả đào tạo đã được xác minh.",
+      "formula": "～を否定するわけではないが、…。両者は～点で一致する一方、～を重視する点で異なる。～を踏まえ、～のみならず、…も…。",
+      "explanation": "Tổng hợp không phải chọn phe, cũng không phải bảo hai bên hoàn toàn giống nhau. A cần căn cứ đo được để phân bổ nguồn lực và không chấp nhận chỉ một chỉ số. B cho rằng số liệu ngắn hạn không nắm hết giá trị, muốn xem thêm việc hỗ trợ đồng nghiệp và khả năng xử lý vấn đề mới xuất hiện về sau, nhưng nói rõ không phủ nhận kiểm tra bằng số. Vì vậy điểm giao là cả hai chấp nhận số liệu, đồng thời không coi đánh giá hẹp là đầy đủ; khác biệt nằm ở trọng tâm loại bằng chứng và thời gian. Đừng gán A là người chỉ quan tâm duy nhất một con số ngay sau học; cũng đừng gán B là người bác bỏ mọi số liệu. ～を否定するわけではない hạn chế một cách hiểu cực đoan, không phải nhượng bộ giả rồi phủ nhận hoàn toàn. Kế hoạch đo nhiều chỉ số ngay sau học và bổ sung trường hợp cụ thể sau vài tháng là một tổng hợp phù hợp, nhưng vẫn là đề xuất: văn bản không cung cấp mức cải thiện, không ấn định chính xác bao nhiêu tháng và không chứng minh đào tạo là nguyên nhân duy nhất. Nếu thêm mốc cụ thể ở bài tập thì phải đánh dấu đó là thiết kế mới.",
+      "examples": [
+        {
+          "id": "teaching:v1:N1:synthesis:example:0",
+          "context": "Tóm tắt lập trường A mà giữ điều kiện không dùng chỉ một chỉ số",
+          "jp": "Aは測定できる根拠を求めていますが、一つの指標だけで研修の成果を判断すべきだとは述べていません。",
+          "reading": "えーはそくていできるこんきょをもとめていますが、ひとつのしひょうだけでけんしゅうのせいかをはんだんすべきだとはのべていません。",
+          "vi": "A yêu cầu căn cứ đo được, nhưng không nói rằng chỉ nên đánh giá kết quả đào tạo bằng một chỉ số duy nhất.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:example:1",
+          "context": "Giữ phủ định có giới hạn của B, không biến thành phản đối mọi số liệu",
+          "jp": "Bは数値による確認を否定するわけではありませんが、時間をかけて表れる価値も評価したいと考えています。",
+          "reading": "びーはすうちによるかくにんをひていするわけではありませんが、じかんをかけてあらわれるかちもひょうかしたいとかんがえています。",
+          "vi": "B không phủ nhận việc kiểm tra bằng số liệu, nhưng muốn đánh giá cả những giá trị bộc lộ qua thời gian.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:example:2",
+          "context": "Gọi đúng điểm chung nhưng vẫn nêu khác biệt về trọng tâm",
+          "jp": "両者は数値による確認を認める点で一致する一方、Aは測定可能な根拠を、Bは時間をかけて表れる価値を重視しています。",
+          "reading": "りょうしゃはすうちによるかくにんをみとめるてんでいっちするいっぽう、えーはそくていかのうなこんきょを、びーはじかんをかけてあらわれるかちをじゅうししています。",
+          "vi": "Hai bên cùng thừa nhận việc kiểm tra bằng số liệu, nhưng A chú trọng căn cứ đo được, còn B chú trọng giá trị bộc lộ qua thời gian.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:example:3",
+          "context": "Đề xuất mới dùng cả hai dạng bằng chứng, không báo cáo một kết quả đã có",
+          "jp": "両者の意見を踏まえ、受講直後の複数の指標のみならず、数か月後の具体的な事例も合わせて評価してはどうでしょうか。",
+          "reading": "りょうしゃのいけんをふまえ、じゅこうちょくごのふくすうのしひょうのみならず、すうかげつごのぐたいてきなじれいもあわせてひょうかしてはどうでしょうか。",
+          "vi": "Tính đến ý kiến cả hai bên, có thể đánh giá kết hợp không chỉ nhiều chỉ số ngay sau học mà cả những trường hợp cụ thể vài tháng sau hay không?",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "Aは一つの短期指標だけで十分だと考え、Bは数値を一切認めていない。",
+          "correction": "Aは測定可能な根拠を重視するが、一つの指標だけの判断を避けている。Bも数値による確認を認め、後から表れる価値を加えたいと考えている。",
+          "reason": "Cả hai vế sai đều xóa các câu hạn định của chính người nói. Tổng hợp phải giữ ただし của A và 否定するわけではない của B."
+        },
+        {
+          "problem": "両者は評価方法について完全に同じ意見なので、相違点はない。",
+          "correction": "両者には共通点があるが、重視する根拠や評価の時間軸には違いがある。",
+          "reason": "Có phần giao không có nghĩa hai tập quan điểm trùng nhau hoàn toàn. Không xóa trọng tâm dài hạn và ví dụ định tính B muốn bổ sung."
+        },
+        {
+          "problem": "本文では、三か月後に全員の能力が向上したと確認されている。",
+          "correction": "Bは数か月後の事例も評価したいと述べているが、具体的な月数や改善結果は示されていない。",
+          "reason": "数か月後 không ấn định đúng ba tháng. 評価したい nói về mong muốn phương pháp, không chứng minh kết quả của mọi người."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "teaching:v1:N1:synthesis:task:0",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "意見A：研修の成果は、受講直後の業務時間の短縮など、測定できる指標で確認すべきだ。数値がなければ、改善に資源を配分する根拠が曖昧になる。ただし、一つの指標だけで判断するべきではない。\n意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は、時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
+          "prompt": "Một biên tập viên định đặt tiêu đề 「一つの短期指標だけで判断するAと、数字を拒むB」. Vì sao tiêu đề này làm sai cả hai lập trường? Chọn giải thích dựa trên chính các câu hạn định, không chỉ đoán thái độ chung.",
+          "options": [
+            { "id": "option:0", "text": "Aは数値を全く求めておらず、Bは短期の一指標だけで十分だと考えているから。" },
+            { "id": "option:1", "text": "両者とも研修の価値を否定しているので、評価方法の違いを論じる必要がないから。" },
+            { "id": "option:2", "text": "Aは一つの指標だけの判断を避け、Bも数値の確認を認めているから。重視する根拠と時間軸の違いとして整理すべきだ。" }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "ただし、一つの指標だけで…ではない giới hạn cách đọc A là đơn nhất; 否定するわけではない phủ định cách gán B bài xích số liệu. Trọng tâm A là căn cứ đo được; B muốn bổ sung giá trị xuất hiện về sau. Không có bên nào phản đối chính việc đào tạo.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:task:1",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "Aは、研修の成果を測定できる指標で確認し、資源配分の根拠にしたいと考えている。ただし、一つの指標だけで判断すべきではないという。Bは、短期の数値だけでは同僚への助言や新しい問題への対応力を十分に捉えられないとし、数値の確認に加えて数か月後の事例も評価したいと述べている。両者の意見は示されているが、評価を実施した結果は示されていない。",
+          "prompt": "Chọn kế hoạch tổng hợp MỚI vừa có căn cứ đo được, vừa không bỏ mất giá trị xuất hiện muộn. Kế hoạch phải ghi là đề xuất, không được biến mong muốn của người nói thành bằng chứng thành công.",
+          "options": [
+            { "id": "option:0", "text": "受講直後に業務時間や誤りの件数など複数の指標を確認し、数か月後には助言や新しい問題への対応の具体例を追加して評価する案を検討する。" },
+            { "id": "option:1", "text": "Aを尊重するため業務時間だけを測り、Bを尊重するためその結果は評価に使わない。" },
+            { "id": "option:2", "text": "研修の効果は既に全員について証明されたので、数値も事例も記録しない。" }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Nhiều chỉ số ở thời điểm đầu đáp ứng yêu cầu căn cứ và tránh một chỉ số duy nhất; trường hợp cụ thể về sau giữ điều B muốn bổ sung. Số lỗi là ví dụ chỉ số do phương án mới đề xuất, không phải dữ kiện đã đo trong nguồn. Kế hoạch vẫn cần được xem xét và thực hiện; không tự chứng minh đào tạo là nguyên nhân duy nhất của mọi thay đổi.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:task:2",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "意見A：研修の成果は、受講直後の業務時間の短縮など、測定できる指標で確認すべきだ。数値がなければ、改善に資源を配分する根拠が曖昧になる。ただし、一つの指標だけで判断するべきではない。\n意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は、時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
+          "prompt": "Bản dự thảo biên bản ghi: 「両者は三か月後の効率二割向上を確認し、短期指標を廃止することで合意した。」 Chọn bản hiệu đính giữ đúng mức độ đồng thuận và ranh giới dữ kiện/đề xuất.",
+          "options": [
+            { "id": "option:0", "text": "短期指標を廃止する合意だけは本文にあるので、改善率と正確な月数だけを削ればよい。" },
+            { "id": "option:1", "text": "両者は数値による確認を認めるが、実施済みの合意や改善率は示されていない。短期の複数指標と後の事例を組み合わせるのは、本文を踏まえた提案として述べられる。" },
+            { "id": "option:2", "text": "数か月後は必ず三か月後を指すため、月数は残し、二割を五割に直せばよい。" }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "Bản sai bịa cả mốc ba tháng, mức tăng 20%, kết quả đã kiểm tra và thỏa thuận bỏ chỉ số ngắn hạn. Nguồn chỉ ghi lập trường; có thể suy ra điểm giao về chấp nhận số liệu, không thể suy ra cuộc họp đã đạt một quyết định triển khai. Đề xuất kết hợp phải được gọi đúng là đề xuất.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:task:3",
+          "mode": "short_text",
+          "skill": "grammar",
+          "passage": "意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
+          "prompt": "Sửa lời gán sai 「Bは数値による確認を全面的に否定している。」 thành tóm tắt đúng. Ràng buộc: giữ đầu 「Bは数値による確認を」; thay 全面的に否定している bằng dạng 否定するわけではない nối với が、; sau đó lấy đúng phần B muốn bổ sung trong lời gốc, giữ 数か月後, 事例 và も合わせて評価したい; kết câu bằng と述べている。. Một câu, giữ nguyên các chữ của lời gốc, không thêm quan điểm mới.",
+          "accepted_variants": [
+            "Bは数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したいと述べている。"
+          ],
+          "rationale": "わけではない bác cách hiểu B phản đối mọi đo lường; も giữ tính bổ sung của trường hợp về sau. 述べている quy ý kiến cho B thay vì biến nó thành kết quả kiểm chứng. Trong viết mở có thể dùng 否定しているわけではない hoặc các cấu trúc khác; nhiệm vụ này chỉ chấp nhận các cụm nguyên văn đã yêu cầu, không coi các cấu trúc khác là sai nói chung.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:task:4",
+          "mode": "short_text",
+          "skill": "reading",
+          "passage": "Aは、受講直後の業務時間の短縮など、測定できる複数の指標を重視する。Bは、数値による確認も認めながら、同僚への助言や新しい問題への対応といった、時間をかけて表れる価値も評価したいと考えている。二人が評価を共同実施したという記述や、具体的な改善数値はない。",
+          "prompt": "Viết kế hoạch hai giai đoạn dưới dạng đề xuất, không phải báo cáo thành công. Khung cố định: 「両者の意見を踏まえ、受講直後に（①）を測定し、数か月後に（②）を追加して評価してはどうか。」 Chọn mỗi ô đúng một cụm từ ngân hàng: 「一つの指標／複数の指標／具体的な事例／改善したという結論」 sao cho giữ được yêu cầu của cả A và B. Nộp cả câu, không có ký hiệu ô trống; không thêm từ, tháng cụ thể hoặc mức cải thiện.",
+          "accepted_variants": [
+            "両者の意見を踏まえ、受講直後に複数の指標を測定し、数か月後に具体的な事例を追加して評価してはどうか。"
+          ],
+          "rationale": "Hai thời điểm và hai dạng bằng chứng giữ được trọng tâm của cả A lẫn B; してはどうか đánh dấu đây là phương án mới để xem xét. 本文 không nói họ đã cùng triển khai hay đo được tăng trưởng. Cách đề xuất khác cũng có thể đúng, nhưng danh sách này chỉ dành cho khung và các cụm bị ràng buộc của nhiệm vụ, không đại diện cho toàn bộ câu tổng hợp hợp lệ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    }
+  ]
+}

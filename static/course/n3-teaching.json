@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "status": "ai_draft",
+  "authorship": "VJBot AI-authored teaching drafts; not publisher text or official JLPT exercises.",
+  "rights_basis": "original_ai_authored",
+  "publisher_permission_independently_verified": false,
+  "human_approved": false,
+  "level_note": "N3 is a study-track estimate, not official JLPT certification.",
+  "integration_status": "draft_for_user_review",
+  "normalization_policy": "Explicit task-bound variants; not exhaustive grammar judgments.",
+  "editorial_reviews": [{"review_kind":"independent_ai_not_human","reviewer":"ReviewN4N3Teaching","scope":"All four N3 lessons, twenty tasks, twelve examples and eight common errors against the original VJBot practical units.","findings_resolved":[],"decision":"No substantive issue found in this finite AI review. Draft remains advisory and requires user quality review before merge.","human_approved":false}],
+  "lessons": [
+    {
+      "id": "teaching:v1:N3:repair",
+      "revision": 1,
+      "order": 1,
+      "level": "N3",
+      "title": "Báo dấu hiệu hỏng mà không đoán chắc nguyên nhân",
+      "goal": "Mô tả vấn đề, phân biệt phỏng đoán và sự thật, hẹn thời gian kiểm tra.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": {"status": "ai_draft", "human_approved": false},
+      "eligibility": {"reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false},
+      "source_refs": [{"chunk_id": "practical:v1:N3:repair", "url": "#curriculum/N3/lesson/reading/practical%3Av1%3AN3%3Arepair%3Asituation", "source_name": "VJBot · Báo hỏng và thu xếp sửa chữa", "role": "background_reference_not_approval"}],
+      "source_header": "Nguồn bối cảnh: VJBot · Báo hỏng và thu xếp sửa chữa [practical:v1:N3:repair]. Bản dạy mới do AI soạn, chưa được con người duyệt.",
+      "formula": "［dấu hiệu quan sát được］。［mệnh đề thể thông thường］ようです。［thời gian］以降なら都合がいいです。",
+      "explanation": "Một báo hỏng hữu ích tách dấu hiệu kiểm tra được khỏi kết luận chưa chắc chắn. 冷たい風が出ません báo không có gió lạnh; 故障しているようです diễn đạt phỏng đoán dựa trên dấu hiệu, không xác nhận linh kiện nào hỏng. Khi dùng ようです, động từ đứng ở thể thông thường; danh từ nối bằng の và tính từ な nối bằng な. Để thu xếp kiểm tra, nêu mốc rõ như 午後三時以降: từ 3 giờ chiều trở đi, bao gồm 3 giờ. 来る前に連絡していただけますか yêu cầu liên lạc trước khi đến; không nhầm với 来てから, sau khi đến. Bài học luyện cách báo và đặt lịch, không hướng dẫn tự sửa thiết bị.",
+      "examples": [
+        {"id": "teaching:v1:N3:repair:example:0", "context": "Người thuê chỉ quan sát hiện tượng, chưa có người kiểm tra máy", "jp": "エアコンをつけても、冷たい風が出ません。故障しているようです。", "reading": "えあこんをつけても、つめたいかぜがでません。こしょうしているようです。", "vi": "Dù bật điều hòa cũng không có gió lạnh. Có vẻ máy đang bị hỏng.", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:repair:example:1", "context": "Đề nghị thời gian kiểm tra phù hợp với lịch ở nhà", "jp": "明日の午後三時以降なら、家にいます。", "reading": "あしたのごごさんじいこうなら、いえにいます。", "vi": "Nếu là từ 3 giờ chiều mai trở đi thì tôi ở nhà.", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:repair:example:2", "context": "Đề nghị kỹ thuật viên báo trước; chưa xác định nguyên nhân máy giặt không chạy", "jp": "洗濯機の電源を入れても動きません。来る前に連絡していただけますか。", "reading": "せんたくきのでんげんをいれてもうごきません。くるまえにれんらくしていただけますか。", "vi": "Dù bật nguồn máy giặt cũng không chạy. Anh/chị có thể liên lạc trước khi đến không?", "authorship": "ai_authored"}
+      ],
+      "common_errors": [
+        {"problem": "故障していますようです。", "correction": "故障しているようです。", "reason": "Trước ようです dùng mệnh đề động từ ở thể thông thường, không dùng ～ます. Toàn câu vẫn lịch sự nhờ です."},
+        {"problem": "Hiểu 午後三時以降 là chỉ sau 3 giờ và loại trừ đúng 3 giờ.", "correction": "Hiểu là từ 3 giờ chiều trở đi, gồm cả mốc 3 giờ.", "reason": "以降 bao gồm mốc nêu ra. Nếu chỉ rảnh sau một thời điểm khác, phải nói đúng mốc thực tế thay vì tự thêm giới hạn không có trong câu."}
+      ],
+      "tasks": [
+        {"id": "teaching:v1:N3:repair:task:0", "mode": "choice", "skill": "reading", "passage": "借主：エアコンをつけても、冷たい風が出ません。故障しているようです。まだ修理の人には見てもらっていません。", "prompt": "Thông tin nào là dấu hiệu người thuê đã quan sát, không phải kết luận kỹ thuật đã được kiểm tra?", "options": [{"id": "option:0", "text": "Một linh kiện cụ thể đã được xác nhận hỏng."}, {"id": "option:1", "text": "Bật điều hòa nhưng không có gió lạnh."}, {"id": "option:2", "text": "Kỹ thuật viên đã kết luận cần thay máy."}], "answer_option_id": "option:1", "rationale": "冷たい風が出ません nêu dấu hiệu trực tiếp. ようです đánh dấu phỏng đoán; câu cuối còn nói chưa nhờ người sửa xem máy, nên không được suy ra chẩn đoán hoặc nhu cầu thay máy.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:repair:task:1", "mode": "choice", "skill": "reading", "passage": "管理人：明日の午後、確認に伺います。何時ならご在宅ですか。\n借主：午後六時以降なら家にいます。来る前に連絡していただけますか。", "prompt": "Kế hoạch nào phù hợp với cả thời gian và yêu cầu liên lạc của người thuê?", "options": [{"id": "option:0", "text": "Đến lúc 5 giờ chiều và chỉ liên lạc sau khi đến."}, {"id": "option:1", "text": "Đến lúc 6 giờ sáng mà không báo trước."}, {"id": "option:2", "text": "Liên lạc trước, rồi đến lúc 6 giờ chiều hoặc muộn hơn trong buổi tối đã thu xếp."}], "answer_option_id": "option:2", "rationale": "午後六時以降 bao gồm 6 giờ chiều và sau đó; 来る前に yêu cầu báo trước khi tới. Người thuê chưa chốt một giờ duy nhất, nên cần thu xếp giờ cụ thể trong khoảng phù hợp.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:repair:task:2", "mode": "choice", "skill": "grammar", "prompt": "Chưa có kết quả kiểm tra, nhưng có dấu hiệu cho thấy máy có thể bị hỏng. Chọn câu dùng ようです đúng hình thức để nêu phỏng đoán.", "options": [{"id": "option:0", "text": "故障しているようです。"}, {"id": "option:1", "text": "故障していますようです。"}, {"id": "option:2", "text": "故障しているをようです。"}], "answer_option_id": "option:0", "rationale": "Mệnh đề động từ 故障している ở thể thông thường nối trực tiếp với ようです. Không đặt ます hoặc を vào vị trí này. Đây vẫn là phỏng đoán, không biến thành xác nhận nguyên nhân.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:repair:task:3", "mode": "short_text", "skill": "grammar", "prompt": "Sửa lời báo hỏng bằng mẫu ようです. Chỉ điền thể thông thường hiện tại tiếp diễn của 故障する, viết toàn bộ phần thiếu bằng kana: 「エアコンは（　）ようです。」 Không thêm ようです hoặc cả câu.", "accepted_variants": ["こしょうしている"], "rationale": "故障する → 故障している, sau đó nối ようです. Bài yêu cầu giữ hiện tại tiếp diễn và cách viết kana; những cách báo hỏng khác có thể đúng nhưng không phải hình thức đang luyện.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:repair:task:4", "mode": "short_text", "skill": "grammar", "prompt": "Bạn muốn được liên lạc trước khi người kiểm tra đến, không phải sau khi đến. Giữ động từ 来る, chỉ điền ba chữ hiragana chỉ quan hệ thời gian: 「来る（　）連絡していただけますか。」 Không viết lại cả câu.", "accepted_variants": ["まえに"], "rationale": "来る前に là trước khi đến. Bài yêu cầu cụm まえに bằng hiragana; 来てから là sau khi đến nên trái yêu cầu về thứ tự. Cách nói lịch sự khác có thể dùng nhưng không phải đáp án của ô này.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false}
+      ]
+    },
+    {
+      "id": "teaching:v1:N3:scam",
+      "revision": 1,
+      "order": 2,
+      "level": "N3",
+      "title": "Thuật lại email mà không coi lời đe dọa là sự thật",
+      "goal": "Nhận ra dấu hiệu rủi ro và chọn cách xác minh thông tin.",
+      "prerequisites": ["teaching:v1:N3:repair"],
+      "authorship": "ai_authored",
+      "review": {"status": "ai_draft", "human_approved": false},
+      "eligibility": {"reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false},
+      "source_refs": [{"chunk_id": "practical:v1:N3:scam", "url": "#curriculum/N3/lesson/reading/practical%3Av1%3AN3%3Ascam%3Asituation", "source_name": "VJBot · Đọc email đáng ngờ", "role": "background_reference_not_approval"}],
+      "source_header": "Nguồn bối cảnh: VJBot · Đọc email đáng ngờ [practical:v1:N3:scam]. Bản dạy mới do AI soạn, chưa được con người duyệt.",
+      "formula": "「［nội dung］」と書いてあります。［mệnh đề nghi vấn］かどうか確認します。",
+      "explanation": "～と書いてあります thuật lại điều được viết; nó không xác nhận người gửi là thật hoặc lời đe dọa sẽ xảy ra. ～かどうか nêu câu hỏi có hay không, như 本物かどうか確認します: kiểm tra có phải thật hay không. 本日中に là trong hôm nay, một hạn chót có thể tạo cảm giác thúc ép nhưng tự nó không chứng minh email giả. Khi đọc tình huống, phân biệt dấu hiệu đáng ngờ với kết luận đã xác minh. Kênh xác minh độc lập là ứng dụng chính thức tự mở hoặc đầu mối chính thức đã biết, không phải một trang chỉ tự xưng “chính thức” từ liên kết trong email. Các email trong bài là hư cấu, không yêu cầu mở liên kết, cung cấp thông tin tài khoản hay thực hiện giao dịch.",
+      "examples": [
+        {"id": "teaching:v1:N3:scam:example:0", "context": "Thuật lại nội dung một email hư cấu mà chưa xác nhận nguồn gửi", "jp": "メールに「本日中に本人確認をしてください」と書いてあります。", "reading": "めーるに「ほんじつちゅうにほんにんかくにんをしてください」とかいてあります。", "vi": "Trong email có ghi: “Hãy xác minh danh tính trong hôm nay.”", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:scam:example:1", "context": "Nêu việc cần kiểm tra, chưa kết luận email là thật hay giả", "jp": "このメールが本物かどうか、公式の窓口に問い合わせます。", "reading": "このめーるがほんものかどうか、こうしきのまどぐちにといあわせます。", "vi": "Tôi sẽ hỏi đầu mối chính thức xem email này có phải thật hay không.", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:scam:example:2", "context": "Nhân vật chọn ứng dụng chính thức đã cài, không làm theo liên kết email", "jp": "メール内のリンクは開かずに、いつも使っている公式アプリでお知らせを確認します。", "reading": "めーるないのりんくはひらかずに、いつもつかっているこうしきあぷりでおしらせをかくにんします。", "vi": "Tôi không mở liên kết trong email mà kiểm tra thông báo bằng ứng dụng chính thức mình vẫn dùng.", "authorship": "ai_authored"}
+      ],
+      "common_errors": [
+        {"problem": "Coi 「口座を停止する」と書いてあります là xác nhận tài khoản chắc chắn bị khóa.", "correction": "Thuật lại rằng email nói sẽ khóa tài khoản, đồng thời tách riêng việc xác minh tính xác thực.", "reason": "と書いてあります xác định nội dung được viết chứ không bảo đảm nội dung đúng hoặc nguồn gửi hợp lệ."},
+        {"problem": "本物ですかどうか確認します。", "correction": "本物かどうか確認します。", "reason": "Trong câu hỏi có/không lồng trước かどうか với danh từ 本物, không giữ です. Toàn câu lịch sự ở 確認します."}
+      ],
+      "tasks": [
+        {"id": "teaching:v1:N3:scam:task:0", "mode": "choice", "skill": "reading", "passage": "架空のメール：「至急。本日中にこのリンクで本人確認をしないと、口座を停止します。」\n受信者：このメールが本物かどうかは、まだ確認していません。", "prompt": "Nhận định nào được chính đoạn văn hỗ trợ, không biến lời email thành sự thật đã kiểm chứng?", "options": [{"id": "option:0", "text": "Email đòi xác minh trong hôm nay và dọa khóa tài khoản; tính xác thực vẫn chưa được kiểm tra."}, {"id": "option:1", "text": "Ngân hàng đã xác nhận chắc chắn tài khoản bị khóa."}, {"id": "option:2", "text": "Vì có hạn trong hôm nay nên đã chứng minh được email là giả."}], "answer_option_id": "option:0", "rationale": "Đoạn email nêu hạn và lời đe dọa, còn người nhận nói chưa xác minh thật giả. Thúc ép là dấu hiệu cần thận trọng, không tự chứng minh nguồn gửi là thật hoặc giả.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:scam:task:1", "mode": "choice", "skill": "reading", "passage": "架空の状況：銀行を名乗るメールが、リンク先でパスワードを入力するよう求めています。あなたは銀行の公式アプリを以前から使っていますが、メールの送信者はまだ確認できていません。", "prompt": "Cách nào xác minh bằng một kênh độc lập thay vì tiếp tục tin vào chính liên kết chưa rõ nguồn?", "options": [{"id": "option:0", "text": "Nhập mật khẩu trước, rồi mới kiểm tra email có thật không."}, {"id": "option:1", "text": "Bấm liên kết và chỉ dựa vào logo trên trang để xác nhận."}, {"id": "option:2", "text": "Không nhập qua liên kết email; tự mở ứng dụng chính thức vẫn dùng để kiểm tra thông báo, rồi hỏi đầu mối chính thức đã biết nếu cần."}], "answer_option_id": "option:2", "rationale": "Ứng dụng chính thức tự mở và đầu mối đã biết không phụ thuộc vào liên kết đáng ngờ. Logo hay tên tự xưng trên một trang không phải bằng chứng độc lập. Tình huống chỉ luyện đọc và chọn cách xác minh, không yêu cầu thao tác tài khoản thật.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:scam:task:2", "mode": "choice", "skill": "grammar", "prompt": "Bạn muốn nói “Tôi kiểm tra xem email này có phải thật hay không”. Chọn câu dùng câu hỏi có/không lồng với かどうか đúng hình thức.", "options": [{"id": "option:0", "text": "このメールが本物ですかどうか確認します。"}, {"id": "option:1", "text": "このメールが本物かどうか確認します。"}, {"id": "option:2", "text": "このメールが本物をどうか確認します。"}], "answer_option_id": "option:1", "rationale": "本物かどうか là câu hỏi “có phải thật hay không” được lồng vào câu. Không giữ です hoặc thay か bằng を ở cấu trúc này. Sự lịch sự thể hiện ở 確認します.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:scam:task:3", "mode": "short_text", "skill": "grammar", "prompt": "Hoàn thành câu thuật lại văn bản, không xác nhận lời trong văn bản là thật: 「メールに『本人確認が必要です』（　）書いてあります。」 Chỉ điền trợ từ trích dẫn đứng ngay trước 書いてあります.", "accepted_variants": ["と"], "rationale": "と đánh dấu nội dung được trích. Câu nói email viết gì, không khẳng định yêu cầu đó hợp lệ. Đề chỉ yêu cầu trợ từ trong mẫu と書いてあります; những cách thuật lại khác không nằm trong ô này.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:scam:task:4", "mode": "short_text", "skill": "grammar", "prompt": "Chỉ điền toàn bộ cụm nghi vấn hai vế “có hay không” bằng kana: 「同じお知らせがある（　）、公式アプリで確認します。」 Không dùng dạng rút gọn chỉ một か và không viết lại câu.", "accepted_variants": ["かどうか"], "rationale": "あるかどうか là có hay không có cùng thông báo. あるか確認します cũng có thể dùng trong tiếng Nhật, nhưng bài yêu cầu mẫu đủ hai vế có/không và không dùng dạng rút gọn; không kết luận một か là sai nói chung.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false}
+      ]
+    },
+    {
+      "id": "teaching:v1:N3:handover",
+      "revision": 1,
+      "order": 3,
+      "level": "N3",
+      "title": "Bàn giao quy trình cùng nhánh xử lý thiếu hàng",
+      "goal": "Phân biệt quy trình thường lệ và việc cần làm khi có vấn đề.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": {"status": "ai_draft", "human_approved": false},
+      "eligibility": {"reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false},
+      "source_refs": [{"chunk_id": "practical:v1:N3:handover", "url": "#curriculum/N3/lesson/reading/practical%3Av1%3AN3%3Ahandover%3Asituation", "source_name": "VJBot · Bàn giao công việc có ngoại lệ", "role": "background_reference_not_approval"}],
+      "source_header": "Nguồn bối cảnh: VJBot · Bàn giao công việc có ngoại lệ [practical:v1:N3:handover]. Bản dạy mới do AI soạn, chưa được con người duyệt.",
+      "formula": "［động từ thể từ điển］ことになっています。［điều kiện］場合は、［cách xử lý］。［thể て］から、［bước tiếp］。",
+      "explanation": "～ことになっています thuật lại quy định hoặc sắp xếp đã có, như 開店前に在庫を確認することになっています. Nó khác với ～ことにしています, thường nói việc một người tự quyết định duy trì thành thói quen. ～場合は mở nhánh theo tình huống: 商品が足りない場合は… nghĩa là nếu thiếu hàng thì…. Phần điều kiện không có nghĩa lúc nào cũng thiếu hàng. Khi bàn giao, tách bước thường lệ là kiểm tra trước mở cửa khỏi nhánh báo người phụ trách khi thiếu. 指示を受けてから注文してください yêu cầu nhận chỉ dẫn trước khi đặt; chỉ báo cáo thôi chưa đồng nghĩa đã được phép đặt.",
+      "examples": [
+        {"id": "teaching:v1:N3:handover:example:0", "context": "Người phụ trách giải thích quy trình chung của cửa hàng giả định", "jp": "開店前に在庫を確認することになっています。", "reading": "かいてんまえにざいこをかくにんすることになっています。", "vi": "Theo quy định, cần kiểm tra hàng tồn trước khi mở cửa.", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:handover:example:1", "context": "Nêu nhánh xử lý chỉ áp dụng nếu phát hiện thiếu hàng", "jp": "商品が足りない場合は、まず責任者に報告してください。", "reading": "しょうひんがたりないばあいは、まずせきにんしゃにほうこくしてください。", "vi": "Nếu thiếu hàng thì trước tiên hãy báo cho người chịu trách nhiệm.", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:handover:example:2", "context": "Nhắc rằng báo cáo chưa đủ; phải nhận chỉ dẫn rồi mới đặt hàng", "jp": "指示を受けてから注文してください。自分で判断して注文しないでください。", "reading": "しじをうけてからちゅうもんしてください。じぶんではんだんしてちゅうもんしないでください。", "vi": "Hãy nhận chỉ dẫn rồi mới đặt hàng. Đừng tự quyết định đặt hàng.", "authorship": "ai_authored"}
+      ],
+      "common_errors": [
+        {"problem": "開店前に在庫を確認しますことになっています。", "correction": "開店前に在庫を確認することになっています。", "reason": "Với việc phải làm theo quy định, động từ đứng ở thể từ điển trước こと, không dùng ます ngay tại đó."},
+        {"problem": "Hiểu “báo người phụ trách” là đã được quyền đặt hàng ngay, dù quy trình còn yêu cầu nhận chỉ dẫn.", "correction": "Báo người phụ trách, nhận chỉ dẫn, rồi mới đặt hàng theo chỉ dẫn.", "reason": "指示を受けてから xác định điều kiện thứ tự trước khi đặt. Không được bỏ bước này khi tóm tắt bàn giao."}
+      ],
+      "tasks": [
+        {"id": "teaching:v1:N3:handover:task:0", "mode": "choice", "skill": "reading", "passage": "引き継ぎメモ：開店前に在庫を確認することになっています。商品が足りない場合は、まず責任者に報告してください。指示を受けてから注文してください。", "prompt": "Bạn kiểm tra trước mở cửa và thấy thiếu hàng. Trình tự tiếp theo nào giữ đủ các bước của ghi chú?", "options": [{"id": "option:0", "text": "Đặt hàng trước, rồi báo lại cho người phụ trách."}, {"id": "option:1", "text": "Chỉ gửi báo cáo rồi tự quyết định đặt ngay, không chờ chỉ dẫn."}, {"id": "option:2", "text": "Báo người phụ trách, nhận chỉ dẫn, rồi mới đặt theo chỉ dẫn."}], "answer_option_id": "option:2", "rationale": "まず đặt báo cáo ở bước đầu khi thiếu; 指示を受けてから buộc nhận chỉ dẫn trước khi đặt. Không phương án nào được bỏ hoặc đảo bước chỉ vì đã báo cáo.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:handover:task:1", "mode": "choice", "skill": "reading", "passage": "店のルール：毎日、開店前に在庫を確認します。商品が足りない場合は、責任者に報告します。\n今日の確認結果：商品は足りています。", "prompt": "Chỉ xét hai quy định đã ghi và kết quả hôm nay, kết luận nào phù hợp?", "options": [{"id": "option:0", "text": "Đã làm bước kiểm tra thường lệ; điều kiện thiếu hàng để báo theo nhánh này không xảy ra."}, {"id": "option:1", "text": "Có đủ hàng nên lần sau không cần kiểm tra trước mở cửa nữa."}, {"id": "option:2", "text": "Dù có đủ hàng, ghi chú vẫn yêu cầu đặt bổ sung ngay."}], "answer_option_id": "option:0", "rationale": "Kiểm tra là việc hằng ngày; báo theo nhánh nêu trong bài gắn với điều kiện thiếu hàng. Hôm nay có đủ hàng nên điều kiện đó không xảy ra. Không suy rộng rằng cửa hàng không có báo cáo nào khác ngoài hai quy định đang đọc.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:handover:task:2", "mode": "choice", "skill": "grammar", "prompt": "Đang thuật lại một quy định chung đã được cửa hàng thống nhất, không phải thói quen do riêng người nói tự chọn. Câu nào thể hiện đúng sự phân biệt đó?", "options": [{"id": "option:0", "text": "私は自分で決めて、毎朝在庫を確認することにしています。"}, {"id": "option:1", "text": "店の規則で、開店前に在庫を確認することになっています。"}, {"id": "option:2", "text": "在庫を確認したことがあります。"}], "answer_option_id": "option:1", "rationale": "ことになっています cùng 店の規則で nêu quy định đã có. ことにしています trong câu đầu nêu thói quen cá nhân tự quyết; たことがあります chỉ trải nghiệm. Các mẫu khác không sai nói chung nhưng không đúng chức năng được yêu cầu.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:handover:task:3", "mode": "short_text", "skill": "grammar", "prompt": "Bàn giao việc theo quy định chung. Chỉ thay 確認します bằng thể từ điển, viết toàn bộ phần thiếu bằng kana: 「開店前に在庫を（　）ことになっています。」 Không thêm ことになっています.", "accepted_variants": ["かくにんする"], "rationale": "確認する là thể từ điển dùng trước こと trong cấu trúc quy định này. Kana là yêu cầu của bài; 確認する viết bằng kanji cũng là tiếng Nhật đúng nhưng không theo yêu cầu cách viết đã nêu.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:handover:task:4", "mode": "short_text", "skill": "grammar", "prompt": "Chỉ điền dạng て của 受ける bằng kana để giữ đúng yêu cầu nhận chỉ dẫn xong mới đặt: 「指示を（　）から注文してください。」 Không viết lại から hoặc cả câu.", "accepted_variants": ["うけて"], "rationale": "受ける → 受けて; 受けてから nêu nhận trước, đặt sau. Những cách khác như 指示の後で có thể diễn đạt thời gian nhưng không phải phép biến đổi động từ trong ô đang luyện.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false}
+      ]
+    },
+    {
+      "id": "teaching:v1:N3:interview",
+      "revision": 1,
+      "order": 4,
+      "level": "N3",
+      "title": "Nêu kinh nghiệm và tiến bộ có căn cứ",
+      "goal": "Nêu kinh nghiệm, ví dụ cụ thể và mục tiêu học hỏi.",
+      "prerequisites": [],
+      "authorship": "ai_authored",
+      "review": {"status": "ai_draft", "human_approved": false},
+      "eligibility": {"reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false},
+      "source_refs": [{"chunk_id": "practical:v1:N3:interview", "url": "#curriculum/N3/lesson/reading/practical%3Av1%3AN3%3Ainterview%3Asituation", "source_name": "VJBot · Trình bày kinh nghiệm khi phỏng vấn", "role": "background_reference_not_approval"}],
+      "source_header": "Nguồn bối cảnh: VJBot · Trình bày kinh nghiệm khi phỏng vấn [practical:v1:N3:interview]. Bản dạy mới do AI soạn, chưa được con người duyệt; các hồ sơ minh họa là hư cấu, không phải kinh nghiệm của người học.",
+      "formula": "［động từ thể た］ことがあります。［động từ khả năng］ようになりました。［mục tiêu］も学びたいです。",
+      "explanation": "～たことがあります nói từng có trải nghiệm, nhưng bản thân mẫu không nêu thời gian làm việc bao lâu hay xác nhận chuyên môn. Với khoảng làm việc cụ thể, 一年間、カフェで働いていました nêu thời lượng rõ hơn. ～できるようになりました diễn đạt sự thay đổi: trước chưa làm được, nay đã có thể làm. Động từ trước ようになりました không có ます. 接客だけでなく、在庫管理も学びたいです mở rộng từ điều thứ nhất sang cả điều thứ hai. Khi tự giới thiệu thật, chỉ dùng kinh nghiệm của chính mình; có thể nói về học tập nếu chưa có việc làm. Các đáp án dưới đây chỉ áp dụng cho hồ sơ nhân vật hư cấu đã cho, không yêu cầu người học nhận kinh nghiệm đó là của mình.",
+      "examples": [
+        {"id": "teaching:v1:N3:interview:example:0", "context": "Nhân vật hư cấu An nêu một trải nghiệm đã có, không nói thay người học", "jp": "カフェで働いたことがあります。", "reading": "かふぇではたらいたことがあります。", "vi": "Tôi từng làm việc ở quán cà phê.", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:interview:example:1", "context": "Nhân vật hư cấu Linh nói sự tiến bộ trong học tập, không bịa kinh nghiệm nghề nghiệp", "jp": "最初は短い文しか読めませんでしたが、今は簡単なメールが読めるようになりました。", "reading": "さいしょはみじかいぶんしかよめませんでしたが、いまはかんたんなめーるがよめるようになりました。", "vi": "Ban đầu tôi chỉ đọc được những câu ngắn, nhưng nay đã có thể đọc email đơn giản.", "authorship": "ai_authored"},
+        {"id": "teaching:v1:N3:interview:example:2", "context": "Nhân vật hư cấu An nêu mục tiêu học thêm, không tự nhận đã thành thạo quản lý tồn kho", "jp": "接客だけでなく、在庫管理も学びたいです。", "reading": "せっきゃくだけでなく、ざいこかんりもまなびたいです。", "vi": "Tôi muốn học không chỉ phục vụ khách mà cả quản lý hàng tồn.", "authorship": "ai_authored"}
+      ],
+      "common_errors": [
+        {"problem": "説明できますようになりました。", "correction": "説明できるようになりました。", "reason": "Dùng thể thông thường của động từ khả năng trước ようになりました. できます không đứng nguyên dạng lịch sự tại vị trí này."},
+        {"problem": "Từ 学びたいです suy ra nhân vật đã có kinh nghiệm quản lý hàng tồn, rồi đưa kinh nghiệm đó vào câu trả lời.", "correction": "Giữ đây là mục tiêu muốn học; chỉ khẳng định kinh nghiệm đã có nếu hồ sơ cho biết rõ.", "reason": "Mong muốn học không chứng minh năng lực hay kinh nghiệm hiện tại. Khi dùng mẫu cho bản thân, không sao chép tiểu sử của nhân vật minh họa."}
+      ],
+      "tasks": [
+        {"id": "teaching:v1:N3:interview:task:0", "mode": "choice", "skill": "reading", "passage": "架空の応募者アン：一年間、カフェで働いていました。最初は緊張しましたが、今はお客様にメニューを説明できるようになりました。こちらでは、接客だけでなく在庫管理も学びたいです。", "prompt": "Nhận định nào phân biệt đúng kinh nghiệm, tiến bộ và mục tiêu của nhân vật?", "options": [{"id": "option:0", "text": "An đã quản lý hàng tồn một năm và không còn điều gì muốn học."}, {"id": "option:1", "text": "An có một năm làm ở quán cà phê, nay có thể giải thích thực đơn và muốn học thêm quản lý tồn kho."}, {"id": "option:2", "text": "An mới chỉ muốn xin làm ở quán cà phê, chưa từng có kinh nghiệm nào được nêu."}], "answer_option_id": "option:1", "rationale": "一年間 nêu thời lượng làm ở quán; 説明できるようになりました nêu tiến bộ; 在庫管理も学びたい là mục tiêu. Không biến mục tiêu thành kinh nghiệm đã có hoặc gán hồ sơ hư cấu này cho người học.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:interview:task:1", "mode": "choice", "skill": "reading", "passage": "架空の学習者リン：アルバイトの経験はありません。大学で日本語を勉強しています。今は簡単なメールが読めるようになりました。これから仕事で使う会話を学びたいです。", "prompt": "Chọn phần tự giới thiệu đóng vai Linh giữ đúng hồ sơ, không thêm kinh nghiệm việc làm chưa có.", "options": [{"id": "option:0", "text": "カフェで一年間働いていました。在庫管理も担当しました。"}, {"id": "option:1", "text": "接客の仕事を三年間していました。日本語は勉強していません。"}, {"id": "option:2", "text": "アルバイトの経験はありませんが、日本語を勉強しています。今は簡単なメールが読めます。"}], "answer_option_id": "option:2", "rationale": "Hồ sơ nói không có kinh nghiệm làm thêm, đang học tiếng Nhật và đã đọc được email đơn giản. Câu đúng không thêm công việc hoặc thời lượng không tồn tại; đây là đóng vai nhân vật, không phải khai lý lịch thật của người học.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:interview:task:2", "mode": "choice", "skill": "grammar", "prompt": "Nhân vật giả định trước đây chưa giải thích thực đơn được, nay đã làm được. Câu nào nhấn mạnh đúng sự thay đổi về khả năng, không chỉ một trải nghiệm từng có?", "options": [{"id": "option:0", "text": "メニューを説明できるようになりました。"}, {"id": "option:1", "text": "メニューを説明したことがあります。"}, {"id": "option:2", "text": "メニューを説明したいです。"}], "answer_option_id": "option:0", "rationale": "できるようになりました nói đã trở nên có khả năng. したことがあります chỉ từng có trải nghiệm; したいです nói mong muốn. Những mẫu kia có thể đúng trong hoàn cảnh khác nhưng không thể hiện đầy đủ thay đổi được yêu cầu.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:interview:task:3", "mode": "short_text", "skill": "grammar", "prompt": "Hồ sơ hư cấu đã cho: An từng làm ở quán cà phê. Chỉ điền thể た của 働く bằng kana để thuật lại trải nghiệm của An: 「アンさんはカフェで（　）ことがあります。」 Không viết lại ことがあります hoặc nói đây là kinh nghiệm của bạn.", "accepted_variants": ["はたらいた"], "rationale": "働く → 働いた trước ことがあります. Bài chỉ biến đổi động từ dựa trên hồ sơ đã cho; không yêu cầu tự nhận trải nghiệm này và không suy ra thời lượng từ riêng mẫu たことがあります.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false},
+        {"id": "teaching:v1:N3:interview:task:4", "mode": "short_text", "skill": "grammar", "prompt": "Nhân vật hư cấu trước chưa đọc được, nay đọc được email đơn giản. Dùng thể khả năng của 読む ở thể thông thường, không dùng 読むことができる. Chỉ điền một động từ bằng kana: 「簡単なメールが（　）ようになりました。」", "accepted_variants": ["よめる"], "rationale": "読む có thể khả năng 読める; 読めるようになりました nêu khả năng mới đạt được. 読むことができる cũng diễn đạt khả năng trong ngữ cảnh phù hợp nhưng đề đã yêu cầu dạng khả năng một động từ để giới hạn câu trả lời.", "assessment_basis": "ai_authored_provisional_not_verified", "scored": false}
+      ]
+    }
+  ]
+}
