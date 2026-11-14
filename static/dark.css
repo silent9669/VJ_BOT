@@ -259,3 +259,4 @@
   --c-ffffff: #1f1f1f;
 }
 /* END generated colors */
+:root[data-theme=dark] { --on-accent: #0e1511; }
