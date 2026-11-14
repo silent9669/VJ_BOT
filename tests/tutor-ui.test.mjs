@@ -277,9 +277,10 @@ test('classroom chip clicks send explicit pedagogical intents',async()=>{
 test('SRS ordering retains canonical word identity without capturing either flashcard face',async()=>{
   const b=lesson(),panel=b.element('panel-lesson');panel.id='panel-flashcards';
   const review=b.add('flashcard-review','div',panel),card=b.add('flashcard-card','div',review);
-  card.innerHTML='<div class="card-face card-front"><p id="fc-front-text"></p><p id="fc-reading-text"></p></div><div class="card-face card-back"><p id="fc-back-meaning"></p><p id="fc-example-jp"></p><p id="fc-example-vi"></p></div>';
+  card.innerHTML='<div class="card-face card-front"><p id="fc-front-text"></p><p id="fc-reading-text"></p></div><div class="card-face card-back"><span id="fc-back-label"></span><button id="btn-fc-audio-back"></button><p id="fc-back-meaning"></p><div class="card-example-box"><p id="fc-example-jp"></p><p id="fc-example-vi"></p></div></div>';
   for(const id of ['fc-counter','fc-badge-lvl','fc-btn-prev','fc-btn-next'])b.add(id,'div',review);
   b.add('fc-face-status','span',review);b.c.soundEngine.playFlip=()=>{};
+  b.add('btn-fc-reveal','button',review);
   b.add('controls','div',review).className='fc-controls-bar';
   const item={id:'words',items:[{id:'word-a',jp:'私',vi:'PRIVATE A'},{id:'word-b',jp:'先生',vi:'PRIVATE B',examples:[{jp:'BACK EXAMPLE',vi:'BACK TRANSLATION'}]}]};
   b.c.window.JLPT_DATA={curriculum:{N3:{skills:{vocabulary:[item]}}}};
@@ -299,17 +300,23 @@ test('SRS ordering retains canonical word identity without capturing either flas
   assert.match(b.element('fc-face-status').textContent,/nghĩa được che/);
   b.c.displayFlashcard();assert.equal(invalidations,1,'same stable word does not invalidate quick ownership');
   assert.equal(Object.hasOwn(b.c.teacherContext().screen,'text'),false);
-  await card.dispatch('keydown',{key:'Enter'});
+  await b.element('btn-fc-reveal').click();
   assert.equal(card.classList.contains('flipped'),true);
   assert.equal(front.inert,true);assert.equal(front.getAttribute('aria-hidden'),'true');
   assert.equal(back.inert,false);assert.equal(back.getAttribute('aria-hidden'),'false');
   assert.equal(b.c.teacherContext().focus.index,1);
   assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE B'),false);
+  await card.dispatch('keydown',{key:'Enter'});assert.equal(card.classList.contains('flipped'),false);
+  await b.element('btn-fc-reveal').click();
   vm.runInContext('fcIdx=1;displayFlashcard();',b.c);
   assert.equal(b.c.teacherContext().focus.index,0);assert.equal(card.classList.contains('flipped'),false);
   assert.equal(front.inert,false);assert.equal(front.getAttribute('aria-hidden'),'false');
   assert.equal(back.inert,true);assert.equal(back.getAttribute('aria-hidden'),'true');
   assert.equal(invalidations,2,'moving to another automatic word invalidates quick ownership');
+  assert.equal(b.element('btn-fc-reveal').getAttribute('aria-expanded'),'false');
+  assert.equal(back.querySelector('.card-example-box').hidden,true);
+  assert.equal(b.element('btn-fc-audio-back').hidden,true);
+  assert.doesNotMatch(b.element('fc-back-label').textContent,/ví dụ/i);
   assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE A'),false);
   card.dataset.teacherWordId='not-in-this-lesson';assert.equal(b.c.teacherContext().focus,null);
 });
@@ -562,7 +569,7 @@ test('recall accepts typed text and persists it against the normalized task inst
   assert.match(b.document.querySelector('.practice-feedback').textContent,/SOURCE RECALL RATIONALE/);
 });
 
-test('writing self-assessment saves the response and rating without reporting objective correctness',async()=>{
+test('standalone writing saves raw text without a fabricated self-rating or objective correctness',async()=>{
   const sent=[],b=lesson({apiFetch:async(path,options)=>{
     if(path==='/api/progress')return Response.json({evidence:[]});
     const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task,basis:'self_report',source_correct:null});
@@ -571,9 +578,10 @@ test('writing self-assessment saves the response and rating without reporting ob
   await b.document.querySelector('[data-lesson-mode=practice]').click();
   const section=b.document.querySelector('.production-task'),input=section.querySelector('textarea');
   assert.equal(section.querySelector('.production-model').hidden,true);
-  input.value='  私はランです。  ';section.querySelector('input').checked=true;
+  assert.equal(section.querySelector('.task-writing-criteria').hidden,false);
+  input.value='  私はランです。  ';
   await section.querySelector('.production-save').click();
-  assert.equal(sent[0].response_text,'  私はランです。  ');assert.equal(sent[0].self_rating,4);
+  assert.equal(sent[0].response_text,'  私はランです。  ');assert.equal(Object.hasOwn(sent[0],'self_rating'),false);
   assert.equal(sent[0].task.id,'writing:question:0');assert.equal(sent[0].event,'answer');
   for(const key of ['correct','quality','answer_index'])assert.equal(Object.hasOwn(sent[0],key),false);
 });
@@ -705,10 +713,11 @@ test('open invitation and authored alternative continuations preserve actual lea
     assert.equal(section.querySelector('.practice-feedback').dataset.correct,'unknown');
     await section.querySelector('.practice-primary').click();
   }
-  assert.equal(sent.length,3);assert.equal(new Set(sent.map(x=>x.body.session_id)).size,1);
-  assert.equal(sent[0].body.response_text,' 土曜日、いっしょに料理をしませんか ');
-  assert.deepEqual(sent.map(x=>x.body.task.id),['invite','accept','refuse']);
-  assert.ok(sent.every(x=>!Object.hasOwn(x.body,'correct')&&!Object.hasOwn(x.body,'prior_response')&&!Object.hasOwn(x.body,'self_rating')));
+  const answers=sent.filter(entry=>entry.body.event==='answer');
+  assert.equal(answers.length,3);assert.equal(new Set(answers.map(x=>x.body.session_id)).size,1);
+  assert.equal(answers[0].body.response_text,' 土曜日、いっしょに料理をしませんか ');
+  assert.deepEqual(answers.map(x=>x.body.task.id),['invite','accept','refuse']);
+  assert.ok(answers.every(x=>!Object.hasOwn(x.body,'correct')&&!Object.hasOwn(x.body,'prior_response')&&!Object.hasOwn(x.body,'self_rating')));
   assert.equal(b.document.querySelector('.practice-result .practice-score'),null,'ungraded writing must not produce a keyed score');
 });
 
@@ -744,21 +753,25 @@ test('te-form stages wait for an actual saved attempt before expansion while ful
   await action.click();assert.equal(b.document.querySelector('.practice-session .task-stage h3').textContent,'Nhóm 1');
 });
 
-test('open writing feedback uses its unassessed contract and bound actual attempt rather than choice aliases',async()=>{
-  const sent=[],b=lesson({signedInUser:{user_id:'learner'},apiFetch:async(path,options)=>{
+test('saved open writing automatically requests feedback bound to its actual attempt rather than choice aliases',async()=>{
+  const sent=[],started=deferred(),feedback=deferred(),b=lesson({signedInUser:{user_id:'learner'},apiFetch:async(path,options)=>{
     const body=JSON.parse(options.body);sent.push({path,body});
-    return Response.json(path==='/api/practice/coach'
-      ?{reply:'Nghĩa: cần xác nhận rõ nơi gặp. Cấu trúc: chưa kết luận. Chính tả: góp ý riêng.',task:body.task,item_id:'open',action:'feedback',source_correct:null,assessment:{comparison:'unassessed'}}
-      :{task:body.task,source_correct:null,assessment:{comparison:'unassessed'}});
+    if(path==='/api/practice/coach'){started.resolve(body);return feedback.promise;}
+    return Response.json({task:body.task,source_correct:null,assessment:{comparison:'unassessed'}});
   }});
   b.c.showLessonDetail({id:'open',title:'Mời',drills:[{task_key:'open',item_id:'open',mode:'writing',objective:'communication',q:'Tự mời bạn.',criteria:['Một hoạt động do em chọn.']}]},'N5','grammar');
   await b.document.querySelector('[data-lesson-mode=practice]').click();
-  const input=b.document.querySelector('textarea');input.value='一緒に料理をしませんか';await input.dispatch('input');
+  assert.equal(b.document.querySelector('.task-writing-criteria').hidden,false);
+  const input=b.document.querySelector('.practice-options textarea');input.value='一緒に料理をしませんか';await input.dispatch('input');
   await b.document.querySelector('.practice-session .practice-primary').click();
-  await b.document.querySelector('.practice-coach button').click();
-  assert.match(b.document.querySelector('.practice-coach-reply').textContent,/xác nhận rõ nơi gặp/);
-  const answer=sent.find(x=>x.body.event==='answer').body,coaching=sent.find(x=>x.path==='/api/practice/coach').body;
+  const coaching=await started.promise,answer=sent.find(x=>x.body.event==='answer').body;
+  assert.equal(sent.filter(x=>x.path==='/api/practice/coach').length,1);
+  assert.equal(b.document.querySelector('.practice-coach').open,true);
+  feedback.resolve(Response.json({reply:'Ý nghĩa: em đã mời bạn nấu ăn. Cấu trúc: lời mời lịch sự. Chính tả: không có điều cần sửa.',task:coaching.task,item_id:'open',action:'feedback',source_correct:null,assessment:{comparison:'unassessed'}}));
+  await new Promise(setImmediate);
+  assert.match(b.document.querySelector('.practice-coach-reply').textContent,/nấu ăn/);
   assert.equal(coaching.response_text,answer.response_text);assert.equal(coaching.attempt_id,answer.attempt_id);assert.equal(coaching.session_id,answer.session_id);
+  assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'unknown');
 });
 
 test('switching accounts invalidates the whole mounted exchange before a new account can see prior learner content',async()=>{
@@ -932,4 +945,160 @@ test('exam previews show one target cue and one numbered part list without chang
   assert.equal(b.document.querySelectorAll('.task-instruction')[1].textContent,'Sắp xếp');
   assert.equal(tasks[1].instruction,instruction);assert.equal(tasks[1].answer_index,1);
   assert.deepEqual(b.document.querySelectorAll('.task-preview-options')[1].querySelectorAll('li').map(x=>x.children[1].textContent),tasks[1].opts);
+});
+
+test('one optional practice help area preserves hints, presentation restoration and saved-answer feedback',async()=>{
+  const sent=[],b=lesson({signedInUser:{user_id:'learner',is_admin:true}});
+  b.c.window=b.c;b.c.addEventListener=()=>{};b.c.MutationObserver=class{observe(){}};
+  vm.runInContext(readFileSync('static/study-teacher.js','utf8'),b.c);
+  b.c.apiFetch=async(path,options)=>{
+    const body=JSON.parse(options.body);sent.push({path,body});
+    if(path==='/api/progress/record')return Response.json({task:body.task});
+    if(body.action==='teach')return Response.json({...body,reply:'Đọc từng lựa chọn.',fields:[
+      {key:'question:option:0',source:'FIRST',text:'Một'},{key:'question:option:1',source:'SECOND',text:'Hai'}]});
+    return Response.json({action:body.action,item_id:'combined-q',task:body.task,reply:body.action==='hint'?'Một gợi ý.':'Xem lại cách chọn.',
+      ...(body.action==='feedback'?{answer_index:1,correct:false}:{})});
+  };
+  b.c.showLessonDetail({id:'combined-help',title:'Luyện',drills:[{q:'選んでください。',opts:['FIRST','SECOND'],answer_index:1,item_id:'combined-q'}]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  let area=b.document.querySelector('.practice-coach');
+  assert.equal(area.tagName,'DETAILS');assert.equal(Boolean(area.open),false);
+  assert.equal(b.document.querySelectorAll('.practice-session .practice-coach').length,1);
+  area.open=true;await area.querySelector('button').click();
+  assert.equal(area.querySelector('.practice-coach-reply').textContent,'Một gợi ý.');
+  const teaching=area.querySelector('.practice-teaching');teaching.open=true;
+  await teaching.querySelector('.study-teacher-button').click();
+  assert.equal(b.document.querySelectorAll('.practice-option')[0].textContent,'1Một');
+  await b.document.querySelector('.practice-options input').dispatch('change');
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  assert.deepEqual(b.document.querySelectorAll('.practice-option').map(x=>x.children[2].textContent),['FIRST','SECOND']);
+  assert.equal(b.document.querySelector('.practice-feedback').hidden,true);
+  area=b.document.querySelector('.practice-coach');area.open=true;await area.querySelector('button').click();
+  assert.equal(area.querySelector('.practice-coach-reply').textContent,'Xem lại cách chọn.');
+  assert.deepEqual(sent.filter(x=>x.path==='/api/practice/coach').map(x=>x.body.action),['hint','teach','feedback']);
+  assert.equal(sent.find(x=>x.body.event==='answer').body.answer_index,0);
+});
+
+test('recall mismatch remains neutral with one visible sample and all original variants behind a disclosure',async()=>{
+  const sent=[],answers=['私は教師です。','わたしは教師です。','私はきょうしです。'],b=lesson({apiFetch:async(_path,options)=>{
+    const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task,source_correct:false,assessment:{comparison:'source_mismatch'}});
+  }});
+  b.c.showLessonDetail({id:'recall-variants',title:'Viết',drills:[{q:'Tự giới thiệu.',mode:'recall',accepted_answers:answers}]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const input=b.document.querySelector('.practice-options input');input.value=' 私は先生です。 ';await input.dispatch('input');
+  assert.equal(b.document.querySelector('.practice-sample'),null);
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  const feedback=b.document.querySelector('.practice-feedback'),variants=feedback.querySelector('.practice-variants');
+  assert.equal(feedback.dataset.correct,'unknown');assert.equal(feedback.querySelector('.practice-sample').textContent,answers[0]);
+  assert.equal(Boolean(variants.open),false);assert.deepEqual(variants.querySelectorAll('li').map(x=>x.textContent),answers.slice(1));
+  assert.equal(sent[0].response_text,' 私は先生です。 ');assert.equal(Object.hasOwn(sent[0],'correct'),false);
+  assert.deepEqual(answers,['私は教師です。','わたしは教師です。','私はきょうしです。']);
+});
+
+function progressFixture(apiFetch){
+  const b=lesson({signedInUser:{user_id:'learner'},userId:'learner',apiFetch,showCompletedActivities(){}});
+  for(const id of ['mastery-lessons-count','mastery-answers-count','mastery-accuracy-rate','mastery-evidence-summary','mastery-legacy',
+    'mastery-streak-val','streak-counter','mastery-exams-count','completed-activities','weak-spots-list'])b.add(id);
+  b.c.location.hash='#mastery';b.c.ensureLessons=async()=>{};b.c.loadPracticalCourse=async()=>{};b.c.createStudyPlan=()=>[];b.c.featureLessons=()=>[];
+  const items=[{id:'review-a',title:'Bài A',drills:[{q:'A1',item_id:'shared',opts:['A','B'],answer_index:0},{q:'A2',item_id:'second',opts:['C','D'],answer_index:1}]},
+    {id:'review-b',title:'Bài B',drills:[{q:'B1',item_id:'shared',opts:['E','F'],answer_index:0}]}];
+  b.c.window.JLPT_DATA={curriculum:{N5:{skills:{grammar:items}}}};
+  vm.runInContext(app.slice(app.indexOf('async function resolveProgressReview('),app.indexOf('// 14. FLOATING SENSEI DOCK')),b.c);
+  return b;
+}
+test('progress names the exact current question and sends ambiguous history to the library rather than guessing',async()=>{
+  const b=progressFixture(async()=>Response.json({total_learned:1,legacy:{accuracy_rate:75},items:[{item_id:'legacy'}],
+    evidence:[{item_id:'second',task_id:'review-a:question:1',lesson_id:'review-a',level:'N5',answered_at:'2026-11-14',source_correct:0}],
+    weak_items:[{item_id:'shared',jlpt_level:'N5',display:'Bản ghi cũ'}]}));
+  await b.c.loadProgress();
+  assert.equal(b.element('mastery-answers-count').textContent,'1');assert.equal(b.element('mastery-accuracy-rate').textContent,'75%');
+  assert.equal(b.element('mastery-legacy').hidden,false);
+  const rows=b.element('weak-spots-list').querySelectorAll('.review-task-card');
+  assert.equal(rows[0].querySelector('h4').textContent,'Bài A');assert.match(rows[0].querySelector('p').textContent,/Câu 2: A2/);
+  const destinations=[];b.c.switchTab=(tab,route)=>destinations.push({tab,route});
+  await rows[1].querySelector('button').click();assert.deepEqual(plain(destinations),[{tab:'curriculum',route:{level:'N5'}}]);assert.equal(b.c.currentLesson,null);
+  await rows[0].querySelector('button').click();
+  assert.equal(b.c.currentLesson.item.id,'review-a');assert.equal(b.c.currentLesson.item.reviewQuestionIndex,1);
+  assert.match(b.document.querySelector('.practice-session').textContent,/A2/);assert.doesNotMatch(b.document.querySelector('.practice-session').textContent,/A1/);
+});
+test('a previous account progress response cannot overwrite current counts or reveal its review text',async()=>{
+  const pending=deferred();let calls=0;
+  const b=progressFixture(async()=>++calls===1?pending.promise:Response.json({evidence:[{item_id:'new',answered_at:'2026-11-14'}]}));
+  const old=b.c.loadProgress();b.c.signedInUser={user_id:'new-account'};b.c.userId='new-account';await b.c.loadProgress();
+  pending.resolve(Response.json({total_learned:99,items:[{item_id:'old'}],weak_items:['PRIVATE OLD REVIEW']}));await old;
+  assert.equal(b.element('mastery-answers-count').textContent,'1');assert.equal(b.element('mastery-lessons-count').textContent,'1');
+  assert.equal(b.element('mastery-legacy').hidden,true);assert.doesNotMatch(b.element('weak-spots-list').textContent,/PRIVATE OLD REVIEW/);
+});
+test('progress API failures are visible without fabricated zero scores',async()=>{
+  const b=progressFixture(async()=>Response.json({detail:'Unavailable'},{status:503}));
+  await b.c.loadProgress();assert.match(b.element('weak-spots-list').textContent,/Chưa tải được tiến độ/);
+  assert.equal(b.element('mastery-answers-count').textContent,'—');assert.equal(b.element('mastery-legacy').hidden,true);
+});
+test('a long lesson outline keeps its current neighborhood visible and every remaining step addressable',async()=>{
+  const b=lesson(),steps=Array.from({length:26},(_,i)=>({lesson:{id:`outline-${i}`,title:`Bài ${i+1}`},skill:'grammar'}));
+  const host=b.add('lesson-outline','aside');b.c.currentLesson={item:steps[12].lesson,level:'N5',skill:'grammar'};
+  b.c.studyPlans.set('N5',[{title:'Chương',steps}]);b.c.studySkillNames={grammar:'Ngữ pháp'};b.c.loadCompletions=async()=>new Set(['outline-11']);
+  const opened=[];b.c.openStudyStep=(step,level)=>opened.push({id:step.lesson.id,level});
+  vm.runInContext(plan.slice(plan.indexOf('async function renderLessonOutline('),plan.indexOf('let studyPlanRequest=')),b.c);
+  await b.c.renderLessonOutline(steps[12].lesson,'N5','grammar');
+  assert.equal(host.children[2].querySelectorAll('button').length,5);
+  assert.equal(host.querySelector('button[aria-current=step]').textContent,'Bài 13');
+  const more=host.querySelector('.lesson-outline-more');assert.equal(Boolean(more.open),false);
+  assert.equal(more.querySelectorAll('button').length,21);assert.equal(host.querySelectorAll('button').length,26);
+  await more.querySelectorAll('button').at(-1).click();assert.deepEqual(opened,[{id:'outline-25',level:'N5'}]);
+});
+
+test('an authored rewrite has an open goal and rubric rather than a forced answer string',()=>{
+  const b=lesson(),source=JSON.parse(readFileSync('static/course/n1-teaching.json','utf8')).lessons[0].tasks.find(task=>task.id==='teaching:v1:N1:argument:task:3');
+  const task=taskFixture({q:source.prompt,mode:source.mode,opts:[],answer_index:null,criteria:source.criteria,passage:source.passage});
+  assert.equal(source.mode,'writing');assert.equal(Object.hasOwn(source,'accepted_variants'),false);
+  const host=b.document.createElement('section');host.innerHTML=b.c.taskPromptHtml(task);
+  const stem=host.querySelector('.task-instruction-prompt');
+  assert.equal(stem.getAttribute('lang'),'vi');assert.equal(stem.querySelectorAll('p').length,2);
+  assert.ok(stem.querySelectorAll('p').some(p=>p.textContent==='「手続きは統一されている。しかし、それだけでは、すべての利用者にとって最善だとは断定できない。」'));
+  assert.equal(host.querySelector('.task-stimulus').textContent,source.passage);
+  for(const text of ['手続きが統一されているからといって、必ずしも全員に最善とはいえない。','手続きを統一したからといって、必ずしも皆にとって最善だとはいえない。']){
+    const round=b.c.createPracticeRound([task]),result=round.answer(text);
+    assert.equal(result.selected,text);assert.equal(result.correct,null);assert.equal(round.correct,0);
+    assert.equal(round.unassessed,1);assert.deepEqual(plain(round.missed),[]);
+  }
+  assert.equal(task.q,source.prompt);assert.deepEqual(plain(task.accepted_answers),[]);
+});
+test('instruction paragraphs escape literal markup and mark the lexical target only once',()=>{
+  const b=lesson(),q='Em hãy sửa 提出.\n\nGiữ <script>alert(1)</script> như văn bản.\n\nViết 提出 và không bỏ phần <cuối>.';
+  const task=taskFixture({q,mode:'writing',target:'提出'}),host=b.document.createElement('section');
+  host.innerHTML=b.c.taskPromptHtml(task);
+  assert.equal(host.querySelectorAll('.task-stem p').length,3);assert.equal(host.querySelectorAll('mark').length,1);
+  assert.equal(host.querySelectorAll('script').length,0);assert.equal(host.querySelectorAll('cuối').length,0);
+  assert.match(host.textContent,/<script>alert\(1\)<\/script>/);assert.match(host.textContent,/không bỏ phần <cuối>/);
+  assert.equal(task.q,q);
+});
+
+test('writing waits for answer persistence, surfaces AI failure once and retries assessment only on request',async()=>{
+  const sent=[],firstCoach=deferred();let saved=false,calls=0;
+  const b=lesson({apiFetch:async(path,options)=>{
+    const body=JSON.parse(options.body);sent.push({path,body});
+    if(path==='/api/practice/coach'){
+      calls++;firstCoach.resolve();
+      return calls===1?Response.json({detail:'Assessment unavailable'},{status:503}):Response.json({
+        task:body.task,item_id:'open-retry',action:'feedback',reply:'Ý nghĩa: em đã nói đúng nghề. Cấu trúc: câu lịch sự. Chính tả: không cần sửa.',
+        source_correct:null,assessment:{comparison:'unassessed'}});
+    }
+    return body.event==='answer'&&!saved?Response.json({detail:'Save failed'},{status:503}):Response.json({task:body.task,assessment:{comparison:'unassessed'}});
+  }});
+  b.c.showLessonDetail({id:'open-retry',title:'Nghề',drills:[{task_key:'open-retry',item_id:'open-retry',mode:'writing',
+    q:'Giới thiệu nghề của em.',criteria:['Nói rõ nghề bằng lời lịch sự.']}]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const input=b.document.querySelector('.practice-options textarea'),action=b.document.querySelector('.practice-actions .practice-primary');
+  assert.equal(b.document.querySelector('.task-writing-criteria').hidden,false);
+  input.value='  教師をしています。  ';await input.dispatch('input');await action.click();
+  assert.equal(calls,0);assert.match(b.document.querySelector('.practice-feedback').textContent,/Save failed/);
+  saved=true;await action.click();await firstCoach.promise;await new Promise(setImmediate);
+  assert.equal(calls,1);assert.match(b.document.querySelector('.practice-coach-reply').textContent,/Assessment unavailable/);
+  assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'unknown');assert.equal(action.disabled,false);
+  const coach=b.document.querySelector('.practice-coach button');assert.equal(coach.disabled,false);
+  await coach.click();assert.equal(calls,2);assert.match(b.document.querySelector('.practice-coach-reply').textContent,/đúng nghề/);
+  const requests=sent.filter(entry=>entry.path==='/api/practice/coach').map(entry=>entry.body);
+  assert.equal(requests[0].response_text,'  教師をしています。  ');assert.deepEqual(requests[0],requests[1]);
+  assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'unknown');
 });

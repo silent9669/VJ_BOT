@@ -24,7 +24,7 @@ function createStudyPlan(level){
   const step=(lesson,skill)=>({lesson,skill,ids:lessonProgressIds(lesson,level,skill)});
   if(level==='N5')units.push({id:'practical:kana',title:'Làm quen bảng chữ cái',goal:'Nhận diện cách đọc các chữ cơ bản trước khi bắt đầu hội thoại.',minutes:60,optional:true,steps:skills.kana.map(l=>step(l,'kana'))});
   const editorial=skills.grammar.filter(lesson=>lesson.editorial);
-  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chờ em duyệt',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Đọc ví dụ theo tình huống rồi tự viết câu. Bài do AI biên soạn, chưa được duyệt; chỉ dùng để tham khảo.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
+  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chờ em duyệt',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Đọc ví dụ theo tình huống rồi tự viết câu.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
   for(const chapter of courseChapters.chapters.filter(c=>c.level===level)){
     const lessons=chapter.grammar_ids.map(id=>skills.grammar.find(l=>l.id===`openjlpt:${level}:grammar:${id}`));
     if(lessons.some(l=>!l))throw new Error('Thiếu nguồn của chương');
@@ -95,20 +95,29 @@ async function renderLessonOutline(item,level,skill,owner){
   const head=document.createElement('header'),title=document.createElement('strong'),count=document.createElement('span'),bar=document.createElement('progress');
   title.textContent=unit.title;count.textContent=`${done}/${unit.steps.length}`;bar.max=unit.steps.length;bar.value=done;bar.setAttribute('aria-label','Số bài đã đánh dấu trong chương');
   head.append(title,count);host.append(head,bar);
-  const list=document.createElement('ol');
-  for(const step of unit.steps){
+  const list=document.createElement('ol'),remaining=document.createElement('ol');
+  const current=unit.steps.findIndex(step=>activityId(step.lesson,level,step.skill)===id);
+  const start=Math.max(0,Math.min(current-2,unit.steps.length-5)),end=start+5;
+  for(const [index,step] of unit.steps.entries()){
     const stepId=activityId(step.lesson,level,step.skill),li=document.createElement('li'),button=document.createElement('button');
     button.type='button';button.dataset.done=String(completed.has(stepId));if(stepId===id)button.setAttribute('aria-current','step');
     const label=document.createElement('span');label.textContent=step.lesson.title;
-    const kind=document.createElement('small');kind.textContent=studySkillNames[step.skill]||'';
-    button.append(label,kind);button.onclick=()=>openStudyStep(step,level);li.append(button);list.append(li);
+    button.setAttribute('aria-label',`${step.lesson.title} · ${studySkillNames[step.skill] || 'Bài học'}`);
+    button.append(label);button.onclick=()=>openStudyStep(step,level);li.append(button);
+    (index>=start && index<end?list:remaining).append(li);
   }
-  host.append(list);host.hidden=false;
+  host.append(list);
+  if(remaining.children.length){
+    const more=document.createElement('details'),summary=document.createElement('summary');
+    more.className='lesson-outline-more';summary.textContent=`Các bài còn lại (${remaining.children.length})`;
+    more.append(summary,remaining);host.append(more);
+  }
+  host.hidden=false;
 }
 let studyPlanRequest=0;
 async function renderStudyPlan(level){
   const request=++studyPlanRequest,host=document.getElementById('study-plan');
-  const expanded=[...host.querySelectorAll('details[open]')].map(d=>d.dataset.unit);
+  const expanded=[...host.querySelectorAll('.plan-unit[open]')].map(d=>d.dataset.unit);
   host.textContent='Đang tải danh sách bài học…';
   try{
     await Promise.all([ensureLessons(level),loadPracticalCourse()]);
@@ -130,11 +139,11 @@ async function renderStudyPlan(level){
     for(const [index,unit] of units.entries()){
       const detail=document.createElement('details');detail.className='plan-unit';detail.dataset.unit=unit.id;detail.open=units.some(u=>expanded.includes(u.id))?expanded.includes(unit.id):unit===upcomingUnit;detail.dataset.current=String(unit===upcomingUnit);detail.dataset.done=String(unitDone(unit));detail.dataset.category=unit.optional?'optional':unit.type==='grammar'?'grammar':'practical';detail.dataset.search=[unit.title,unit.goal,...unit.steps.map(step=>step.lesson.title)].join(' ').normalize('NFKC').toLocaleLowerCase();
       const count=unit.steps.filter(marked).length;
-      detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?' · tùy chọn':''}</strong><span>${unitDone(unit)?'Đã đánh dấu':`${count}/${unit.steps.length}`}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal)} <span>${escapeHtml(unit.sourceLabel || (unit.type==='grammar'?'Ngữ pháp · OpenJLPT':unit.optional?'Kana':'Tình huống · tiếng Việt'))} · khoảng ${unit.minutes} phút</span></p></div>`;
+      detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?' · tùy chọn':''}</strong><span>${unitDone(unit)?'Đã đánh dấu':`${count}/${unit.steps.length}`}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal)}</p><details class="unit-info"><summary>Về chương này</summary><p>${escapeHtml(unit.sourceLabel || (unit.type==='grammar'?'Ngữ pháp · OpenJLPT':unit.optional?'Kana':'Tình huống · tiếng Việt'))} · khoảng ${unit.minutes} phút</p></details></div>`;
       const list=detail.querySelector('.plan-steps');
       for(const step of unit.steps){
         const state=studyStepState(step,records,progress.evidence,revisions),button=document.createElement('button');button.type='button';button.className='plan-step';button.dataset.done=String(marked(step));if(step===upcoming)button.setAttribute('aria-current','step');
-        button.innerHTML=`<span class="plan-skill">${studySkillNames[step.skill] || (step.kind==='kaiwa'?'Kaiwa':'Bài kiểm tra')}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${marked(step)?'Em đã đánh dấu':state.submitted?`Đã làm ${state.submitted}/${state.total} câu`:state.needsReview?'Cần ôn':'Bắt đầu →'}</span>`;
+        button.innerHTML=`<span class="plan-skill task-accessible-target">${studySkillNames[step.skill] || (step.kind==='kaiwa'?'Kaiwa':'Bài kiểm tra')}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${marked(step)?'Em đã đánh dấu':state.submitted?`Đã làm ${state.submitted}/${state.total} câu`:state.needsReview?'Cần ôn':'Bắt đầu →'}</span>`;
         button.onclick=()=>openStudyStep(step,level);list.append(button);
         if(step.lesson.delayed_review_task_id){
           const tasks=lessonQuestions(step.lesson,level,step.skill),later=delayedReviewState(step.lesson,tasks,progress.evidence,revisions);
@@ -148,7 +157,7 @@ async function renderStudyPlan(level){
         }
       }
       const target=unit.steps.find(s=>!marked(s)) || unit.steps[0];
-      if(target){const talk=document.createElement('button');talk.type='button';talk.className='plan-step plan-talk';talk.innerHTML='<span class="plan-skill">Thầy Lâm</span><span>Lớp học đảo ngược</span><span class="plan-step-status">Vào lớp →</span>';talk.onclick=()=>{switchTab('classroom');startReversedLesson(target.lesson,level,target.skill);};list.append(talk);}
+      if(target){const talk=document.createElement('button');talk.type='button';talk.className='plan-step plan-talk';talk.innerHTML='<span class="plan-skill task-accessible-target">Thầy Lâm</span><span>Lớp học đảo ngược</span><span class="plan-step-status">Vào lớp →</span>';talk.onclick=()=>{switchTab('classroom');startReversedLesson(target.lesson,level,target.skill);};list.append(talk);}
       const completion=document.createElement('div');list.append(completion);mountCompletion(completion,{activity_id:unit.id,kind:'roadmap',level,title:unit.title},true);
       detail.addEventListener('toggle',()=>{if(detail.open)for(const other of host.querySelectorAll('.plan-unit'))if(other!==detail)other.open=false;});
       host.querySelector('.plan-units').append(detail);

@@ -396,9 +396,8 @@
 
                   <!-- Back Side -->
                   <div class="card-face card-back" aria-hidden="true" inert>
-                    <span class="card-hint">NGHĨA &amp; VÍ DỤ</span>
+                    <span class="card-hint" id="fc-back-label">Nghĩa</span>
                     <div class="card-badge-row">
-                      <span class="card-badge" id="fc-badge-back">Ý nghĩa</span>
                       <button type="button" class="card-audio-btn" id="btn-fc-audio-back" title="Nghe câu ví dụ">Nghe</button>
                     </div>
                     <div class="card-meaning-text" id="fc-back-meaning">Tôi (đại từ nhân xưng ngôi thứ nhất)</div>
@@ -409,7 +408,8 @@
                   </div>
                 </div>
               </div>
-              <p id="fc-face-status" role="status">Đang xem mặt chữ, nghĩa được che</p>
+              <button type="button" class="stage-btn" id="btn-fc-reveal" aria-controls="flashcard-card" aria-expanded="false">Xem nghĩa</button>
+              <p id="fc-face-status" class="task-accessible-target" role="status">Đang xem mặt chữ, nghĩa được che</p>
 
               <!-- SRS Controls -->
               <div class="fc-controls-bar">
@@ -604,8 +604,8 @@
               <div class="mastery-kpi-card">
 
                 <div class="kpi-info">
-                  <span class="kpi-label">Độ khớp nguồn đã lưu trước đây · chưa xác minh</span>
-                  <strong class="kpi-val" id="mastery-accuracy-rate">0%</strong>
+                  <span class="kpi-label">Lượt trả lời</span>
+                  <strong class="kpi-val" id="mastery-answers-count">0</strong>
                 </div>
               </div>
               <div class="mastery-kpi-card">
@@ -623,6 +623,7 @@
                 </div>
               </div>
             </div>
+            <details id="mastery-legacy" class="mastery-legacy" hidden><summary>Lịch sử trước đây</summary><p id="mastery-evidence-summary"></p><p>Tỷ lệ so với đáp án lúc đó: <strong id="mastery-accuracy-rate"></strong></p></details>
 
             <section class="completed-section"><h2>Bài đã hoàn thành</h2><div id="completed-activities"></div></section>
             <!-- Weak Spots Revision Section -->

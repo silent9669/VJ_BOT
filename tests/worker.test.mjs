@@ -1311,13 +1311,16 @@ for(const [level,lessonId] of [
     response=await worker.fetch(request('/api/practice/coach',{...reference,question_index:questionIndex,item_id:question.item_id,action:'feedback',answer_index:wrongIndex}),env);
     const feedback=await response.json();assert.equal(response.status,200);assert.equal(feedback.correct,false);assert.equal(feedback.verified,false);
     assert.equal(evidence[1].submission_index,wrongIndex);assert.equal(evidence[1].authored_explanation,question.explanation);
-    const textIndex=lesson.questions.findIndex(question=>question.mode==='recall'),text=lesson.questions[textIndex];
+    const textIndex=lesson.questions.findIndex(question=>['recall','writing'].includes(question.mode)),text=lesson.questions[textIndex],open=text.mode==='writing';
+    const raw=open?'自分の言葉で書いた文です。':text.accepted_answers[0];
     response=await worker.fetch(request('/api/progress/record',{...reference,task:{id:text.task_id,revision:text.revision},question_index:textIndex,
-      attempt_id:`${level}-package-recall-0001`,event:'answer',response_text:text.accepted_answers[0]}),env);
-    assert.equal(response.status,200);assert.equal((await response.json()).basis,'source_advisory');
+      attempt_id:`${level}-package-text-0001`,event:'answer',response_text:raw}),env);
+    assert.equal(response.status,200);const typed=await response.json();
+    assert.equal(typed.basis,open?'self_report':'source_advisory');assert.equal(typed.source_correct,open?null:true);assert.equal(typed.verified,false);
     const progress=await(await worker.fetch(request('/api/progress'),env)).json();
-    assert.equal(progress.verified.answered,0);assert.equal(progress.source_advisory.answered,2);
-    assert.equal(progress.source_advisory.incorrect,1);assert.equal(progress.source_advisory.correct,1);
+    assert.equal(progress.verified.answered,0);assert.equal(progress.source_advisory.answered,open?1:2);
+    assert.equal(progress.source_advisory.incorrect,1);assert.equal(progress.source_advisory.correct,open?0:1);
+    assert.equal(progress.self_report.answered,open?1:0);
     assert.equal((await worker.fetch(request('/api/practice/coach',{...reference,task:{...reference.task,revision:'f'.repeat(64)},question_index:questionIndex,action:'hint'}),env)).status,409);
     assert.equal(evidence.length,2,'a stale revision never reaches the provider');
   }finally{globalThis.fetch=original;}
@@ -1362,7 +1365,7 @@ test('bound exchange feedback uses raw same-session learner answers and persists
     const hint=await worker.fetch(request('/api/practice/coach',{...reference(1),action:'hint'}),env);
     assert.equal(hint.status,200);assert.doesNotMatch(JSON.stringify(calls[0].evidence),/SECRET|authored_answer|authored_explanation|"submission"/);
     assert.equal(calls[0].evidence.exchange.prior_responses[0].response_text,invitation);
-    assert.equal(Object.hasOwn(calls[0].evidence,'criteria'),false,'pre-answer hints cannot receive post-answer writing criteria');
+    assert.deepEqual(calls[0].evidence.criteria,['Nêu hoạt động phù hợp với tình huống.','Dùng cách mời lịch sự.'],'ordinary writing hints use the learner-visible rubric without receiving the model answer');
     assert.equal((await worker.fetch(request('/api/progress/record',answer(1,acceptance)),env)).status,200);
     assert.equal((await worker.fetch(request('/api/progress/record',answer(0,'別のセッションの回答。',
       {attempt_id:'learning-other-invite-0001',session_id:'learning-other-session-0001'})),env)).status,200);
@@ -1621,5 +1624,34 @@ test('feedback accepts bounded full-length current and actual prior writing with
     assert.equal(evidence[0].submission,current);assert.equal(evidence[0].exchange.prior_responses[0].response_text,prior);
     assert.equal(Object.hasOwn(evidence[0].assessment,'submitted_text'),false);
     assert.equal((JSON.stringify(evidence[0]).match(new RegExp(current,'g')) || []).length,1);
+  }finally{globalThis.fetch=original;}
+});
+
+test('authored open rewrites bind different raw answers to the same rubric without creating a source-key verdict',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;await withApi(env,request);
+  const lesson=teacherCatalogs.N1.lessons['teaching:v1:N1:argument'],index=lesson.questions.findIndex(task=>task.task_id==='teaching:v1:N1:argument:task:3'),task=lesson.questions[index];
+  assert.equal(task.mode,'writing');assert.deepEqual(task.accepted_answers,[]);assert.equal(task.answer_index,null);
+  const answers=['  手続きが統一されているからといって、必ずしも全員に最善とはいえない。  ','手続きを統一したからといって、必ずしも皆にとって最善だとはいえない。'],calls=[];
+  globalThis.fetch=async(_url,options)=>{
+    const wire=JSON.parse(options.body),evidence=JSON.parse(wire.messages.at(-1).content);calls.push(evidence);
+    return Response.json({choices:[{message:{content:JSON.stringify({reply:'意味：元の留保を保っています。構造：提出された文の接続を確認します。表記：異なる語句を使っていても、それだけでは誤りにしません。'})}}]});
+  };
+  try{
+    for(const [position,response_text]of answers.entries()){
+      const reference={lesson:{id:lesson.id,level:'N1'},view:'checks',question_index:index,task:{id:task.task_id,revision:task.revision},attempt_id:`open-rewrite-attempt-000${position}`};
+      const saved=await worker.fetch(request('/api/progress/record',{...reference,event:'answer',response_text}),env),receipt=await saved.json();
+      assert.equal(saved.status,200);assert.equal(receipt.source_correct,null);assert.equal(receipt.verified,false);
+      const feedback=await worker.fetch(request('/api/practice/coach',{...reference,item_id:task.item_id,action:'feedback',response_text}),env),body=await feedback.json();
+      assert.equal(feedback.status,200);assert.equal(body.correct,null);assert.equal(body.source_correct,null);assert.equal(body.verified,false);
+      assert.equal(body.assessment.comparison,'unassessed');assert.equal(body.assessment.semantic_verified,false);
+      assert.equal(calls[position].submission,response_text);assert.deepEqual(calls[position].criteria,task.criteria);
+      assert.equal(calls[position].authored_answer,null);assert.equal(calls[position].model,'');
+      const row=await env.DB.prepare('SELECT response_text,source_correct,feedback_json FROM task_attempt_evidence WHERE attempt_id=?').bind(reference.attempt_id).first();
+      assert.equal(row.response_text,response_text);assert.equal(row.source_correct,null);assert.ok(row.feedback_json);
+      assert.equal((await worker.fetch(request('/api/practice/coach',{...reference,action:'feedback',response_text:response_text+'改変'}),env)).status,409);
+    }
+    const progress=await(await worker.fetch(request('/api/progress'),env)).json();
+    assert.equal(progress.self_report.answered,2);assert.equal(progress.verified.answered,0);assert.equal(progress.source_advisory.answered,0);
+    assert.equal(calls.length,2);
   }finally{globalThis.fetch=original;}
 });

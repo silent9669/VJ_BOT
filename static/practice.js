@@ -29,18 +29,25 @@ function practiceCoachIdentity() {
       window.antigravityConnectionId?.(owner), owner && window.VJProfiles?.active(owner)]);
   } catch { return null; }
 }
-function mountPracticeCoach(section, container, lesson, question, index, result) {
-  const area=document.createElement('aside');area.className='practice-coach';area.setAttribute('aria-label','Học cùng thầy Lâm');area.setAttribute('data-teacher-exclude','');
-  const heading=document.createElement('strong');heading.textContent='Cùng thầy Lâm gỡ từng bước';
+function mountPracticeCoach(section, container, lesson, question, index, result, presentation={}) {
+  const area=document.createElement('details');area.className='practice-coach';area.setAttribute('aria-label','Học cùng thầy Lâm');area.setAttribute('data-teacher-exclude','');
+  const toggle=document.createElement('summary');toggle.textContent='Hỏi thầy Lâm';
   const button=document.createElement('button');button.type='button';
   button.textContent=result ? result.correct===null?'Thầy nhận xét câu em viết':result.correct?'Thầy giải thích giúp em nhé':'Thầy giúp em sửa nhé' : 'Thầy gợi ý cho em nhé';
   const output=document.createElement('p');output.className='practice-coach-reply';output.setAttribute('role','status');output.hidden=true;
   const ask=document.createElement('button');ask.type='button';ask.textContent='Em vẫn chưa hiểu';ask.hidden=true;
-  area.append(heading,button,output,ask);section.querySelector('.practice-actions').before(area);
+  const content=document.createElement('div');content.className='practice-help-content';
+  content.append(button,output,ask);area.append(toggle,content);section.querySelector('.practice-actions').before(area);
   let owner=practiceCoachIdentity();
-  const conversation=globalThis.mountTeacherConversation?.(area,{trigger:ask,lesson,focus:{kind:'question',index},task:question,
+  const conversation=globalThis.mountTeacherConversation?.(content,{trigger:ask,lesson,focus:{kind:'question',index},task:question,
     isCurrent:()=>area.isConnected && !container.hidden && practiceCoachIdentity()===owner});
   ask.onclick=()=>conversation?.open();
+  const teaching=document.createElement('details'),teachingTitle=document.createElement('summary'),teachingHost=document.createElement('div');
+  teaching.className='practice-teaching';teachingTitle.textContent=question.mode==='choice'?'Hiểu đề và các lựa chọn':'Hiểu đề bài';
+  teaching.append(teachingTitle,teachingHost);content.append(teaching);
+  const releaseTeaching=globalThis.mountStudyTeacher?.(teachingHost,{...presentation,lesson,focus:{kind:'question',index},task:question,
+    isCurrent:()=>area.isConnected && area.open && teaching.open && !container.hidden && presentation.isCurrent?.()!==false});
+  area.addEventListener('toggle',()=>{if(area.isConnected && !area.open){cancelPracticeCoach();conversation?.clear();}});
   const refresh=()=>{
     if(!area.isConnected){if(practiceCoachRefresh===refresh)practiceCoachRefresh=null;return;}
     const identity=practiceCoachIdentity();
@@ -84,7 +91,8 @@ function mountPracticeCoach(section, container, lesson, question, index, result)
       if(practiceCoachRequest===controller){practiceCoachRequest=null;button.disabled=false;button.setAttribute('aria-busy','false');}
     }
   };
-  return ()=>{cancelPracticeCoach();if(practiceCoachRefresh===refresh)practiceCoachRefresh=null;conversation?.cleanup();area.remove();};
+  if(result?.saved && question.mode==='writing' && question.criteria?.length){area.open=true;void button.onclick();}
+  return ()=>{cancelPracticeCoach();releaseTeaching?.();if(practiceCoachRefresh===refresh)practiceCoachRefresh=null;conversation?.cleanup();area.remove();};
 }
 for(const event of ['hashchange','popstate','pagehide','vjbot-account-ready'])globalThis.addEventListener?.(event,()=>{cancelPracticeCoach();practiceCoachRefresh?.();practiceRunRefresh?.();});
 globalThis.addEventListener?.('vjbot-voice-changed',()=>practiceCoachRefresh?.());
@@ -92,11 +100,9 @@ globalThis.addEventListener?.('storage',event=>{
   if(event.key===null||/^vjbot_ai_(?:active_v1|method|oauth):/.test(event.key)){cancelPracticeCoach();practiceCoachRefresh?.();}
 });
 
-function taskAssessmentMessage(task,assessment,matched){
-  if(task.mode==='writing')return 'Em xem lại câu vừa viết theo các mục tự kiểm tra nhé.';
-  if(assessment?.comparison==='orthographic_difference')return 'Câu em viết khác mẫu ở cách trình bày, như dấu chấm hoặc khoảng trắng; chưa thể kết luận sai nghĩa hay ngữ pháp.';
-  if(task.mode==='choice')return matched?'Em chọn đúng đáp án.':'Em chưa chọn đúng đáp án.';
-  return `${matched?'Câu em viết khớp mẫu.':'Câu em viết chưa khớp mẫu.'} Cách viết khác vẫn có thể đúng.`;
+function taskAssessmentMessage(assessment,matched){
+  if(assessment?.comparison==='orthographic_difference')return 'Cách trình bày khác mẫu, chẳng hạn dấu câu hoặc khoảng trắng.';
+  return matched?'Khớp một cách viết mẫu.':'Câu của em khác mẫu tham khảo; chưa thể kết luận sai nghĩa hay ngữ pháp.';
 }
 function practiceTaskIndices(item,questions,{reference=false}={}){
   if(Number.isInteger(item.reviewQuestionIndex) && item.reviewQuestionIndex>=0 && item.reviewQuestionIndex<questions.length)return [item.reviewQuestionIndex];
@@ -161,10 +167,10 @@ function renderPracticeSession(container,item,level,skill){
       ${stage?`<aside class="task-stage"><h3>${escapeHtml(stage.title)}</h3><p>${escapeHtml(stage.note)}</p><p lang="ja">${escapeHtml(stage.example.jp)}</p><details><summary>Cách đọc và nghĩa của ví dụ</summary><p lang="ja">${escapeHtml(stage.example.reading)}</p><p>${escapeHtml(stage.example.vi)}</p></details></aside>`:''}
       ${previous.length?`<aside data-teacher-exclude><strong>${['accept','refuse'].includes(question.exchange.stage)?'Lời mời em vừa viết trong phiên này':'Câu em viết ở bước trước trong phiên này'}</strong>${previous.map(text=>`<p lang="ja">${escapeHtml(text)}</p>`).join('')}</aside>`:''}
       ${question.exchange?.partner_reply?`<p class="task-partner" lang="ja">${escapeHtml(question.exchange.partner_reply)}</p><p>Đây là lời đáp soạn sẵn để em luyện tiếp.</p>`:''}
-      <fieldset><legend tabindex="-1">${escapeHtml(taskInstruction(question) || (question.mode==='writing'?'Tự chọn nội dung và viết câu':question.mode==='recall'?'Viết lại theo yêu cầu':'Chọn một đáp án'))}</legend>
+      <fieldset><legend tabindex="-1">${escapeHtml(taskInstruction(question) || (question.mode==='writing'?'Viết câu trả lời của em':question.mode==='recall'?'Viết lại theo yêu cầu':'Chọn một đáp án'))}</legend>
       ${taskPromptHtml({...question,instruction:''})}<div class="practice-options"></div></fieldset>
-      ${question.criteria?.length?`<section class="task-writing-criteria"${question.mode==='writing'?' hidden':''}><h4>Tự kiểm tra câu trả lời</h4><ul>${question.criteria.map(text=>`<li>${escapeHtml(text)}</li>`).join('')}</ul></section>`:''}
-      <div class="practice-feedback" role="status" hidden></div><div class="practice-actions"><button type="button" class="practice-primary" disabled>${question.mode==='writing'?'Gửi bài':'Kiểm tra'}</button></div>`;
+      ${question.criteria?.length?`<section class="task-writing-criteria"${question.exchange?.stage==='delayed'?' hidden':''}><h4>Thầy sẽ xem những điểm này</h4><ul>${question.criteria.map(text=>`<li>${escapeHtml(text)}</li>`).join('')}</ul></section>`:''}
+      <div class="practice-feedback" role="status" hidden></div><div class="practice-actions"><button type="button" class="practice-primary" disabled>${question.mode==='writing'?'Gửi thầy nhận xét':'Kiểm tra'}</button></div>`;
     const options=section.querySelector('.practice-options'),action=section.querySelector('.practice-primary'),feedback=section.querySelector('.practice-feedback');
     if(question.unavailable_reason){
       feedback.hidden=false;feedback.textContent=taskUnavailableMessage(question);
@@ -179,14 +185,21 @@ function renderPracticeSession(container,item,level,skill){
     let selected=null,pending=null;
     const optionTexts=[];
     const renderFeedback=()=>{
-      if(question.mode==='choice'){feedback.replaceChildren();feedback.hidden=true;return;}
-      const result=document.createElement('p');result.textContent=taskAssessmentMessage(question,pending?.assessment,pending?.correct);
+      if(question.mode==='choice' || question.mode==='writing'){feedback.replaceChildren();feedback.hidden=true;return;}
+      const result=document.createElement('p');result.textContent=taskAssessmentMessage(pending?.assessment,pending?.correct);
       feedback.replaceChildren(result);
-      if(question.mode==='writing')return;
       const answers=question.accepted_answers || [];
       if(answers.length){
-        const answer=document.createElement('p');answer.textContent=`Mẫu trả lời: ${answers.join(' hoặc ')}`;
-        feedback.append(answer);
+        const index=Math.max(0,answers.findIndex(answer=>answer.normalize('NFC').trim()===String(pending?.selected || '').normalize('NFC').trim()));
+        const answer=document.createElement('p');answer.className='practice-sample';answer.lang='ja';answer.textContent=answers[index];
+        const label=document.createElement('strong');label.textContent='Một cách viết';
+        feedback.append(label,answer);
+        if(answers.length>1){
+          const variants=document.createElement('details'),summary=document.createElement('summary'),list=document.createElement('ul');
+          variants.className='practice-variants';summary.textContent=`Các cách viết khác (${answers.length-1})`;
+          answers.forEach((text,position)=>{if(position!==index){const row=document.createElement('li');row.lang='ja';row.textContent=text;list.append(row);}});
+          variants.append(summary,list);feedback.append(variants);
+        }
       }
       if(question.explanation){
         const details=document.createElement('details'),summary=document.createElement('summary'),reason=document.createElement('p');
@@ -194,7 +207,6 @@ function renderPracticeSession(container,item,level,skill){
         details.append(summary,reason);feedback.append(details);
       }
     };
-    let removeCoach=mountPracticeCoach(section,container,lesson,question,originalIndex,null);
     if(question.mode==='choice'){
       for(const [index,option] of question.opts.entries()){
         const label=document.createElement('label');label.className='practice-option';
@@ -216,10 +228,10 @@ function renderPracticeSession(container,item,level,skill){
       feedback.hidden=false;feedback.textContent='Mở hoạt động nghe tương ứng để làm dạng bài này.';
       action.disabled=false;action.textContent='Bỏ qua câu này';action.onclick=()=>{round.blocked++;round.checked=true;round.next();show(true);};return;
     }
-    globalThis.mountStudyTeacher?.(section,{lesson,focus:{kind:'question',index:originalIndex},task:question,
-      targets:optionTexts.map((element,index)=>globalThis.studyTarget(`question:option:${index}`,element,question.opts[index])),
+    const presentation={targets:globalThis.mountStudyTeacher?optionTexts.map((element,index)=>globalThis.studyTarget(`question:option:${index}`,element,question.opts[index])):[],
       isCurrent:()=>!container.hidden && round.indices[round.index]===originalIndex,
-      onApply:()=>{if(pending?.saved)renderFeedback();}});
+      onApply:()=>{if(pending?.saved)renderFeedback();}};
+    let removeCoach=mountPracticeCoach(section,container,lesson,question,originalIndex,null,presentation);
     async function save(){
       if(!currentRun()){invalidateRun();return;}
       action.disabled=true;action.textContent='Đang gửi…';
@@ -230,10 +242,10 @@ function renderPracticeSession(container,item,level,skill){
         savedResponses.set(question.task_id,selected);
         const criteria=section.querySelector('.task-writing-criteria');if(criteria)criteria.hidden=false;
         if(!pending.coachReady){
-          removeCoach();removeCoach=mountPracticeCoach(section,container,lesson,question,originalIndex,pending);pending.coachReady=true;
+          removeCoach();removeCoach=mountPracticeCoach(section,container,lesson,question,originalIndex,pending,presentation);pending.coachReady=true;
         }
         renderFeedback();
-        feedback.dataset.correct=receipt.assessment?.comparison==='orthographic_difference' || question.mode==='writing'?'unknown':String(pending.correct);
+        feedback.dataset.correct=receipt.assessment?.comparison==='orthographic_difference' || question.mode==='writing' || question.mode==='recall' && !pending.correct?'unknown':String(pending.correct);
         action.textContent=round.index+1===round.indices.length?'Xem kết quả':'Tiếp tục';action.disabled=false;
         action.onclick=()=>{round.next();show(true);};action.focus();
       }catch(error){

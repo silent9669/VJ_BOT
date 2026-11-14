@@ -191,15 +191,10 @@
         {
           "id": "n5-teaching:v1:topic:task:3",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Tự giới thiệu nghề nghiệp bằng đúng mẫu NはNです: “Tôi là giáo viên”.",
-          "accepted_variants": [
-            "私は教師です。",
-            "わたしは教師です。",
-            "私はきょうしです。",
-            "わたしはきょうしです。"
-          ],
-          "rationale": "教師 nêu nghề nghiệp của mình một cách trung tính; 先生 thường là cách gọi hoặc nói về giáo viên khác. Bài này yêu cầu đủ chủ đề và câu lịch sự; hội thoại tự nhiên có thể lược 私は.",
+          "mode": "writing",
+          "prompt": "Em đóng vai một giáo viên và tự giới thiệu nghề của mình bằng một câu tiếng Nhật lịch sự.",
+          "criteria": ["Người nghe hiểu em đang giới thiệu mình là giáo viên.", "Dùng câu danh từ lịch sự đã học; có thể lược chủ đề khi người nghe vẫn hiểu.", "Chữ và cách đọc không làm đổi ý; không cần viết giống một câu mẫu."],
+          "rationale": "Thầy xem câu có giới thiệu đúng nghề và dùng lời nói lịch sự không. 教師 là từ trung tính để nói nghề của mình; cách dùng 先生 cần xét theo ngữ cảnh, không chỉ so từng chữ.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -429,15 +424,10 @@
         {
           "id": "n5-teaching:v1:request:task:4",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Viết câu nhờ đọc câu này; dùng この文・読む và mẫu てください.",
-          "accepted_variants": [
-            "この文を読んでください。",
-            "このぶんをよんでください。",
-            "この文をよんでください。",
-            "このぶんを読んでください。"
-          ],
-          "rationale": "Đánh dấu đối tượng bằng を và đổi 読む thành 読んで trước ください.",
+          "mode": "writing",
+          "prompt": "Em muốn nhờ người bên cạnh đọc câu này. Hãy viết lời nhờ lịch sự với ～てください.",
+          "criteria": ["Nói rõ em muốn người kia đọc câu này, không phải tự kể việc mình đọc.", "Dùng thể て và ください phù hợp; các thành phần trong câu nối đúng.", "Có thể dùng kanji hoặc kana dễ hiểu."],
+          "rationale": "Khi dùng 読む với てください, em cần dạng 読んで. Thầy nhận xét cả ý nhờ vả và cách ghép câu, không bắt em chép một câu duy nhất.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -935,12 +925,10 @@
         {
           "id": "n5-teaching:v1:also:task:4",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Sửa đúng một chỗ trong 私はも学生です。 để thành 'Tôi cũng là sinh viên'. Giữ 私・学生・です, viết cả câu với dấu 。, không thêm khoảng trắng.",
-          "accepted_variants": [
-            "私も学生です。"
-          ],
-          "rationale": "Bỏ は trước も để được mẫu NもNです. Đây là đáp án cho phép sửa đã giới hạn, không phải danh sách mọi cách nói tự nhiên cùng nghĩa.",
+          "mode": "writing",
+          "prompt": "Người bạn vừa nói mình là sinh viên. Em cũng là sinh viên. Hãy viết một câu đáp lại với も.",
+          "criteria": ["Câu cho thấy em cũng là sinh viên, không hỏi lại nghề của bạn.", "Dùng も đúng chỗ với chủ đề được thêm vào.", "Lời đáp lịch sự và dễ hiểu; không bắt buộc một cách viết kanji hay kana."],
+          "rationale": "も thêm người hoặc vật có cùng đặc điểm. Thầy cần xem em gắn も với ai và lời đáp có giữ ý 'cũng' không.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -1145,24 +1133,20 @@
         {
           "id": "n5-teaching:v1:possession:task:3",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Dùng đúng ba thành phần あね・の・かばん để viết cụm 'chiếc cặp của chị gái tôi'. Chỉ viết hiragana, không khoảng trắng, không thêm です hay dấu câu.",
-          "accepted_variants": [
-            "あねのかばん"
-          ],
-          "rationale": "Chủ sở hữu あね đứng trước の; vật được sở hữu かばん đứng sau. Yêu cầu hiragana và các thành phần cố định giới hạn đáp án của bài.",
+          "mode": "writing",
+          "prompt": "Em hãy viết cụm tiếng Nhật có nghĩa là \"chiếc cặp của chị gái tôi\", dùng の.",
+          "criteria": ["Giữ đúng người sở hữu là chị gái của em và vật là chiếc cặp.", "Dùng の để nối người sở hữu với vật, không đảo quan hệ.", "Có thể dùng kanji hoặc kana phù hợp."],
+          "rationale": "Người sở hữu đứng trước の, vật đứng sau. Thầy xem quan hệ ấy có rõ không thay vì bắt buộc toàn bộ câu phải viết bằng hiragana.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
         {
           "id": "n5-teaching:v1:possession:task:4",
           "objective": "transformation",
-          "mode": "short_text",
-          "prompt": "Trong cuộc nói chuyện về cùng một cuốn sách, rút gọn 私の本です。 bằng cách chỉ lược 本. Giữ chữ 私 và dấu 。; không thêm khoảng trắng.",
-          "accepted_variants": [
-            "私のです。"
-          ],
-          "rationale": "Giữ の để còn nghĩa 'của tôi' sau khi lược tên vật đã biết. Đáp án này chỉ áp dụng khi 本 đã được xác định trong ngữ cảnh như đề cho.",
+          "mode": "writing",
+          "prompt": "Hai người đang nói về cùng một cuốn sách. Em hãy nói sách đó là của mình bằng một câu lịch sự, không lặp lại từ 本.",
+          "criteria": ["Người nghe vẫn hiểu em nói cuốn sách là của mình.", "Dùng の để thay cho tên vật đã rõ trong cuộc nói chuyện.", "Câu hoàn chỉnh, lịch sự và không lặp 本."],
+          "rationale": "Có thể bỏ tên vật khi người nghe đã biết đang nói về vật nào. の vẫn giữ quan hệ sở hữu; phần còn lại có thể thay đổi nếu câu vẫn rõ ý.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -2995,12 +2979,10 @@
         {
           "id": "n5-teaching:v1:time-range:task:4",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Viết riêng cụm ‘từ 10 giờ đến 12 giờ’ bằng から・まで. Dùng đúng dạng số 10時 và 12時, không thêm câu hay dấu câu.",
-          "accepted_variants": [
-            "10時から12時まで"
-          ],
-          "rationale": "Ghép mốc đầu 10時 với から, mốc cuối 12時 với まで. Cách viết chữ hoặc kana ngoài yêu cầu không bị coi là sai tiếng Nhật nói chung.",
+          "mode": "writing",
+          "prompt": "Em hãy viết cụm hoặc câu ngắn nói \"từ 10 giờ đến 12 giờ\", dùng から và まで.",
+          "criteria": ["Giữ đúng mốc bắt đầu 10 giờ và mốc kết thúc 12 giờ.", "Dùng から và まで đúng với hai mốc.", "Có thể viết giờ bằng số, kanji hoặc kana rõ nghĩa."],
+          "rationale": "から đi với mốc bắt đầu, まで đi với mốc kết thúc. Cách viết số khác nhau không làm câu sai nếu hai mốc và ý nghĩa vẫn đúng.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -3224,13 +3206,10 @@
         {
           "id": "n5-teaching:v1:action-place:task:4",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Viết riêng cụm ‘ở nhà hàng’ để ghép trước パンを食べました trong câu ‘Tôi đã ăn bánh mì ở nhà hàng’. Dùng từ レストラン, không thêm câu hay dấu câu.",
-          "accepted_variants": [
-            "レストランで",
-            "れすとらんで"
-          ],
-          "rationale": "Ghép nơi hoạt động với で: レストランでパンを食べました. Ở đây không dùng に để thay cho nơi ăn.",
+          "mode": "writing",
+          "prompt": "Em hãy kể rằng mình đã ăn bánh mì ở nhà hàng. Dùng レストラン và パン trong một câu lịch sự.",
+          "criteria": ["Giữ đúng việc ăn bánh mì, địa điểm nhà hàng và thời điểm đã xảy ra.", "Đánh dấu nơi diễn ra hành động và vật được ăn phù hợp.", "Câu lịch sự, dễ hiểu; không cần giữ một trật tự từ duy nhất."],
+          "rationale": "Với hành động ăn, nơi diễn ra thường đi với で. Thầy xem quan hệ giữa nơi, đồ ăn và hành động trong cả câu.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -3273,7 +3252,7 @@
       "support": [
         {
           "term": "Lộ trình và hai loại bằng chứng",
-          "explanation": "Đã biết đuôi động từ, câu hỏi, giờ/địa điểm. Lộ trình mặc định: hiểu một hội thoại mới, tự chọn nội dung để mời, tiếp tục khi được nhận lời, rồi xử lý nhánh từ chối thay thế. Năm câu cũ là luyện nhớ/nhận diện có ràng buộc, không chứng minh sản sinh độc lập."
+          "explanation": "Em cần biết đuôi động từ, câu hỏi, giờ và địa điểm. Trước hết, em đọc một hội thoại mới, tự chọn nội dung để mời, rồi đáp lại khi bạn nhận lời hoặc từ chối. Năm câu luyện thêm giúp em nhớ cách nói theo gợi ý, nhưng chưa cho thấy em có thể tự viết một lời mời mới."
         },
         {
           "term": "Lời nhận và từ chối nhẹ",
@@ -3389,7 +3368,7 @@
           "id": "n5-teaching:v1:invitation:task:0",
           "objective": "transformation",
           "mode": "choice",
-          "prompt": "Luyện nhớ/nhận diện có ràng buộc (không phải sản sinh độc lập): Rủ bạn cùng đọc truyện tranh. Chọn phần đúng: 一緒に漫画を（　）。",
+          "prompt": "Em muốn rủ bạn cùng đọc truyện tranh. Chọn phần còn thiếu: 一緒に漫画を（　）。",
           "options": [
             {
               "id": "option:0",
@@ -3413,7 +3392,7 @@
           "id": "n5-teaching:v1:invitation:task:1",
           "objective": "meaning",
           "mode": "choice",
-          "prompt": "Luyện nhớ/nhận diện có ràng buộc (không phải sản sinh độc lập): Hai bạn đang chọn hoạt động làm cùng nhau. Một người nói 一緒に散歩しませんか。Ý của lời nói này là gì?",
+          "prompt": "Một người rủ em: 一緒に散歩しませんか。 Người đó muốn nói gì?",
           "options": [
             {
               "id": "option:0",
@@ -3437,7 +3416,7 @@
           "id": "n5-teaching:v1:invitation:task:2",
           "objective": "communication",
           "mode": "choice",
-          "prompt": "Luyện nhớ/nhận diện có ràng buộc (không phải sản sinh độc lập): Bạn được rủ đi xem phim nhưng đã có hẹn và muốn từ chối nhẹ nhàng. Chọn lời đáp phù hợp với ý định ấy.",
+          "prompt": "Bạn rủ em đi xem phim, nhưng em đã có hẹn. Em sẽ từ chối nhẹ nhàng thế nào?",
           "options": [
             {
               "id": "option:0",
@@ -3461,7 +3440,7 @@
           "id": "n5-teaching:v1:invitation:task:3",
           "objective": "transformation",
           "mode": "short_text",
-          "prompt": "Luyện nhớ/nhận diện có ràng buộc (không phải sản sinh độc lập): Rủ cùng chơi quần vợt: 一緒にテニスを（　）。Đổi します sang dạng lời rủ đang học; chỉ viết phần trong ngoặc, không viết dấu câu.",
+          "prompt": "Em hãy đổi します thành lời rủ vừa học để hoàn thành câu:\n\n一緒にテニスを（　）。\n\nChỉ viết phần trong ngoặc, không thêm dấu câu.",
           "accepted_variants": [
             "しませんか"
           ],
@@ -3472,12 +3451,10 @@
         {
           "id": "n5-teaching:v1:invitation:task:4",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Luyện nhớ/nhận diện có ràng buộc (không phải sản sinh độc lập): Nhận lời một cách tích cực bằng đúng cụm ‘Hay đấy’ đã học. Chỉ ghép ba phần いい・です・ね, không thêm dấu câu.",
-          "accepted_variants": [
-            "いいですね"
-          ],
-          "rationale": "いいですね là lời hưởng ứng trong tình huống này. Đây là bài nhớ cụm cố định, không phải danh sách đầy đủ mọi cách nhận lời tự nhiên.",
+          "mode": "writing",
+          "prompt": "Bạn rủ em cùng đi dạo và em muốn nhận lời. Hãy viết một lời đáp ngắn, lịch sự.",
+          "criteria": ["Người nghe hiểu em đồng ý với lời rủ.", "Lời đáp phù hợp với việc hai người sẽ đi dạo cùng nhau.", "Em có thể chọn cách nhận lời ngắn gọn, tự nhiên và lịch sự."],
+          "rationale": "Có nhiều cách nhận lời. Thầy xem lời đáp có cho thấy em đồng ý và phù hợp với lời rủ không, chứ không bắt em ghép đúng ba từ.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -3789,28 +3766,20 @@
         {
           "id": "n5-teaching:v1:reason:task:3",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Chỉ viết cụm ‘vì trời mưa’ theo mẫu lịch sự Nですから. Dùng 雨, không thêm vế kết quả hoặc dấu câu.",
-          "accepted_variants": [
-            "雨ですから",
-            "あめですから"
-          ],
-          "rationale": "Thêm ですから sau danh từ 雨. Bài yêu cầu đúng mẫu này; 雨だから là dạng thường khác, không phải lỗi tiếng Nhật nói chung.",
+          "mode": "writing",
+          "prompt": "Em hãy giải thích ngắn rằng lý do là trời mưa, dùng から và cách nói lịch sự.",
+          "criteria": ["Lý do được nêu là trời mưa.", "Dùng から để diễn đạt lý do, ghép đúng với từ đứng trước.", "Lời giải thích lịch sự; có thể viết một cụm đáp ngắn hoặc câu đầy đủ."],
+          "rationale": "Khi dùng danh từ 雨 ở cách nói lịch sự, em chú ý phần nối với から. Thầy xét cả câu và ngữ cảnh, không coi khác cách viết mẫu là sai.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
         {
           "id": "n5-teaching:v1:reason:task:4",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Bạn hỏi tại sao mình nghỉ. Ghép đúng mệnh đề đã cho 疲れました với から để trả lời ‘Vì tôi mệt rồi’. Chỉ viết câu trả lời ấy; có thể có hoặc không có dấu 。 cuối câu.",
-          "accepted_variants": [
-            "疲れましたから。",
-            "疲れましたから",
-            "つかれましたから。",
-            "つかれましたから"
-          ],
-          "rationale": "Giữ nguyên mệnh đề lịch sự 疲れました rồi thêm から. Có thể lược vế ‘tôi nghỉ’ vì câu hỏi đã xác định nội dung cần giải thích.",
+          "mode": "writing",
+          "prompt": "Bạn hỏi vì sao em nghỉ. Em hãy đáp ngắn rằng mình đã mệt, dùng から.",
+          "criteria": ["Nêu được lý do mệt cho việc nghỉ, không đổi sang lý do khác.", "Nối lý do bằng から và giữ thời điểm phù hợp.", "Lời đáp dễ hiểu; có thể lược việc nghỉ vì câu hỏi đã nói rõ."],
+          "rationale": "Em có thể trả lời riêng lý do hoặc viết cả câu. Thầy xem から và thời của động từ có giữ đúng điều em muốn nói không.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -4705,14 +4674,10 @@
         {
           "id": "n5-teaching:v1:choice:task:4",
           "objective": "structure",
-          "mode": "short_text",
-          "prompt": "Hoàn thành câu hỏi ‘Đồ uống thì bạn chọn gì?’: 飲み物は（　）。Dùng 何 và đúng mẫu にしますか; chỉ viết phần trong ngoặc, không thêm dấu câu.",
-          "accepted_variants": [
-            "何にしますか",
-            "なににしますか",
-            "なんにしますか"
-          ],
-          "rationale": "何にしますか hỏi phương án người nghe quyết định chọn. 飲み物は đã nêu phạm vi là đồ uống, nên không cần lặp lại trong chỗ trống. 何に thường được đọc なにに; dạng なんに cũng được dùng. Hai cách viết kana này không làm thay đổi mẫu hỏi lựa chọn.",
+          "mode": "writing",
+          "prompt": "Em và bạn đang chọn đồ uống. Hãy hỏi bạn chọn gì, dùng ～にしますか.",
+          "criteria": ["Câu hỏi hướng tới đồ uống người nghe muốn chọn.", "Dùng にしますか đúng để hỏi lựa chọn, không đổi thành hỏi giá hay sở thích chung.", "Lời hỏi lịch sự; có thể nêu hoặc lược đồ uống khi đã rõ."],
+          "rationale": "にしますか hỏi quyết định chọn. Thầy xem lời hỏi có đúng mục đích này không, không bắt buộc em giữ nguyên một câu mẫu.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -4931,15 +4896,10 @@
         {
           "id": "n5-teaching:v1:after-action:task:4",
           "objective": "transformation",
-          "mode": "short_text",
-          "prompt": "Ở thư viện, bạn sẽ trả sách rồi mới về nhà. Ghép thành một câu lịch sự bằng てから: 本を返します／家に帰ります. Giữ nguyên các chữ kanji và trợ từ đã cho, không thêm chủ đề; có thể dùng hoặc bỏ dấu 、 và dấu 。.",
-          "accepted_variants": [
-            "本を返してから、家に帰ります。",
-            "本を返してから家に帰ります。",
-            "本を返してから、家に帰ります",
-            "本を返してから家に帰ります"
-          ],
-          "rationale": "返します chuyển thành 返してから; giữ 帰ります làm vị ngữ cuối. Bài quy định cách viết để có đáp án tham khảo hữu hạn, không coi các cách viết kana tương đương là sai tiếng Nhật nói chung.",
+          "mode": "writing",
+          "prompt": "Em sẽ trả sách ở thư viện rồi mới về nhà. Hãy viết một câu lịch sự với ～てから.",
+          "criteria": ["Giữ thứ tự trả sách trước, về nhà sau.", "Dùng thể て kết hợp với から đúng để nối hai việc.", "Câu lịch sự và rõ nghĩa; có thể chọn cách viết kanji hoặc kana."],
+          "rationale": "Việc trước đứng ở dạng てから, việc sau kết câu. Thầy đánh giá thứ tự và cách nối, không bắt em giữ nguyên chữ hoặc dấu câu của một đáp án mẫu.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -4998,7 +4958,7 @@
         {"id":"teaching:v1:N5:introductions:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Hồ sơ hư cấu khác: マイさんはベトナム人です。学生ではありません。会社員です。","prompt":"Cách tóm tắt nào giữ đúng cả quốc tịch và nghề nghiệp của Mai?","options":[{"id":"option:0","text":"Mai là người Việt Nam và là nhân viên công ty."},{"id":"option:1","text":"Mai là sinh viên Nhật Bản."},{"id":"option:2","text":"Mai là người Việt Nam và là sinh viên."}],"answer_option_id":"option:0","rationale":"ベトナム人 nói quốc tịch; 学生ではありません phủ định việc là sinh viên; 会社員 xác định nghề. Không đổi phủ định thành khẳng định.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:introductions:task:2","objective":"communication","mode":"choice","skill":"grammar","passage":"Người mới gặp nói: はじめまして。田中です。 Em đóng vai An và cần đáp lại bằng lời làm quen, tên và lời kết lịch sự.","prompt":"Chọn lời đáp đáp ứng đủ ba yêu cầu, không đổi sang lời chào tạm biệt.","options":[{"id":"option:0","text":"さようなら。アンです。"},{"id":"option:1","text":"アンさんは学生ですか。"},{"id":"option:2","text":"はじめまして。アンです。よろしくお願いします。"}],"answer_option_id":"option:2","rationale":"Phương án cuối vừa đáp はじめまして, vừa giới thiệu アン, vừa kết bằng よろしくお願いします. Hai phương án kia thiếu yêu cầu hoặc đổi ý định giao tiếp; không phải mọi câu trong đó đều sai ngữ pháp.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:introductions:task:3","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Hoàn thành câu tự giới thiệu lịch sự của An: 私はアン（　）。 Chỉ viết phần trong ngoặc bằng hiragana; không thêm dấu câu.","accepted_variants":["です"],"rationale":"Danh từ tên người kết bằng です trong mẫu lịch sự này. Không dùng だです hoặc thêm một động từ không có trong yêu cầu.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:introductions:task:4","objective":"structure","mode":"short_text","skill":"grammar","passage":"Hồ sơ hư cấu: tên アン; đến từ ベトナム; nghề 会社員.","prompt":"Tự ghép ba câu lịch sự theo thứ tự tên, nơi đến, nghề. Câu đầu dùng 私はアンです; câu hai dùng ベトナムから来ました; câu ba dùng 会社員です. Giữ nguyên chữ đã cho, viết 。 sau mỗi câu, không thêm thông tin hoặc khoảng trắng.","accepted_variants":["私はアンです。ベトナムから来ました。会社員です。"],"rationale":"Ba câu giữ ba thông tin riêng và không gán hồ sơ này cho chính em. Ràng buộc cách viết giúp đối chiếu hữu hạn; các cách giới thiệu tự nhiên khác không vì thế thành sai tiếng Nhật.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:introductions:task:4","objective":"structure","mode":"writing","skill":"grammar","passage":"Hồ sơ hư cấu: tên アン; đến từ ベトナム; nghề 会社員.","prompt":"Em hãy đóng vai An trong hồ sơ và viết lời tự giới thiệu ngắn, lịch sự. Nói rõ tên, nơi đến và nghề.","criteria":["Giữ đúng ba thông tin của An trong hồ sơ, không gán chúng thành thông tin thật của em.","Các câu danh từ và cách nói nơi đến phù hợp, người nghe hiểu em đang tự giới thiệu.","Có thể chọn thứ tự và cách viết tự nhiên; không cần chép ba câu mẫu."],"rationale":"Thầy xem lời giới thiệu có đủ và đúng thông tin của nhân vật không, rồi góp ý cách nói. Thứ tự câu hoặc cách viết khác không tự làm lời giới thiệu sai.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {
           "id":"teaching:v1:N5:introductions:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
           "prompt":"Tại buổi làm quen câu lạc bộ hư cấu, em đóng một vai do chính em tạo. Tự chọn tên, nơi đến và nghề/vai trò, ghi hồ sơ Việt ngắn rồi viết lời giới thiệu Nhật lịch sự cho người mới gặp. Chọn hồ sơ khác An/Mai; không cần dùng thông tin cá nhân thật hoặc chép ba câu mẫu.",
@@ -5053,7 +5013,7 @@
         {"id":"teaching:v1:N5:ordering:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Bảng giá mới chỉ dùng cho câu này, không suy từ tổng đơn trước: 定食は一つ八百円です。お茶は一つ二百円です。 Ngoài hai món này không có phụ phí.","prompt":"Một suất ăn và hai phần trà có tổng giá bao nhiêu?","options":[{"id":"option:0","text":"1.000 yên."},{"id":"option:1","text":"1.200 yên."},{"id":"option:2","text":"1.600 yên."}],"answer_option_id":"option:1","rationale":"800 + 2 × 200 = 1.200. 1.000 chỉ tính một phần trà; 1.600 tính thừa. Bảng giá là dữ kiện mới của riêng câu hỏi, không phải thông tin rút ra từ tình huống gốc.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:ordering:task:2","objective":"communication","mode":"choice","skill":"grammar","passage":"Em đã gọi món và muốn biết tổng tiền, không hỏi số người hoặc địa điểm.","prompt":"Chọn câu hỏi đúng ý định giao tiếp này.","options":[{"id":"option:0","text":"全部でいくらですか。"},{"id":"option:1","text":"何人ですか。"},{"id":"option:2","text":"どこですか。"}],"answer_option_id":"option:0","rationale":"いくら hỏi giá; 全部で xác định tổng. 何人 hỏi số người; どこ hỏi nơi chốn. Các câu kia có thể đúng trong ngữ cảnh khác nhưng không hỏi tổng tiền.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:ordering:task:3","objective":"meaning","mode":"short_text","skill":"grammar","prompt":"Điền đúng lượng ‘hai phần trà’: お茶を（　）ください。 Dùng hệ đếm 一つ・二つ; chỉ viết phần trong ngoặc bằng kanji kèm つ hoặc toàn hiragana, không thêm dấu câu.","accepted_variants":["二つ","ふたつ"],"rationale":"Hai phần dùng 二つ, đọc ふたつ. Bài yêu cầu hệ đếm chung; không phải kết luận rằng mọi cách dùng đơn vị đếm khác đều sai trong mọi quán.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:ordering:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết một câu lịch sự gọi một suất ăn và hai phần trà. Dùng đúng các cụm 定食を一つ／お茶を二つ theo thứ tự này, rồi kết bằng ください. Giữ kanji; có thể dùng hoặc bỏ 、 giữa hai món và 。 cuối câu; không thêm từ.","accepted_variants":["定食を一つ、お茶を二つください。","定食を一つお茶を二つください。","定食を一つ、お茶を二つください","定食を一つお茶を二つください"],"rationale":"Tên món và lượng tương ứng đều được giữ nguyên; ください kết thúc yêu cầu. Khóa tham khảo có các biến thể dấu câu được đề cho phép, không chấm mọi lời gọi món tự do.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:ordering:task:4","objective":"structure","mode":"writing","skill":"grammar","prompt":"Em hãy gọi một suất ăn và hai phần trà bằng một lời yêu cầu lịch sự. Có thể dùng 定食, お茶 và ください.","criteria":["Giữ đúng một suất ăn và hai phần trà, không đổi lượng giữa hai món.","Tên món, lượng và lời yêu cầu nối rõ nghĩa; dùng cách đếm phù hợp.","Có thể đổi thứ tự hai món hoặc cách trình bày nếu người phục vụ vẫn hiểu đúng."],"rationale":"Thầy xem người phục vụ có hiểu đúng cả hai món và số lượng không. Không có một trật tự món hay cách đặt dấu câu duy nhất.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {
           "id":"teaching:v1:N5:ordering:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
           "prompt":"Trong quầy ăn hư cấu, tự tạo menu hai món đơn giản khác suất ăn/trà của ví dụ. Em đặt cho nhóm nhỏ: tự chọn lượng mỗi món từ một đến ba phần, ghi đơn Việt rồi viết lời gọi Nhật lịch sự có tên và lượng từng món. Chưa có bảng giá nên không tự báo tổng tiền.",
@@ -5108,7 +5068,7 @@
         {"id":"teaching:v1:N5:time:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"昼休みは十二時から一時までです。 Bài này nói khoảng từ 12:00 trưa đến 13:00 cùng ngày.","prompt":"Khoảng nghỉ trưa dài bao lâu?","options":[{"id":"option:0","text":"30 phút."},{"id":"option:1","text":"Hai giờ."},{"id":"option:2","text":"Một giờ."}],"answer_option_id":"option:2","rationale":"13:00 trừ 12:00 là một giờ. Câu không có 半 để thành nửa giờ và không nêu mốc 14:00 để thành hai giờ.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:time:task:2","objective":"meaning","mode":"choice","skill":"grammar","passage":"Tình huống mới: đổi cuộc hẹn sang 09:30 sáng; không còn dùng giờ hẹn buổi chiều của đoạn trước.","prompt":"Cụm nào giữ đúng giờ hẹn mới?","options":[{"id":"option:0","text":"午後九時半に会います。"},{"id":"option:1","text":"午前九時半に会います。"},{"id":"option:2","text":"午前九時に会います。"}],"answer_option_id":"option:1","rationale":"09:30 sáng cần 午前, 九時 và 半. Phương án đầu là 21:30; phương án cuối bỏ mất 30 phút. Không mang dữ kiện cũ sang tình huống đã thay đổi rõ ràng.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:time:task:3","objective":"meaning","mode":"short_text","skill":"reading","prompt":"Đổi 午後五時半 sang giờ 24 giờ. Chỉ dùng chữ số 0–9 và dấu : theo mẫu HH:MM; không thêm chữ hoặc dấu câu.","accepted_variants":["17:30"],"rationale":"五時 là 5 giờ; 午後 chuyển thành 17 giờ và 半 là 30 phút. Bài kiểm tra mốc thời gian, không yêu cầu chép chữ Nhật.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:time:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết câu nêu khoảng từ 9 giờ sáng đến 5 giờ chiều bằng đúng 午前九時／から／午後五時／までです theo thứ tự ấy. Giữ kanji và viết 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["午前九時から午後五時までです。"],"rationale":"から đặt sau mốc bắt đầu; まで đặt sau mốc kết thúc. Hai nhãn 午前/午後 giữ đúng buổi. Cách viết bị giới hạn cho bài này, không phải tiêu chuẩn chấm mọi lời nói về giờ làm.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:time:task:4","objective":"structure","mode":"writing","skill":"grammar","prompt":"Em hãy nói khoảng thời gian từ 9 giờ sáng đến 5 giờ chiều bằng một câu tiếng Nhật lịch sự, dùng から và まで.","criteria":["Giữ đúng 9 giờ sáng và 5 giờ chiều, không nhầm buổi.","Dùng から cho mốc đầu và まで cho mốc cuối.","Có thể dùng số, kanji hoặc kana và thêm chủ đề phù hợp."],"rationale":"Thầy kiểm tra hai mốc giờ, buổi sáng/chiều và cách nối. Cách viết số khác nhau không làm thay đổi ý nếu giờ vẫn rõ.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {
           "id":"teaching:v1:N5:time:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
           "prompt":"Tự lập lịch hư cấu cho một buổi học: chọn khoảng giờ em bận, rồi một giờ và nơi gặp bạn sau đó cùng ngày. Ghi lịch số và thời gian đi lại dự kiến bằng Việt; viết hai câu Nhật lịch sự báo khoảng bận và đề xuất giờ/nơi gặp khả thi. Không dùng lịch 9–17 hoặc hẹn 17:30 của bài.",
@@ -5163,7 +5123,7 @@
         {"id":"teaching:v1:N5:transport:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Thông báo mới, chỉ dùng trong câu này: 空港行きのバスは三番乗り場です。駅行きのバスは二番乗り場です。 Từ hỗ trợ: 乗り場 = điểm lên xe; 行き = đi tới.","prompt":"Muốn lên xe đi sân bay theo thông báo này, cần đến điểm nào?","options":[{"id":"option:0","text":"Điểm số 2."},{"id":"option:1","text":"Điểm số 1."},{"id":"option:2","text":"Điểm số 3."}],"answer_option_id":"option:2","rationale":"空港行き gắn với 三番. 二番 là xe đi ga; không có thông tin dùng điểm số 1. Đây là thông báo mới, không tự suy số điểm từ hội thoại gốc.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:transport:task:2","objective":"communication","mode":"choice","skill":"grammar","prompt":"Em chỉ muốn hỏi chiếc xe này có đi đến sân bay không, chưa hỏi giá và không hỏi nó xuất phát từ đâu. Chọn câu phù hợp.","options":[{"id":"option:0","text":"このバスは空港に行きますか。"},{"id":"option:1","text":"このバスは空港から来ますか。"},{"id":"option:2","text":"空港までいくらですか。"}],"answer_option_id":"option:0","rationale":"に行きます hỏi đích đến. から来ます hỏi nơi xuất phát, còn いくら hỏi giá; hai câu ấy có thể hợp ngữ cảnh khác nhưng không hỏi đúng điều cần biết.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:transport:task:3","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Hoàn thành mẫu nêu địa điểm thực hiện việc xuống xe: 駅（　）降ります。 Bài này yêu cầu đúng trợ từ chỉ nơi xảy ra hành động trong mẫu ［nơi］で降ります; chỉ viết một chữ hiragana.","accepted_variants":["で"],"rationale":"Theo mẫu được chỉ định, 駅で nêu nơi xuống. バスを降ります dùng を với phương tiện rời khỏi; bài không kết luận các cách diễn đạt khác đều sai ở mọi ngữ cảnh.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:transport:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Xe đang hỏi không đi sân bay; em sẽ đợi chuyến tiếp theo. Ghép 次のバス／を／待ちます thành một câu lịch sự, giữ kanji, có 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["次のバスを待ちます。"],"rationale":"を gắn đối tượng được đợi với 待ちます; 次の giữ thông tin ‘tiếp theo’, không đổi thành chiếc đang hỏi.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:transport:task:4","objective":"structure","mode":"writing","skill":"grammar","prompt":"Xe em vừa hỏi không đi sân bay. Em sẽ đợi chuyến tiếp theo. Hãy nói quyết định ấy bằng một câu lịch sự.","criteria":["Nói rõ sẽ đợi chuyến tiếp theo, không phải lên chiếc xe vừa hỏi.","Dùng động từ và trợ từ phù hợp để nói việc chờ.","Lời nói lịch sự, rõ nghĩa; không cần ghép các từ theo một mẫu cố định."],"rationale":"Thầy xem em có giữ thông tin 'chuyến tiếp theo' và diễn đạt được quyết định chờ không.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {
           "id":"teaching:v1:N5:transport:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
           "prompt":"Em đứng trước một xe buýt trong thành phố hư cấu và chưa biết nó có tới nơi em cần không. Tự chọn một đích khác sân bay/ga của bài, ghi đích bằng Việt rồi viết câu hỏi Nhật lịch sự cho lái xe trước khi lên. Không tự cung cấp lời đáp, số tuyến hoặc giờ chạy.",
@@ -5218,7 +5178,7 @@
         {"id":"teaching:v1:N5:shopping:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Tình huống ngân sách mới: em có 800 yên. 傘は一本五百円です。 Không giảm giá, không phụ phí, không vay hoặc trả góp.","prompt":"Với số tiền đang có, mua tối đa được bao nhiêu chiếc ô?","options":[{"id":"option:0","text":"Hai chiếc."},{"id":"option:1","text":"Một chiếc."},{"id":"option:2","text":"Không mua được chiếc nào."}],"answer_option_id":"option:1","rationale":"Một chiếc 500 ≤ 800; hai chiếc 1.000 > 800. Việc đơn trước mua hai chiếc không làm ngân sách mới đủ mua hai.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:shopping:task:2","objective":"structure","mode":"choice","skill":"grammar","prompt":"Muốn hỏi ‘cái ô này bao nhiêu tiền’, giữ cả từ chỉ ‘này’ và danh từ 傘. Chọn cách ghép đúng.","options":[{"id":"option:0","text":"これ傘はいくらですか。"},{"id":"option:1","text":"このはいくらですか。"},{"id":"option:2","text":"この傘はいくらですか。"}],"answer_option_id":"option:2","rationale":"この phải đi cùng danh từ 傘. Nếu muốn dùng これ, phải bỏ danh từ và nói これはいくらですか; không nối thành これ傘.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:shopping:task:3","objective":"meaning","mode":"short_text","skill":"reading","passage":"傘は一本五百円です。二本ください。 Không phụ phí hoặc giảm giá.","prompt":"Tự tính tổng. Chỉ nhập số tiền bằng chữ số 0–9, không dấu phân cách, không 円 và không dấu câu.","accepted_variants":["1000"],"rationale":"2 × 500 = 1000. Đây là đối chiếu một số tiền theo dữ kiện, không phải kiểm tra duy nhất một cách viết số trong tiếng Nhật nói chung.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:shopping:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết lời yêu cầu mua hai chiếc ô này bằng các cụm この傘／を／二本／ください, theo đúng thứ tự. Bài yêu cầu đơn vị 本, giữ kanji, viết 。 cuối câu, không thêm từ hoặc khoảng trắng.","accepted_variants":["この傘を二本ください。"],"rationale":"この bổ nghĩa 傘; を nêu vật cần lấy; 二本 giữ đúng hai chiếc. Ràng buộc 本 giúp đối chiếu hữu hạn, không khẳng định mọi cách đếm chung khác đều sai trong mọi tình huống.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:shopping:task:4","objective":"structure","mode":"writing","skill":"grammar","prompt":"Em muốn mua hai chiếc ô đang chỉ trước mặt. Hãy viết một lời yêu cầu lịch sự. Gợi ý từ: 傘, 二本, ください.","criteria":["Người bán hiểu em muốn hai chiếc ô này, không nhầm vật hoặc số lượng.","Từ chỉ vật, số lượng và lời yêu cầu nối đúng; xem cách đếm theo ngữ cảnh.","Có thể chọn cách diễn đạt tự nhiên và dùng kanji hoặc kana rõ nghĩa."],"rationale":"本 thường dùng để đếm ô vì là vật dài. Thầy xem cả lời yêu cầu và ngữ cảnh; cách viết khác một câu mẫu không tự làm câu sai.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {
           "id":"teaching:v1:N5:shopping:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
           "prompt":"Dựng quầy đồ dùng học tập hư cấu: tự chọn một đồ loại dài có thể đếm bằng 本, đặt đơn giá và số tiền được dùng, không phụ phí/giảm giá. Tự chọn lượng từ một đến ba sao cho đủ tiền; ghi dữ kiện/tổng bằng Việt rồi viết lời yêu cầu mua Nhật lịch sự, tự chọn cách chỉ rõ vật. Không lặp đơn ô của bài.",
@@ -5273,7 +5233,7 @@
         {"id":"teaching:v1:N5:asking-help:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"もう一度、ゆっくり言ってください。","prompt":"Lời nhờ yêu cầu đủ hai việc nào?","options":[{"id":"option:0","text":"Nói lại một lần nữa và nói chậm."},{"id":"option:1","text":"Nói to hơn và không cần lặp lại."},{"id":"option:2","text":"Viết nghĩa của từ bằng tiếng Việt."}],"answer_option_id":"option:0","rationale":"もう一度 là lặp lại một lần nữa; ゆっくり là chậm. Không có từ nào yêu cầu tăng âm lượng hoặc viết bản dịch.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:asking-help:task:2","objective":"communication","mode":"choice","skill":"grammar","passage":"Người kia vừa tự nói một câu, không đọc từ văn bản. Em biết các từ nhưng chưa nghe rõ câu, chỉ cần người đó nói lại.","prompt":"Chọn lời nhờ đúng nhu cầu này.","options":[{"id":"option:0","text":"意味を教えてください。"},{"id":"option:1","text":"もう一度言ってください。"},{"id":"option:2","text":"はい、わかりました。"}],"answer_option_id":"option:1","rationale":"言ってください nhờ nói; もう一度 nhờ lặp lại. Hỏi 意味 đổi sang hỏi nghĩa, còn わかりました tuyên bố đã hiểu. Không đánh đồng nghe chưa rõ với không biết nghĩa.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:asking-help:task:3","objective":"orthography","mode":"short_text","skill":"reading","prompt":"Nhớ lại cách đọc của 入口 đã được người kia hướng dẫn. Chỉ viết toàn hiragana, không dấu ngoặc hoặc dấu câu.","accepted_variants":["いりぐち"],"rationale":"Cách đọc được cho là いりぐち; không nhầm với 出口／でぐち. Bài đang kiểm tra đúng chữ 入口.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:asking-help:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Ghép lời nhờ ‘nói lại chậm một lần nữa’ bằng đúng もう一度／ゆっくり／言ってください, theo thứ tự. Giữ kanji; có thể dùng hoặc bỏ 、 sau もう一度 và 。 cuối câu; không thêm từ hoặc khoảng trắng.","accepted_variants":["もう一度、ゆっくり言ってください。","もう一度ゆっくり言ってください。","もう一度、ゆっくり言ってください","もう一度ゆっくり言ってください"],"rationale":"Lời nhờ giữ cả việc lặp lại và tốc độ nói. Các biến thể dấu câu được liệt kê theo giới hạn của đề; không coi một lời nhờ tương đương ngoài giới hạn là sai tiếng Nhật nói chung.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:asking-help:task:4","objective":"structure","mode":"writing","skill":"grammar","prompt":"Em chưa nghe kịp. Hãy nhờ người kia nói lại chậm hơn bằng một câu lịch sự.","criteria":["Giữ cả hai ý: nói lại và nói chậm hơn.","Lời nhờ hướng tới người nghe, không biến thành lời tự hứa của em.","Có thể dùng もう一度, ゆっくり và ～てください hoặc cách lịch sự phù hợp khác."],"rationale":"Thầy xem người nghe có hiểu cần lặp lại với tốc độ chậm hơn không. Nhiều cách nhờ khác nhau có thể hợp lý.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {
           "id":"teaching:v1:N5:asking-help:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
           "prompt":"Trong lớp giao lưu hư cấu, em cần giúp về một thông tin ngôn ngữ. Tự chọn một từ/chữ mới không phải 入口, rồi chọn em chưa biết cách đọc hay chưa biết nghĩa; nêu nhu cầu Việt và viết lời nhờ Nhật lịch sự hỏi đúng điều ấy. Em chọn cả từ và cách mở lời, không cần tự cung cấp đáp án hoặc giả vờ đã hiểu.",
