@@ -50,7 +50,8 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
   const overview = {
     formula: item.formula || unit?.formula, explanation: item.explanation || item.summary, meaning_vi: item.meaning_vi,
     note: unit?.note,
-    common_errors:item.common_errors,prerequisites:item.prerequisites,
+    common_errors:item.common_errors,prerequisites:item.prerequisites,support:item.support,
+    guided_steps:item.guided_steps,
     passage: item.passage, translation: item.translation, script_jp: item.script_jp, script_vi: item.script_vi,
     words: words.map(compactWord),
     // Beginner tracks classify vocabulary, not the difficulty of attached corpus sentences.

@@ -184,10 +184,16 @@ test('all-level draft packages preserve canonical context, authored IDs, explici
           assert.deepEqual(plain(task.opts),original.options.map(option=>option.text));
           assert.equal(new Set(original.options.map(option=>option.id)).size,original.options.length,'original option identities must remain unambiguous');
           assert.equal(original.options[task.answer_index].id,original.answer_option_id);
+        }else if(original.mode==='writing'){
+          assert.equal(task.mode,'writing');assert.equal(task.answer_index,null);
+          assert.deepEqual(plain(task.accepted_answers),[]);
+          assert.deepEqual(plain(task.criteria),original.criteria);
         }else{
           assert.equal(task.mode,'recall');assert.equal(task.answer_index,null);
           assert.deepEqual(plain(task.accepted_answers),original.accepted_variants);
         }
+        if(original.objective)assert.equal(task.objective,original.objective);
+        if(original.exchange)assert.deepEqual(plain(task.exchange),original.exchange);
       }
     }
     assert.equal(seen.size,level==='N5'?20+practical.units.filter(unit=>unit.level===level).length:practical.units.filter(unit=>unit.level===level).length);
@@ -223,4 +229,27 @@ test('draft admission rejects falsely approved or cross-level packages and remai
   c.fetch=async path=>({ok:true,json:async()=>JSON.parse(readFileSync('static/'+path,'utf8'))});
   await c.ensureLessons('N5');
   assert.equal(c.window.JLPT_DATA.curriculum.N5.skills.grammar.filter(lesson=>lesson.editorial).length,original.lessons.length);
+});
+
+test('objective and exchange changes invalidate only their bound task revision, not legacy unannotated tasks',()=>{
+  const c=context(),base=c.lessonQuestions({id:'objective',drills:[{q:'Invite',mode:'writing',criteria:['Choose an activity.']}]},'N5','grammar')[0];
+  const objective={...base,objective:'communication'},exchange={...objective,exchange:{group:'invitation',stage:'invite',prior_task_ids:[]}};
+  assert.notEqual(hash(c,base),hash(c,objective));assert.notEqual(hash(c,objective),hash(c,exchange));
+  assert.notEqual(hash(c,exchange),hash(c,{...exchange,exchange:{...exchange.exchange,stage:'delayed',delay_hours:24}}));
+  assert.equal(hash(c,base),hash(c,{...base,objective:undefined}));
+});
+
+test('delayed invitation review requires a complete current-revision cycle in one prior session and time, not pooled or stale evidence',()=>{
+  const c=context(),ids=['invite','accept','refuse'],tasks=[
+    ...ids.map(task_id=>({task_id})),
+    {task_id:'later',exchange:{stage:'delayed',prior_task_ids:ids,delay_hours:24}}
+  ],lesson={delayed_review_task_id:'later'},revisions=new Map(ids.map(id=>[id,'current']));
+  const day=24*3600000,at=Date.parse('2026-01-01T00:00:00Z'),evidence=ids.map((task_id,index)=>({
+    task_id,revision:'current',session_id:'previous',validity:'valid',answered_at:new Date(at+index*1000).toISOString()
+  }));
+  assert.equal(c.delayedReviewState(lesson,tasks,evidence,revisions,at+day).due,false,'delay starts after the last required exchange answer');
+  assert.equal(c.delayedReviewState(lesson,tasks,evidence,revisions,at+day+2000).due,true);
+  assert.equal(c.delayedReviewState(lesson,tasks,evidence.slice(0,2),revisions,at+2*day),null);
+  assert.equal(c.delayedReviewState(lesson,tasks,evidence.map((row,index)=>({...row,session_id:`session-${index}`})),revisions,at+2*day),null);
+  assert.equal(c.delayedReviewState(lesson,tasks,evidence.map((row,index)=>index===1?{...row,revision:'old'}:row),revisions,at+2*day),null);
 });

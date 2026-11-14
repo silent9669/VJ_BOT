@@ -4,6 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {readFileSync,readdirSync} from 'node:fs';
 import {recordTaskAttempt,taskEvidenceSummary} from '../src/task-attempts.js';
 import {groundLesson,resolveTaskReference,taskEvidence} from '../src/tutor-context.js';
+import {assessTaskResponse} from '../src/task-response.js';
 
 const revision='a'.repeat(64);
 const task={task_id:'lesson:question:0',revision,item_id:'original-item',mode:'choice',q:'Choose position',instruction:'Pick the numbered slot',opts:['あれ','何で','あれ'],answer_index:2,review_status:'unreviewed',explanation:'SECRET_RATIONALE',accepted_answers:['SECRET_ACCEPTED'],example_indexes:[0]};
@@ -135,4 +136,81 @@ test('assistance racing with an answer is classified using stored answer state i
   const row=sqlite.prepare('SELECT * FROM task_attempt_evidence').get();
   assert.equal(row.answer_index,2);assert.equal(row.help_mask,0);assert.equal(row.post_answer_help_mask,8);
   assert.equal(row.assistance,'unknown');
+});
+
+test('objective assessment preserves raw text and literal source keys without grading cosmetic or semantic differences',()=>{
+  const reference={...task,mode:'recall',objective:'structure',accepted_answers:['水を二本飲みました。','みずを二本飲みました。']};
+  const raw='  水 を二本飲みました  ';
+  const cosmetic=assessTaskResponse(reference,{response_text:raw});
+  assert.equal(cosmetic.source_correct,false);assert.equal(cosmetic.assessment.comparison,'orthographic_difference');
+  assert.equal(cosmetic.assessment.submitted_text,raw);assert.equal(cosmetic.assessment.meaning,'uncertain');assert.equal(cosmetic.assessment.structure,'uncertain');
+  assert.equal(assessTaskResponse(reference,{response_text:'みずを二本飲みました。'}).source_correct,true);
+  for(const response_text of ['水を二本飲みませんでした。','水を三本飲みました。','水を二本飲みました？','水を二 本飲みました。','水を二本、飲みました。']) {
+    assert.equal(assessTaskResponse(reference,{response_text}).assessment.comparison,'different_reference',response_text);
+  }
+  assert.equal(assessTaskResponse({...reference,objective:'orthography'},{response_text:raw}).assessment.comparison,'different_reference');
+  assert.equal(assessTaskResponse({...reference,accepted_answers:['AB CD 12']},{response_text:'ABCD12'}).assessment.comparison,'different_reference');
+  assert.equal(assessTaskResponse({...reference,accepted_answers:['水を飲みました。']},{response_text:'みずを飲みました。'}).assessment.comparison,'different_reference');
+  assert.deepEqual(reference.accepted_answers,['水を二本飲みました。','みずを二本飲みました。']);
+  const writing=assessTaskResponse({...reference,mode:'writing'},{response_text:'水を二本飲みました。'});
+  assert.equal(writing.source_correct,null);assert.equal(writing.basis,'self_report');assert.equal(writing.verified,false);assert.equal(writing.assessment.comparison,'unassessed');
+});
+
+test('session binding is validated, immutable and retains original text and private feedback fields',async t=>{
+  const {env,canonical,sqlite}=fixture(t),session_id='learning-session-0001';
+  canonical.questions[0]={...task,mode:'recall',objective:'structure',accepted_answers:['水を飲みました。']};
+  const body=submission({answer_index:undefined,response_text:'  水 を飲みました  ',session_id});
+  const response=await recordTaskAttempt(body,env),result=await response.json();
+  assert.equal(response.status,200);assert.equal(result.session_id,session_id);assert.equal(result.assessment.comparison,'orthographic_difference');
+  assert.equal(result.response_text,body.response_text);assert.equal(result.source_correct,false);
+  assert.deepEqual(await (await recordTaskAttempt(body,env)).json(),result);
+  assert.equal((await recordTaskAttempt({...body,session_id:'learning-session-0002'},env)).status,409);
+  assert.equal((await recordTaskAttempt({...body,session_id:undefined},env)).status,400);
+  assert.equal((await recordTaskAttempt({...body,session_id:'bad'},env)).status,400);
+  const stored=sqlite.prepare('SELECT * FROM task_attempt_evidence').get();
+  assert.equal(stored.response_text,body.response_text);assert.equal(stored.session_id,session_id);
+  const [evidence]=(await taskEvidenceSummary(env,'learner')).evidence;
+  assert.equal(evidence.session_id,session_id);assert.equal(evidence.feedback_json,null);assert.equal(evidence.feedback_at,null);
+});
+
+test('canonical exchange requires earlier answers in the owned session, while delayed review requires another due session',async t=>{
+  const {env,canonical,sqlite}=fixture(t),session_id='learning-session-0001';
+  const invite={...task,task_id:'invite-task',mode:'writing',objective:'communication',exchange:{group:'invite-group',stage:'invite',prior_task_ids:[]}};
+  const continuation={...invite,task_id:'accept-task',exchange:{group:'invite-group',stage:'accept',prior_task_ids:['invite-task']}};
+  const refusal={...invite,task_id:'refuse-task',exchange:{group:'invite-group',stage:'refuse',prior_task_ids:['invite-task']}};
+  const delayed={...invite,task_id:'delayed-task',exchange:{group:'invite-group',stage:'delayed',prior_task_ids:['invite-task','accept-task','refuse-task'],delay_hours:24}};
+  canonical.questions=[invite,continuation,refusal,delayed];
+  const answer=(index,extra={})=>submission({question_index:index,task:{id:canonical.questions[index].task_id,revision},
+    answer_index:undefined,response_text:'一緒に公園へ行きませんか。',session_id,attempt_id:`exchange-attempt-000${index}`,...extra});
+  assert.equal((await recordTaskAttempt(answer(1),env)).status,409);
+  const invited=await (await recordTaskAttempt(answer(0),env)).json();assert.equal(invited.source_correct,null);assert.equal(invited.verified,false);
+  assert.equal((await recordTaskAttempt(answer(1,{session_id:'learning-session-0002'}),env)).status,409);
+  assert.equal((await recordTaskAttempt(answer(1),env)).status,200);
+  assert.equal((await recordTaskAttempt(answer(3,{session_id:'learning-session-0002'}),env)).status,409);
+  sqlite.prepare('UPDATE task_attempt_evidence SET answered_at=?').run(new Date(Date.now()-25*3600000).toISOString());
+  assert.equal((await recordTaskAttempt(answer(3,{session_id:'learning-session-0002'}),env)).status,409,'an unfinished cycle is not eligible');
+  assert.equal((await recordTaskAttempt(answer(2),env)).status,200);
+  assert.equal((await recordTaskAttempt(answer(3,{session_id:'learning-session-0002'}),env)).status,409,'all earlier stages must be due');
+  sqlite.prepare('UPDATE task_attempt_evidence SET answered_at=?').run(new Date(Date.now()-25*3600000).toISOString());
+  assert.equal((await recordTaskAttempt(answer(3),env)).status,409,'same session is not later independent recall');
+  assert.equal((await recordTaskAttempt(answer(3,{session_id:'learning-session-0002'}),env)).status,200);
+  const changed=structuredClone(canonical);changed.questions[0].revision='b'.repeat(64);
+  env.ASSETS={fetch:async()=>Response.json({lessons:{lesson:changed},items:{},scenarios:{}})};
+  assert.equal((await recordTaskAttempt(answer(3,{session_id:'learning-session-0003',attempt_id:'exchange-delayed-0003'}),env)).status,409,'stale invitation revision is not eligibility');
+});
+
+test('session answer timestamps strictly order answers even when pending assistance rows were created earlier',async t=>{
+  const {env,canonical,sqlite}=fixture(t),session_id='ordered-session-0001';
+  const invite={...task,task_id:'ordered-invite',mode:'writing',objective:'communication',exchange:{group:'ordered-group',stage:'invite',prior_task_ids:[]}};
+  const continuation={...invite,task_id:'ordered-accept',exchange:{group:'ordered-group',stage:'accept',prior_task_ids:['ordered-invite']}};
+  canonical.questions=[invite,continuation];
+  const answer=(index,extra={})=>submission({question_index:index,task:{id:canonical.questions[index].task_id,revision},answer_index:undefined,
+    response_text:'公園へ行きませんか。',session_id,attempt_id:`ordered-attempt-000${index}`,...extra});
+  assert.equal((await recordTaskAttempt(answer(0),env)).status,200);
+  assert.equal((await recordTaskAttempt(answer(1,{event:'assist',help:'hint',response_text:undefined}),env)).status,200);
+  const latest=new Date(Date.now()+1000).toISOString();
+  sqlite.prepare("UPDATE task_attempt_evidence SET answered_at=? WHERE task_id='ordered-invite'").run(latest);
+  assert.equal((await recordTaskAttempt(answer(1),env)).status,200);
+  const saved=sqlite.prepare("SELECT answered_at FROM task_attempt_evidence WHERE task_id='ordered-accept'").get();
+  assert.equal(Date.parse(saved.answered_at),Date.parse(latest)+1);
 });

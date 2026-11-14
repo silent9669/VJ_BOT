@@ -658,7 +658,8 @@ function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
 function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   item={...item,items:item.items || item.roleplay?.words || item.targetWords,examples:item.examples || item.roleplay?.dialogue};
   const returnView=curriculumView;
-  if(switchTab('lesson',{level,skill,id:owner?item.id:activityId(item,level,skill),fromHistory,owner})===false)return;
+  if(switchTab('lesson',{level,skill,id:owner?item.id:activityId(item,level,skill),fromHistory,owner,
+    ...(item.delayedReview && Number.isInteger(item.reviewQuestionIndex)?{reviewTaskId:lessonQuestions(item,level,skill)[item.reviewQuestionIndex]?.task_id}:{})})===false)return;
   activeCurriculumLevel=level;
   activeCurriculumSkill=skill;
   currentLesson={item,level,skill,returnView,owner};
@@ -694,6 +695,10 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage" lang="ja">${escapeHtml(item.passage)}</p>${item.translation?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content reading-translation">${escapeHtml(item.translation)}</p></details>`:''}</div>` : "";
   const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-study-hint">Nghe và tự nắm ý chính trước khi xem lời thoại.</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(item.script_jp)}">Nghe bài</button><details class="lesson-disclosure"><summary>Lời thoại</summary><p class="lesson-japanese-passage lesson-aid-content" lang="ja">${escapeHtml(item.script_jp)}</p></details>${item.script_vi?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content listening-translation">${escapeHtml(item.script_vi)}</p></details>`:''}</div>` : "";
   const tasks=lessonQuestions(item,level,skill);
+  const delayedReview=item.delayedReview===true && tasks[item.reviewQuestionIndex]?.exchange?.stage==='delayed';
+  const guided=item.guided_steps?.length && !delayedReview;
+  const firstStage=guided?item.guided_steps[0]:null;
+  const supportHtml=item.support?.length?`<section class="lesson-section"><h3>Hỗ trợ ngay trong bài</h3><p>Đây là từ hoặc cách diễn đạt được giải thích tại chỗ, không phải tất cả đều là kiến thức bắt buộc phải biết trước.</p>${item.support.map(entry=>`<details class="lesson-disclosure"><summary>${escapeHtml(entry.term)}</summary><p>${escapeHtml(entry.explanation)}</p></details>`).join('')}</section>`:'';
   const taskReferenceHtml=Number.isInteger(item.examIndex)?`<section class="lesson-section"><h3>Bộ câu hỏi · ${tasks.length} câu</h3>
     <p>Đọc đầy đủ đề và ngữ cảnh. Đáp án/lời giải chỉ xuất hiện sau khi em thử trả lời.</p>
     <ol class="task-reference-list">${tasks.map(task=>`<li>${taskPromptHtml(task)}${task.unavailable_reason?`<p role="note">Tạm ngừng: ${escapeHtml(taskUnavailableMessage(task))}</p>`:
@@ -706,12 +711,18 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
       <span class="lesson-source">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT" : "Bài học"))}</span>
       ${item.editorial?`<p class="lesson-study-hint">AI biên soạn, chỉ dùng tham khảo; chưa được giáo viên duyệt và không xác nhận thành thạo.</p><p>${escapeHtml(item.source_header)}</p>${item.prerequisite_titles.length?`<p>Học trước: ${escapeHtml(item.prerequisite_titles.join(' · '))}</p>`:''}`:''}
       <p class="lesson-meaning">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
+      ${guided?`<aside class="task-stage"><h3>${escapeHtml(firstStage.title)}</h3><p>${escapeHtml(firstStage.note)}</p><p lang="ja">${escapeHtml(firstStage.example.jp)}</p><details><summary>Cách đọc và nghĩa</summary><p lang="ja">${escapeHtml(firstStage.example.reading)}</p><p>${escapeHtml(firstStage.example.vi)}</p></details><p>Làm một lượt nhỏ, xem phản hồi rồi mới mở bước tiếp. Bảng đầy đủ ở phần tham khảo bên dưới.</p></aside>`:''}
+      ${guided?'<details class="lesson-disclosure lesson-full-reference"><summary>Bảng và ghi chú đầy đủ · tài liệu tham khảo</summary>':''}
       ${item.formula ? `<div class="lesson-formula"><span>Cấu trúc</span><code>${escapeHtml(item.formula)}</code></div>` : ""}
       ${item.explanation || item.summary ? `<p class="lesson-explain">${escapeHtml(item.explanation || item.summary || "")}</p>` : ""}
+      ${guided?'</details>':''}
     </section>
+    ${supportHtml}
     ${item.resources?.length ? `<aside class="lesson-resources"><h4>Học tiếp từ nguồn gốc</h4>${item.resources.map(r=>`<p>${escapeHtml(r.publisher)} · ${escapeHtml(r.title)}</p><a href="${escapeHtml(r.pdf_url)}" target="_blank" rel="noopener">Mở bài PDF</a> ${r.audio_page_url?`<a href="${escapeHtml(r.audio_page_url)}" target="_blank" rel="noopener">Nghe bản gốc</a>`:''}`).join('')}<p>Bài trong app được biên soạn riêng; nguồn gốc dùng hệ A1/A2/A2–B1.</p></aside>` : ''}
+    ${guided?'<details class="lesson-disclosure"><summary>Các ví dụ và đối chiếu lỗi đầy đủ · tham khảo</summary>':''}
     ${examplesHtml}
     ${item.common_errors?.length?`<section class="lesson-section"><h3>Lỗi dễ gặp và cách sửa</h3>${item.common_errors.map(error=>`<details class="lesson-disclosure"><summary>${escapeHtml(error.problem)}</summary><p>${escapeHtml(error.correction)}</p><p>${escapeHtml(error.reason)}</p></details>`).join('')}</section>`:''}
+    ${guided?'</details>':''}
     ${vocabularyHtml}
     ${readingHtml}
     ${listeningHtml}
@@ -723,12 +734,18 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
       <button type="button" class="stage-btn modal-close-action">Đóng</button>
     </div>
   `;
+  if(delayedReview){
+    body.querySelector('#lesson-reference').replaceChildren();
+    const note=document.createElement('p');note.textContent='Gợi nhớ ở tình huống mới: không mở bài mẫu hoặc lời giải trước khi thử. Lượt này chưa chứng minh khả năng nhớ lâu.';
+    body.querySelector('#lesson-reference').append(note);
+  }
 
   renderLessonExercises(item,level,skill);
   const hasPractice=Boolean(item.production || item.dictation || lessonQuestions(item,level,skill).length);
   const modes=body.querySelector('.lesson-mode-switch');
   modes.hidden=!hasPractice;
-  const practiceLabel=item.production?'Thực hành viết':item.dictation?'Nghe và chép':`${tasks.length} câu luyện tập`;
+  const practicedCount=typeof practiceTaskIndices==='function'?practiceTaskIndices(item,tasks).length:tasks.length;
+  const practiceLabel=item.production?'Thực hành viết':item.dictation?'Nghe và chép':guided?'Luyện từng bước':`${practicedCount} hoạt động luyện tập`;
   modes.querySelector('[data-lesson-mode=practice]').textContent=practiceLabel;
   const selectMode=mode=>{
     body.dataset.mode=mode;
@@ -742,12 +759,13 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   };
   modes.querySelectorAll('button').forEach(b=>b.onclick=()=>selectMode(b.dataset.lessonMode));
   if(hasPractice){
-    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent=item.production || item.dictation?practiceLabel:`Làm ${tasks.length} câu luyện tập`;
+    const start=document.createElement('button');start.className='practice-primary lesson-start';start.textContent=guided?'Thử bước đầu':item.production || item.dictation?practiceLabel:`Bắt đầu ${practicedCount} hoạt động`;
     start.onclick=()=>{selectMode('practice');body.querySelector('#lesson-exercises legend, #lesson-exercises textarea, #lesson-exercises button')?.focus();};
     body.querySelector('#lesson-reference').append(start);
   }
-  selectMode('read');
-  globalThis.mountLessonTeaching?.(body,item,level,skill);
+  selectMode(delayedReview?'practice':'read');
+  if(delayedReview){modes.querySelector('[data-lesson-mode=read]').hidden=true;body.querySelector('#lesson-exercises legend,textarea,button')?.focus();}
+  else globalThis.mountLessonTeaching?.(body,item,level,skill);
   body.querySelectorAll('.word-detail').forEach(word=>word.addEventListener('toggle',()=>{
     if(word.open && word.isConnected)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
   }));

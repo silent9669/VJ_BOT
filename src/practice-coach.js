@@ -1,5 +1,7 @@
 import {askAI} from './providers.js';
-import {catalogLesson, resolveTaskReference, taskEvidence, taskResultBasis, teacherCatalog, validLessonReference} from './tutor-context.js';
+import {catalogLesson, resolveTaskReference, taskEvidence, teacherCatalog, validLessonReference} from './tutor-context.js';
+import {assessTaskResponse} from './task-response.js';
+import {priorTaskResponses,taskAttemptIdPattern} from './task-attempts.js';
 import {studyTeacher} from './study-teacher.js';
 import {attributedReply, learningBoundary, learningQuery, retrieveLearning} from './learning-rag.js';
 
@@ -12,20 +14,26 @@ Never invent a grade, override a source answer, claim acoustic assessment, or pr
 Return only the schema's JSON object. Keep reply within 140 words, at most three short paragraphs, without Markdown tables or generic praise.`;
 const instructions = {
   hint:'Give one small clue about the skill or evidence to look for. Do not reveal, name, complete or eliminate options to expose the answer. Leave the learner to choose. Do not assess an answer that has not been submitted.',
-  feedback:'The supplied correctness and answer come from the authored exercise, not your judgment. If wrong, identify the specific confusion in the selected option, contrast it with the correct answer using the evidence, and give one short strategy or self-check to improve. If correct, explain the deciding evidence and one useful transfer principle. Do not assert an authored option is universally ungrammatical outside this task. If evidence is insufficient or contradictory, state the limitation instead of inventing a reason.'
+  feedback:'Source agreement is only a literal comparison, never proof of meaning or grammar. For objective-aware tasks separately name meaning, structure and orthography; quote the actual submitted evidence, state what is uncertain, and give one actionable next revision or self-check. A missing terminal 。 or harmless Japanese spacing is not a grammar failure; kana/kanji variants without an explicit authored key remain uncertain, not automatically wrong grammar. Do not erase negation, quantity, question marks or other meaningful differences. For writing use the task-specific criteria and authored partner scenario with the learner’s actual earlier responses, but give advisory feedback only: no score, verified correctness or invented semantic verdict. For choice tasks contrast the actual selected option with the authored key using the evidence; never say that option is universally ungrammatical. If evidence is insufficient or contradictory, state that limitation instead of inventing a reason.'
 };
 
-export async function practiceCoach(request, env) {
+export async function practiceCoach(request, env, expectedEpoch=undefined) {
+  // Worker middleware supplies the epoch captured before its first body read.
   const body = await request.json();
   if (body?.action === 'teach') return studyTeacher(body,request,env);
-  const allowed = ['user_id','api_connection','lesson','question_index','item_id','action','answer_index','response_text','task','view'];
+  const allowed = ['user_id','api_connection','lesson','question_index','item_id','action','answer_index','response_text','task','view','attempt_id','session_id'];
   if (!body || Object.keys(body).some(key => !allowed.includes(key)) || !validLessonReference(body.lesson)
     || !['hint','feedback'].includes(body.action) || !Number.isInteger(body.question_index) || body.question_index < 0
     || body.view !== undefined && !['checks','exam'].includes(body.view)
     || body.item_id !== undefined && (typeof body.item_id !== 'string' || !body.item_id || body.item_id.length > 500)
+    || ['attempt_id','session_id'].some(key=>Object.hasOwn(body,key) && (typeof body[key]!=='string' || !taskAttemptIdPattern.test(body[key])))
     || body.action === 'hint' && ['answer_index','response_text'].some(key=>Object.hasOwn(body,key))) {
     return reply({detail:'Invalid practice coaching request.'},400);
   }
+  const profile=await env.DB.prepare('SELECT task_evidence_epoch FROM profiles WHERE user_id=?').bind(body.user_id).first();
+  const epoch=expectedEpoch===undefined?profile?.task_evidence_epoch:expectedEpoch;
+  if(!epoch || profile?.task_evidence_epoch!==epoch)return reply({detail:'The learner account changed. Reopen the activity.'},409);
+  const currentEpoch=async()=>Boolean(await env.DB.prepare('SELECT 1 valid FROM profiles WHERE user_id=? AND task_evidence_epoch=?').bind(body.user_id,epoch).first());
   const catalog = await teacherCatalog(env,body.lesson.level);
   if (!catalog) return reply({detail:'The lesson catalog is unavailable. Your exercise result has not changed.'},503);
   const lesson = catalogLesson(catalog,body.lesson),view=body.view??'checks';
@@ -38,23 +46,45 @@ export async function practiceCoach(request, env) {
     :Object.hasOwn(body,'answer_index') || typeof body.response_text!=='string' || !body.response_text.trim() || body.response_text.length>4000)) {
     return reply({detail:'Submit the original choice index or actual text for this task.'},400);
   }
-  const basis=taskResultBasis(question);
-  const correct=body.action!=='feedback' || question.mode==='writing'?null:question.mode==='choice'
-    ?body.answer_index===question.answer_index
-    :question.accepted_answers.some(answer=>answer.normalize('NFC').trim()===body.response_text.normalize('NFC').trim());
+  let bound=null;
+  if(body.attempt_id!==undefined) {
+    bound=await env.DB.prepare('SELECT * FROM task_attempt_evidence WHERE user_id=? AND attempt_id=?')
+      .bind(body.user_id,body.attempt_id).first();
+    if(!bound || bound.account_epoch!==epoch || bound.lesson_id!==lesson.id || bound.level!==lesson.level
+      || bound.task_id!==question.task_id || bound.revision!==question.revision || bound.item_id!==question.item_id
+      || bound.view!==view || bound.question_index!==body.question_index || (bound.session_id??null)!==(body.session_id??null)
+      || body.action==='feedback' && (bound.answer_payload===null || (question.mode==='choice'
+        ?bound.answer_index!==body.answer_index:bound.response_text!==body.response_text))) {
+      return reply({detail:'Feedback must use the original answered task, submission and learning session.'},409);
+    }
+  }
+  const prior=await priorTaskResponses(env,body.user_id,lesson,question,body.session_id,epoch,bound?.answered_at??null);
+  if(prior.error)return reply({detail:prior.error},409);
+  if(body.action==='feedback' && bound?.feedback_json) {
+    const current=await env.DB.prepare('SELECT task_evidence_epoch FROM profiles WHERE user_id=?').bind(body.user_id).first();
+    if(current?.task_evidence_epoch!==epoch)return reply({detail:'The learner account changed. Reopen the activity.'},409);
+    return reply(JSON.parse(bound.feedback_json));
+  }
+  const assessed=assessTaskResponse(question,bound || body);
+  const basis=bound?.basis??assessed.basis,correct=body.action==='feedback'?assessed.source_correct:null;
   const answer=question.mode==='choice'?question.opts[question.answer_index]:question.mode==='writing'?null:question.accepted_answers;
   const evidence = {level:body.lesson.level,question:taskEvidence(question),
+    ...(question.mode==='writing'?{criteria:question.criteria || []}:{}),
+    ...(question.exchange?{exchange:{group:question.exchange.group,stage:question.exchange.stage,
+      partner_reply:question.exchange.partner_reply || '',prior_responses:prior.responses}}:{}),
     ...(body.action === 'feedback' ? {submission:question.mode==='choice'?question.opts[body.answer_index]:body.response_text,
-      submission_index:body.answer_index??null,source_correct:correct,basis,authored_answer:answer,
-      authored_explanation:question.explanation || '',...(question.mode==='writing'?{criteria:question.criteria || [],model:question.model || ''}:{})} : {})};
+      submission_index:body.answer_index??null,source_correct:correct,basis,assessment:assessed.assessment,authored_answer:answer,
+      authored_explanation:question.explanation || '',...(question.mode==='writing'?{model:question.model || ''}:{})} : {})};
   if(JSON.stringify(evidence).length>8000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
   const retrieval = await retrieveLearning(env, learningQuery(lesson,'',question), {assessment:body.action==='hint'});
   evidence.learning_retrieval = retrieval;
   if(JSON.stringify(evidence).length>12000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
+  if(!(await currentEpoch()))return reply({detail:'The learner account changed before coaching. Reopen the activity.'},409);
   const asked = await askAI(env,body.user_id, {system:boundary + '\n' + instructions[body.action] + '\n' + learningBoundary,
     schema,schemaName:'practice_coaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
-  body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
+  body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined,{beforeGeneration:currentEpoch});
   if (asked.response) return asked.response;
+  if(!(await currentEpoch()))return reply({detail:'The learner account changed before feedback returned. Reopen the activity.'},409);
   let result;
   try { result = JSON.parse(asked.text); } catch { return reply({detail:'AI did not return a usable explanation. Your result is unchanged.'},503); }
   if (!result || Array.isArray(result) || Object.keys(result).length !== 1
@@ -65,7 +95,22 @@ export async function practiceCoach(request, env) {
     :basis==='self_report'?'Đây là tự đánh giá, không phải điểm số đã xác minh. ':'Đối chiếu khóa nguồn có thông tin thẩm định. '):'';
   const attributed=attributedReply(basisLabel+result.reply.trim(),retrieval,2000);
   if(!attributed)return reply({detail:'AI explanation with source attribution exceeded the reply limit. Your result is unchanged.'},503);
-  return reply({reply:attributed, action:body.action, item_id:question.item_id,task:resolved.reference,
-    ...(body.action === 'feedback' ? {correct,source_correct:correct,basis,verified:basis==='reviewed_source',
-      answer_index:question.answer_index??null,answer} : {})});
+  const response={reply:attributed, action:body.action, item_id:question.item_id,task:resolved.reference,
+    ...(body.attempt_id!==undefined?{attempt_id:body.attempt_id}:{}),...(body.session_id!==undefined?{session_id:body.session_id}:{}),
+    ...(body.action === 'feedback' ? {correct,source_correct:correct,basis,verified:question.mode!=='writing' && basis==='reviewed_source',
+      answer_index:question.answer_index??null,answer,...(assessed.assessment?{assessment:assessed.assessment}:{})} : {})};
+  if(body.action==='feedback' && bound) {
+    const feedback_at=new Date().toISOString(),feedback_json=JSON.stringify({...response,feedback_at});
+    await env.DB.prepare(`UPDATE task_attempt_evidence SET feedback_json=?,feedback_at=?,post_answer_help_mask=post_answer_help_mask|8
+      WHERE user_id=? AND attempt_id=? AND account_epoch=? AND identity_json=? AND answer_payload=? AND session_id IS ?
+      AND feedback_json IS NULL AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)`)
+      .bind(feedback_json,feedback_at,body.user_id,body.attempt_id,epoch,bound.identity_json,bound.answer_payload,body.session_id??null,body.user_id,epoch).run();
+    const saved=await env.DB.prepare(`SELECT feedback_json FROM task_attempt_evidence
+      WHERE user_id=? AND attempt_id=? AND account_epoch=? AND identity_json=? AND answer_payload=? AND session_id IS ?
+      AND EXISTS(SELECT 1 FROM profiles WHERE user_id=? AND task_evidence_epoch=?)`)
+      .bind(body.user_id,body.attempt_id,epoch,bound.identity_json,bound.answer_payload,body.session_id??null,body.user_id,epoch).first();
+    if(!saved?.feedback_json)return reply({detail:'This account or attempt changed before feedback was saved.'},409);
+    return reply(JSON.parse(saved.feedback_json));
+  }
+  return reply(response);
 }

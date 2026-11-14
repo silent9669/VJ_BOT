@@ -83,7 +83,8 @@ export function taskEvidence(task) {
   return {task_id:task.task_id,item_id:task.item_id,mode:task.mode,q:task.q,instruction:task.instruction || '',
     ...(task.mode === 'dictation' ? {} : {passage:task.passage || '',script_jp:task.script_jp || '',
       target:task.target || '',parts:task.parts || []}),
-    opts:task.mode === 'choice' ? task.opts : [],review_status:task.review_status || 'unreviewed'};
+    opts:task.mode === 'choice' ? task.opts : [],review_status:task.review_status || 'unreviewed',
+    ...(['meaning','structure','orthography','transformation','communication'].includes(task.objective)?{objective:task.objective}:{})};
 }
 
 export function taskResultBasis(task) {

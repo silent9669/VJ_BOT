@@ -64,6 +64,23 @@ function studyStepState(step,records,evidence=[],revisions=new Map()){
 function openStudyStep(step,level){
   showLessonDetail(step.lesson,level,step.skill);
 }
+function delayedReviewState(lesson,tasks,evidence,revisions,now=Date.now()){
+  const index=tasks.findIndex(task=>task.task_id===lesson.delayed_review_task_id),task=tasks[index];
+  if(!task || task.exchange?.stage!=='delayed' || !task.exchange.prior_task_ids.length)return null;
+  const prior=task.exchange.prior_task_ids;
+  const sessions=new Map();
+  for(const row of evidence || []){
+    if(!row.session_id || row.validity!=='valid' || !prior.includes(row.task_id) || revisions.get(row.task_id)!==row.revision || !row.answered_at)continue;
+    const answered=Date.parse(row.answered_at);if(!Number.isFinite(answered))continue;
+    if(!sessions.has(row.session_id))sessions.set(row.session_id,new Map());
+    const records=sessions.get(row.session_id),previous=records.get(row.task_id);
+    if(!previous || answered>previous.time)records.set(row.task_id,{time:answered,row});
+  }
+  const completed=[...sessions].filter(([,records])=>prior.every(id=>records.has(id))).map(([session,records])=>({
+    session,dueAt:Math.max(...prior.map(id=>records.get(id).time))+(task.exchange.delay_hours || 24)*3600000
+  })).sort((a,b)=>b.dueAt-a.dueAt)[0];
+  return completed?{index,task,session:completed.session,dueAt:completed.dueAt,due:now>=completed.dueAt}:null;
+}
 // Right-hand outline of the chapter this lesson belongs to: where you are, what is done, one click to any step.
 async function renderLessonOutline(item,level,skill,owner){
   const host=document.getElementById('lesson-outline');
@@ -118,6 +135,16 @@ async function renderStudyPlan(level){
         const state=studyStepState(step,records,progress.evidence,revisions),button=document.createElement('button');button.type='button';button.className='plan-step';button.dataset.done=String(marked(step));if(step===upcoming)button.setAttribute('aria-current','step');
         button.innerHTML=`<span class="plan-skill">${studySkillNames[step.skill] || (step.kind==='kaiwa'?'Kaiwa':'Bài kiểm tra')}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${marked(step)?'Em đã đánh dấu':state.submitted?`Đã thử ${state.submitted}/${state.total} · tham khảo`:state.needsReview?'Cần ôn':'Bắt đầu →'}</span>`;
         button.onclick=()=>openStudyStep(step,level);list.append(button);
+        if(step.lesson.delayed_review_task_id){
+          const tasks=lessonQuestions(step.lesson,level,step.skill),later=delayedReviewState(step.lesson,tasks,progress.evidence,revisions);
+          if(later){
+            const followup=document.createElement('button');followup.type='button';followup.className='plan-step delayed-review';
+            followup.textContent=later.due?'Gợi nhớ tình huống mới · phiên riêng':`Gợi nhớ tình huống mới mở sau ${new Date(later.dueAt).toLocaleString('vi-VN')}`;
+            followup.disabled=!later.due;
+            followup.onclick=()=>showLessonDetail({...step.lesson,reviewQuestionIndex:later.index,delayedReview:true},level,step.skill);
+            list.append(followup);
+          }
+        }
       }
       const target=unit.steps.find(s=>!marked(s)) || unit.steps[0];
       if(target){const talk=document.createElement('button');talk.type='button';talk.className='plan-step plan-talk';talk.innerHTML='<span class="plan-skill">Thầy Lâm</span><span>Lớp học đảo ngược</span><span class="plan-step-status">Vào lớp →</span>';talk.onclick=()=>{switchTab('classroom');startReversedLesson(target.lesson,level,target.skill);};list.append(talk);}

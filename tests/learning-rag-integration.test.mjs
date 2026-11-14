@@ -42,7 +42,8 @@ test('reference teaching uses selected-provider RAG evidence and a deterministic
 });
 
 test('unsubmitted question teaching and hints never receive source passages; feedback retains canonical grading',async t=>{
-  const calls=provider(t,'Nhìn trợ từ giúp xác định chủ đề.');const env={ASSETS:assets()};
+  const calls=provider(t,'Nhìn trợ từ giúp xác định chủ đề.'),DB=database(t),env={ASSETS:assets(),DB};
+  DB.sqlite.prepare("INSERT INTO profiles(user_id,level,track,updated_at) VALUES('learner','N5','test','now')").run();
   for(const body of [{action:'teach',focus:{kind:'question',index:0}}, {action:'hint',question_index:0,item_id:'rag-q1'}]){
     const response=await practiceCoach(request('/api/practice/coach',body),env);
     assert.equal(response.status,200);assert.equal(calls.at(-1).evidence.learning_retrieval.status,'withheld_for_assessment');

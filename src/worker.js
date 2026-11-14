@@ -81,7 +81,7 @@ export default {
         if(!user) return jsonResponse({detail:'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'},401);
         const expectedAccount=request.headers.get('X-VJBot-Account');
         if(expectedAccount!==null&&expectedAccount!==user.user_id)return jsonResponse({detail:'The signed-in account changed. Reload before using API profiles.',code:'account_changed'},409);
-        if(url.pathname==='/api/progress/record'){
+        if(url.pathname==='/api/progress/record' || url.pathname==='/api/practice/coach'){
           const profile=await env.DB.prepare('SELECT task_evidence_epoch FROM profiles WHERE user_id=?').bind(user.user_id).first();
           progressEpoch=profile?.task_evidence_epoch || null;
           if(!progressEpoch)return jsonResponse({detail:'The learner account changed. Reopen the activity.'},409);
@@ -480,7 +480,7 @@ export default {
         },503);
       }
 
-      if (url.pathname === '/api/practice/coach' && request.method === 'POST') return await practiceCoach(request,env);
+      if (url.pathname === '/api/practice/coach' && request.method === 'POST') return await practiceCoach(request,env,progressEpoch);
 
       if (url.pathname === "/api/chat" && request.method === "POST") return await tutorChat(request, env);
 

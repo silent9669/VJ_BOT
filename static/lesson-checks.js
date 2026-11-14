@@ -7,7 +7,9 @@ const taskQuarantines={
   'N2:2:3':'The explanation puts 従わ third, but the stored key selects fourth-piece ざる.'
 };
 function taskRevisionSource(task){
-  return JSON.stringify(['task-v1',task.task_id,task.item_id,task.mode,task.q,task.instruction||'',task.passage||'',task.script_jp||'',task.target||'',task.parts||[],task.opts||[],task.answer_index??null,task.accepted_answers||[],task.explanation||'',task.review_status,task.unavailable_reason||'',task.criteria||[],task.model||'',task.skill||'',task.source_language||'']);
+  const fields=['task-v1',task.task_id,task.item_id,task.mode,task.q,task.instruction||'',task.passage||'',task.script_jp||'',task.target||'',task.parts||[],task.opts||[],task.answer_index??null,task.accepted_answers||[],task.explanation||'',task.review_status,task.unavailable_reason||'',task.criteria||[],task.model||'',task.skill||'',task.source_language||''];
+  if(task.objective!==undefined || task.exchange)fields.push('assessment-v1',task.objective || '',task.exchange || null);
+  return JSON.stringify(fields);
 }
 function normalizedLessonTasks(item,level,skill){
   if(item.externalResources)return [];
@@ -26,6 +28,11 @@ function normalizedLessonTasks(item,level,skill){
       else if(typeof source.ans==='string' && opts.filter(option=>option===source.ans).length===1)answer_index=opts.indexOf(source.ans);
     }
     const accepted_answers=Array.isArray(source.accepted_answers)?[...source.accepted_answers]:[];
+    const exchange=source.exchange && typeof source.exchange==='object' && !Array.isArray(source.exchange)?{
+      group:source.exchange.group,stage:source.exchange.stage,prior_task_ids:Array.isArray(source.exchange.prior_task_ids)?[...source.exchange.prior_task_ids]:[],
+      ...(source.exchange.partner_reply?{partner_reply:source.exchange.partner_reply}:{}),
+      ...(source.exchange.delay_hours!==undefined?{delay_hours:source.exchange.delay_hours}:{})
+    }:null;
     const quarantine=taskQuarantines[source.source_identity];
     let unavailable_reason=quarantine || source.unavailable_reason || '';
     const task={
@@ -42,7 +49,9 @@ function normalizedLessonTasks(item,level,skill){
       source_language:source.source_language || item.language || 'vi',
       ...(source.source_identity?{source_identity:source.source_identity}:{}),
       ...(source.criteria?{criteria:[...source.criteria]}:{}),
-      ...(source.model?{model:source.model}:{})
+      ...(source.model?{model:source.model}:{}),
+      ...(source.objective!==undefined?{objective:source.objective}:{}),
+      ...(exchange?{exchange}:{})
     };
     if(!unavailable_reason){
       if(!['choice','recall','dictation','writing'].includes(mode))unavailable_reason='Unsupported task mode.';
@@ -51,6 +60,12 @@ function normalizedLessonTasks(item,level,skill){
       else if(['recall','dictation'].includes(mode) && (!accepted_answers.length || accepted_answers.some(answer=>typeof answer!=='string' || !answer.trim())))unavailable_reason='Missing explicit source text answer.';
       else if(source.requires_passage && (typeof task.passage!=='string' || !task.passage.trim()))unavailable_reason='Missing required source passage/dialogue.';
       else if(source.requires_script && (typeof task.script_jp!=='string' || !task.script_jp.trim()))unavailable_reason='Missing required source listening context.';
+      else if(source.objective!==undefined && !['meaning','structure','orthography','transformation','communication'].includes(source.objective))unavailable_reason='Missing supported assessment objective.';
+      else if(source.exchange && (!exchange || typeof exchange.group!=='string' || !exchange.group
+        || !['invite','accept','refuse','delayed'].includes(exchange.stage)
+        || !Array.isArray(source.exchange.prior_task_ids) || exchange.prior_task_ids.some(id=>typeof id!=='string' || !id)
+        || exchange.partner_reply!==undefined && typeof exchange.partner_reply!=='string'
+        || exchange.delay_hours!==undefined && (!Number.isFinite(exchange.delay_hours) || exchange.delay_hours<1)))unavailable_reason='Invalid source exchange context.';
     }
     if(item.processing_allowed===false || source.processing_allowed===false || item.capabilities?.processing===false || source.capabilities?.processing===false)unavailable_reason ||= 'Source permissions prohibit provider processing.';
     task.unavailable_reason=unavailable_reason;

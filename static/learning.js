@@ -12,6 +12,14 @@ async function loadTeachingDrafts(level){
       || lesson.eligibility?.reference_display!==true || lesson.eligibility?.provider_teaching!=='advisory_only'
       || lesson.eligibility?.scored_assessment!==false || lesson.eligibility?.mastery_credit!==false
       || !Array.isArray(lesson.tasks)))throw new Error(`Bộ bài ${level} chưa có cấu trúc và giới hạn sử dụng phù hợp.`);
+  for(const lesson of source.lessons){
+    const ids=new Set(lesson.tasks.map(task=>task.id)),paths=[lesson.practice_path,lesson.reference_task_ids,...(lesson.guided_steps || []).map(step=>step.task_ids)].filter(path=>path!==undefined);
+    if(ids.size!==lesson.tasks.length || paths.some(path=>!Array.isArray(path) || !path.length || new Set(path).size!==path.length || path.some(id=>!ids.has(id)))
+      || lesson.delayed_review_task_id && !ids.has(lesson.delayed_review_task_id)
+      || lesson.guided_steps?.some(step=>typeof step.title!=='string' || typeof step.note!=='string'
+        || !step.example || ['jp','reading','vi'].some(key=>typeof step.example[key]!=='string' || !step.example[key].trim())))
+      throw new Error(`Bộ bài ${level} có bước luyện chưa gắn đúng câu hỏi. Hãy mở lại sau khi nội dung được sửa.`);
+  }
   const titles=new Map(source.lessons.map(lesson=>[lesson.id,lesson.title]));
   return [...source.lessons].sort((a,b)=>a.order-b.order).map(lesson=>({
     ...lesson,lesson:lesson.order,editorial:true,source:`AI-authored ${level} study drafts`,sourceLabel:'VJBot · AI biên soạn · chờ bạn duyệt',language:'vi',
@@ -25,7 +33,10 @@ async function loadTeachingDrafts(level){
       opts:task.mode==='choice'?task.options.map(option=>option.text):[],
       answer_index:task.mode==='choice'?task.options.findIndex(option=>option.id===task.answer_option_id):null,
       accepted_answers:task.mode==='short_text'?task.accepted_variants:[],
-      explanation:task.rationale,source_language:'vi'
+      explanation:task.rationale,source_language:'vi',
+      ...(task.objective!==undefined?{objective:task.objective}:{}),
+      ...(task.criteria?{criteria:task.criteria}:{}),...(task.model?{model:task.model}:{}),
+      ...(task.exchange?{exchange:task.exchange}:{})
     }))
   }));
 }
@@ -118,7 +129,7 @@ async function recordTaskEvent(attempt,event,extra={}){
   if(account!==attempt.account)throw new Error('Tài khoản đã thay đổi. Mở lại bài trước khi lưu.');
   const response=await apiFetch('/api/progress/record',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({lesson:attempt.lesson,view:attempt.view,question_index:attempt.index,task,
-      attempt_id:attempt.id,event,...extra})});
+      attempt_id:attempt.id,...(attempt.sessionId?{session_id:attempt.sessionId}:{}),event,...extra})});
   const result=await response.json();
   if((typeof signedInUser==='undefined'?null:signedInUser?.user_id)!==attempt.account)throw new Error('Đã bỏ phản hồi lưu của tài khoản cũ.');
   if(!response.ok)throw new Error(result.detail || 'Chưa lưu được lượt học. Hãy thử lại.');

@@ -102,3 +102,19 @@ test('practice catalog selection round trips separately from timed simulation se
   assert.equal(route.tab,'quiz');assert.equal(route.level,'N4');assert.equal(route.view,'catalog');assert.equal(route.id,'simulation');
   assert.equal(c.parseAppRoute('#quiz/N4/simulation/2018').view,'simulation');
 });
+
+test('delayed-review route keeps its task identity on reload and never falls back to reference content when unavailable',async()=>{
+  const c=await navigation(),id='n5-teaching:v1:invitation',taskId=id+':task:9';
+  const hash=c.appRouteHash('lesson',{level:'N5',skill:'grammar',id,reviewTaskId:taskId});
+  assert.equal(c.parseAppRoute(hash).reviewTaskId,taskId);
+  const canonical={id,delayed_review_task_id:taskId},host={textContent:'',append(){}},opened=[];
+  c.location={hash};c.document={getElementById:()=>host,createElement:()=>({})};c.switchTab=()=>true;
+  c.ensureLessons=async()=>{};c.loadPracticalCourse=async()=>{};
+  c.createStudyPlan=()=>[{steps:[{lesson:canonical}]}];c.window={JLPT_DATA:{curriculum:{N5:{skills:{grammar:[]}}}}};
+  c.activityId=lesson=>lesson.id;c.lessonQuestions=()=>[{task_id:taskId,exchange:{stage:'delayed'}}];
+  c.apiFetch=async()=>({ok:true,json:async()=>({evidence:[]})});c.taskReference=async()=>({revision:'current'});
+  c.showLessonDetail=item=>opened.push(item);c.delayedReviewState=()=>({due:false});
+  await c.restoreAppRoute();assert.equal(opened.length,0,'not-yet-due cannot expose the ordinary reference lesson');
+  c.delayedReviewState=()=>({due:true});await c.restoreAppRoute();
+  assert.equal(opened.length,1);assert.equal(opened[0].delayedReview,true);assert.equal(opened[0].reviewQuestionIndex,0);
+});

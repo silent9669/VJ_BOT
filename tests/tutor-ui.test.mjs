@@ -552,7 +552,7 @@ test('recall accepts typed text and persists it against the normalized task inst
   assert.equal(input.type,'text');assert.equal(action.disabled,true);
   assert.doesNotMatch(b.document.querySelector('.practice-session').textContent,/せんせい|SOURCE RECALL RATIONALE/);
   input.value=' せんせい ';await input.dispatch('input');await action.click();
-  assert.equal(sent[0].body.response_text,'せんせい');assert.equal(sent[0].body.event,'answer');
+  assert.equal(sent[0].body.response_text,' せんせい ');assert.equal(sent[0].body.event,'answer');
   assert.equal(sent[0].body.task.id,'practice:question:0');assert.equal(sent[0].body.question_index,0);
   assert.equal(Object.hasOwn(sent[0].body,'answer_index'),false);
   assert.equal(b.document.querySelector('.practice-feedback').dataset.correct,'true');
@@ -683,4 +683,109 @@ test('task prompts identify actual lexical targets rather than source category l
   const marked=b.c.taskPromptHtml(taskFixture({q:'書類を提出する。',target:'提出'}));
   assert.match(marked,/<mark>提出<\/mark>/);assert.match(marked,/Từ cần xét/);
   assert.match(b.c.taskUnavailableMessage(taskFixture({review_status:'quarantined',unavailable_reason:'Technical source conflict'})),/chờ rà soát/);
+});
+
+test('open invitation and authored alternative continuations preserve actual learner content and one session without a string key',async()=>{
+  const sent=[],b=lesson({apiFetch:async(path,options)=>{
+    const body=JSON.parse(options.body);sent.push({path,body});
+    return Response.json({task:body.task,basis:'self_report',source_correct:null,assessment:{comparison:'unassessed',objective:'communication'}});
+  }});
+  const tasks=[
+    {task_key:'invite',mode:'writing',q:'Tự chọn việc muốn làm và mời bạn.',criteria:['Hoạt động do em tự chọn.'],objective:'communication',exchange:{group:'cycle',stage:'invite',prior_task_ids:[]}},
+    {task_key:'accept',mode:'writing',q:'Bạn đồng ý. Hãy xác nhận một chi tiết.',criteria:['Phản hồi đúng lời nhận.'],objective:'communication',exchange:{group:'cycle',stage:'accept',prior_task_ids:['invite'],partner_reply:'いいですね。何時にしますか。'}},
+    {task_key:'refuse',mode:'writing',q:'Nhánh giả định khác: bạn từ chối. Hãy đáp lại.',criteria:['Không ép người từ chối.'],objective:'communication',exchange:{group:'cycle',stage:'refuse',prior_task_ids:['invite'],partner_reply:'すみません。今日はちょっと。'}}
+  ];
+  b.c.showLessonDetail({id:'cycle',title:'Mời',drills:tasks,practice_path:['invite','accept','refuse']},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  for(const [index,text] of [' 土曜日、いっしょに料理をしませんか ','午後二時はどうですか。','わかりました。また今度。'].entries()){
+    const section=b.document.querySelector('.practice-session'),input=section.querySelector('textarea');
+    if(index>0)assert.match(section.textContent,/土曜日、いっしょに料理をしませんか/);
+    assert.doesNotMatch(section.textContent,/Đáp án nguồn:/);
+    input.value=text;await input.dispatch('input');await section.querySelector('.practice-primary').click();
+    assert.equal(section.querySelector('.practice-feedback').dataset.correct,'unknown');
+    assert.match(section.querySelector('.practice-feedback').textContent,/Chưa có kết luận đúng\/sai/);
+    await section.querySelector('.practice-primary').click();
+  }
+  assert.equal(sent.length,3);assert.equal(new Set(sent.map(x=>x.body.session_id)).size,1);
+  assert.equal(sent[0].body.response_text,' 土曜日、いっしょに料理をしませんか ');
+  assert.deepEqual(sent.map(x=>x.body.task.id),['invite','accept','refuse']);
+  assert.ok(sent.every(x=>!Object.hasOwn(x.body,'correct')&&!Object.hasOwn(x.body,'prior_response')&&!Object.hasOwn(x.body,'self_rating')));
+  assert.match(b.document.querySelector('.practice-result').textContent,/3 câu tự diễn đạt đã lưu riêng/);
+});
+
+test('cosmetic source differences stay neutral and preserve raw text without claiming a grammar error',async()=>{
+  const sent=[],b=lesson({apiFetch:async(path,options)=>{
+    const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task,assessment:{comparison:'orthographic_difference',objective:'structure'}});
+  }});
+  b.c.showLessonDetail({id:'cosmetic',title:'Cấu trúc',drills:[{q:'Viết câu giới thiệu.',mode:'recall',objective:'structure',accepted_answers:['私は学生です。']}]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const input=b.document.querySelector('.practice-options input');input.value=' 私は学生です ';await input.dispatch('input');
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  assert.equal(sent[0].response_text,' 私は学生です ');
+  const feedback=b.document.querySelector('.practice-feedback');
+  assert.equal(feedback.dataset.correct,'unknown');assert.match(feedback.textContent,/khác biệt trình bày/);
+  assert.doesNotMatch(feedback.textContent,/sai ngữ pháp|hiểu sai nghĩa\./);
+});
+
+test('te-form stages wait for an actual saved attempt before expansion while full reference starts collapsed',async()=>{
+  const sent=[],b=lesson({apiFetch:async(path,options)=>{const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task});}});
+  const drills=[{task_key:'first',q:'Tạo dạng của 食べる.',mode:'recall',accepted_answers:['食べて'],explanation:'Nhóm 2 bỏ る rồi thêm て.'},
+    {task_key:'second',q:'Tạo dạng của 飲む.',mode:'recall',accepted_answers:['飲んで']}];
+  const item={id:'staged',title:'Thể て',formula:'FULL TABLE',explanation:'FULL FUNCTION NOTES',drills,
+    guided_steps:[{title:'Nhóm 2',note:'Xem một ví dụ rồi thử.',example:{jp:'見て',reading:'みて',vi:'dạng て của 見る'},task_ids:['first']},
+      {title:'Nhóm 1',note:'Bước sau.',example:{jp:'読んで',reading:'よんで',vi:'dạng て của 読む'},task_ids:['second']}]};
+  b.c.showLessonDetail(item,'N5','grammar');
+  assert.ok(b.document.querySelector('.lesson-full-reference'));assert.equal(b.document.querySelector('.lesson-full-reference').open,undefined);
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  assert.equal(b.document.querySelector('.task-stage h3').textContent,'Nhóm 2');
+  const action=b.document.querySelector('.practice-session .practice-primary');assert.equal(action.disabled,true);
+  const input=b.document.querySelector('.practice-options input');input.value='食べるて';await input.dispatch('input');await action.click();
+  assert.match(b.document.querySelector('.practice-feedback').textContent,/bỏ る rồi thêm て/);
+  assert.equal(sent.length,1);assert.equal(sent[0].response_text,'食べるて');
+  await action.click();assert.equal(b.document.querySelector('.practice-session .task-stage h3').textContent,'Nhóm 1');
+});
+
+test('open writing feedback uses its unassessed contract and bound actual attempt rather than choice aliases',async()=>{
+  const sent=[],b=lesson({signedInUser:{user_id:'learner'},apiFetch:async(path,options)=>{
+    const body=JSON.parse(options.body);sent.push({path,body});
+    return Response.json(path==='/api/practice/coach'
+      ?{reply:'Nghĩa: cần xác nhận rõ nơi gặp. Cấu trúc: chưa kết luận. Chính tả: góp ý riêng.',task:body.task,item_id:'open',action:'feedback',source_correct:null,assessment:{comparison:'unassessed'}}
+      :{task:body.task,source_correct:null,assessment:{comparison:'unassessed'}});
+  }});
+  b.c.showLessonDetail({id:'open',title:'Mời',drills:[{task_key:'open',item_id:'open',mode:'writing',objective:'communication',q:'Tự mời bạn.',criteria:['Một hoạt động do em chọn.']}]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const input=b.document.querySelector('textarea');input.value='一緒に料理をしませんか';await input.dispatch('input');
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  await b.document.querySelector('.practice-coach button').click();
+  assert.match(b.document.querySelector('.practice-coach-reply').textContent,/xác nhận rõ nơi gặp/);
+  const answer=sent.find(x=>x.body.event==='answer').body,coaching=sent.find(x=>x.path==='/api/practice/coach').body;
+  assert.equal(coaching.response_text,answer.response_text);assert.equal(coaching.attempt_id,answer.attempt_id);assert.equal(coaching.session_id,answer.session_id);
+});
+
+test('switching accounts invalidates the whole mounted exchange before a new account can see prior learner content',async()=>{
+  const listeners=new Map(),sent=[],b=lesson({signedInUser:{user_id:'A'},addEventListener:(event,handler)=>{
+    if(!listeners.has(event))listeners.set(event,[]);listeners.get(event).push(handler);
+  },apiFetch:async(path,options)=>{const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task});}});
+  b.c.showLessonDetail({id:'owned',title:'Mời',drills:[
+    {task_key:'invite',mode:'writing',q:'Tự mời.',objective:'communication'},
+    {task_key:'accept',mode:'writing',q:'Tiếp lời.',objective:'communication',exchange:{group:'cycle',stage:'accept',prior_task_ids:['invite']}}
+  ]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const input=b.document.querySelector('textarea');input.value='PRIVATE ACCOUNT A INVITATION';await input.dispatch('input');await b.document.querySelector('.practice-session .practice-primary').click();
+  b.c.signedInUser={user_id:'B'};
+  for(const handler of listeners.get('vjbot-account-ready')||[])handler({});
+  assert.doesNotMatch(b.document.querySelector('.practice-session').textContent,/PRIVATE ACCOUNT A/);
+  assert.match(b.document.querySelector('.practice-session').textContent,/Tài khoản đã thay đổi/);
+  assert.equal(b.document.querySelector('.practice-session textarea'),null);assert.equal(sent.length,1);
+});
+
+test('restart restores keyboard focus to the new run and gives it a fresh session',async()=>{
+  const sent=[],b=lesson({apiFetch:async(path,options)=>{const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task});}});
+  b.c.showLessonDetail({id:'restart',title:'Ôn',drills:[{q:'Q',opts:['A','B'],answer_index:0}]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();await b.document.querySelector('.practice-options input').dispatch('change');
+  await b.document.querySelector('.practice-session .practice-primary').click();await b.document.querySelector('.practice-session .practice-primary').click();
+  await b.document.querySelector('.practice-result-actions button').click();
+  assert.equal(b.document.querySelector('.practice-session legend').focused,true);
+  await b.document.querySelector('.practice-options input').dispatch('change');await b.document.querySelector('.practice-session .practice-primary').click();
+  assert.notEqual(sent[0].session_id,sent[1].session_id);
 });
