@@ -4,7 +4,13 @@ const taskQuarantines={
   'N3:1:3':'The explanation introduces unsupplied わかる as a fifth piece; supplied parts and options disagree.',
   'N3:2:3':'The explanation puts 私は third, but the stored key selects fourth-piece 決して.',
   'N2:1:3':'The named 〜にほかならない construction disagrees with the supplied 結晶にほかにならない assembly.',
-  'N2:2:3':'The explanation puts 従わ third, but the stored key selects fourth-piece ざる.'
+  'N2:2:3':'The explanation puts 従わ third, but the stored key selects fourth-piece ざる.',
+  // Review candidates are unavailable, not silently promoted to corrected keys.
+  'N1:1:3':'Language review pending: the proposed sequence joins ある to 極まりない without an established construction.',
+  'N4:1:2':'Unique answer not established: both おくれて and とまって fit the supplied accident context.',
+  'N5:1:5':'Unique star position not established: the supplied destination, companion and transport phrases permit another order.',
+  'N5:2:3':'Unique star position not established: たくさん may precede the object, changing the star choice.',
+  'N4:2:3':'Unique star position not established: 心を込めて may precede the material phrase, changing the star choice.'
 };
 function taskRevisionSource(task){
   const fields=['task-v1',task.task_id,task.item_id,task.mode,task.q,task.instruction||'',task.passage||'',task.script_jp||'',task.target||'',task.parts||[],task.opts||[],task.answer_index??null,task.accepted_answers||[],task.explanation||'',task.review_status,task.unavailable_reason||'',task.criteria||[],task.model||'',task.skill||'',task.source_language||''];
@@ -61,11 +67,14 @@ function normalizedLessonTasks(item,level,skill){
       else if(source.requires_passage && (typeof task.passage!=='string' || !task.passage.trim()))unavailable_reason='Missing required source passage/dialogue.';
       else if(source.requires_script && (typeof task.script_jp!=='string' || !task.script_jp.trim()))unavailable_reason='Missing required source listening context.';
       else if(source.objective!==undefined && !['meaning','structure','orthography','transformation','communication'].includes(source.objective))unavailable_reason='Missing supported assessment objective.';
-      else if(source.exchange && (!exchange || typeof exchange.group!=='string' || !exchange.group
-        || !['invite','accept','refuse','delayed'].includes(exchange.stage)
-        || !Array.isArray(source.exchange.prior_task_ids) || exchange.prior_task_ids.some(id=>typeof id!=='string' || !id)
+      else if(source.exchange && (!exchange || mode!=='writing' || typeof exchange.group!=='string' || !exchange.group
+        || !['invite','accept','refuse','produce','respond','revise','delayed'].includes(exchange.stage)
+        || !Array.isArray(source.exchange.prior_task_ids) || exchange.prior_task_ids.length>8
+        || exchange.prior_task_ids.some(id=>typeof id!=='string' || !id) || new Set(exchange.prior_task_ids).size!==exchange.prior_task_ids.length
+        || ['invite','produce'].includes(exchange.stage)!==(exchange.prior_task_ids.length===0)
         || exchange.partner_reply!==undefined && typeof exchange.partner_reply!=='string'
-        || exchange.delay_hours!==undefined && (!Number.isFinite(exchange.delay_hours) || exchange.delay_hours<1)))unavailable_reason='Invalid source exchange context.';
+        || exchange.stage==='delayed' && exchange.delay_hours!==24
+        || exchange.stage!=='delayed' && exchange.delay_hours!==undefined))unavailable_reason='Invalid source exchange context.';
     }
     if(item.processing_allowed===false || source.processing_allowed===false || item.capabilities?.processing===false || source.capabilities?.processing===false)unavailable_reason ||= 'Source permissions prohibit provider processing.';
     task.unavailable_reason=unavailable_reason;
@@ -74,7 +83,10 @@ function normalizedLessonTasks(item,level,skill){
   };
   if(item.production){
     const production=item.production;
-    add({mode:'writing',q:production.prompt,instruction:production.question_jp,item_id:id,criteria:production.criteria || [],model:production.model},0);
+    const limitation=id==='practical:v1:N2:policy:production'
+      ?'Bài mẫu nguồn chỉ ghi 来月から, chưa giữ chính xác ngày 来月一日から. Không dùng mẫu ấy làm câu trả lời đầy đủ; hãy tự giữ nguyên ngày hiệu lực và các điều kiện trong thông báo.':'';
+    add({mode:'writing',q:production.prompt,instruction:production.instruction || '',item_id:id,criteria:production.criteria || [],
+      model:limitation?'':production.model,explanation:limitation},0);
     return tasks;
   }
   if(item.dictation){

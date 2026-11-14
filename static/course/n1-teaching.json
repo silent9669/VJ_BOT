@@ -12,12 +12,27 @@
   "lessons": [
     {
       "id": "teaching:v1:N1:argument",
-      "revision": 1,
+      "revision": 2,
       "order": 1,
       "level": "N1",
       "title": "Phân tích lập luận: giới hạn suy diễn và hỗ trợ có điều kiện",
       "goal": "Tách lập luận chính khỏi ví dụ và nêu giới hạn của kết luận.",
       "prerequisites": [],
+      "support": [
+        { "term": "Bản đồ lập luận và phạm vi", "explanation": "Trước khi phản biện, tách tiền đề được thừa nhận, bước suy diễn bị bác, ví dụ và kết luận. 'Không đủ để bảo đảm mọi trường hợp' không có nghĩa 'không có lợi trong trường hợp nào'. Ví dụ về khả năng không phải thống kê hiệu quả đã đo." },
+        { "term": "共通基準・支援・検証", "explanation": "共通基準（きょうつうきじゅん）tiêu chuẩn chung; 支援（しえん）hỗ trợ; 検証（けんしょう）kiểm chứng. Hỗ trợ cách thực hiện có thể khác thay đổi tiêu chí đủ điều kiện. Người viết phải nói rõ mình đề nghị thay phần nào và giữ phần nào." },
+        { "term": "Phản biện có điều kiện", "explanation": "Đối thoại trang trọng với nhóm: thừa nhận lợi ích có căn cứ, giới hạn điều chưa biết, đề nghị điều kiện và cách kiểm tra. Không cần dùng mọi cấu trúc nâng cao hoặc bác bỏ đối phương toàn bộ. Khuôn sửa câu cũ là luyện biến đổi, không phải lập luận mở." }
+      ],
+      "practice_path": [
+        "teaching:v1:N1:argument:task:0",
+        "teaching:v1:N1:argument:task:1",
+        "teaching:v1:N1:argument:task:2",
+        "teaching:v1:N1:argument:task:3",
+        "teaching:v1:N1:argument:task:4",
+        "teaching:v1:N1:argument:task:5",
+        "teaching:v1:N1:argument:task:6"
+      ],
+      "delayed_review_task_id": "teaching:v1:N1:argument:task:7",
       "authorship": "ai_authored",
       "review": { "status": "ai_draft", "human_approved": false },
       "eligibility": { "reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false },
@@ -86,6 +101,7 @@
       "tasks": [
         {
           "id": "teaching:v1:N1:argument:task:0",
+          "objective": "meaning",
           "mode": "choice",
           "skill": "reading",
           "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。例えば、オンライン申請への一本化は、多くの人の待ち時間を減らす一方、機器の操作に不慣れな人には新たな負担となりうる。したがって、共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
@@ -102,6 +118,7 @@
         },
         {
           "id": "teaching:v1:N1:argument:task:1",
+          "objective": "meaning",
           "mode": "choice",
           "skill": "reading",
           "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。例えば、オンライン申請への一本化は、多くの人の待ち時間を減らす一方、機器の操作に不慣れな人には新たな負担となりうる。したがって、共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
@@ -118,6 +135,7 @@
         },
         {
           "id": "teaching:v1:N1:argument:task:2",
+          "objective": "meaning",
           "mode": "choice",
           "skill": "reading",
           "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。例えば、オンライン申請への一本化は、多くの人の待ち時間を減らす一方、機器の操作に不慣れな人には新たな負担となりうる。したがって、共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
@@ -134,6 +152,7 @@
         },
         {
           "id": "teaching:v1:N1:argument:task:3",
+          "objective": "transformation",
           "mode": "short_text",
           "skill": "grammar",
           "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。オンライン申請への一本化も、利用者によって利益と負担が異なりうる。",
@@ -147,6 +166,7 @@
         },
         {
           "id": "teaching:v1:N1:argument:task:4",
+          "objective": "transformation",
           "mode": "short_text",
           "skill": "reading",
           "passage": "共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
@@ -158,17 +178,89 @@
           "rationale": "～ではなく loại chính điều bản tóm tắt sai đã gán cho tác giả. Cần khôi phục cả công khai điều kiện và kiểm chứng tác dụng; すべき và するべき đều được ghi nhận trong khuôn này. Câu tóm tắt mở có thể dùng nhiều cách khác, nhưng ở đây phải giữ đầu/cuối và hai hành động đã yêu cầu; không dùng danh sách hẹp này để bác mọi biến thể diễn đạt khác.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:argument:task:5",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Bối cảnh câu lạc bộ dụng cụ giả định, không phải thủ tục hành chính thật.\n運営担当者は、貸出手順を一つの端末に統一すれば、受付の対応のばらつきを減らせると説明している。操作に不慣れな会員には負担となる可能性も指摘された。全員に同じ利用資格と貸出上限を適用する方針は決まっているが、端末への統一や補助の方法はまだ決定していない。待ち時間や利用を完了できた人数の測定結果はない。\nBạn được mời viết ý kiến để nhóm cân nhắc phương án, không có quyền quyết định thay nhóm.",
+          "prompt": "Viết ý kiến 5–7 câu tiếng Nhật: tự chọn một hình thức hỗ trợ thao tác hoặc cách thử khác trong phạm vi vẫn giữ cùng điều kiện thành viên và giới hạn mượn. Trình bày quan hệ giữa lợi ích được người phụ trách kỳ vọng, khả năng một nhóm gặp gánh nặng, và giới hạn của suy luận 'thống nhất nên tốt nhất cho tất cả'. Nêu điều kiện hỗ trợ do bạn tự thiết kế và cách kiểm tra có thể cho biết ai còn gặp khó, cùng một giới hạn của phép kiểm tra. Không coi khả năng khó khăn là đã xảy ra cho mọi người hoặc phương án của bạn là đã được thông qua/thành công.",
+          "criteria": [
+            "Lập luận: thừa nhận lợi ích đang được kỳ vọng mà không biến nó thành số liệu đã đo; bác bước suy từ thống nhất ra tối ưu cho tất cả, không bác mọi giá trị của thống nhất.",
+            "Thiết kế mở: tự chọn hỗ trợ/thử, nêu ai được dùng và theo điều kiện nào; giữ chung điều kiện thành viên và giới hạn mượn, không mở quyền tùy tiện cho người xử lý.",
+            "Kiểm chứng: cách ghi nhận đủ cụ thể để thấy người hoàn tất lẫn người còn khó, không chỉ một trung bình che nhóm nhỏ; tự nêu một giới hạn mà phép ghi chưa giải quyết.",
+            "Ngôn ngữ: lượng từ, phủ định và mức chắc chắn nhất quán giữa tiền đề và kết luận; người đọc hiểu ai kỳ vọng, ai đề nghị, việc gì chưa quyết định. Không yêu cầu thuộc một mẫu câu hoặc đủ từ khóa.",
+            "Giao tiếp/tự kiểm: tách dữ kiện, khả năng và đề nghị trong lời mình; giọng góp ý phù hợp nhóm, chính tả được nhận xét riêng, tự kiểm không là phê duyệt nghĩa/ngữ pháp."
+          ],
+          "exchange": { "group": "n1-argument-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
+          "rationale": "Lưu nguyên văn ý kiến tự chọn dưới dạng chưa được đánh giá; không có câu mẫu hoặc chấm đúng bằng từ khóa. Góp ý AI cần chỉ ra quan hệ trong văn bản thật và nói rõ điểm chưa chắc, không xác nhận phương án đã thực thi.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:argument:task:6",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Câu hỏi biên tập chung do AI soạn, không phải người phụ trách đã đọc hay nhận xét riêng: điều kiện hỗ trợ có thể quá khó hiểu hoặc cách kiểm tra có thể bỏ sót người không hoàn tất. Đây là hai khả năng cần xem xét, không phải lỗi đã xác nhận trong bài của bạn hoặc sự việc của câu lạc bộ.",
+          "prompt": "Đọc đúng ý kiến bạn đã lưu, trích một câu về điều kiện hỗ trợ hoặc phép kiểm tra. Chọn một trong hai khả năng biên tập để xem xét đối với chính thiết kế của bạn, rồi viết lại đoạn liên quan và 2–3 câu tiếng Nhật giải thích vì sao sửa hoặc giữ. Làm rõ phạm vi của ít nhất một khẳng định trong câu thật: đối tượng nào, điều kiện nào hoặc mức bằng chứng nào. Nếu thiết kế đã xử lý được khả năng ấy, giữ đoạn hợp lý và chỉ ra căn cứ; không bắt buộc nhận một lỗi không có và không thay bằng thiết kế hoàn toàn không liên quan.",
+          "criteria": [
+            "Tính thực: câu trích phải có trong ý kiến trước, và đoạn mới tiếp nối hình thức hỗ trợ/kiểm tra mà chính người học đã chọn; thiếu bản trước thì chưa thể xem xét.",
+            "Phản biện: khả năng tự chọn được xét bằng cơ chế cụ thể trong thiết kế, không kết luận rằng rủi ro chắc chắn đã xảy ra.",
+            "Sửa/giữ có lý do: giải thích gắn với phạm vi đối tượng, điều kiện hoặc mức bằng chứng của câu thật; cho phép giữ nguyên nếu đã có giới hạn phù hợp.",
+            "Nhất quán: không vô tình bỏ tiêu chuẩn chung hay coi hỗ trợ bảo đảm hết khó khăn cho tất cả; giữ vai đề nghị chưa thông qua và nguồn phát ngôn rõ.",
+            "Bằng chứng: hai lượt nguyên văn phải còn riêng; nhận xét AI hoặc lời tự kiểm không tạo dữ liệu về người dùng, không chứng nhận năng lực lập luận."
+          ],
+          "exchange": { "group": "n1-argument-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N1:argument:task:5"] },
+          "rationale": "Yêu cầu biên tập tĩnh, không giả vờ có đối tác thích ứng hoặc đã phát hiện lỗi cá nhân. Chỉ đọc bản thật mới xem được người học giới hạn luận điểm ra sao; lưu riêng bản sửa/lý do, không ghi đè bài đầu.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:argument:task:7",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Bối cảnh mới giả định: bạn là biên tập viên góp ý kế hoạch âm thanh cho triển lãm địa phương.\n企画者は、説明をすべて同じ長さの音声にそろえれば、作品ごとの情報量の差を抑えられると主張している。一方、短時間で回る人や詳しく聞きたい人には、同じ長さが最適とは限らないという意見がある。全作品で制作年と作者名を正しく伝える共通基準は維持する方針だが、音声の長さや追加説明の方式は未決定である。利用者による試聴結果はまだない。\nTừ tại chỗ: 試聴（しちょう）nghe thử. Không có kết quả đo hoặc quyết định triển khai khác ngoài nội dung trên.",
+          "prompt": "Ở phiên sau, không xem bài cũ: viết góp ý 5–7 câu tiếng Nhật cho nhóm triển lãm. Tự chọn một cách tổ chức âm thanh/thông tin thêm để vừa giữ chuẩn thông tin chung vừa xem xét khác biệt mục đích người nghe. Thừa nhận điều người đề xuất kỳ vọng, giới hạn suy từ độ dài đồng đều ra tối ưu cho mọi người, nêu điều kiện dùng phần hỗ trợ/thông tin thêm và cách nghe thử có thể xem xét ít nhất hai nhóm nhu cầu. Nêu một điều chưa thể kết luận; không bịa kết quả nghe thử hay mặc định đề nghị đã được chấp thuận.",
+          "criteria": [
+            "Chuyển giao: lập luận về thiết kế tiếp nhận thông tin cho người xem với vai biên tập, không lặp quy trình mượn dụng cụ hoặc thay tên người dùng.",
+            "Phạm vi: giữ chuẩn năm sáng tác/tên tác giả chung, phân biệt mục tiêu giảm chênh lệch lượng thông tin với kết luận tối ưu cho tất cả; không đổi ý kiến về khả năng thành dữ kiện quan sát.",
+            "Thiết kế: phương án và điều kiện do người học tự chọn có thể thực hiện trong cảnh; cách nghe thử xem được hai nhóm nhu cầu thay vì chỉ nêu khẩu hiệu 'hỗ trợ mọi người'.",
+            "Giới hạn: nêu điều phép thử chưa chứng minh, giữ lượng từ/phủ định tương ứng và trạng thái chưa quyết định; không phủ định sạch mọi giá trị của phương án đồng đều.",
+            "Bằng chứng: nguyên văn mới và trợ giúp thực tế mới hỗ trợ nhận xét. Tiêu chí tự kiểm/AI tư vấn hay đủ 24 giờ không chứng minh chuyển giao, ghi nhớ tự lực hoặc chất lượng triển lãm."
+          ],
+          "exchange": { "group": "n1-argument-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N1:argument:task:5", "teaching:v1:N1:argument:task:6"], "delay_hours": 24 },
+          "rationale": "Đổi vai, mục đích và loại tiêu chuẩn; bối cảnh mới đầy đủ, không mang theo bài/đáp án cũ. Giữ riêng nguyên văn chưa chấm để con người xem lập luận, không dùng từ vựng nâng cao làm bằng chứng ngữ nghĩa.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
         }
       ]
     },
     {
       "id": "teaching:v1:N1:synthesis",
-      "revision": 1,
+      "revision": 2,
       "order": 2,
       "level": "N1",
       "title": "Tổng hợp hai lập trường mà không xóa khác biệt hoặc bịa kết quả",
       "goal": "Tìm điểm đồng thuận, khác biệt và đề xuất kết hợp có điều kiện.",
       "prerequisites": ["teaching:v1:N1:argument"],
+      "support": [
+        { "term": "Tổng hợp không xóa khác biệt", "explanation": "Trước khi viết, xác định mỗi người khẳng định gì, hạn định điều gì, có điểm giao nào và còn khác trọng tâm/thời gian ra sao. Điểm giao suy được từ hai ý kiến không tự là một thỏa thuận họ đã thông qua." },
+        { "term": "指標・事例・資源配分", "explanation": "指標（しひょう）chỉ số; 事例（じれい）trường hợp cụ thể; 資源配分（しげんはいぶん）phân bổ nguồn lực. Khi tự đề nghị đo, cần định nghĩa đại lượng và thời điểm; một câu chuyện hoặc số thay đổi riêng lẻ chưa chứng minh nguyên nhân." },
+        { "term": "Nguồn phát ngôn và đề xuất mới", "explanation": "Dùng thể tường thuật nhất quán để giữ ý của A/B; dùng dấu hiệu đề nghị cho thiết kế của mình. Mốc cụ thể thêm từ 数か月後 phải được ghi là lựa chọn mới, không sửa ngược nguồn. Không cần viết dài hoặc dùng liên tiếp mọi mẫu nâng cao." }
+      ],
+      "practice_path": [
+        "teaching:v1:N1:synthesis:task:0",
+        "teaching:v1:N1:synthesis:task:1",
+        "teaching:v1:N1:synthesis:task:2",
+        "teaching:v1:N1:synthesis:task:3",
+        "teaching:v1:N1:synthesis:task:4",
+        "teaching:v1:N1:synthesis:task:5",
+        "teaching:v1:N1:synthesis:task:6"
+      ],
+      "delayed_review_task_id": "teaching:v1:N1:synthesis:task:7",
       "authorship": "ai_authored",
       "review": { "status": "ai_draft", "human_approved": false },
       "eligibility": { "reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false },
@@ -237,6 +329,7 @@
       "tasks": [
         {
           "id": "teaching:v1:N1:synthesis:task:0",
+          "objective": "meaning",
           "mode": "choice",
           "skill": "reading",
           "passage": "意見A：研修の成果は、受講直後の業務時間の短縮など、測定できる指標で確認すべきだ。数値がなければ、改善に資源を配分する根拠が曖昧になる。ただし、一つの指標だけで判断するべきではない。\n意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は、時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
@@ -253,6 +346,7 @@
         },
         {
           "id": "teaching:v1:N1:synthesis:task:1",
+          "objective": "meaning",
           "mode": "choice",
           "skill": "reading",
           "passage": "Aは、研修の成果を測定できる指標で確認し、資源配分の根拠にしたいと考えている。ただし、一つの指標だけで判断すべきではないという。Bは、短期の数値だけでは同僚への助言や新しい問題への対応力を十分に捉えられないとし、数値の確認に加えて数か月後の事例も評価したいと述べている。両者の意見は示されているが、評価を実施した結果は示されていない。",
@@ -269,6 +363,7 @@
         },
         {
           "id": "teaching:v1:N1:synthesis:task:2",
+          "objective": "meaning",
           "mode": "choice",
           "skill": "reading",
           "passage": "意見A：研修の成果は、受講直後の業務時間の短縮など、測定できる指標で確認すべきだ。数値がなければ、改善に資源を配分する根拠が曖昧になる。ただし、一つの指標だけで判断するべきではない。\n意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は、時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
@@ -285,6 +380,7 @@
         },
         {
           "id": "teaching:v1:N1:synthesis:task:3",
+          "objective": "transformation",
           "mode": "short_text",
           "skill": "grammar",
           "passage": "意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
@@ -298,6 +394,7 @@
         },
         {
           "id": "teaching:v1:N1:synthesis:task:4",
+          "objective": "transformation",
           "mode": "short_text",
           "skill": "reading",
           "passage": "Aは、受講直後の業務時間の短縮など、測定できる複数の指標を重視する。Bは、数値による確認も認めながら、同僚への助言や新しい問題への対応といった、時間をかけて表れる価値も評価したいと考えている。二人が評価を共同実施したという記述や、具体的な改善数値はない。",
@@ -306,6 +403,63 @@
             "両者の意見を踏まえ、受講直後に複数の指標を測定し、数か月後に具体的な事例を追加して評価してはどうか。"
           ],
           "rationale": "Hai thời điểm và hai dạng bằng chứng giữ được trọng tâm của cả A lẫn B; してはどうか đánh dấu đây là phương án mới để xem xét. 本文 không nói họ đã cùng triển khai hay đo được tăng trưởng. Cách đề xuất khác cũng có thể đúng, nhưng danh sách này chỉ dành cho khung và các cụm bị ràng buộc của nhiệm vụ, không đại diện cho toàn bộ câu tổng hợp hợp lệ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:task:5",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Tình huống câu lạc bộ làm tư liệu giả định, không đánh giá nhân viên hay việc làm thật.\n意見A：研修の成果は、受講直後の資料整理にかかる時間など、測定できる指標で確認すべきだ。記録がなければ次の活動に時間や道具を配分する根拠が曖昧になる。ただし、一つの指標だけで判断すべきではない。\n意見B：研修の価値は短期の数値だけでは捉えられない。他の会員への助言や初めての資料への対応は、時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。\nHai ý kiến chưa thành quyết định chung; chưa có kết quả thực hiện hay số liệu cải thiện.",
+          "prompt": "Viết bản tổng hợp/đề nghị 6–8 câu tiếng Nhật cho cuộc trao đổi. Nêu một điểm giao và khác biệt mà không gán A chỉ cần một số hoặc B bác mọi số. Chính bạn chọn ít nhất hai chỉ số đầu kỳ có định nghĩa khác nhau, một loại trường hợp cần ghi về sau và một mốc theo dõi cụ thể phù hợp để đề xuất. Giải thích chúng bổ sung nhau thế nào và một giới hạn của kết luận có thể rút ra. Mốc/đại lượng là thiết kế mới của bạn, không phải số tháng hay kết quả đã có trong nguồn; không có khung câu hoặc danh sách đáp án cho phần viết mở.",
+          "criteria": [
+            "Trung thành với nguồn: cả hai chấp nhận số liệu nhưng trọng tâm bằng chứng/thời gian khác nhau; giữ hạn định không chỉ một chỉ số của A và không phủ nhận đo bằng số của B.",
+            "Thiết kế mở: ít nhất hai chỉ số đầu kỳ có định nghĩa không trùng nhau, một loại trường hợp về sau và mốc cụ thể tự chọn; người khác hiểu sẽ ghi gì vào lúc nào.",
+            "Tổng hợp: giải thích mỗi phần đáp ứng yêu cầu nào, không chỉ ghép danh từ; mốc cụ thể và phương pháp được đánh dấu là đề nghị mới, không giả làm đồng thuận đã thông qua.",
+            "Giới hạn: không có số liệu thực hiện trong cảnh, không kết luận mọi người đã tiến bộ hoặc đào tạo là nguyên nhân duy nhất; điểm giao không xóa khác biệt.",
+            "Ngôn ngữ/tự kiểm: nguồn phát ngôn, thời và mức chắc chắn rõ, cách tường thuật nhất quán; góp ý chính tả riêng, không dùng sự có mặt mẫu câu/từ khóa để chấm nghĩa."
+          ],
+          "exchange": { "group": "n1-synthesis-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
+          "rationale": "Lưu nguyên văn tổng hợp và thiết kế chưa chấm qua nhiệm vụ viết hiện có. Có nhiều kế hoạch hợp lý, không có câu mẫu; AI chỉ tư vấn việc giữ lập trường và giới hạn, không chứng nhận đào tạo có hiệu quả.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:task:6",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Yêu cầu biên tập chung do AI soạn: bản tổng hợp cần giúp người đọc phân biệt điều suy được từ hai lập trường với phương pháp riêng người viết đề nghị. Chưa có thỏa thuận mới, kết quả đo hay lời A/B phản hồi về bản của bạn.",
+          "prompt": "Trích đúng một câu trong bản bạn vừa viết về điểm giao/khác biệt, rồi trích câu chứa mốc hoặc phép đo bạn tự đề nghị. Viết lại đoạn liên quan và thêm 2–3 câu tiếng Nhật giải thích ranh giới nguồn/thiết kế, cùng điều dữ liệu dự kiến vẫn chưa đủ để kết luận. Dùng chính các chỉ số, trường hợp và mốc đã chọn, không thay bằng kế hoạch mẫu. Nếu cách viết cũ đã phân biệt rõ, giữ nó và giải thích vì sao không cần sửa; không bắt buộc tự nhận một sai lầm.",
+          "criteria": [
+            "Nối tiếp thật: hai câu trích đều có trong bản trước; kế hoạch được sửa/giữ vẫn là kế hoạch người học đã chọn. Nếu thiếu câu theo yêu cầu trong bản trước, nói rõ chỗ thiếu và bổ sung, không bịa trích dẫn.",
+            "Ranh giới: chỉ ra phần nào căn cứ ở lời A/B, phần nào là suy điểm giao và phần nào là thiết kế mới; không viết rằng hai người đã đồng ý mốc/đại lượng tự chọn.",
+            "Hiệu đính: đoạn mới hoặc lý do giữ giải quyết được một phạm vi cụ thể trong câu thật, không chỉ thêm từ 'có thể' vào mọi câu.",
+            "Giới hạn: nói rõ một điều các phép đo/trường hợp thực sự đã đề nghị chưa chứng minh, không tự thêm dữ liệu hoặc biến mục tiêu thành cải thiện đã quan sát.",
+            "Bằng chứng/giao tiếp: bản đầu và bản sửa/lý do mới lưu riêng, giọng tổng hợp công bằng với hai bên; AI tư vấn không thay được người đọc kiểm tra nghĩa và cấu trúc."
+          ],
+          "exchange": { "group": "n1-synthesis-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N1:synthesis:task:5"] },
+          "rationale": "Biên tập dựa trên văn bản thật, không giả có phản hồi cá nhân thích ứng hay A/B chấp thuận. Giữ nguyên văn từng lượt chưa chấm để xem người học làm rõ nguồn và giới hạn ra sao.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N1:synthesis:task:7",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Bối cảnh mới giả định: bạn viết ghi chú công bằng cho nhóm làm chương trình âm thanh lịch sử địa phương, không phải nhóm đào tạo.\n意見C：次回の制作に人手と機材を割り当てるには、公開後二週間の再生数や最後まで聞かれた割合など、複数の数値が必要だ。ただし、数が多い作品だけに価値があるとは考えていない。\n意見D：再生数だけでは、少人数にとって深く役立った話を見落とす可能性がある。数値を記録することには賛成だが、数週間後に届く具体的な感想も検討したい。\nChưa có quyết định đánh giá chung, dữ liệu lượt nghe, cảm tưởng thu được hoặc bằng chứng chương trình gây ra thay đổi nào.\nTừ tại chỗ: 再生数（さいせいすう）số lượt phát; 割合（わりあい）tỷ lệ; 感想（かんそう）cảm tưởng.",
+          "prompt": "Không xem bản tổng hợp cũ, viết ghi chú/đề xuất 6–8 câu tiếng Nhật. Phân biệt điểm giao với khác biệt của C/D, giữ hạn định của cả hai. Bạn tự thiết kế cách kết hợp các số liệu giai đoạn đầu với loại cảm tưởng cụ thể cần xin về sau, chọn mốc thu nhận sau giai đoạn đầu và nêu rõ đó là đề xuất mới. Giải thích cách làm giúp cân nhắc giá trị với nguồn lực mà chưa bảo đảm kết luận về tất cả người nghe; nêu một điều dữ liệu ấy vẫn chưa chứng minh. Không bịa lượt nghe hoặc sự đồng ý đã có.",
+          "criteria": [
+            "Chuyển giao: viết cho nhóm sáng tạo cân nhắc tác phẩm/nguồn lực, không chép báo cáo đào tạo hoặc mặc định chỉ tiêu năng lực thành viên.",
+            "Nguồn: C cần nhiều số nhưng không coi chỉ tác phẩm đông người mới có giá trị; D chấp nhận ghi số và muốn bổ sung cảm tưởng muộn; có điểm giao không đồng nghĩa hoàn toàn cùng trọng tâm.",
+            "Thiết kế: cách kết hợp đầu kỳ/về sau đủ cụ thể, loại cảm tưởng và mốc sau hai tuần do người học tự chọn ghi là đề xuất; không tự đổi 数週間後 của D thành mốc cố định vốn đã nói.",
+            "Giới hạn: giải thích tác dụng của từng loại căn cứ, tách số lượt khỏi mọi người nghe và cảm tưởng tự gửi khỏi toàn bộ khán giả; không kết luận nguyên nhân hoặc hiệu quả phổ quát khi chưa có dữ liệu.",
+            "Bằng chứng: giữ nguyên văn mới và trợ giúp đã dùng. Tự kiểm và AI chỉ tư vấn, không tự chấm ý nghĩa hoặc chứng minh ghi nhớ/chuyển giao bằng lịch ôn."
+          ],
+          "exchange": { "group": "n1-synthesis-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N1:synthesis:task:5", "teaching:v1:N1:synthesis:task:6"], "delay_hours": 24 },
+          "rationale": "Lượt giữ lại có đủ hai lập trường mới và vai/mục tiêu mới, không kèm văn bản học hoặc lời giải cũ. Lưu đáp án mới chưa đánh giá; người đọc cần xem nguyên văn để đánh giá giới hạn, không đếm mẫu nâng cao.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         }

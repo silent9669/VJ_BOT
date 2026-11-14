@@ -930,11 +930,11 @@ function loadKaiwaPrompt() {
   const context=document.getElementById('kaiwa-context');context.textContent=s.context || '';context.hidden=!s.context;
   if (tag) tag.textContent = s.title;
   if (jp) jp.textContent = prompt.jp || "こんにちは。よろしくお願いします。";
-  if (vi) vi.textContent = prompt.vi || "Hãy trả lời bằng một câu tiếng Nhật tự nhiên.";
+  if (vi) vi.textContent = prompt.vi || "Chưa có diễn giải tiếng Việt từ nguồn. Nhờ thầy giảng từ câu tiếng Nhật khi cần.";
   if (manualInput) manualInput.value = "";
   document.getElementById("kaiwa-next-prompt").hidden=prompts.length<2;
   const hint = document.getElementById("kaiwa-prompt-hint");
-  if (hint) hint.textContent = prompt.hints?.[0] || "Gợi ý: dùng câu lịch sự với です / ます.";
+  if (hint) hint.textContent = prompt.hints?.[0] || "Chưa có gợi ý riêng cho câu này. Hãy dựa vào câu hỏi và ngữ cảnh, hoặc nhờ thầy gợi mở.";
   document.querySelectorAll('.kaiwa-prompt-card .lesson-disclosure').forEach(details=>{details.open=false;});
   globalThis.mountKaiwaTeaching?.(s,prompt);
 }

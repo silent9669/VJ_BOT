@@ -568,9 +568,9 @@ test('writing self-assessment saves the response and rating without reporting ob
   await b.document.querySelector('[data-lesson-mode=practice]').click();
   const section=b.document.querySelector('.production-task'),input=section.querySelector('textarea');
   assert.equal(section.querySelector('.production-model').hidden,true);
-  input.value='私はランです。';section.querySelector('input').checked=true;
+  input.value='  私はランです。  ';section.querySelector('input').checked=true;
   await section.querySelector('.production-save').click();
-  assert.equal(sent[0].response_text,'私はランです。');assert.equal(sent[0].self_rating,4);
+  assert.equal(sent[0].response_text,'  私はランです。  ');assert.equal(sent[0].self_rating,4);
   assert.equal(sent[0].task.id,'writing:question:0');assert.equal(sent[0].event,'answer');
   for(const key of ['correct','quality','answer_index'])assert.equal(Object.hasOwn(sent[0],key),false);
   assert.match(section.querySelector('output').textContent,/chưa có kết luận đúng\/sai/);
@@ -788,4 +788,56 @@ test('restart restores keyboard focus to the new run and gives it a fresh sessio
   assert.equal(b.document.querySelector('.practice-session legend').focused,true);
   await b.document.querySelector('.practice-options input').dispatch('change');await b.document.querySelector('.practice-session .practice-primary').click();
   assert.notEqual(sent[0].session_id,sent[1].session_id);
+});
+
+test('generic production continuation reuses actual raw learner text without presenting it as an invitation or model answer',async()=>{
+  const sent=[],b=lesson({apiFetch:async(path,options)=>{
+    const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task,assessment:{comparison:'unassessed'},source_correct:null});
+  }});
+  b.c.showLessonDetail({id:'generic-cycle',title:'Bàn giao',practice_path:['produce','revise'],drills:[
+    {task_key:'produce',mode:'writing',q:'Tự chọn việc bàn giao và hạn.',criteria:['Giữ hạn do em chọn.'],exchange:{group:'handover',stage:'produce',prior_task_ids:[]}},
+    {task_key:'revise',mode:'writing',q:'Kiểm tra hạn trong chính câu đã viết; giữ hoặc sửa có lý do.',criteria:['Dựa trên câu thật.'],exchange:{group:'handover',stage:'revise',prior_task_ids:['produce']}}
+  ]},'N3','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const raw='  水曜日までに資料を送ります。  ',input=b.document.querySelector('textarea');
+  input.value=raw;await input.dispatch('input');await b.document.querySelector('.practice-session .practice-primary').click();
+  await b.document.querySelector('.practice-session .practice-primary').click();
+  const section=b.document.querySelector('.practice-session');
+  assert.match(section.textContent,/Câu em đã lưu ở bước trước/);assert.doesNotMatch(section.textContent,/Lời mời|Đáp án nguồn/);
+  assert.ok(section.textContent.includes(raw));assert.equal(section.querySelector('textarea').value,'');
+  assert.equal(sent[0].response_text,raw);
+});
+
+test('an incomplete policy production model is withheld without blocking the real written attempt',async()=>{
+  const sent=[],b=lesson({apiFetch:async(path,options)=>{
+    if(path==='/api/progress')return Response.json({evidence:[]});
+    const body=JSON.parse(options.body);sent.push(body);return Response.json({task:body.task});
+  }});
+  b.c.showLessonDetail({id:'practical:v1:N2:policy:production',title:'Thông báo',production:{
+    prompt:'Tóm tắt chính xác ngày hiệu lực và ngoại lệ.',criteria:['Giữ đúng ngày.'],model:'来月から始まります。'
+  }},'N2','production');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.production-task');
+  assert.equal(section.querySelector('.production-reveal').hidden,true);
+  assert.doesNotMatch(section.querySelector('.production-model').textContent,/来月から始まります/);
+  assert.match(section.textContent,/来月一日から/);
+  section.querySelector('textarea').value='  来月一日から始まります。  ';
+  await section.querySelector('.production-save').click();
+  assert.equal(sent[0].response_text,'  来月一日から始まります。  ');
+  assert.equal(sent[0].event,'answer');assert.equal(Object.hasOwn(sent[0],'correct'),false);
+});
+
+test('writing self-check criteria stay concealed until the actual answer is saved, including failed-save retries',async()=>{
+  let accept=false;const b=lesson({apiFetch:async(path,options)=>{
+    const body=JSON.parse(options.body);return accept?Response.json({task:body.task}):Response.json({detail:'Save failed'},{status:503});
+  }});
+  b.c.showLessonDetail({id:'heldout-criteria',title:'Gợi nhớ',reviewQuestionIndex:0,delayedReview:true,drills:[
+    {task_key:'heldout',mode:'writing',q:'Tự nhớ cách diễn đạt phù hợp.',criteria:['POST_ANSWER_TARGET_FORM'],
+      exchange:{group:'closed-cycle',stage:'delayed',prior_task_ids:['earlier'],delay_hours:24}}
+  ]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.practice-session'),criteria=section.querySelector('.task-writing-criteria'),input=section.querySelector('textarea');
+  assert.equal(criteria.hidden,true);input.value='自分の答え。';await input.dispatch('input');
+  await section.querySelector('.practice-primary').click();assert.equal(criteria.hidden,true,'failure is not permission to show a target form');
+  accept=true;await section.querySelector('.practice-primary').click();assert.equal(criteria.hidden,false);
 });

@@ -112,3 +112,17 @@ test('writing lessons remain resolvable while the roadmap only contains theory, 
     }
   }
 });
+
+test('missing spoken gloss and hint are explicit rather than fake translations or generic level-inappropriate grammar',async()=>{
+  const c=await context();await c.ensureLessons('N4');c.createStudyPlan('N4');c.installCourseKaiwa();
+  const app=fs.readFileSync('static/app.js','utf8');
+  vm.runInContext(app.slice(app.indexOf('function loadKaiwaPrompt()'),app.indexOf('// 12. JLPT MOCK EXAM CONTROLLER')),c);
+  const nodes=new Map(),node=id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);};
+  c.document={getElementById:node,querySelectorAll:()=>[]};c.mountCompletion=()=>{};
+  c.activeKaiwaLevel='N4';c.activeKaiwaKey='practical:v1:N4:late';c.activeKaiwaPromptIdx=0;c.loadKaiwaPrompt();
+  assert.equal(node('kaiwa-prompt-jp').textContent,'今どこですか。何時ごろ着きますか。');
+  assert.match(node('kaiwa-prompt-vi').textContent,/Chưa có diễn giải tiếng Việt từ nguồn/);
+  assert.doesNotMatch(node('kaiwa-prompt-vi').textContent,/Nhắn cho đồng nghiệp/);
+  assert.match(node('kaiwa-prompt-hint').textContent,/Chưa có gợi ý riêng/);
+  assert.doesNotMatch(node('kaiwa-prompt-hint').textContent,/です \/ ます/);
+});

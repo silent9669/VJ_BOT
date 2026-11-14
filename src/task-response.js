@@ -24,7 +24,7 @@ export function assessTaskResponse(task,submission) {
     :task.mode!=='choice' && objective!=='orthography' && answers.some(answer=>cosmetic(answer)===cosmetic(text))
       ?'orthographic_difference':'different_reference';
   return {source_correct,basis,verified:!writing && basis==='reviewed_source',
-    ...(objective || writing?{assessment:{objective,comparison,submitted_text:text,
+    ...(objective || task.mode!=='choice'?{assessment:{objective,comparison,submitted_text:text,
       meaning:'uncertain',structure:'uncertain',orthography:comparison==='orthographic_difference'?'cosmetic_difference':'unassessed',
       semantic_verified:false}}:{})};
 }

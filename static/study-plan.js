@@ -15,7 +15,7 @@ async function loadPracticalCourse(){
   return practicalLoad;
 }
 function installCourseKaiwa(){
-  for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:unit.production.prompt,hints:unit.production.criteria}]};}
+  for(const unit of practicalCourse.units){window.JLPT_DATA.kaiwaScenarios[unit.id]={title:unit.title,desc:unit.goal,level:unit.level,course:true,context:unit.dialogue.map(d=>d.jp).join('\n'),prompts:[{jp:unit.production.question_jp,vi:''}]};}
 }
 function createStudyPlan(level){
   if(studyPlans.has(level))return studyPlans.get(level);
@@ -78,8 +78,9 @@ function delayedReviewState(lesson,tasks,evidence,revisions,now=Date.now()){
   }
   const completed=[...sessions].filter(([,records])=>prior.every(id=>records.has(id))).map(([session,records])=>({
     session,dueAt:Math.max(...prior.map(id=>records.get(id).time))+(task.exchange.delay_hours || 24)*3600000
-  })).sort((a,b)=>b.dueAt-a.dueAt)[0];
-  return completed?{index,task,session:completed.session,dueAt:completed.dueAt,due:now>=completed.dueAt}:null;
+  })).sort((a,b)=>b.dueAt-a.dueAt);
+  const eligible=completed.find(session=>session.dueAt<=now) || completed.at(-1);
+  return eligible?{index,task,session:eligible.session,dueAt:eligible.dueAt,due:now>=eligible.dueAt}:null;
 }
 // Right-hand outline of the chapter this lesson belongs to: where you are, what is done, one click to any step.
 async function renderLessonOutline(item,level,skill,owner){

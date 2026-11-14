@@ -57,7 +57,8 @@ function lessonData(context, item, level, skill, course, sourceCatalog) {
     // Beginner tracks classify vocabulary, not the difficulty of attached corpus sentences.
     examples: examples.filter(example => !['N5', 'N4'].includes(level)
       || example.provenance.sentence_level_certified !== false).slice(0, 3),
-    task: item.production || unit?.production, external_resources: item.externalResources
+    task: item.production ? {prompt:questions[0]?.q,criteria:questions[0]?.criteria,model:questions[0]?.model,
+      limitation:questions[0]?.explanation}:undefined, external_resources: item.externalResources
   };
   // Normalize VM objects to JSON data without ever slicing serialized JSON or dropping addressable items.
   return JSON.parse(JSON.stringify({

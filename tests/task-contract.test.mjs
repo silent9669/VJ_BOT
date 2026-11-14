@@ -85,7 +85,7 @@ test('dictation and writing have dedicated canonical tasks with reveal-only sour
   assert.deepEqual(plain(c.lessonProgressIds(production,'N5','production')),[production.id]);
 });
 
-test('original quiz contradictions are tombstones while N1 duplicate parts stay separately addressable',async()=>{
+test('original quiz contradictions and nonunique candidates remain unavailable at their original source positions',async()=>{
   const c=context();await c.loadPracticalCourse();const blocked=[];
   for(const level of ['N5','N4','N3','N2','N1']){
     await c.ensureLessons(level);
@@ -97,13 +97,13 @@ test('original quiz contradictions are tombstones while N1 duplicate parts stay 
         assert.equal(task.source_position,i);assert.deepEqual(plain(task.opts),plain(raw[i].options));
         assert.equal(task.answer_index,raw[i].answer);assert.equal(task.passage,raw[i].passage || '');
         if(task.review_status==='quarantined'){
-          blocked.push(task.source_identity);assert.equal(i,2);assert.ok(task.unavailable_reason);
+          blocked.push(task.source_identity);assert.ok(task.unavailable_reason);
           assert.deepEqual(plain(task.capabilities),{answer:false,hint:false,evaluation:false,processing:false});
         }
       }
     }
   }
-  assert.deepEqual(blocked.sort(),['N4:1:3','N3:1:3','N3:2:3','N2:1:3','N2:2:3'].sort());
+  assert.deepEqual(blocked.sort(),['N4:1:3','N3:1:3','N3:2:3','N2:1:3','N2:2:3','N1:1:3','N4:1:2','N5:1:5','N5:2:3','N4:2:3'].sort());
   const n1=c.featureLessons('quiz','N1').find(item=>item.id==='quiz-lesson:N1:2').drills[2];
   assert.deepEqual(plain(n1.opts),['何で','あれ','どうで','あれ']);
   assert.deepEqual(plain(n1.parts),['1. 何で','2. あれ','3: どうで','4. あれ']);
@@ -143,7 +143,7 @@ test('catalog uses the same complete canonical inventory and SHA256 revisions in
       if(task.review_status==='quarantined')quarantineCount++;
     }
   }
-  assert.equal(quarantineCount,5);
+  assert.equal(quarantineCount,10);
   const n3=catalogs.N3.lessons['test:N3:1'];assert.equal(n3.questions.length,4);assert.equal(n3.examples.length,0);
   assert.equal(n3.questions[0].skill,'kanji');assert.equal(n3.questions[3].skill,'reading');
   const writing=catalogs.N5.lessons['practical:v1:N5:introductions:production'].questions;
@@ -252,4 +252,66 @@ test('delayed invitation review requires a complete current-revision cycle in on
   assert.equal(c.delayedReviewState(lesson,tasks,evidence.slice(0,2),revisions,at+2*day),null);
   assert.equal(c.delayedReviewState(lesson,tasks,evidence.map((row,index)=>({...row,session_id:`session-${index}`})),revisions,at+2*day),null);
   assert.equal(c.delayedReviewState(lesson,tasks,evidence.map((row,index)=>index===1?{...row,revision:'old'}:row),revisions,at+2*day),null);
+  const repeated=evidence.map(row=>({...row,session_id:'recent-retry',answered_at:new Date(at+day/2).toISOString()}));
+  assert.equal(c.delayedReviewState(lesson,tasks,[...evidence,...repeated],revisions,at+day+2000).due,true,'a newer incomplete wait must not hide an older eligible cycle accepted by the server');
+});
+
+test('written production keeps its own instructions while speaking never inherits broader writing requirements',async()=>{
+  const c=context(),catalogs=await buildTeacherCatalog();await c.loadPracticalCourse();
+  for(const level of ['N5','N4','N3','N2','N1']){
+    await c.ensureLessons(level);c.createStudyPlan(level);c.installCourseKaiwa();
+    const productions=c.window.JLPT_DATA.curriculum[level].skills.production;
+    for(const item of productions){
+      const task=c.lessonQuestions(item,level,'production')[0],spoken=c.window.JLPT_DATA.kaiwaScenarios[item.roleplay.id].prompts[0];
+      assert.equal(task.instruction,'');assert.equal(task.q,item.production.prompt);
+      assert.equal(spoken.jp,item.production.question_jp);assert.equal(spoken.vi,'');
+      assert.equal(Object.hasOwn(spoken,'hints'),false,'spoken rubric owns its criteria, not written-production extras');
+      const speaking=catalogs[level].lessons[`kaiwa:${item.roleplay.id}`];
+      assert.equal(Object.hasOwn(speaking.overview,'task'),false);
+      if(item.id==='practical:v1:N2:policy:production'){
+        assert.equal(task.model || '','');assert.match(task.explanation,/来月一日から/);
+        assert.equal(catalogs[level].lessons[item.id].overview.task.model || '','');
+      }else assert.equal(task.model,item.production.model);
+    }
+  }
+});
+
+test('draft admission rejects broken continuation ordering and heldout tasks mixed into immediate practice',async()=>{
+  const original=JSON.parse(readFileSync('static/course/n5-teaching.json','utf8'));
+  const inviteId='n5-teaching:v1:invitation';
+  for(const change of [
+    lesson=>lesson.practice_path.push(lesson.delayed_review_task_id),
+    lesson=>lesson.practice_path.reverse(),
+    lesson=>lesson.tasks.find(task=>task.exchange?.stage==='accept').exchange.prior_task_ids=['missing'],
+    lesson=>lesson.reference_task_ids.push(lesson.delayed_review_task_id)
+  ]){
+    const c=context(),source=structuredClone(original);change(source.lessons.find(lesson=>lesson.id===inviteId));
+    c.fetch=async()=>({ok:true,json:async()=>source});
+    await assert.rejects(c.ensureLessons('N5'),/chuỗi tự viết|bước luyện/);
+  }
+});
+
+test('all authored cycles keep open text unkeyed, retain actual-prior ownership and separate later practice from reference aids',async()=>{
+  const c=context(),catalogs=await buildTeacherCatalog();await c.loadPracticalCourse();
+  for(const level of ['N5','N4','N3','N2','N1']){
+    await c.ensureLessons(level);
+    for(const item of c.window.JLPT_DATA.curriculum[level].skills.grammar.filter(lesson=>lesson.editorial)){
+      const tasks=c.lessonQuestions(item,level,'grammar'),canonical=catalogs[level].lessons[item.id];
+      const root=tasks.find(task=>['produce','invite'].includes(task.exchange?.stage));
+      const next=tasks.find(task=>['respond','revise','accept'].includes(task.exchange?.stage));
+      const later=tasks.find(task=>task.task_id===item.delayed_review_task_id);
+      assert.ok(root && next && later,item.id);assert.equal(later.exchange.stage,'delayed');
+      assert.ok(next.exchange.prior_task_ids.includes(root.task_id));
+      assert.ok(later.exchange.prior_task_ids.includes(root.task_id));assert.ok(later.exchange.prior_task_ids.includes(next.task_id));
+      assert.equal(item.practice_path.includes(later.task_id),false);
+      assert.ok(!item.reference_task_ids?.includes(later.task_id));
+      for(const task of [root,next,later]){
+        assert.equal(task.mode,'writing');assert.equal(task.answer_index,null);assert.deepEqual(plain(task.accepted_answers),[]);
+        assert.deepEqual(plain(task.opts),[]);assert.equal(task.model || '','');assert.ok(task.criteria.length>1);
+        assert.equal(task.unavailable_reason,'');assert.equal(task.review_status,'unreviewed');
+        assert.equal(canonical.questions[task.source_position].revision,hash(c,task));
+        assert.ok(!item.guided_steps?.some(step=>step.task_ids.includes(task.task_id)),'no worked solution is supplied to open or later production');
+      }
+    }
+  }
 });

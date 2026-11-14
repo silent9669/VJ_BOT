@@ -68,17 +68,21 @@ export async function practiceCoach(request, env, expectedEpoch=undefined) {
   const assessed=assessTaskResponse(question,bound || body);
   const basis=bound?.basis??assessed.basis,correct=body.action==='feedback'?assessed.source_correct:null;
   const answer=question.mode==='choice'?question.opts[question.answer_index]:question.mode==='writing'?null:question.accepted_answers;
+  // Raw current and prior responses occur once each; receipt diagnostics still keep
+  // submitted_text, but repeating it here consumes the focused context budget.
+  const assessment=assessed.assessment?Object.fromEntries(Object.entries(assessed.assessment).filter(([key])=>key!=='submitted_text')):undefined;
   const evidence = {level:body.lesson.level,question:taskEvidence(question),
-    ...(question.mode==='writing'?{criteria:question.criteria || []}:{}),
+    ...(question.mode==='writing' && body.action==='feedback'?{criteria:question.criteria || []}:{}),
     ...(question.exchange?{exchange:{group:question.exchange.group,stage:question.exchange.stage,
       partner_reply:question.exchange.partner_reply || '',prior_responses:prior.responses}}:{}),
     ...(body.action === 'feedback' ? {submission:question.mode==='choice'?question.opts[body.answer_index]:body.response_text,
-      submission_index:body.answer_index??null,source_correct:correct,basis,assessment:assessed.assessment,authored_answer:answer,
+      submission_index:body.answer_index??null,source_correct:correct,basis,assessment,authored_answer:answer,
       authored_explanation:question.explanation || '',...(question.mode==='writing'?{model:question.model || ''}:{})} : {})};
-  if(JSON.stringify(evidence).length>8000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
+  // Budget room for task metadata and two bounded 4K learner responses.
+  if(JSON.stringify(evidence).length>16000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
   const retrieval = await retrieveLearning(env, learningQuery(lesson,'',question), {assessment:body.action==='hint'});
   evidence.learning_retrieval = retrieval;
-  if(JSON.stringify(evidence).length>12000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
+  if(JSON.stringify(evidence).length>20000)return reply({detail:'Choose a smaller focused task for coaching.'},413);
   if(!(await currentEpoch()))return reply({detail:'The learner account changed before coaching. Reopen the activity.'},409);
   const asked = await askAI(env,body.user_id, {system:boundary + '\n' + instructions[body.action] + '\n' + learningBoundary,
     schema,schemaName:'practice_coaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},

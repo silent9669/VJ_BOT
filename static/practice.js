@@ -97,8 +97,8 @@ function taskAssessmentMessage(task,assessment,matched){
   if(task.mode==='writing')return 'Đã lưu câu do em tự chọn nội dung. Chưa có kết luận đúng/sai; hãy tự đối chiếu tiêu chí hoặc yêu cầu nhận xét tham khảo.';
   if(assessment?.comparison==='orthographic_difference')return 'Có khác biệt trình bày như dấu chấm cuối hoặc khoảng trắng. Chưa thể kết luận em hiểu sai nghĩa hay ngữ pháp; bản gốc em viết được giữ nguyên.';
   const result=matched?'Câu trả lời khớp đáp án nguồn.':'Câu trả lời chưa khớp đáp án nguồn.';
-  if(!task.objective || task.mode==='choice')return result;
-  return `${result} Mục tiêu: ${taskObjectiveLabels[task.objective] || task.objective}. Khác chữ với mẫu không tự chứng minh sai nghĩa hoặc cấu trúc; cách viết kana/kanji khác chưa có trong biến thể cần được xem xét.`;
+  if(task.mode==='choice')return result;
+  return `${result} ${task.objective?`Mục tiêu: ${taskObjectiveLabels[task.objective] || task.objective}. `:''}Khác chữ với mẫu không tự chứng minh sai nghĩa hoặc cấu trúc; cách viết kana/kanji khác chưa có trong biến thể cần được xem xét.`;
 }
 function practiceTaskIndices(item,questions,{reference=false}={}){
   if(Number.isInteger(item.reviewQuestionIndex) && item.reviewQuestionIndex>=0 && item.reviewQuestionIndex<questions.length)return [item.reviewQuestionIndex];
@@ -146,7 +146,7 @@ function renderPracticeSession(container,item,level,skill){
         reference.onclick=()=>{round=createPracticeRound(questions,practiceTaskIndices(item,questions,{reference:true}));review=true;show(true);};actions.append(reference);
       }
       if(item.delayed_review_task_id){
-        const note=document.createElement('p');note.textContent='Lượt gợi nhớ ở tình huống khác chỉ mở từ khóa học sau ít nhất 24 giờ, trong một phiên luyện mới. Lượt vừa làm không chứng minh khả năng nhớ lâu.';actions.append(note);
+        const note=document.createElement('p');note.textContent='Lượt gợi nhớ tình huống khác chỉ mở sau ít nhất 24 giờ kể từ khi hoàn tất các bước tự viết, trong một phiên mới. Lượt vừa làm không chứng minh khả năng nhớ lâu.';actions.append(note);
       }
       completion.hidden=round.blocked>0 || scopedReview;
       if(focus)section.querySelector('h3').focus();
@@ -162,11 +162,11 @@ function renderPracticeSession(container,item,level,skill){
     section.innerHTML=`<div class="practice-meter"><span>${review?'Luyện lại':'Luyện tập'}</span><span>${round.index+1} / ${round.indices.length}</span>
       <progress value="${round.index}" max="${round.indices.length}" aria-label="Câu đã xem"></progress></div>
       ${stage?`<aside class="task-stage"><h3>${escapeHtml(stage.title)}</h3><p>${escapeHtml(stage.note)}</p><p lang="ja">${escapeHtml(stage.example.jp)}</p><details><summary>Cách đọc và nghĩa của ví dụ</summary><p lang="ja">${escapeHtml(stage.example.reading)}</p><p>${escapeHtml(stage.example.vi)}</p></details></aside>`:''}
-      ${previous.length?`<aside data-teacher-exclude><strong>Lời mời em vừa viết trong phiên này</strong>${previous.map(text=>`<p lang="ja">${escapeHtml(text)}</p>`).join('')}</aside>`:''}
+      ${previous.length?`<aside data-teacher-exclude><strong>${['accept','refuse'].includes(question.exchange.stage)?'Lời mời em vừa viết trong phiên này':'Câu em đã lưu ở bước trước trong phiên này'}</strong>${previous.map(text=>`<p lang="ja">${escapeHtml(text)}</p>`).join('')}</aside>`:''}
       ${question.exchange?.partner_reply?`<p class="task-partner" lang="ja">${escapeHtml(question.exchange.partner_reply)}</p><p>Đây là lời đáp giả định đã biên soạn, không phải phản hồi AI đang trò chuyện trực tiếp.</p>`:''}
       <fieldset><legend tabindex="-1">${escapeHtml(question.instruction || (question.mode==='writing'?'Tự chọn nội dung và diễn đạt':question.mode==='recall'?'Luyện nhớ hoặc biến đổi có giới hạn':'Chọn một phương án'))}</legend>
       ${taskPromptHtml({...question,instruction:''})}<div class="practice-options"></div></fieldset>
-      ${question.criteria?.length?`<section><h4>Tiêu chí tự đối chiếu</h4><ul>${question.criteria.map(text=>`<li>${escapeHtml(text)}</li>`).join('')}</ul></section>`:''}
+      ${question.criteria?.length?`<section class="task-writing-criteria"${question.mode==='writing'?' hidden':''}><h4>Tiêu chí tự đối chiếu sau khi thử</h4><ul>${question.criteria.map(text=>`<li>${escapeHtml(text)}</li>`).join('')}</ul></section>`:''}
       <p class="task-basis">${question.objective?`Mục tiêu: ${escapeHtml(taskObjectiveLabels[question.objective] || question.objective)}. `:''}${question.mode==='writing'?'Không có một chuỗi đáp án duy nhất. Chưa đánh giá nghĩa/cấu trúc; nếu dùng AI, nhận xét vẫn là tham khảo.':'Đối chiếu nguồn chỉ kiểm tra mẫu đã cho, không phải điểm đã được thẩm định.'}</p>
       <div class="practice-feedback" role="status" hidden></div><div class="practice-actions"><button type="button" class="practice-primary" disabled>${question.mode==='writing'?'Lưu câu em viết':'Đối chiếu'}</button></div>`;
     const options=section.querySelector('.practice-options'),action=section.querySelector('.practice-primary'),feedback=section.querySelector('.practice-feedback');
@@ -222,6 +222,7 @@ function renderPracticeSession(container,item,level,skill){
         if(!section.isConnected)return;
         pending.assessment=receipt.assessment;pending.feedback=feedbackMessage();
         savedResponses.set(question.task_id,selected);
+        const criteria=section.querySelector('.task-writing-criteria');if(criteria)criteria.hidden=false;
         if(!pending.coachReady){
           removeCoach();removeCoach=mountPracticeCoach(section,container,lesson,question,originalIndex,pending);pending.coachReady=true;
         }

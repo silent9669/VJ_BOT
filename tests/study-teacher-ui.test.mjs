@@ -342,7 +342,7 @@ async function practicalPage(t) {
       reply:'Em thử tự giới thiệu tên và công việc của mình nhé?',
       fields:evidence.fields.map(field=>({key:field.key,text:field.key==='explanation'
         ? 'Em hãy nói tên, quê quán và nghề nghiệp bằng ba câu.'
-        : field.key==='example:vi'?'Em hãy viết phần giới thiệu về bản thân, gồm tên, quê quán và nghề nghiệp.':field.source}))
+        : field.key==='example:translation'?`${field.source} — Xin chào lần đầu. Hãy cho tôi biết tên và công việc của bạn.`:field.source}))
     })}}]});
   };
   t.after(()=>{globalThis.fetch=original;});
@@ -403,9 +403,11 @@ test('a practical speaking production prompt has a canonical teaching panel with
   const panel=byClass(card,'study-teacher'),controls=panelControls(panel);
   await controls.button.onclick();
   assert.equal(controls.reply.hidden,false,controls.status.textContent);
-  assert.equal(translation.textContent,'Em hãy viết phần giới thiệu về bản thân, gồm tên, quê quán và nghề nghiệp.');
+  assert.equal(translation.textContent,'');
+  assert.match(byClass(panel,'study-generated-fields').textContent,/Xin chào lần đầu/);
   assert.equal(b.calls.at(-1).evidence.example.jp,unit.production.question_jp);
-  assert.equal(b.calls.at(-1).fields.find(field=>field.key==='example:vi').source,unit.production.prompt);
+  assert.equal(b.calls.at(-1).fields.find(field=>field.key==='example:translation').source,unit.production.question_jp);
+  assert.ok(!b.calls.at(-1).fields.some(field=>field.source===unit.production.prompt),'a broader written prompt cannot masquerade as a translation of the spoken question');
   const canonical=b.catalogs.N5.lessons[descriptor.completionId];
   assert.equal(canonical.examples[unit.dialogue.length].jp,prompt.jp);
   assert.deepEqual(canonical.examples.slice(0,unit.dialogue.length).map(example=>example.jp),Array.from(unit.dialogue,example=>example.jp));

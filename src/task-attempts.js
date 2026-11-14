@@ -124,16 +124,17 @@ export async function taskEvidenceSummary(env,userId) {
 export async function priorTaskResponses(env,userId,lesson,task,sessionId,epoch,beforeAnsweredAt=null) {
   const exchange=task.exchange;
   if(!exchange)return {responses:[]};
-  if(!exchange || typeof exchange!=='object' || !['invite','accept','refuse','delayed'].includes(exchange.stage)
-    || typeof exchange.group!=='string' || !Array.isArray(exchange.prior_task_ids)
-    || !exchange.prior_task_ids.every(id=>typeof id==='string') || exchange.prior_task_ids.length>8
+  if(task.mode!=='writing' || !['invite','accept','refuse','produce','respond','revise','delayed'].includes(exchange.stage)
+    || typeof exchange.group!=='string' || !exchange.group || !Array.isArray(exchange.prior_task_ids)
+    || !exchange.prior_task_ids.every(id=>typeof id==='string' && id) || exchange.prior_task_ids.length>8
     || new Set(exchange.prior_task_ids).size!==exchange.prior_task_ids.length) {
     return {error:'The canonical exchange context is unavailable.'};
   }
   const delayed=exchange.stage==='delayed';
-  if(!exchange.prior_task_ids.length)return ['accept','refuse','delayed'].includes(exchange.stage)
-    ?{error:'This continuation requires an earlier invitation.'}:{responses:[]};
   if(!sessionId)return {error:'Continue this exchange with a learning session identifier.'};
+  if(!exchange.prior_task_ids.length)return ['invite','produce'].includes(exchange.stage)
+    ?{responses:[]}:{error:'This continuation requires an earlier learner response.'};
+  if(['invite','produce'].includes(exchange.stage))return {error:'The first production task cannot depend on another answer.'};
   if(delayed && exchange.delay_hours!==24)return {error:'The delayed review interval is unavailable.'};
   const inventory=[...(lesson.questions || []),...(lesson.exam_questions || [])],responses=[];
   const priors=exchange.prior_task_ids.map(id=>inventory.find(candidate=>candidate.task_id===id));
@@ -141,7 +142,8 @@ export async function priorTaskResponses(env,userId,lesson,task,sessionId,epoch,
     return {error:'The canonical prior task changed. Reopen the exchange.'};
   }
   if(delayed) {
-    if(!priors.some(prior=>prior.exchange.stage==='invite'))return {error:'This review requires an earlier invitation.'};
+    if(!priors.some(prior=>['invite','produce'].includes(prior.exchange.stage))
+      || !priors.some(prior=>['accept','refuse','respond','revise'].includes(prior.exchange.stage)))return {error:'Complete the earlier production and continuation before this review.'};
     const cutoff=new Date(Date.now()-exchange.delay_hours*3600000).toISOString();
     // Every required stage must belong to one completed older session. A later
     // attempt in that session postpones eligibility; do not mix unrelated runs.
@@ -153,7 +155,7 @@ export async function priorTaskResponses(env,userId,lesson,task,sessionId,epoch,
       .bind(userId,sessionId,epoch,lesson.id,lesson.level,...priors.flatMap(prior=>[prior.task_id,prior.revision]),priors.length,cutoff).first();
     return row?{responses:[]}:{error:'Complete the earlier exchange in one different session, then return after at least 24 hours.'};
   }
-  let invitation=false;
+  let invitation=false,production=false;
   for(const prior of priors) {
     const row=await env.DB.prepare(`SELECT * FROM task_attempt_evidence
       WHERE user_id=? AND session_id=? AND account_epoch=? AND lesson_id=? AND level=? AND task_id=? AND revision=?
@@ -164,9 +166,11 @@ export async function priorTaskResponses(env,userId,lesson,task,sessionId,epoch,
     const response=prior.mode==='choice'?prior.opts?.[row.answer_index]:row.response_text;
     if(typeof response!=='string')return {error:'The earlier learner response is unavailable.'};
     if(prior.exchange.stage==='invite')invitation=true;
+    if(prior.exchange.stage==='produce')production=true;
     responses.push({task_id:prior.task_id,revision:prior.revision,stage:prior.exchange.stage,
       attempt_id:row.attempt_id,answered_at:row.answered_at,answer_index:row.answer_index,response_text:response});
   }
   if(['accept','refuse'].includes(exchange.stage) && !invitation)return {error:'This continuation requires an earlier invitation.'};
+  if(['respond','revise'].includes(exchange.stage) && !production)return {error:'This continuation requires an earlier independent response.'};
   return {responses};
 }

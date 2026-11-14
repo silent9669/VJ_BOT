@@ -11,7 +11,9 @@
   "lessons": [
     {
       "id": "n5-teaching:v1:topic",
-      "revision": 2,
+      "revision": 3,
+      "practice_path": ["n5-teaching:v1:topic:task:0", "n5-teaching:v1:topic:task:1", "n5-teaching:v1:topic:task:2", "n5-teaching:v1:topic:task:3", "n5-teaching:v1:topic:task:4", "n5-teaching:v1:topic:cycle:produce", "n5-teaching:v1:topic:cycle:revise"],
+      "delayed_review_task_id": "n5-teaching:v1:topic:cycle:delayed",
       "order": 1,
       "level": "N5",
       "title": "Nêu chủ đề bằng は",
@@ -212,12 +214,35 @@
           "rationale": "Theo yêu cầu đang luyện, chọn は. Không kết luận が luôn sai trong mọi ngữ cảnh.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id": "n5-teaching:v1:topic:cycle:produce", "mode": "writing", "skill": "grammar", "objective": "structure",
+          "prompt": "Làm thẻ giới thiệu cho một nhân vật hư cấu ở lớp giao lưu: tự đặt tên và chọn một nghề hoặc vai trò của người đó. Viết một câu tiếng Nhật lịch sự nêu nhân vật làm chủ đề và thông tin em chọn. Không dùng hồ sơ hoặc câu của ví dụ; không cần thông tin cá nhân thật.",
+          "criteria": ["Nội dung: nhân vật và nghề/vai trò đều do em chọn; người đọc nhận ra đang nói về ai và họ là gì.", "Cấu trúc: dùng は để nêu chủ đề và vị ngữ danh từ lịch sự; không ghép だです hoặc biến danh từ nghề thành tân ngữ.", "Phạm vi: đây là tạo câu danh từ, không yêu cầu hội thoại dài. Kana/kanji hợp lệ và dấu câu được góp ý riêng, không dùng làm bằng chứng tự động về hiểu ngữ pháp."],
+          "exchange": {"group":"n5-topic-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale": "Câu tự chọn không có khóa chuỗi. Nhận xét chỉ dựa trên ý định và câu thực tế; nếu không rõ danh từ được dùng, hỏi lại thay vì khẳng định sai. Bài lưu tự báo cáo, không xác nhận đúng nghĩa hoặc thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:topic:cycle:revise","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Mở lại chính câu trên thẻ em vừa viết. Kiểm tra chỗ nêu người và chỗ nêu nghề/vai trò; viết bản cuối giữ nguyên nhân vật và thông tin. Có thể giữ nguyên câu nếu đã phù hợp. Thêm một ghi chú tiếng Việt chỉ rõ phần nào là chủ đề và phần nào là thông tin về chủ đề trong chính câu ấy.",
+          "criteria":["Nối tiếp: bản cuối và ghi chú phải dựa trên câu thực tế đã lưu, không thay bằng hồ sơ mẫu.", "Cấu trúc: chỉ ra đúng vai trò は và vị ngữ danh từ; sửa nếu có lỗi nhưng không buộc tạo lỗi rồi sửa.", "Chưa có câu trước thì chưa đánh giá được việc tự kiểm; giữ riêng nghi vấn nghĩa, cấu trúc và chính tả."],
+          "exchange":{"group":"n5-topic-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:topic:cycle:produce"]},
+          "rationale":"Tự kiểm một câu đã tạo, không chứng nhận việc tự giải thích là ngữ pháp đúng.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:topic:cycle:delayed","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Ở phiên khác sau ít nhất 24 giờ, không mở tham khảo: em làm nhãn cho một góc trưng bày đồ dùng hư cấu, không giới thiệu người. Tự chọn một vật và loại của vật đó, rồi viết một câu danh từ lịch sự để khách biết vật được nói đến là gì. Tạo nội dung mới, không nhắc thẻ nhân vật cũ.",
+          "criteria":["Chuyển giao: mục đích là phân loại vật cho khách trưng bày, không thay tên trong hồ sơ người.", "Cấu trúc: tự tạo chủ đề và vị ngữ danh từ lịch sự đúng ý đã chọn.", "Bằng chứng: câu mới và trợ giúp thực tế được ghi riêng; lịch mở bài không chứng minh tự lực, nhớ lâu hay thành thạo."],
+          "exchange":{"group":"n5-topic-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:topic:cycle:produce","n5-teaching:v1:topic:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp câu cũ hay mẫu đáp án; nhận xét AI chỉ tư vấn trên bài mới.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:request",
-      "revision": 2,
+      "revision": 3,
+      "practice_path": ["n5-teaching:v1:request:task:0", "n5-teaching:v1:request:task:1", "n5-teaching:v1:request:task:2", "n5-teaching:v1:request:task:3", "n5-teaching:v1:request:task:4", "n5-teaching:v1:request:cycle:produce", "n5-teaching:v1:request:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:request:cycle:delayed",
       "order": 8,
       "level": "N5",
       "title": "Nhờ làm bằng てください",
@@ -415,12 +440,34 @@
           "rationale": "Đánh dấu đối tượng bằng を và đổi 読む thành 読んで trước ください.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:request:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Trong buổi làm đồ thủ công giả định với bạn cùng lớp, em cần bạn giúp một việc nhỏ. Tự chọn việc và vật liên quan, viết một lời nhờ bằng tiếng Nhật dùng mẫu đang học. Không chép việc mở cửa/đọc câu trong ví dụ; người nghe là bạn cùng nhóm, không phải khách hay cấp trên.",
+          "criteria":["Nghĩa: người nghe biết việc cụ thể em muốn họ làm; là lời nhờ chứ không kể việc em đã làm.", "Cấu trúc: động từ tự chọn có thể て phù hợp trước ください và trợ từ hợp hành động.", "Giao tiếp: việc nhỏ khả thi trong nhóm thủ công; không coi ください tự đủ mềm ở mọi quan hệ. Chính tả tách khỏi nghĩa/cấu trúc."],
+          "exchange":{"group":"n5-request-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có khóa câu cho nội dung tự chọn; AI góp ý có điều kiện, không cấp điểm hay chứng nhận.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:request:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Dựa đúng lời nhờ em vừa viết, kiểm tra bạn có biết phải làm gì với vật nào không, rồi kiểm tra thể て. Viết bản cuối giữ ý nhờ ban đầu và làm rõ nếu cần; nếu câu đã rõ có thể giữ nguyên. Thêm ghi chú Việt nêu động từ em đã chọn, nhóm đã biết/tra và chỗ em kiểm.",
+          "criteria":["Nối tiếp: giữ việc và vật trong bài thực tế, không viết lời nhờ mới không liên quan.", "Cấu trúc: phân biệt sai nhóm/thể て với lỗi chữ; chưa biết nhóm phải ghi chưa chắc, không đoán từ る.", "Không ép sửa câu đúng; ghi chú nêu kiểm tra cụ thể chứ không tự tuyên bố đã thành thạo."],
+          "exchange":{"group":"n5-request-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:request:cycle:produce"]},
+          "rationale":"Kiểm tra lời nhờ thật của người học; thiếu lượt trước thì không tự bịa.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:request:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Phiên khác ít nhất 24 giờ sau, không xem mẫu: em hướng dẫn một bạn mới trong buổi chụp ảnh nhóm hư cấu. Tự chọn một hành động nhỏ cần bạn thực hiện để chuẩn bị bức ảnh, rồi viết lời nhờ tiếng Nhật. Không dùng lại việc thủ công ở phiên trước.",
+          "criteria":["Chuyển giao: lời nhờ phục vụ chuẩn bị ảnh và người nghe mới, không chỉ đổi tên vật cũ.", "Cấu trúc/nghĩa: tự tạo thể て＋ください cho hành động rõ ràng, không nhầm lời cấm hoặc kể quá khứ.", "Ghi trợ giúp thực tế riêng; một bài sau 24 giờ không tự chứng minh nhớ lâu hoặc đúng ngữ nghĩa."],
+          "exchange":{"group":"n5-request-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:request:cycle:produce","n5-teaching:v1:request:cycle:revise"],"delay_hours":24},
+          "rationale":"Bài mới không hiển thị câu cũ hay đáp án; nhận xét chỉ tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:comparison",
-      "revision": 2,
+      "revision": 3,
+      "delayed_review_task_id":"n5-teaching:v1:comparison:cycle:delayed",
       "order": 15,
       "level": "N5",
       "title": "So sánh với より・ほうが",
@@ -450,7 +497,9 @@
         "n5-teaching:v1:comparison:task:1",
         "n5-teaching:v1:comparison:task:2",
         "n5-teaching:v1:comparison:task:3",
-        "n5-teaching:v1:comparison:task:4"
+        "n5-teaching:v1:comparison:task:4",
+        "n5-teaching:v1:comparison:cycle:produce",
+        "n5-teaching:v1:comparison:cycle:revise"
       ],
       "authorship": "ai_authored",
       "review": {
@@ -672,12 +721,35 @@
           "rationale": "Tính từ な dùng thân＋です ở vị ngữ, nhưng thêm な khi trực tiếp bổ nghĩa danh từ: 簡単な問題. Không đưa な trước です hay biến 簡単 thành tính từ い.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:comparison:cycle:produce","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Em giúp chọn đồ cho góc học tập hư cấu. Tự chọn hai đồ cùng loại, đặt một đặc điểm có thể so sánh và tự quyết định bên nào có đặc điểm ấy hơn. Ghi dữ kiện ngắn bằng tiếng Việt rồi viết một câu so sánh tiếng Nhật cho người cùng chọn. Không dùng bảng giá hay túi của ví dụ.",
+          "criteria":["Nghĩa: câu Nhật giữ đúng hai đối tượng, tiêu chí và chiều so sánh trong dữ kiện em tự đặt.", "Cấu trúc: mốc より và phía được nhận xét không bị đảo; vị ngữ tính từ い/な phù hợp.", "Phạm vi: không tự suy vật tốt hơn về mọi mặt hay nhất toàn bộ thị trường; kana/kanji/dấu câu góp ý riêng."],
+          "exchange":{"group":"n5-comparison-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Dữ kiện là hư cấu của người học, không phải xác minh sản phẩm; không chấm bằng một câu mẫu.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:comparison:cycle:revise","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Đọc chính dữ kiện và câu so sánh em vừa viết. Viết cách diễn đạt còn lại bằng より／のほうが sao cho giữ nguyên bên có đặc điểm hơn; hoặc giữ câu nếu chưa chắc cách đổi và ghi rõ chỗ chưa chắc. Thêm ghi chú Việt xác định mốc và phía được nhận xét trong bản cuối.",
+          "criteria":["Nối tiếp: giữ đúng hai đối tượng và quan hệ trong bài trước; không tự đổi giá trị để hợp câu.", "Nghĩa/cấu trúc: đổi cách diễn đạt không đảo chiều; ghi chú phải đối chiếu được câu thật.", "Ghi chưa chắc là thông tin hỗ trợ, không phải tự xác nhận đúng; không bắt sửa một câu ban đầu hợp lý."],
+          "exchange":{"group":"n5-comparison-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:comparison:cycle:produce"]},
+          "rationale":"Cần xem bài trước mới nhận xét được giữ nghĩa; không suy từ khớp chữ thành hiểu.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:comparison:cycle:delayed","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Sau ít nhất 24 giờ ở phiên khác, không xem tham khảo: viết cho bản tin câu lạc bộ hư cấu một nhận xét so sánh hai hoạt động em tự chọn về độ dễ hoặc mức em thích. Tự quyết định quan hệ rồi viết tiếng Nhật và nêu ý định bằng tiếng Việt. Không nói về đồ dùng hoặc tái dùng dữ kiện góc học tập.",
+          "criteria":["Chuyển giao: nhận xét hoạt động cho bản tin, không phải chọn vật mua.", "Nghĩa/cấu trúc: quan hệ so sánh trong câu giữ đúng ý định và mốc, không biến sở thích cá nhân thành sự thật của mọi người.", "Trợ giúp và bài mới ghi riêng; chỉ lịch hẹn không chứng minh khả năng tự lực hay ghi nhớ."],
+          "exchange":{"group":"n5-comparison-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:comparison:cycle:produce","n5-teaching:v1:comparison:cycle:revise"],"delay_hours":24},
+          "rationale":"Tình huống giữ lại không cấp câu cũ hoặc một đáp án duy nhất; AI chỉ tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:also",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:also:task:0","n5-teaching:v1:also:task:1","n5-teaching:v1:also:task:2","n5-teaching:v1:also:task:3","n5-teaching:v1:also:task:4","n5-teaching:v1:also:cycle:produce","n5-teaching:v1:also:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:also:cycle:delayed",
       "order": 2,
       "level": "N5",
       "title": "Bổ sung thông tin giống nhau bằng も",
@@ -871,12 +943,35 @@
           "rationale": "Bỏ は trước も để được mẫu NもNです. Đây là đáp án cho phép sửa đã giới hạn, không phải danh sách mọi cách nói tự nhiên cùng nghĩa.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:also:cycle:produce","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Lập hai thẻ nhân vật hư cấu cho lớp giao lưu. Tự chọn hai tên và một nghề/vai trò chung, có thể cùng là hoặc cùng không phải nghề ấy. Viết hai câu Nhật: câu đầu nêu thông tin, câu sau bổ sung người thứ hai bằng も. Tự chọn nội dung, không chép hai người trong ví dụ.",
+          "criteria":["Nghĩa: cả hai thực sự có cùng thông tin đã chọn; nếu là phủ định thì giữ phủ định ở cả hai.", "Cấu trúc: も bổ sung đối tượng thứ hai, không ghép はも; vị ngữ danh từ lịch sự.", "Mục tiêu là liên kết thông tin bằng も, không bắt viết hội thoại; lỗi chữ và dấu câu tách khỏi phủ định/nghĩa."],
+          "exchange":{"group":"n5-also-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Có nhiều nội dung hợp lệ, không đối chiếu một hồ sơ chuẩn hay suy nghề từ tên.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:also:cycle:revise","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Kiểm tra chính hai câu vừa viết: người thứ hai 'cũng' có cùng thông tin nào? Viết bản cuối giữ hai nhân vật và ý khẳng định/phủ định. Có thể giữ nguyên nếu phù hợp; thêm ghi chú Việt trỏ đến vị ngữ chung trong bài em, không chỉ nói 'đã đúng'.",
+          "criteria":["Nối tiếp: dùng cặp câu thật đã lưu, giữ hai nhân vật và thông tin chung.", "Nghĩa: không coi も tự mang nghĩa 'không'; cấu trúc phủ định phải còn nếu ý ban đầu phủ định.", "Sửa có lý do hoặc giữ câu đúng; không có bài trước thì chưa thể nhận xét liên kết."],
+          "exchange":{"group":"n5-also-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:also:cycle:produce"]},
+          "rationale":"Tự giải thích không tự chứng minh đã hiểu; góp ý có điều kiện trên câu thực tế.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:also:cycle:delayed","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Ở phiên khác ít nhất 24 giờ sau, không xem mẫu: em phân loại hai đồ vật tự chọn để ghi nhãn kệ lớp hư cấu. Tự chọn loại chung rồi viết hai câu tiếng Nhật, dùng も để nói vật thứ hai cũng thuộc loại ấy. Không dùng lại hồ sơ nghề của hai nhân vật.",
+          "criteria":["Chuyển giao: bổ sung thông tin phân loại vật cho kệ, không thay tên người.", "Cấu trúc/nghĩa: câu thứ hai có も gắn đúng vật và giữ loại đã nêu ở câu đầu.", "Lưu bài và trợ giúp mới riêng; không suy thành thạo hoặc tự lực từ việc hoàn thành lịch ôn."],
+          "exchange":{"group":"n5-also-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:also:cycle:produce","n5-teaching:v1:also:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp lại bài cũ, mẫu hay khóa chuỗi; chỉ góp ý tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:possession",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:possession:task:0","n5-teaching:v1:possession:task:1","n5-teaching:v1:possession:task:2","n5-teaching:v1:possession:task:3","n5-teaching:v1:possession:task:4","n5-teaching:v1:possession:cycle:produce","n5-teaching:v1:possession:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:possession:cycle:delayed",
       "order": 3,
       "level": "N5",
       "title": "Nối danh từ và nói sở hữu bằng の",
@@ -1070,12 +1165,35 @@
           "rationale": "Giữ の để còn nghĩa 'của tôi' sau khi lược tên vật đã biết. Đáp án này chỉ áp dụng khi 本 đã được xác định trong ngữ cảnh như đề cho.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:possession:cycle:produce","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Trong góc đồ thất lạc hư cấu, em đã biết chủ của một vật. Tự chọn vật và chủ, ghi hai dữ kiện này bằng tiếng Việt rồi viết một câu Nhật với の để giúp trả đúng người. Không dùng ô/đồng hồ hoặc hồ sơ đã có trong bài.",
+          "criteria":["Nghĩa: chủ và vật trong câu đúng chiều dữ kiện tự đặt; không suy chủ từ vị trí vật.", "Cấu trúc: AのB giữ B làm vật trung tâm và A làm chủ; câu lịch sự rõ vật cần trả.", "Tự chọn nội dung chứ không chép; kana/kanji và dấu câu hợp lệ không bị coi là lỗi sở hữu."],
+          "exchange":{"group":"n5-possession-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Dữ kiện hư cấu do người học chọn; nhận xét không xác minh quyền sở hữu thật hay cấp điểm.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:possession:cycle:revise","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Dựa chính câu em vừa viết, kiểm tra người đọc có nhận ra vật nào của ai không. Viết bản cuối giữ chủ và vật; nếu đã rõ có thể giữ nguyên. Thêm ghi chú Việt chỉ rõ danh từ trước/sau の trong câu của em và khi nào có thể lược tên vật mà không mơ hồ.",
+          "criteria":["Nối tiếp: giữ đúng chủ và vật đã chọn, không thay bằng mẫu sách.", "Cấu trúc/nghĩa: giải thích đúng chiều の; chỉ lược vật khi vật đã rõ trong ngữ cảnh, không lược mất quan hệ sở hữu.", "Không bắt tạo lỗi; chưa rõ nghĩa của một từ thì nêu chưa chắc thay vì phán sai chắc chắn."],
+          "exchange":{"group":"n5-possession-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:possession:cycle:produce"]},
+          "rationale":"Nhận xét so với câu thực tế, không chấm tự báo cáo thành đúng ngữ nghĩa.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:possession:cycle:delayed","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Sau ít nhất 24 giờ ở phiên khác, không xem mẫu: em đặt nhãn chủ đề cho tài liệu trong góc đọc hư cấu. Tự chọn một lĩnh vực và một loại tài liệu, rồi dùng の viết một câu Nhật cho biết tài liệu thuộc lĩnh vực nào. Đây là quan hệ chủ đề–tài liệu, không phải tìm chủ đồ thất lạc.",
+          "criteria":["Chuyển giao: dùng の nối quan hệ nội dung, không chỉ đổi tên người sở hữu.", "Cấu trúc/nghĩa: danh từ trung tâm đứng sau の và người đọc hiểu loại tài liệu, lĩnh vực.", "Bài mới và trợ giúp được giữ riêng; không coi hoàn thành là xác nhận nhớ lâu hay thành thạo."],
+          "exchange":{"group":"n5-possession-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:possession:cycle:produce","n5-teaching:v1:possession:cycle:revise"],"delay_hours":24},
+          "rationale":"Không đưa câu cũ hoặc đáp án duy nhất; AI chỉ tư vấn ngôn ngữ.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:question",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:question:task:0","n5-teaching:v1:question:task:1","n5-teaching:v1:question:task:2","n5-teaching:v1:question:task:3","n5-teaching:v1:question:task:4","n5-teaching:v1:question:cycle:produce","n5-teaching:v1:question:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:question:cycle:delayed",
       "order": 4,
       "level": "N5",
       "title": "Hỏi lịch sự bằng か",
@@ -1270,12 +1388,35 @@
           "rationale": "どこ hỏi vị trí; だれ hỏi người và 何 hỏi sự vật hoặc nội dung nên không đáp ứng yêu cầu cụ thể này.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:question:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Lần đầu đến lớp vẽ hư cấu, em cần biết một thông tin trước khi vào học. Tự chọn điều chưa biết về tên một đồ vật hoặc vị trí một nơi trong lớp; viết một câu hỏi Nhật lịch sự có か. Không cấp tên vật/nơi hay đáp án, không hỏi thông tin riêng tư của người thật.",
+          "criteria":["Nghĩa: câu hỏi thực sự xin thông tin em chọn, không khẳng định thông tin đã biết.", "Cấu trúc: từ hỏi phù hợp tên vật/vị trí, か theo sau phần lịch sự; không đảo thành かです.", "Giao tiếp: người được hỏi biết em đang hỏi vật/nơi nào; chính tả tách khỏi khả năng hỏi đúng ý."],
+          "exchange":{"group":"n5-question-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có câu chuẩn duy nhất; nội dung tự chọn được nhận xét tư vấn, không chấm đúng bằng chuỗi.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:question:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Đọc lại chính câu hỏi em vừa viết. Ghi bằng tiếng Việt người nghe cần cung cấp loại thông tin gì, rồi viết bản câu hỏi cuối giữ nguyên điều cần hỏi và làm rõ đối tượng nếu cần. Nếu đã rõ, giữ nguyên; đừng tự trả lời bằng một dữ kiện mà chưa ai cung cấp.",
+          "criteria":["Nối tiếp: câu cuối giữ điều chưa biết trong câu hỏi thực tế, không đổi câu khác.", "Nghĩa: phân biệt câu hỏi thông tin với xác nhận có/không; ghi chú nêu đúng loại câu trả lời cần thiết.", "Cấu trúc ですか phù hợp; không ép sửa câu đúng hoặc coi dấu ？ hợp lệ là thiếu hiểu biết."],
+          "exchange":{"group":"n5-question-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:question:cycle:produce"]},
+          "rationale":"Kiểm tra ý định của câu đã viết, không giả vờ có lời đáp thật từ đối tác.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:question:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: em kiểm tra nhãn một món đồ ở khu đổi sách hư cấu. Tự chọn vật và một loại em nghi nó thuộc về; viết câu hỏi lịch sự để xác nhận giả định ấy, không hỏi vị trí hay xin tên như ở lớp vẽ.",
+          "criteria":["Chuyển giao: câu hỏi xác nhận giả định ở khu đổi sách, không tái dùng câu xin thông tin cũ.", "Cấu trúc/nghĩa: danh từ và ですか thể hiện điều cần xác nhận, không trình bày giả định là sự thật.", "Ghi bài và trợ giúp thực tế; không suy nhớ lâu/tự lực từ điều kiện 24 giờ."],
+          "exchange":{"group":"n5-question-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:question:cycle:produce","n5-teaching:v1:question:cycle:revise"],"delay_hours":24},
+          "rationale":"Không hiển thị câu cũ hay đáp án; chỉ nhận xét tư vấn trên bài mới.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:polite-verbs",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:polite-verbs:task:0","n5-teaching:v1:polite-verbs:task:1","n5-teaching:v1:polite-verbs:task:2","n5-teaching:v1:polite-verbs:task:3","n5-teaching:v1:polite-verbs:task:4","n5-teaching:v1:polite-verbs:cycle:produce","n5-teaching:v1:polite-verbs:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:polite-verbs:cycle:delayed",
       "order": 5,
       "level": "N5",
       "title": "Bốn đuôi động từ lịch sự",
@@ -1488,12 +1629,34 @@
           "rationale": "Thay ます bằng ました; giữ nguyên phần かい trước đuôi. Bài yêu cầu dạng khẳng định, không phải phủ định.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:polite-verbs:cycle:produce","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Viết hai dòng cập nhật cho sổ sinh hoạt lớp hư cấu: một việc của hôm qua và một dự định ngày mai. Tự chọn hoạt động và tự quyết định mỗi việc có làm hay không, ghi ý định Việt ngắn rồi viết hai câu Nhật lịch sự. Không cần một việc phải phủ định nếu em không chọn vậy.",
+          "criteria":["Nghĩa: giữ đúng hôm qua/ngày mai và làm/không làm theo ý định tự đặt; dự định không phải đang làm.", "Cấu trúc: chọn đuôi lịch sự quá khứ/phi quá khứ và khẳng định/phủ định đúng mục đích, không thêm です sau động từ.", "Nội dung do em chọn; phân biệt lỗi thời/phủ định với cách viết kana/kanji và dấu câu."],
+          "exchange":{"group":"n5-polite-verbs-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có một lịch hoạt động hoặc khóa câu cố định; nhận xét chỉ tư vấn, không xác minh việc thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:polite-verbs:cycle:revise","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Đọc chính hai dòng vừa viết cùng ý định Việt. Viết bản cuối giữ nguyên ngày và ý làm/không làm. Có thể giữ nguyên nếu phù hợp; thêm ghi chú chỉ ra đuôi em dùng ở mỗi câu và nó đang kể quá khứ hay nêu dự định.",
+          "criteria":["Nối tiếp: kiểm đúng hai hành động của bài trước, không thay lịch để né lỗi.", "Nghĩa/cấu trúc: thời và phủ định nhất quán với ý định, không xem ます là bằng chứng đang làm.", "Không ép sửa câu đúng; thiếu bài trước thì chưa đủ bằng chứng kiểm tra."],
+          "exchange":{"group":"n5-polite-verbs-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:polite-verbs:cycle:produce"]},
+          "rationale":"Ghi chú và câu cuối đều được lưu như tự báo cáo, không cấp chứng nhận hiểu.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:polite-verbs:cycle:delayed","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: làm lời thuyết minh cho một nhân vật trong truyện tranh hư cấu. Tự chọn một thói quen mỗi tuần và một việc nhân vật đã không làm cuối tuần trước; viết hai câu Nhật lịch sự và ghi ý định Việt ngắn. Không dùng lại nhật ký lớp.",
+          "criteria":["Chuyển giao: phân biệt thói quen với phủ định quá khứ trong lời kể về nhân vật, không sao chép kế hoạch ngày mai.", "Cấu trúc/nghĩa: đuôi động từ giữ đúng thời, tính khẳng định/phủ định và thông tin tự chọn.", "Trợ giúp mới ghi riêng; hoàn thành bài hẹn giờ không chứng minh tự lực hay ghi nhớ."],
+          "exchange":{"group":"n5-polite-verbs-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:polite-verbs:cycle:produce","n5-teaching:v1:polite-verbs:cycle:revise"],"delay_hours":24},
+          "rationale":"Không hiển thị câu trước hoặc đáp án; AI chỉ nhận xét có điều kiện.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:past-negative",
-      "revision": 2,
+      "revision": 3,
+      "delayed_review_task_id":"n5-teaching:v1:past-negative:cycle:delayed",
       "order": 6,
       "level": "N5",
       "title": "Kể việc đã không làm bằng ませんでした・なかった",
@@ -1526,7 +1689,9 @@
         "n5-teaching:v1:past-negative:task:1",
         "n5-teaching:v1:past-negative:task:2",
         "n5-teaching:v1:past-negative:task:3",
-        "n5-teaching:v1:past-negative:task:4"
+        "n5-teaching:v1:past-negative:task:4",
+        "n5-teaching:v1:past-negative:cycle:produce",
+        "n5-teaching:v1:past-negative:cycle:revise"
       ],
       "authorship": "ai_authored",
       "review": {
@@ -1736,12 +1901,34 @@
           "rationale": "Nhóm 2 bỏ る rồi thêm ない: 寝る→寝ない. Sau khi tạo được phủ định phi quá khứ mới luyện đổi ない→なかった; không nhầm không ngủ với đã không ngủ.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:past-negative:cycle:produce","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Viết một dòng nhật ký hư cấu về việc em đã không làm vào một thời điểm quá khứ tự chọn. Tự chọn động từ và nội dung, ghi dạng từ điển cùng nhóm đã biết/tra, rồi tự tạo câu tiếng Nhật dạng thường phủ định quá khứ. Không dùng lại việc dùng điện thoại hoặc ra ngoài của ví dụ.",
+          "criteria":["Nghĩa: hành động không xảy ra ở thời điểm quá khứ đã chọn, không phải kế hoạch không làm ngày mai.", "Cấu trúc: từ nhóm đã xác định tạo ない rồi なかった phù hợp; dạng thường hợp nhật ký.", "Không đoán nhóm chỉ từ đuôi る; chính tả tách khỏi lỗi chia dạng. Nếu đã tra, ghi trợ giúp thật."],
+          "exchange":{"group":"n5-past-negative-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Mục tiêu là tự tạo phủ định quá khứ có nội dung chọn, không cần giả lập hội thoại.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:past-negative:cycle:revise","mode":"writing","skill":"grammar","objective":"transformation",
+          "prompt":"Dùng chính việc và thời điểm trong nhật ký vừa viết để báo lại lịch sự cho giáo viên, bằng đuôi ませんでした. Kiểm tra bản nhật ký; nếu cần sửa, ghi bản sửa trước, còn nếu đã phù hợp thì giữ. Thêm ghi chú Việt xác nhận hai cách nói giữ cùng phủ định và quá khứ, không đổi thành một việc khác.",
+          "criteria":["Nối tiếp: giữ hành động, nội dung và mốc quá khứ từ bài thực tế.", "Cấu trúc: chuyển mức lịch sự mà không mất phủ định/quá khứ; không ghép ませんだった.", "Không buộc bản đầu có lỗi; ghi chưa chắc nếu chưa biết dạng ます, không bịa nhóm."],
+          "exchange":{"group":"n5-past-negative-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:past-negative:cycle:produce"]},
+          "rationale":"Nhận xét phải so với bản thật, không dùng mẫu chuẩn thay ý người học; chưa được chấm xác minh.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:past-negative:cycle:delayed","mode":"writing","skill":"grammar","objective":"structure",
+          "prompt":"Ít nhất 24 giờ sau ở phiên khác, không xem tham khảo: trong bản tổng kết câu lạc bộ hư cấu, một hoạt động dự tính tuần trước đã không diễn ra. Tự chọn hoạt động khác nhật ký cũ và ngày quá khứ, viết một câu thông báo Nhật lịch sự cho thành viên; không giải thích nguyên nhân nếu chưa muốn.",
+          "criteria":["Chuyển giao: tổng kết hoạt động chung đã không diễn ra, không chỉ đổi ngày nhật ký cá nhân.", "Cấu trúc/nghĩa: tự tạo phủ định quá khứ lịch sự, giữ sự không xảy ra chứ không khẳng định đã làm.", "Bài mới và trợ giúp lưu riêng; không suy thành thạo từ lịch mở bài."],
+          "exchange":{"group":"n5-past-negative-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:past-negative:cycle:produce","n5-teaching:v1:past-negative:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp câu cũ hoặc khóa đáp án; chỉ tư vấn ngôn ngữ.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:te-form",
-      "revision": 2,
+      "revision": 3,
+      "delayed_review_task_id":"n5-teaching:v1:te-form:cycle:delayed",
       "order": 7,
       "level": "N5",
       "title": "Tạo thể て theo nhóm động từ",
@@ -1880,7 +2067,9 @@
         "n5-teaching:v1:te-form:task:9",
         "n5-teaching:v1:te-form:task:3",
         "n5-teaching:v1:te-form:task:4",
-        "n5-teaching:v1:te-form:task:2"
+        "n5-teaching:v1:te-form:task:2",
+        "n5-teaching:v1:te-form:cycle:produce",
+        "n5-teaching:v1:te-form:cycle:revise"
       ],
       "authorship": "ai_authored",
       "review": {
@@ -2130,12 +2319,35 @@
           "rationale": "Phần danh từ 散歩 giữ nguyên, する đổi bất quy tắc thành して. Không dùng quy tắc bỏ る của nhóm 2 để tạo すて. Dạng của 来る cần học riêng, không suy từ する.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:te-form:cycle:produce","mode":"writing","skill":"grammar","objective":"transformation",
+          "prompt":"Sau chín bước nhỏ, tự chọn hai hành động đơn giản trong lịch buổi chiều hư cấu, khác các chuỗi mẫu. Ghi động từ đầu ở dạng từ điển và nhóm đã biết/tra, rồi tự viết một câu Nhật nối hai việc theo thứ tự bằng thể て; tự chọn kể hôm qua hay nói lịch thường ngày. Không cần lời nhờ hoặc hội thoại.",
+          "criteria":["Nội dung: em tự chọn hai hành động, thứ tự và thời; chuỗi có thể thực hiện được.", "Cấu trúc: thể て của động từ đầu phù hợp nhóm/ngoại lệ đã xác định, không lấy thân ます＋て làm quy tắc chung.", "Thời: nhìn động từ cuối và ngữ cảnh, không coi thể て tự là quá khứ. Chính tả tách khỏi chia dạng; tra nhóm là trợ giúp phải ghi."],
+          "exchange":{"group":"n5-te-form-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Ứng dụng sau lộ trình chia dạng, không thay chín bước thành một bài chatbot; không có khóa câu duy nhất.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:te-form:cycle:revise","mode":"writing","skill":"grammar","objective":"transformation",
+          "prompt":"Kiểm tra chính chuỗi em vừa viết. Chỉ ra động từ đầu và quy tắc/ngoại lệ em đã dùng, cùng phần nào cho biết thời. Viết bản cuối giữ hai hành động và thứ tự; nếu đã phù hợp thì giữ nguyên và ghi kết quả kiểm bằng tiếng Việt. Không cần thêm mẫu mới hay cố tạo lỗi.",
+          "criteria":["Nối tiếp: kiểm đúng động từ và chuỗi đã lưu; không thay bằng động từ do bài mẫu chọn.", "Cấu trúc: thông tin nhóm có căn cứ, thể て và đuôi cuối đúng mục đích đã chọn.", "Ghi chú chỉ rõ điểm kiểm; chưa chắc thì nêu chưa chắc, không tự xác nhận thành thạo hoặc hiểu mọi chức năng て."],
+          "exchange":{"group":"n5-te-form-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:te-form:cycle:produce"]},
+          "rationale":"Tự kiểm dạng và thời dựa trên bài thật; thiếu bài trước thì không suy ra khả năng sửa.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:te-form:cycle:delayed","mode":"writing","skill":"grammar","objective":"transformation",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem bảng hay câu cũ: làm một dòng mô tả công việc cho bảng phân công chuẩn bị góc mỹ thuật hư cấu. Tự chọn hai thao tác khác lịch buổi chiều, nêu động từ đầu cùng nhóm em nhớ, rồi viết câu Nhật nối việc đầu với việc sau bằng thể て, ở dạng lịch sự phi quá khứ.",
+          "criteria":["Chuyển giao: mô tả hai thao tác chuẩn bị đồ dùng cho bảng phân công, không tái kể lịch cá nhân.", "Mục tiêu dạng: tự tạo thể て theo nhóm/ngoại lệ, kết thúc lịch sự phi quá khứ; không cần diễn thêm hội thoại.", "Chưa biết nhóm được ghi là chưa biết, không coi một lần tự báo cáo hoặc hẹn giờ là nhớ lâu; trợ giúp phải lưu riêng."],
+          "exchange":{"group":"n5-te-form-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:te-form:cycle:produce","n5-teaching:v1:te-form:cycle:revise"],"delay_hours":24},
+          "rationale":"Bài giữ lại không cấp bảng hay dạng cần tạo; AI chỉ tư vấn, không xác minh mức nhớ.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:negative-request",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:negative-request:task:0","n5-teaching:v1:negative-request:task:1","n5-teaching:v1:negative-request:task:2","n5-teaching:v1:negative-request:task:3","n5-teaching:v1:negative-request:task:4","n5-teaching:v1:negative-request:cycle:produce","n5-teaching:v1:negative-request:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:negative-request:cycle:delayed",
       "order": 9,
       "level": "N5",
       "title": "Nhờ đừng làm bằng ないでください",
@@ -2332,12 +2544,35 @@
           "rationale": "来る có thể ない là 来ない, đọc こない. Khi ghép với phần でください đã có trong đề, được こないでください; きない không phải dạng này.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:negative-request:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Em phụ trách bàn tranh giấy của lớp trong buổi trưng bày hư cấu. Tự chọn một hành động nhỏ muốn khách cùng lớp đừng làm để giữ tranh nguyên vẹn; ghi ý định Việt rồi viết một lời nhờ tiếng Nhật bằng mẫu đang học. Không sao chép nội quy chụp ảnh hoặc cửa sổ của ví dụ.",
+          "criteria":["Nghĩa: yêu cầu người nghe không làm hành động đã tự chọn, không phải nhờ làm hoặc kể đã không làm.", "Cấu trúc: tạo ない của động từ phù hợp rồi ghép でください; không dùng ませんでください.", "Giao tiếp: lời nhờ cụ thể, không đe dọa; không coi mức lịch sự đủ cho mọi khách. Chính tả góp ý riêng."],
+          "exchange":{"group":"n5-negative-request-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có khóa câu cho nội quy tự chọn; chỉ tư vấn, không chấm đúng ngữ nghĩa tự động.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:negative-request:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Kiểm chính lời nhờ vừa viết với ý định Việt: có vô tình yêu cầu làm điều muốn ngăn không? Viết bản cuối giữ hành động cần tránh; có thể giữ nguyên nếu phù hợp. Thêm ghi chú nêu động từ và thể ない trong chính câu em, không đổi sang một nội quy khác.",
+          "criteria":["Nối tiếp: giữ bàn tranh và hành động trong bài đã lưu.", "Nghĩa/cấu trúc: phủ định nằm đúng trong lời nhờ người nghe; phân biệt ないで với なくて và lời kể quá khứ.", "Không ép sửa câu đúng; chưa có bài trước hoặc chưa biết nhóm phải nêu chưa đủ dữ kiện."],
+          "exchange":{"group":"n5-negative-request-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:negative-request:cycle:produce"]},
+          "rationale":"Tự kiểm không đồng nghĩa đã đạt mục tiêu; góp ý theo văn bản thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:negative-request:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Sau ít nhất 24 giờ, ở phiên khác không xem mẫu: em viết một mẩu nhắc cho bạn cùng nhóm trước buổi thu âm truyện hư cấu. Tự chọn một việc muốn bạn đừng làm để buổi thu không gián đoạn; viết tiếng Nhật. Không tái dùng quy định bảo quản tranh.",
+          "criteria":["Chuyển giao: lời nhắc cho bạn trước buổi thu, không chỉ đổi danh từ ở bảng trưng bày.", "Cấu trúc/nghĩa: ないでください thể hiện rõ việc đừng làm; không đổi thành lời khẳng định hoặc kể quá khứ.", "Lưu trợ giúp thực tế riêng; lịch 24 giờ không chứng minh tự lực/ghi nhớ."],
+          "exchange":{"group":"n5-negative-request-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:negative-request:cycle:produce","n5-teaching:v1:negative-request:cycle:revise"],"delay_hours":24},
+          "rationale":"Không hiển thị câu cũ hoặc mẫu mới; nhận xét chỉ tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:existence",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:existence:task:0","n5-teaching:v1:existence:task:1","n5-teaching:v1:existence:task:2","n5-teaching:v1:existence:task:3","n5-teaching:v1:existence:task:4","n5-teaching:v1:existence:cycle:produce","n5-teaching:v1:existence:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:existence:cycle:delayed",
       "order": 10,
       "level": "N5",
       "title": "Nói có và ở đâu bằng あります・います",
@@ -2539,12 +2774,35 @@
           "rationale": "Xe đỗ là đồ vật nên dùng あります trong câu này; khả năng tự di chuyển của một chiếc xe không khiến nó được xếp như người hay động vật. Đáp án chỉ áp dụng cho cách tả tồn tại bình thường đã nêu.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:existence:cycle:produce","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Vẽ bằng lời một góc sân hư cấu cho người bạn chưa nhìn thấy: tự chọn một nơi, một đồ vật hoặc cây, và một người hoặc con vật có mặt. Ghi sơ đồ ngắn bằng Việt rồi viết hai câu Nhật nêu sự có mặt/vị trí. Không dùng lại nguyên cảnh vườn có mèo của bài.",
+          "criteria":["Nghĩa: hai đối tượng và vị trí đúng sơ đồ tự chọn; câu nêu hiện diện chứ không tự thêm hoạt động.", "Cấu trúc: nơi tồn tại với に; người/động vật thông thường dùng います, đồ vật/cây thông thường dùng あります.", "Không lấy tiêu chí sống/di chuyển làm quy tắc tuyệt đối; chính tả/dấu câu tách khỏi lựa chọn vị ngữ."],
+          "exchange":{"group":"n5-existence-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có sơ đồ chuẩn hay câu đáp án; tư vấn dựa trên cảnh hư cấu người học đặt.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:existence:cycle:revise","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Đối chiếu chính hai câu với sơ đồ em đã đặt. Viết bản cuối giữ các đối tượng/vị trí, sửa nếu cần hoặc giữ nếu đã phù hợp. Thêm ghi chú Việt cho từng câu: đối tượng gì, vì sao chọn あります hay います, và に đang chỉ nơi có mặt chứ không phải nơi làm việc.",
+          "criteria":["Nối tiếp: giữ hai đối tượng thật trong bài trước, không thay để né lựa chọn động từ.", "Nghĩa/cấu trúc: chọn vị ngữ theo loại đối tượng và chức năng tồn tại của câu, không chỉ nhìn chữ 'sống'.", "Không bắt câu đầu phải sai; ghi chưa chắc khi nghĩa từ chưa rõ."],
+          "exchange":{"group":"n5-existence-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:existence:cycle:produce"]},
+          "rationale":"Cần bài trước để kiểm sơ đồ; tự giải thích vẫn chưa được xác minh.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:existence:cycle:delayed","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: em kiểm tra một phòng sinh hoạt hư cấu trước khi mở cửa. Tự chọn một đồ cần có nhưng hiện không có và một người đang có mặt ở nơi tự chọn; viết hai câu Nhật để báo người phụ trách. Không tả lại góc sân cũ.",
+          "criteria":["Chuyển giao: báo thiếu đồ và vị trí người để chuẩn bị phòng, không chỉ kể cảnh khẳng định.", "Cấu trúc/nghĩa: giữ đúng phủ định của đồ và hiện diện của người với ありません／います và nơi phù hợp.", "Bài mới/trợ giúp ghi riêng, không lấy lịch mở bài làm bằng chứng đã nhớ lâu."],
+          "exchange":{"group":"n5-existence-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:existence:cycle:produce","n5-teaching:v1:existence:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp câu cũ hay đáp án; chỉ tư vấn, không xác minh thực trạng thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:time-range",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:time-range:task:0","n5-teaching:v1:time-range:task:1","n5-teaching:v1:time-range:task:2","n5-teaching:v1:time-range:task:3","n5-teaching:v1:time-range:task:4","n5-teaching:v1:time-range:cycle:produce","n5-teaching:v1:time-range:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:time-range:cycle:delayed",
       "order": 11,
       "level": "N5",
       "title": "Nêu khoảng thời gian với から・まで",
@@ -2745,12 +3003,35 @@
           "rationale": "Ghép mốc đầu 10時 với から, mốc cuối 12時 với まで. Cách viết chữ hoặc kana ngoài yêu cầu không bị coi là sai tiếng Nhật nói chung.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:time-range:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Lập một khung giờ tự học hư cấu để báo cho bạn cùng phòng. Tự chọn hoạt động, giờ bắt đầu và kết thúc cùng ngày, có ghi rõ buổi. Ghi lịch bằng số Việt rồi viết một câu Nhật với から・まで. Không dùng lại giờ 19–20 hoặc 10–12 của bài.",
+          "criteria":["Nghĩa: hoạt động và hai mốc đúng lịch em đặt, giờ cuối sau giờ đầu; buổi sáng/chiều rõ.", "Cấu trúc: から đánh dấu bắt đầu, まで đánh dấu kết thúc; không ghép にから trong mẫu giờ này.", "Giao tiếp: người bạn biết khoảng em bận, không tự coi mọi phút đều làm liên tục; chữ và dấu câu góp ý riêng."],
+          "exchange":{"group":"n5-time-range-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Lịch do người học chọn, không có khóa giờ hoặc câu duy nhất; tư vấn không xác minh lịch thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:time-range:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Dùng chính lịch và câu Nhật vừa viết: kiểm xem bạn có thể nhầm mốc đầu/cuối hoặc sáng/chiều không. Viết bản cuối giữ hoạt động và khoảng đã chọn; có thể giữ nguyên. Thêm ghi chú Việt nêu mốc bắt đầu/kết thúc mà câu cuối thực sự nói.",
+          "criteria":["Nối tiếp: giữ lịch đã lưu, không tự đổi giờ để khớp một mẫu khác.", "Nghĩa/cấu trúc: ghi chú và câu cùng chiều từ đầu đến cuối, buổi nhất quán.", "Không ép sửa câu rõ; thiếu lịch trước thì chưa đánh giá được sự nhất quán."],
+          "exchange":{"group":"n5-time-range-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:time-range:cycle:produce"]},
+          "rationale":"Tự kiểm hai mốc của bài thật, không cấp điểm thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:time-range:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Sau ít nhất 24 giờ ở phiên khác, không xem tham khảo: em mô tả một chặng đi bộ trong bản đồ khu phố hư cấu. Tự chọn nơi xuất phát và nơi kết thúc khác nhau, viết một câu Nhật với から・まで để chỉ chặng, không nêu lại lịch tự học hoặc tự đoán độ dài đường.",
+          "criteria":["Chuyển giao: hai mốc là địa điểm của hành trình, không phải giờ tự học đổi số.", "Cấu trúc/nghĩa: から gắn nơi xuất phát và まで gắn nơi cuối; không đảo chiều hoặc suy quãng đường.", "Trợ giúp thực tế và bài mới giữ riêng; hẹn 24 giờ không chứng minh tự lực/ghi nhớ."],
+          "exchange":{"group":"n5-time-range-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:time-range:cycle:produce","n5-teaching:v1:time-range:cycle:revise"],"delay_hours":24},
+          "rationale":"Không hiển thị câu cũ hay lời giải; nhận xét AI chỉ tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:action-place",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:action-place:task:0","n5-teaching:v1:action-place:task:1","n5-teaching:v1:action-place:task:2","n5-teaching:v1:action-place:task:3","n5-teaching:v1:action-place:task:4","n5-teaching:v1:action-place:cycle:produce","n5-teaching:v1:action-place:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:action-place:cycle:delayed",
       "order": 12,
       "level": "N5",
       "title": "Nói nơi diễn ra hoạt động bằng で",
@@ -2952,6 +3233,27 @@
           "rationale": "Ghép nơi hoạt động với で: レストランでパンを食べました. Ở đây không dùng に để thay cho nơi ăn.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:action-place:cycle:produce","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Lập ghi chú cho bản đồ sinh hoạt lớp hư cấu: tự chọn một hoạt động và nơi sẽ làm, rồi một đồ vật/người chỉ đang có mặt ở một nơi em chọn. Viết hai câu Nhật để người đọc phân biệt nơi hành động với nơi hiện diện. Không sao chép bếp/công viên trong ví dụ.",
+          "criteria":["Nghĩa: câu đầu thực sự nêu hoạt động, câu sau chỉ hiện diện, đúng các nơi em tự đặt.", "Cấu trúc: nơi hoạt động dùng で, nơi hiện diện dùng に với vị ngữ phù hợp; không quyết định chỉ từ tên nơi.", "Phạm vi: không đồng nhất mọi あります với đồ vật; chữ/dấu câu được góp ý riêng."],
+          "exchange":{"group":"n5-action-place-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Tự chọn cảnh, không có sơ đồ hay khóa câu cho sẵn; nhận xét tư vấn, không điểm.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:action-place:cycle:revise","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Đọc chính hai câu bản đồ em vừa viết. Viết bản cuối giữ nội dung/nơi, sửa hoặc giữ nếu đã phù hợp. Thêm ghi chú Việt chỉ vị ngữ ở mỗi câu và giải thích nơi ấy là nơi làm việc hay nơi có mặt; không chỉ ghi 'cứ tên địa điểm thì dùng で'.",
+          "criteria":["Nối tiếp: dùng hai câu đã lưu và giữ thông tin, không thay bằng câu mẫu.", "Nghĩa/cấu trúc: giải thích trợ từ theo chức năng vị ngữ, không chỉ từ danh từ nơi.", "Không ép sửa câu đúng; nếu từ chỉ hoạt động chưa rõ phải nêu nghi vấn riêng."],
+          "exchange":{"group":"n5-action-place-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:action-place:cycle:produce"]},
+          "rationale":"Phải có văn bản trước để đối chiếu; tự giải thích vẫn là bằng chứng chưa xác minh.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:action-place:cycle:delayed","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: em làm thông báo cho một sự kiện câu lạc bộ hư cấu. Tự chọn loại sự kiện, nơi tổ chức và ngày, viết một câu Nhật báo sự kiện diễn ra ở đâu với あります. Không kể vị trí đồ vật hoặc tái dùng bản đồ sinh hoạt cũ.",
+          "criteria":["Chuyển giao: sự kiện diễn ra tại nơi tự chọn, khác đồ vật hiện diện và hành động cá nhân.", "Cấu trúc/nghĩa: dùng で cho nơi diễn ra sự kiện dù vị ngữ あります; nội dung/ngày rõ.", "Bài và trợ giúp lưu riêng; không coi hoàn thành lịch ôn là chứng minh nhớ lâu hay thành thạo."],
+          "exchange":{"group":"n5-action-place-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:action-place:cycle:produce","n5-teaching:v1:action-place:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cung cấp câu cũ hoặc mẫu sự kiện cần chép; AI chỉ tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
@@ -3301,7 +3603,9 @@
     },
     {
       "id": "n5-teaching:v1:reason",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:reason:task:0","n5-teaching:v1:reason:task:1","n5-teaching:v1:reason:task:2","n5-teaching:v1:reason:task:3","n5-teaching:v1:reason:task:4","n5-teaching:v1:reason:cycle:produce","n5-teaching:v1:reason:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:reason:cycle:delayed",
       "order": 14,
       "level": "N5",
       "title": "Nêu lý do bằng から",
@@ -3509,12 +3813,35 @@
           "rationale": "Giữ nguyên mệnh đề lịch sự 疲れました rồi thêm から. Có thể lược vế ‘tôi nghỉ’ vì câu hỏi đã xác định nội dung cần giải thích.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:reason:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Trong buổi tự học hư cấu, em quyết định làm hoặc không làm một việc nhỏ. Tự chọn việc và một lý do phù hợp, ghi ý định Việt rồi viết câu Nhật lịch sự với から nêu lý do. Không dùng lại trời mưa/mang ô hoặc quán yên tĩnh của ví dụ.",
+          "criteria":["Nghĩa: lý do và quyết định có liên hệ hợp lý theo ý định em chọn; không đảo nguyên nhân/kết quả.", "Cấu trúc: から theo sau mệnh đề thích hợp, giữ vị ngữ danh từ/tính từ/động từ lịch sự; không nhầm mốc giờ＋から.", "Giao tiếp: giải thích quyết định của mình, không đoán động cơ người khác; chính tả góp ý riêng."],
+          "exchange":{"group":"n5-reason-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Có nhiều lý do hợp lệ, không có một câu mẫu; nhận xét tư vấn chứ không xác minh quan hệ nhân quả thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:reason:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Kiểm chính câu vừa viết với ý định Việt: phần nào là lý do, phần nào là quyết định? Viết bản cuối giữ hai ý, sửa hoặc giữ nguyên nếu phù hợp. Thêm ghi chú chỉ rõ vị ngữ trước から trong câu em và lý do không hiểu nó là mốc 'từ'.",
+          "criteria":["Nối tiếp: dựa đúng câu trước, không thay quyết định hoặc bịa lý do mới.", "Nghĩa/cấu trúc: から nối mệnh đề lý do; loại vị ngữ không bị ghép なです hoặc だです.", "Không ép sửa câu đúng; nếu liên hệ hai ý còn thiếu dữ kiện thì nói chưa rõ, không khẳng định sai chắc chắn."],
+          "exchange":{"group":"n5-reason-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:reason:cycle:produce"]},
+          "rationale":"Kiểm câu thật và giữ nghĩa người học; tự giải thích chưa phải bằng chứng đã thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:reason:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: em phụ trách trò chơi trong buổi gặp câu lạc bộ hư cấu và cần giải thích một thay đổi địa điểm hoặc hoạt động. Tự chọn thay đổi và lý do, viết câu Nhật lịch sự để báo cả nhóm. Không dùng lại quyết định tự học của phiên trước.",
+          "criteria":["Chuyển giao: giải thích thay đổi chung cho nhóm, không chỉ đổi từ trong quyết định cá nhân.", "Cấu trúc/nghĩa: から giữ đúng lý do và kết quả, thông báo đủ để nhóm hiểu việc thay đổi.", "Bài/trợ giúp mới ghi riêng; không coi đã mở sau 24 giờ là đã nhớ lâu hoặc giao tiếp đúng."],
+          "exchange":{"group":"n5-reason-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:reason:cycle:produce","n5-teaching:v1:reason:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp lời cũ hay mẫu đổi địa điểm; chỉ tư vấn, không cấp điểm.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:want-action",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:want-action:task:0","n5-teaching:v1:want-action:task:1","n5-teaching:v1:want-action:task:2","n5-teaching:v1:want-action:task:3","n5-teaching:v1:want-action:task:4","n5-teaching:v1:want-action:cycle:produce","n5-teaching:v1:want-action:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:want-action:cycle:delayed",
       "order": 16,
       "level": "N5",
       "title": "Nói muốn làm bằng たい",
@@ -3711,12 +4038,35 @@
           "rationale": "水を飲みたいです và 水が飲みたいです đều phù hợp ở đây. Không áp dụng kết luận này cho mọi động từ hay mọi trợ từ chỉ nơi đến.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:want-action:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Bạn cùng lớp hỏi về kỳ nghỉ hư cấu của em. Tự chọn một việc muốn làm và một việc hiện không muốn làm, viết hai câu Nhật lịch sự về mong muốn của vai em. Chọn nội dung khác ví dụ; không cần kế hoạch thực hiện chắc chắn hoặc thông tin thật.",
+          "criteria":["Nghĩa: phân biệt mong muốn và không muốn của chính vai người nói, không suy mong muốn chưa biết của bạn.", "Cấu trúc: thân dạng ます＋たい và たくない phù hợp, trợ từ đúng động từ; không cấm máy móc を／が ở tân ngữ thích hợp.", "Giao tiếp: trả lời mong muốn chứ không tuyên bố đã hoàn thành; lỗi chính tả tách khỏi phủ định/mong muốn."],
+          "exchange":{"group":"n5-want-action-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có hai hoạt động hoặc câu đáp án cố định; AI chỉ tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:want-action:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Đọc chính hai câu mong muốn em vừa viết. Viết bản cuối giữ ý muốn/không muốn và hoạt động đã chọn; có thể giữ nếu phù hợp. Thêm ghi chú Việt nêu hai câu có cho biết việc đã xảy ra chưa, và chỉ ra đuôi thể hiện không muốn trong bài em.",
+          "criteria":["Nối tiếp: giữ hoạt động và mong muốn đã lưu, không biến thành câu kể hành động khác.", "Nghĩa: たい/たくない không tự chứng minh có làm hay không; ghi chú phải dựa câu em.", "Cấu trúc: không gắn たい thẳng sau dạng từ điển hoặc ます; không ép sửa biến thể trợ từ hợp lệ."],
+          "exchange":{"group":"n5-want-action-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:want-action:cycle:produce"]},
+          "rationale":"Tự kiểm dựa trên bài thật, không tự xác nhận hiểu hay thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:want-action:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Sau ít nhất 24 giờ ở phiên khác, không xem mẫu: trong nhật ký sau một buổi triển lãm hư cấu, em nhớ lại một việc mình đã muốn làm lúc ở đó. Tự chọn việc và viết câu Nhật lịch sự về mong muốn quá khứ; thêm ghi chú Việt rằng bài chưa cung cấp kết quả hành động. Không lặp kỳ nghỉ trước.",
+          "criteria":["Chuyển giao: nhớ mong muốn quá khứ trong một sự kiện, không nêu lịch kỳ nghỉ tương lai.", "Cấu trúc/nghĩa: dùng たかった phù hợp; không biến 'đã muốn' thành 'đã làm xong'.", "Bài/trợ giúp mới ghi riêng; điều kiện thời gian không chứng minh tự lực hay ghi nhớ."],
+          "exchange":{"group":"n5-want-action-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:want-action:cycle:produce","n5-teaching:v1:want-action:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cung cấp câu cũ hoặc câu mẫu; chỉ nhận xét tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:want-object",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:want-object:task:0","n5-teaching:v1:want-object:task:1","n5-teaching:v1:want-object:task:2","n5-teaching:v1:want-object:task:3","n5-teaching:v1:want-object:task:4","n5-teaching:v1:want-object:cycle:produce","n5-teaching:v1:want-object:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:want-object:cycle:delayed",
       "order": 17,
       "level": "N5",
       "title": "Nói muốn có bằng がほしい",
@@ -3913,12 +4263,35 @@
           "rationale": "ほしい chia quá khứ thành ほしかったです. Câu chỉ nói từng muốn có chó, không chứng minh đã nuôi chó.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:want-object:cycle:produce","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Làm danh sách mong muốn cho góc sáng tạo hư cấu của mình: tự chọn một thứ muốn có và một thứ không muốn có thêm, viết hai câu Nhật lịch sự. Không nói cách mua/nhận quà và không chọn thay mong muốn của người khác.",
+          "criteria":["Nghĩa: nêu thứ muốn có và thứ không muốn có, không tự thêm hành động mua hoặc khẳng định đã sở hữu.", "Cấu trúc: ほしい／ほしくない phù hợp; Nがほしい không bị thay bằng Nをほしい, cho phép chủ đề は theo ý đối chiếu.", "Nội dung tự chọn, không chép danh sách ví dụ; chữ/dấu câu góp ý riêng."],
+          "exchange":{"group":"n5-want-object-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có món đồ chuẩn hoặc khóa câu; tư vấn không xác minh nhu cầu thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:want-object:cycle:revise","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Kiểm chính danh sách hai câu của em: có câu nào vô tình nói muốn mua hoặc muốn làm thay vì muốn có không? Viết bản cuối giữ hai thứ và mong muốn ban đầu, sửa hoặc giữ nguyên. Thêm ghi chú Việt chỉ đuôi phủ định và cho biết câu nào chưa nêu cách có được đồ.",
+          "criteria":["Nối tiếp: giữ đúng hai thứ trong bài trước, không thay bằng đồ của ví dụ.", "Nghĩa/cấu trúc: giữ muốn có/không muốn có và phân biệt ほしい với hành động たい.", "Không ép sửa câu đúng hoặc cấm は đối chiếu; nếu ý từ chưa rõ phải ghi chưa chắc."],
+          "exchange":{"group":"n5-want-object-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:want-object:cycle:produce"]},
+          "rationale":"Nhận xét so với văn bản đã lưu, không chấm tự báo cáo thành đúng ngữ nghĩa.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:want-object:cycle:delayed","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: viết một dòng hồi tưởng cho nhân vật hư cấu về một thứ nhân vật đã muốn có khi bắt đầu đi học. Tự chọn thứ đó khác góc sáng tạo cũ và viết tiếng Nhật lịch sự; không khẳng định nhân vật đã nhận được nó.",
+          "criteria":["Chuyển giao: mong muốn sở hữu trong hồi tưởng tuổi đi học, không danh sách nhu cầu hiện tại.", "Cấu trúc/nghĩa: ほしかった diễn đạt đã muốn có, không tự suy kết quả sở hữu; không thêm hành động mua ngoài ý định.", "Bài mới/trợ giúp lưu riêng; một lượt nhớ không chứng minh hiệu quả học hoặc thành thạo."],
+          "exchange":{"group":"n5-want-object-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:want-object:cycle:produce","n5-teaching:v1:want-object:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cung cấp câu cũ hoặc đáp án; nhận xét chỉ tư vấn trên vai hư cấu.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:demonstratives",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:demonstratives:task:0","n5-teaching:v1:demonstratives:task:1","n5-teaching:v1:demonstratives:task:2","n5-teaching:v1:demonstratives:task:3","n5-teaching:v1:demonstratives:task:4","n5-teaching:v1:demonstratives:cycle:produce","n5-teaching:v1:demonstratives:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:demonstratives:cycle:delayed",
       "order": 18,
       "level": "N5",
       "title": "Chỉ đồ vật bằng これ・それ・あれ",
@@ -4115,12 +4488,35 @@
           "rationale": "Đổi lượt nói thì đổi điểm nhìn: đồng hồ gần A, là người nghe trong lượt của B, nên B dùng それ. Vật không hề đổi chỗ.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:demonstratives:cycle:produce","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Dựng cảnh hai người đứng ở hai đầu bàn dài trong lớp hư cấu. Tự chọn một đồ vật và đặt nó sát một trong hai người hoặc ở xa cả hai; mô tả vị trí bằng tiếng Việt, ghi ai nói, rồi tự viết một câu Nhật để người ấy chỉ và gọi tên vật. Không cấp trước từ chỉ vật em phải dùng.",
+          "criteria":["Nghĩa: これ／それ／あれ phù hợp vị trí vật đối với người nói/nghe em đã đặt.", "Cấu trúc: từ chỉ vật đứng như danh từ, không ghép これ＋tên vật; câu đủ để gọi tên vật.", "Không suy chủ sở hữu từ vị trí; kana/kanji/dấu câu góp ý riêng, không thay đổi điểm nhìn."],
+          "exchange":{"group":"n5-demonstratives-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Cảnh và vật do người học chọn; không chấm theo một từ chỉ vật cố định.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:demonstratives:cycle:revise","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Giữ nguyên vật và vị trí hai người trong chính cảnh em vừa đặt, nhưng đổi người nói thành người còn lại. Viết câu chỉ đúng vật ấy từ góc nhìn mới, rồi ghi chú Việt vì sao từ chỉ vật đổi hoặc không đổi. Nếu câu đầu cần sửa thì ghi bản sửa, không dời vật để né điểm nhìn.",
+          "criteria":["Nối tiếp: đúng cùng vật/cảnh đã lưu, chỉ đổi lượt nói; không bịa vật mới.", "Nghĩa: xét khoảng cách từ người nói mới, kể cả trường hợp xa cả hai nên không cần đổi từ.", "Cấu trúc: giữ câu gọi tên vật; không buộc bản đầu có lỗi hoặc suy sở hữu từ việc gần người."],
+          "exchange":{"group":"n5-demonstratives-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:demonstratives:cycle:produce"]},
+          "rationale":"Không ép đổi từ nếu điểm nhìn vẫn dùng cùng từ; tư vấn dựa cảnh thật người học đã mô tả.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:demonstratives:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Sau ít nhất 24 giờ ở phiên khác, không xem mẫu: trong gian đổi đồ hư cấu, em muốn hỏi giá một vật tự chọn mà người bán đang cầm; em đứng xa ở bên kia quầy. Viết câu hỏi Nhật dùng từ chỉ vật phù hợp, không dùng lại vật/câu gọi tên ở lớp. Không đặt sẵn giá.",
+          "criteria":["Chuyển giao: mục đích hỏi giá trong vai khách, không chỉ gọi tên vật rồi đổi lượt nói.", "Nghĩa/cấu trúc: từ chỉ vật phù hợp vật gần người nghe, hỏi giá chứ không hỏi giờ/tuổi.", "Bài và trợ giúp mới lưu riêng; không suy nhớ lâu hoặc tự lực chỉ từ lịch hẹn."],
+          "exchange":{"group":"n5-demonstratives-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:demonstratives:cycle:produce","n5-teaching:v1:demonstratives:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp câu cũ hoặc giá/câu đáp án; chỉ tư vấn ngôn ngữ.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:choice",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:choice:task:0","n5-teaching:v1:choice:task:1","n5-teaching:v1:choice:task:2","n5-teaching:v1:choice:task:3","n5-teaching:v1:choice:task:4","n5-teaching:v1:choice:cycle:produce","n5-teaching:v1:choice:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:choice:cycle:delayed",
       "order": 19,
       "level": "N5",
       "title": "Chốt lựa chọn bằng にします",
@@ -4319,12 +4715,35 @@
           "rationale": "何にしますか hỏi phương án người nghe quyết định chọn. 飲み物は đã nêu phạm vi là đồ uống, nên không cần lặp lại trong chỗ trống. 何に thường được đọc なにに; dạng なんに cũng được dùng. Hai cách viết kana này không làm thay đổi mẫu hỏi lựa chọn.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:choice:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Tự dựng thực đơn hư cấu có hai món đơn giản, khác các món ở ví dụ; ghi bằng Việt hoặc tên Nhật rồi tự chọn một món. Viết câu Nhật lịch sự báo quyết định cho nhân viên. Không cần giá/số lượng, không tuyên bố món đã được mang ra.",
+          "criteria":["Nghĩa: món được chốt có trong hai phương án em đặt; đây là quyết định chứ không chỉ muốn có.", "Cấu trúc: Nにします nối đúng món với dạng lịch sự, không ghép にするます.", "Giao tiếp: người nghe biết chọn món nào, không suy đã ăn/trả tiền; chữ và dấu câu góp ý riêng."],
+          "exchange":{"group":"n5-choice-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Menu tự chọn không có đáp án duy nhất; tư vấn không xác nhận giao dịch thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:choice:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Kiểm chính menu và câu chốt món em vừa viết. Viết bản cuối giữ món đã quyết định; nếu đã rõ có thể giữ nguyên. Thêm ghi chú Việt chỉ ra câu thể hiện quyết định ở đâu và những việc như được phục vụ/ăn xong mà câu chưa cho biết. Không tự đổi món hoặc bịa lời nhân viên xác nhận.",
+          "criteria":["Nối tiếp: giữ menu và món thực tế trong lượt trước.", "Nghĩa/cấu trúc: phân biệt にします với ほしい và hành động hoàn thành; sửa nếu thật sự cần.", "Không ép câu đúng thành lỗi; chưa có menu/bài trước thì chưa đánh giá được chọn trong phạm vi."],
+          "exchange":{"group":"n5-choice-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:choice:cycle:produce"]},
+          "rationale":"Tự kiểm quyết định đã viết, không xác minh việc ăn hay thanh toán và không cấp điểm.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:choice:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Ở phiên khác sau ít nhất 24 giờ, không xem mẫu: em phụ trách chọn màu bìa cho tập san lớp hư cấu. Tự đặt hai phương án màu, chốt một màu rồi báo nhóm bằng một câu Nhật lịch sự dùng mẫu quyết định. Không chọn món ăn hoặc nhắc menu cũ.",
+          "criteria":["Chuyển giao: quyết định phương án thiết kế cho nhóm, không đổi món trong quán.", "Cấu trúc/nghĩa: Nにします thể hiện chốt một phương án rõ trong hai màu đã đặt, không tự nói nhóm đã in xong.", "Ghi bài/trợ giúp mới; hoàn thành lịch ôn không chứng minh nhớ lâu hay tự lực."],
+          "exchange":{"group":"n5-choice-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:choice:cycle:produce","n5-teaching:v1:choice:cycle:revise"],"delay_hours":24},
+          "rationale":"Không có câu mẫu hoặc bài cũ cho sẵn; AI chỉ tư vấn trên lựa chọn mới.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
       "id": "n5-teaching:v1:after-action",
-      "revision": 2,
+      "revision": 3,
+      "practice_path":["n5-teaching:v1:after-action:task:0","n5-teaching:v1:after-action:task:1","n5-teaching:v1:after-action:task:2","n5-teaching:v1:after-action:task:3","n5-teaching:v1:after-action:task:4","n5-teaching:v1:after-action:cycle:produce","n5-teaching:v1:after-action:cycle:revise"],
+      "delayed_review_task_id":"n5-teaching:v1:after-action:cycle:delayed",
       "order": 20,
       "level": "N5",
       "title": "Nói trình tự sau khi làm bằng てから",
@@ -4523,14 +4942,42 @@
           "rationale": "返します chuyển thành 返してから; giữ 帰ります làm vị ngữ cuối. Bài quy định cách viết để có đáp án tham khảo hữu hạn, không coi các cách viết kana tương đương là sai tiếng Nhật nói chung.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
+        },
+        {
+          "id":"n5-teaching:v1:after-action:cycle:produce","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Tự chọn hai việc chuẩn bị đồ học cho ngày mai trong tình huống hư cấu, trong đó một việc cần xong trước việc kia. Ghi thứ tự và lý do thực tế ngắn bằng Việt, rồi viết một câu Nhật lịch sự dùng てから nêu kế hoạch. Không dùng lại mua vé/rửa tay/trả sách của ví dụ.",
+          "criteria":["Nghĩa: vế てから là việc phải làm trước theo thứ tự em đặt; kế hoạch khả thi.", "Cấu trúc: tạo đúng thể て trước から, vị ngữ cuối lịch sự cho dự định; không nhầm dạng từ điển＋から lý do.", "Không tự suy 'ngay lập tức' hoặc nguyên nhân chỉ từ てから; chính tả góp ý riêng."],
+          "exchange":{"group":"n5-after-action-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Hai việc do người học chọn, không có một chuỗi mẫu; tư vấn không xác minh hành động thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:after-action:cycle:revise","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Đối chiếu chính câu Nhật với thứ tự Việt em vừa đặt. Viết bản cuối giữ hai việc và thứ tự; sửa hoặc giữ nếu phù hợp. Thêm ghi chú Việt nêu việc ở trước てから, việc ở cuối và liệu câu có tự nói việc sau xảy ra ngay không.",
+          "criteria":["Nối tiếp: giữ hai việc trong bài đã lưu, không thay thứ tự Việt để hợp một câu sai.", "Nghĩa/cấu trúc: dạng て và trình tự đúng; không thêm nghĩa tức thời nếu chưa có dữ kiện.", "Không ép sửa câu đúng; nếu chưa chắc nhóm động từ phải nêu rõ."],
+          "exchange":{"group":"n5-after-action-cycle-v1","stage":"revise","prior_task_ids":["n5-teaching:v1:after-action:cycle:produce"]},
+          "rationale":"Góp ý dựa chuỗi người học đã tạo; tự kiểm không cấp điểm hoặc xác nhận thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"n5-teaching:v1:after-action:cycle:delayed","mode":"writing","skill":"grammar","objective":"meaning",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: viết cho nhật ký câu lạc bộ hư cấu về hai việc đã hoàn thành trong buổi dọn khu sinh hoạt hôm qua. Tự chọn hai việc mới, đặt thứ tự hợp lý rồi viết một câu Nhật lịch sự với てから; không dùng kế hoạch chuẩn bị đồ học cũ.",
+          "criteria":["Chuyển giao: lời kể quá khứ về hoạt động chung, không chỉ đổi ngày dự định cá nhân.", "Cấu trúc/nghĩa: thể て trước から và động từ cuối quá khứ giữ đúng thứ tự, không tự thêm quan hệ nguyên nhân.", "Bài mới/trợ giúp lưu riêng; lịch 24 giờ không chứng minh khả năng tự lực hoặc ghi nhớ."],
+          "exchange":{"group":"n5-after-action-cycle-v1","stage":"delayed","prior_task_ids":["n5-teaching:v1:after-action:cycle:produce","n5-teaching:v1:after-action:cycle:revise"],"delay_hours":24},
+          "rationale":"Không hiển thị chuỗi cũ hoặc câu mẫu; AI chỉ tư vấn.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
         }
       ]
     },
     {
-      "id": "teaching:v1:N5:introductions", "revision": 2, "order": 21, "level": "N5",
+      "id": "teaching:v1:N5:introductions", "revision": 3, "order": 21, "level": "N5",
       "title": "Làm quen: phân biệt tên, quê quán và nghề nghiệp",
-      "goal": "Hiểu câu giới thiệu và tự ghép ba câu theo hồ sơ hư cấu, không đoán thông tin chưa nói.",
-      "prerequisites": ["n5-teaching:v1:topic"], "authorship": "ai_authored",
+      "goal": "Phân biệt thông tin được hỏi với thông tin được xác nhận; tự chọn hồ sơ hư cấu, giới thiệu và tự kiểm tên/nơi đến/vai trò; chuyển sang vai giới thiệu người khác ở phiên sau.",
+      "prerequisites": ["n5-teaching:v1:topic","n5-teaching:v1:question","n5-teaching:v1:polite-verbs"], "authorship": "ai_authored",
+      "support":[
+        {"term":"Hồ sơ và mức lịch sự","explanation":"Hồ sơ hoàn toàn hư cấu, không cần khai tên/quê/nghề thật. はじめまして là lời khi mới gặp; よろしくお願いします（よろしくおねがいします）là lời kết mong quan hệ tốt, không phải hứa một việc cụ thể. Không thêm さん vào tên mình."},
+        {"term":"Tên, quốc tịch và nơi đến","explanation":"会社員（かいしゃいん）nhân viên công ty; 学生（がくせい）sinh viên/học sinh. ベトナム Việt Nam; 日本（にほん）Nhật Bản; 韓国（かんこく）Hàn Quốc. Nước＋人（じん）nói quốc tịch; nơi＋から来ました（からきました）nói nơi đến trong lời giới thiệu, không tự chứng minh quốc tịch. 来ました đã lịch sự."},
+        {"term":"Phủ định danh từ tại chỗ","explanation":"Nではありません nói không phải N. はい xác nhận, いいえ bác bỏ; một câu hỏi không tự xác nhận nghề. Các cụm làm quen được cấp tại chỗ, không cần học practical khác trước."}
+      ],
+      "practice_path":["teaching:v1:N5:introductions:task:0","teaching:v1:N5:introductions:task:1","teaching:v1:N5:introductions:task:2","teaching:v1:N5:introductions:task:3","teaching:v1:N5:introductions:task:4","teaching:v1:N5:introductions:cycle:produce","teaching:v1:N5:introductions:cycle:revise"],
+      "delayed_review_task_id":"teaching:v1:N5:introductions:cycle:delayed",
       "review": {"status":"ai_draft","human_approved":false},
       "eligibility": {"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
       "source_refs": [{"chunk_id":"practical:v1:N5:introductions","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aintroductions%3Asituation","source_name":"VJBot · Gặp đồng nghiệp lần đầu","role":"background_reference_not_approval"}],
@@ -4551,13 +4998,41 @@
         {"id":"teaching:v1:N5:introductions:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Hồ sơ hư cấu khác: マイさんはベトナム人です。学生ではありません。会社員です。","prompt":"Cách tóm tắt nào giữ đúng cả quốc tịch và nghề nghiệp của Mai?","options":[{"id":"option:0","text":"Mai là người Việt Nam và là nhân viên công ty."},{"id":"option:1","text":"Mai là sinh viên Nhật Bản."},{"id":"option:2","text":"Mai là người Việt Nam và là sinh viên."}],"answer_option_id":"option:0","rationale":"ベトナム人 nói quốc tịch; 学生ではありません phủ định việc là sinh viên; 会社員 xác định nghề. Không đổi phủ định thành khẳng định.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:introductions:task:2","objective":"communication","mode":"choice","skill":"grammar","passage":"Người mới gặp nói: はじめまして。田中です。 Em đóng vai An và cần đáp lại bằng lời làm quen, tên và lời kết lịch sự.","prompt":"Chọn lời đáp đáp ứng đủ ba yêu cầu, không đổi sang lời chào tạm biệt.","options":[{"id":"option:0","text":"さようなら。アンです。"},{"id":"option:1","text":"アンさんは学生ですか。"},{"id":"option:2","text":"はじめまして。アンです。よろしくお願いします。"}],"answer_option_id":"option:2","rationale":"Phương án cuối vừa đáp はじめまして, vừa giới thiệu アン, vừa kết bằng よろしくお願いします. Hai phương án kia thiếu yêu cầu hoặc đổi ý định giao tiếp; không phải mọi câu trong đó đều sai ngữ pháp.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:introductions:task:3","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Hoàn thành câu tự giới thiệu lịch sự của An: 私はアン（　）。 Chỉ viết phần trong ngoặc bằng hiragana; không thêm dấu câu.","accepted_variants":["です"],"rationale":"Danh từ tên người kết bằng です trong mẫu lịch sự này. Không dùng だです hoặc thêm một động từ không có trong yêu cầu.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:introductions:task:4","objective":"structure","mode":"short_text","skill":"grammar","passage":"Hồ sơ hư cấu: tên アン; đến từ ベトナム; nghề 会社員.","prompt":"Tự ghép ba câu lịch sự theo thứ tự tên, nơi đến, nghề. Câu đầu dùng 私はアンです; câu hai dùng ベトナムから来ました; câu ba dùng 会社員です. Giữ nguyên chữ đã cho, viết 。 sau mỗi câu, không thêm thông tin hoặc khoảng trắng.","accepted_variants":["私はアンです。ベトナムから来ました。会社員です。"],"rationale":"Ba câu giữ ba thông tin riêng và không gán hồ sơ này cho chính em. Ràng buộc cách viết giúp đối chiếu hữu hạn; các cách giới thiệu tự nhiên khác không vì thế thành sai tiếng Nhật.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+        {"id":"teaching:v1:N5:introductions:task:4","objective":"structure","mode":"short_text","skill":"grammar","passage":"Hồ sơ hư cấu: tên アン; đến từ ベトナム; nghề 会社員.","prompt":"Tự ghép ba câu lịch sự theo thứ tự tên, nơi đến, nghề. Câu đầu dùng 私はアンです; câu hai dùng ベトナムから来ました; câu ba dùng 会社員です. Giữ nguyên chữ đã cho, viết 。 sau mỗi câu, không thêm thông tin hoặc khoảng trắng.","accepted_variants":["私はアンです。ベトナムから来ました。会社員です。"],"rationale":"Ba câu giữ ba thông tin riêng và không gán hồ sơ này cho chính em. Ràng buộc cách viết giúp đối chiếu hữu hạn; các cách giới thiệu tự nhiên khác không vì thế thành sai tiếng Nhật.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {
+          "id":"teaching:v1:N5:introductions:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Tại buổi làm quen câu lạc bộ hư cấu, em đóng một vai do chính em tạo. Tự chọn tên, nơi đến và nghề/vai trò, ghi hồ sơ Việt ngắn rồi viết lời giới thiệu Nhật lịch sự cho người mới gặp. Chọn hồ sơ khác An/Mai; không cần dùng thông tin cá nhân thật hoặc chép ba câu mẫu.",
+          "criteria":["Nghĩa: tên, nơi đến và nghề/vai trò nhất quán hồ sơ tự chọn, không đánh đồng nơi đến với quốc tịch chưa nêu.", "Cấu trúc: câu danh từ/động từ kết thúc lịch sự phù hợp, không ghép 来ましたです và không thêm さん vào tên mình.", "Giao tiếp: người mới gặp hiểu em đóng vai ai; mở/kết phù hợp, không ép một cụm thuộc lòng. Chính tả góp ý riêng."],
+          "exchange":{"group":"n5-practical-introductions-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Tự chọn hồ sơ và lời giới thiệu, không có khóa chuỗi; chỉ tư vấn, không xác minh danh tính.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:introductions:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Dựa chính lời giới thiệu và hồ sơ em vừa viết, kiểm xem người nghe phân biệt được tên, nơi đến và nghề/vai trò không. Viết bản cuối giữ hồ sơ ấy, làm rõ nếu thiếu; có thể giữ nguyên nếu đã đủ. Thêm ghi chú Việt chỉ câu/cụm nào cung cấp từng thông tin, không tự bịa lời bạn đã hiểu.",
+          "criteria":["Nối tiếp: giữ nhân vật và dữ kiện của bài thực tế, không đổi sang hồ sơ An.", "Nghĩa/cấu trúc: thông tin rõ, đuôi lịch sự phù hợp; không thêm quốc tịch từ nơi đến.", "Không ép sửa câu đúng; chỉ ra thiếu dữ kiện thay vì đoán, tách chính tả khỏi nội dung."],
+          "exchange":{"group":"n5-practical-introductions-cycle-v1","stage":"revise","prior_task_ids":["teaching:v1:N5:introductions:cycle:produce"]},
+          "rationale":"Tự kiểm bản đã tạo, không giả lập phản hồi xác nhận của người thật; chưa được chấm xác minh.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:introductions:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: em là người dẫn buổi giao lưu hư cấu và giới thiệu một khách mới với cả nhóm. Tự chọn tên, nơi khách đến và vai trò khác hồ sơ cũ; ghi dữ kiện Việt rồi viết lời giới thiệu Nhật lịch sự về người ấy, không tự xưng thành khách.",
+          "criteria":["Chuyển giao: giới thiệu người khác cho nhóm, không chỉ thay tên trong lời tự giới thiệu.", "Nghĩa/cấu trúc: giữ người được nói đến và ba dữ kiện đã chọn, không dùng 私 làm khách nếu em là người dẫn.", "Ghi bài/trợ giúp mới; lịch 24 giờ và góp ý AI không chứng minh tự lực, nhớ lâu hoặc thành thạo."],
+          "exchange":{"group":"n5-practical-introductions-cycle-v1","stage":"delayed","prior_task_ids":["teaching:v1:N5:introductions:cycle:produce","teaching:v1:N5:introductions:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp hồ sơ cũ, mẫu hay đáp án; tư vấn trên bài mới, không xác minh thông tin thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        }
       ]
     },
     {
-      "id":"teaching:v1:N5:ordering","revision":2,"order":22,"level":"N5",
-      "title":"Gọi món: đọc số lượng và kiểm tra tổng tiền","goal":"Phân biệt một suất ăn với hai phần trà, hỏi tổng giá và viết yêu cầu rõ món/số lượng.",
-      "prerequisites":["teaching:v1:N5:introductions"],"authorship":"ai_authored",
+      "id":"teaching:v1:N5:ordering","revision":3,"order":22,"level":"N5",
+      "title":"Gọi món: đọc số lượng và kiểm tra tổng tiền","goal":"Đọc đúng món/lượng/giá; tự chọn đơn hư cấu, kiểm lại đơn thực tế và chuyển mục đích đặt đồ ở phiên sau.",
+      "prerequisites":["n5-teaching:v1:question","n5-teaching:v1:demonstratives"],"authorship":"ai_authored",
+      "support":[
+        {"term":"Yêu cầu món, không phải chia thể て","explanation":"Danh từ món＋を＋số lượng＋ください là lời xin món/đồ, khác động từ thể て＋ください nhờ làm. Có thể đọc を là o. Không cần hoàn thành bài làm quen practical để đặt món."},
+        {"term":"Lượng và tiền tại chỗ","explanation":"一つ（ひとつ）một phần/cái; 二つ（ふたつ）hai; 三つ（みっつ）ba trong cách đếm chung của bài. 円（えん）yên; 百（ひゃく）100; 二百（にひゃく）200; 八百（はっぴゃく）800; 千（せん）1000; 千二百（せんにひゃく）1200. Giá từng phần và tổng cần đọc riêng."},
+        {"term":"Từ trong quán","explanation":"定食（ていしょく）suất ăn; お茶（おちゃ）trà; 客（きゃく）khách; 店員（てんいん）nhân viên; 全部（ぜんぶ）tất cả. いくら hỏi giá, いくつ hỏi lượng; không cấp trước câu trả lời cho đoạn đọc. Tự chọn món đơn giản ở bài mở, có thể ghi kana."}
+      ],
+      "practice_path":["teaching:v1:N5:ordering:task:0","teaching:v1:N5:ordering:task:1","teaching:v1:N5:ordering:task:2","teaching:v1:N5:ordering:task:3","teaching:v1:N5:ordering:task:4","teaching:v1:N5:ordering:cycle:produce","teaching:v1:N5:ordering:cycle:revise"],
+      "delayed_review_task_id":"teaching:v1:N5:ordering:cycle:delayed",
       "review":{"status":"ai_draft","human_approved":false},
       "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
       "source_refs":[{"chunk_id":"practical:v1:N5:ordering","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aordering%3Asituation","source_name":"VJBot · Gọi món và xác nhận số lượng","role":"background_reference_not_approval"}],
@@ -4578,13 +5053,41 @@
         {"id":"teaching:v1:N5:ordering:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Bảng giá mới chỉ dùng cho câu này, không suy từ tổng đơn trước: 定食は一つ八百円です。お茶は一つ二百円です。 Ngoài hai món này không có phụ phí.","prompt":"Một suất ăn và hai phần trà có tổng giá bao nhiêu?","options":[{"id":"option:0","text":"1.000 yên."},{"id":"option:1","text":"1.200 yên."},{"id":"option:2","text":"1.600 yên."}],"answer_option_id":"option:1","rationale":"800 + 2 × 200 = 1.200. 1.000 chỉ tính một phần trà; 1.600 tính thừa. Bảng giá là dữ kiện mới của riêng câu hỏi, không phải thông tin rút ra từ tình huống gốc.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:ordering:task:2","objective":"communication","mode":"choice","skill":"grammar","passage":"Em đã gọi món và muốn biết tổng tiền, không hỏi số người hoặc địa điểm.","prompt":"Chọn câu hỏi đúng ý định giao tiếp này.","options":[{"id":"option:0","text":"全部でいくらですか。"},{"id":"option:1","text":"何人ですか。"},{"id":"option:2","text":"どこですか。"}],"answer_option_id":"option:0","rationale":"いくら hỏi giá; 全部で xác định tổng. 何人 hỏi số người; どこ hỏi nơi chốn. Các câu kia có thể đúng trong ngữ cảnh khác nhưng không hỏi tổng tiền.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:ordering:task:3","objective":"meaning","mode":"short_text","skill":"grammar","prompt":"Điền đúng lượng ‘hai phần trà’: お茶を（　）ください。 Dùng hệ đếm 一つ・二つ; chỉ viết phần trong ngoặc bằng kanji kèm つ hoặc toàn hiragana, không thêm dấu câu.","accepted_variants":["二つ","ふたつ"],"rationale":"Hai phần dùng 二つ, đọc ふたつ. Bài yêu cầu hệ đếm chung; không phải kết luận rằng mọi cách dùng đơn vị đếm khác đều sai trong mọi quán.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:ordering:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết một câu lịch sự gọi một suất ăn và hai phần trà. Dùng đúng các cụm 定食を一つ／お茶を二つ theo thứ tự này, rồi kết bằng ください. Giữ kanji; có thể dùng hoặc bỏ 、 giữa hai món và 。 cuối câu; không thêm từ.","accepted_variants":["定食を一つ、お茶を二つください。","定食を一つお茶を二つください。","定食を一つ、お茶を二つください","定食を一つお茶を二つください"],"rationale":"Tên món và lượng tương ứng đều được giữ nguyên; ください kết thúc yêu cầu. Khóa tham khảo có các biến thể dấu câu được đề cho phép, không chấm mọi lời gọi món tự do.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+        {"id":"teaching:v1:N5:ordering:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết một câu lịch sự gọi một suất ăn và hai phần trà. Dùng đúng các cụm 定食を一つ／お茶を二つ theo thứ tự này, rồi kết bằng ください. Giữ kanji; có thể dùng hoặc bỏ 、 giữa hai món và 。 cuối câu; không thêm từ.","accepted_variants":["定食を一つ、お茶を二つください。","定食を一つお茶を二つください。","定食を一つ、お茶を二つください","定食を一つお茶を二つください"],"rationale":"Tên món và lượng tương ứng đều được giữ nguyên; ください kết thúc yêu cầu. Khóa tham khảo có các biến thể dấu câu được đề cho phép, không chấm mọi lời gọi món tự do.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {
+          "id":"teaching:v1:N5:ordering:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Trong quầy ăn hư cấu, tự tạo menu hai món đơn giản khác suất ăn/trà của ví dụ. Em đặt cho nhóm nhỏ: tự chọn lượng mỗi món từ một đến ba phần, ghi đơn Việt rồi viết lời gọi Nhật lịch sự có tên và lượng từng món. Chưa có bảng giá nên không tự báo tổng tiền.",
+          "criteria":["Nghĩa: đúng hai món và lượng trong đơn em tự đặt, không gắn lượng món này sang món kia.", "Cấu trúc: cụm món/lượng và lời yêu cầu lịch sự đủ rõ, đơn vị đếm phù hợp hoặc cách đếm chung trong cảnh quán.", "Giao tiếp: nhân viên biết cần đưa gì, bao nhiêu; không suy tổng khi chưa có đơn giá. Chính tả/dấu câu góp ý riêng."],
+          "exchange":{"group":"n5-practical-ordering-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Không có menu hay lượng chuẩn; không xác nhận đơn mua thật và không chấm bằng câu mẫu.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:ordering:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Kiểm lại chính lời gọi món với đơn Việt vừa lập. Viết bản cuối giữ món và lượng, làm rõ nếu dễ nhầm; có thể giữ nguyên nếu đã rõ. Thêm ghi chú Việt ghép từng món trong câu Nhật với lượng của nó và cho biết có đủ dữ kiện tính tiền chưa.",
+          "criteria":["Nối tiếp: kiểm đúng đơn thực tế, không thay bằng đơn một suất ăn/hai trà.", "Nghĩa/cấu trúc: lượng đi với đúng món; yêu cầu lịch sự rõ, không bịa giá/tổng hoặc lời nhân viên nhận đơn.", "Không ép sửa câu đúng; cách đếm khác có thể hợp ngữ cảnh cần được xét nghĩa chứ không phán sai từ khớp chữ."],
+          "exchange":{"group":"n5-practical-ordering-cycle-v1","stage":"revise","prior_task_ids":["teaching:v1:N5:ordering:cycle:produce"]},
+          "rationale":"Tự kiểm một đơn thật đã viết trong bài, không xác minh giao tiếp hay thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:ordering:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Sau ít nhất 24 giờ ở phiên khác, không xem mẫu: em phụ trách lấy đồ ăn nhẹ cho buổi xem phim câu lạc bộ hư cấu, cần mỗi loại từ một đến ba phần. Tự chọn hai loại khác đơn cũ và lượng mỗi loại, viết yêu cầu Nhật lịch sự cho quầy, rồi hỏi tổng tiền mà không tự đặt giá.",
+          "criteria":["Chuyển giao: yêu cầu để chuẩn bị buổi nhóm và xin thông tin tổng giá, không chép lại đơn cũ.", "Cấu trúc/nghĩa: đủ hai loại/lượng tự chọn và câu hỏi giá, không hỏi số người/nơi chốn thay giá.", "Bài mới/trợ giúp ghi riêng; lịch ôn không chứng minh tự lực, nhớ lâu hoặc đã đặt hàng thành công."],
+          "exchange":{"group":"n5-practical-ordering-cycle-v1","stage":"delayed","prior_task_ids":["teaching:v1:N5:ordering:cycle:produce","teaching:v1:N5:ordering:cycle:revise"],"delay_hours":24},
+          "rationale":"Không có menu/câu cũ hay lời giải được cấp; AI chỉ tư vấn, không giao dịch thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        }
       ]
     },
     {
-      "id":"teaching:v1:N5:time","revision":2,"order":23,"level":"N5",
-      "title":"Giờ làm và giờ hẹn: giữ đúng buổi, mốc và khoảng","goal":"Đọc khoảng làm/nghỉ rồi phân biệt giờ hẹn với giờ kết thúc công việc.",
-      "prerequisites":["teaching:v1:N5:ordering"],"authorship":"ai_authored",
+      "id":"teaching:v1:N5:time","revision":3,"order":23,"level":"N5",
+      "title":"Giờ làm và giờ hẹn: giữ đúng buổi, mốc và khoảng","goal":"Phân biệt khoảng bận với giờ hẹn; tự chọn lịch hư cấu, kiểm sự khả thi và chuyển sang thông báo sự kiện ở phiên sau.",
+      "prerequisites":["n5-teaching:v1:time-range","n5-teaching:v1:action-place","n5-teaching:v1:question"],"authorship":"ai_authored",
+      "support":[
+        {"term":"Đọc giờ, không cần học gọi món trước","explanation":"午前（ごぜん）sáng; 午後（ごご）chiều/tối; 半（はん）nửa giờ. 一時（いちじ）1h, 二時（にじ）2h, 三時（さんじ）3h, 四時（よじ）4h, 五時（ごじ）5h, 六時（ろくじ）6h, 七時（しちじ）7h, 八時（はちじ）8h, 九時（くじ）9h, 十時（じゅうじ）10h, 十一時（じゅういちじ）11h, 十二時（じゅうにじ）12h. Được dùng số＋時 khi tự viết."},
+        {"term":"Lịch và cuộc hẹn","explanation":"仕事（しごと）công việc; 昼休み（ひるやすみ）nghỉ trưa; 駅（えき）ga; 会います（あいます）gặp; 会いましょう（あいましょう）đề nghị cùng gặp là cụm cấp tại chỗ. に gắn giờ hẹn cụ thể, で gắn nơi gặp; から・まで giữ hai đầu khoảng."},
+        {"term":"Phạm vi hư cấu","explanation":"Lịch làm việc ở đây chỉ là dữ kiện ngôn ngữ, không tư vấn lao động. Không tự coi khoảng ca là tất cả thời gian làm liên tục; thời gian đi lại tự đặt rõ khi lập lịch mở, không suy từ giờ tan ca."}
+      ],
+      "practice_path":["teaching:v1:N5:time:task:0","teaching:v1:N5:time:task:1","teaching:v1:N5:time:task:2","teaching:v1:N5:time:task:3","teaching:v1:N5:time:task:4","teaching:v1:N5:time:cycle:produce","teaching:v1:N5:time:cycle:revise"],
+      "delayed_review_task_id":"teaching:v1:N5:time:cycle:delayed",
       "review":{"status":"ai_draft","human_approved":false},
       "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
       "source_refs":[{"chunk_id":"practical:v1:N5:time","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Atime%3Asituation","source_name":"VJBot · Đọc giờ làm và hẹn gặp","role":"background_reference_not_approval"}],
@@ -4605,13 +5108,41 @@
         {"id":"teaching:v1:N5:time:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"昼休みは十二時から一時までです。 Bài này nói khoảng từ 12:00 trưa đến 13:00 cùng ngày.","prompt":"Khoảng nghỉ trưa dài bao lâu?","options":[{"id":"option:0","text":"30 phút."},{"id":"option:1","text":"Hai giờ."},{"id":"option:2","text":"Một giờ."}],"answer_option_id":"option:2","rationale":"13:00 trừ 12:00 là một giờ. Câu không có 半 để thành nửa giờ và không nêu mốc 14:00 để thành hai giờ.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:time:task:2","objective":"meaning","mode":"choice","skill":"grammar","passage":"Tình huống mới: đổi cuộc hẹn sang 09:30 sáng; không còn dùng giờ hẹn buổi chiều của đoạn trước.","prompt":"Cụm nào giữ đúng giờ hẹn mới?","options":[{"id":"option:0","text":"午後九時半に会います。"},{"id":"option:1","text":"午前九時半に会います。"},{"id":"option:2","text":"午前九時に会います。"}],"answer_option_id":"option:1","rationale":"09:30 sáng cần 午前, 九時 và 半. Phương án đầu là 21:30; phương án cuối bỏ mất 30 phút. Không mang dữ kiện cũ sang tình huống đã thay đổi rõ ràng.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:time:task:3","objective":"meaning","mode":"short_text","skill":"reading","prompt":"Đổi 午後五時半 sang giờ 24 giờ. Chỉ dùng chữ số 0–9 và dấu : theo mẫu HH:MM; không thêm chữ hoặc dấu câu.","accepted_variants":["17:30"],"rationale":"五時 là 5 giờ; 午後 chuyển thành 17 giờ và 半 là 30 phút. Bài kiểm tra mốc thời gian, không yêu cầu chép chữ Nhật.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:time:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết câu nêu khoảng từ 9 giờ sáng đến 5 giờ chiều bằng đúng 午前九時／から／午後五時／までです theo thứ tự ấy. Giữ kanji và viết 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["午前九時から午後五時までです。"],"rationale":"から đặt sau mốc bắt đầu; まで đặt sau mốc kết thúc. Hai nhãn 午前/午後 giữ đúng buổi. Cách viết bị giới hạn cho bài này, không phải tiêu chuẩn chấm mọi lời nói về giờ làm.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+        {"id":"teaching:v1:N5:time:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết câu nêu khoảng từ 9 giờ sáng đến 5 giờ chiều bằng đúng 午前九時／から／午後五時／までです theo thứ tự ấy. Giữ kanji và viết 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["午前九時から午後五時までです。"],"rationale":"から đặt sau mốc bắt đầu; まで đặt sau mốc kết thúc. Hai nhãn 午前/午後 giữ đúng buổi. Cách viết bị giới hạn cho bài này, không phải tiêu chuẩn chấm mọi lời nói về giờ làm.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {
+          "id":"teaching:v1:N5:time:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Tự lập lịch hư cấu cho một buổi học: chọn khoảng giờ em bận, rồi một giờ và nơi gặp bạn sau đó cùng ngày. Ghi lịch số và thời gian đi lại dự kiến bằng Việt; viết hai câu Nhật lịch sự báo khoảng bận và đề xuất giờ/nơi gặp khả thi. Không dùng lịch 9–17 hoặc hẹn 17:30 của bài.",
+          "criteria":["Nghĩa: giờ hẹn không bị lẫn giờ kết thúc khoảng bận; đủ thời gian đi lại theo giả định em đặt.", "Cấu trúc: から・まで cho khoảng, に cho mốc, で cho nơi gặp; giữ đúng buổi.", "Giao tiếp: đề xuất chứ không tự coi bạn đã đồng ý; dấu câu/kanji góp ý riêng, không bắt một câu mẫu."],
+          "exchange":{"group":"n5-practical-time-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Lịch tự chọn và hoàn toàn hư cấu; nhận xét không xác minh hẹn thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:time:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Kiểm chính lịch số và hai câu em vừa viết: khoảng bận, giờ hẹn và thời gian đi lại có khớp không? Viết bản cuối giữ lịch nếu đã khả thi; chỉ đổi chi tiết khi nêu rõ lý do cần sửa bằng Việt. Không tự bịa câu bạn đã nhận lời.",
+          "criteria":["Nối tiếp: nêu được giờ đã viết và chi tiết giữ/sửa của đúng lịch trước, không làm một lịch mới không liên quan.", "Nghĩa/cấu trúc: buổi, khoảng, mốc hẹn rõ và nhất quán dữ kiện đi lại; không lấy tan ca làm giờ hẹn mặc định.", "Cho phép giữ lịch đúng; thiếu dữ kiện đi lại thì nói chưa đủ, không khẳng định bất khả thi chắc chắn."],
+          "exchange":{"group":"n5-practical-time-cycle-v1","stage":"revise","prior_task_ids":["teaching:v1:N5:time:cycle:produce"]},
+          "rationale":"Kiểm bản thực tế không phải đặt hẹn mới hay xác nhận thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:time:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Ở phiên khác sau ít nhất 24 giờ, không xem mẫu: em làm thông báo cho buổi chiếu phim hư cấu. Tự chọn khoảng chiếu và giờ mở cửa trước đó cùng ngày, ghi lịch số Việt rồi viết tiếng Nhật để khách phân biệt giờ được vào với giờ phim bắt đầu/kết thúc. Không lặp lịch bận và hẹn bạn cũ.",
+          "criteria":["Chuyển giao: thông báo hai vai trò thời gian cho khách sự kiện, không chỉ đổi số cuộc hẹn cá nhân.", "Nghĩa/cấu trúc: mốc mở cửa trước khoảng chiếu, buổi rõ, から・まで cho hai đầu khoảng; không nhập nhằng giờ vào và giờ chiếu.", "Ghi bài/trợ giúp mới; hoàn thành lịch mở không chứng minh tự lực hoặc ghi nhớ."],
+          "exchange":{"group":"n5-practical-time-cycle-v1","stage":"delayed","prior_task_ids":["teaching:v1:N5:time:cycle:produce","teaching:v1:N5:time:cycle:revise"],"delay_hours":24},
+          "rationale":"Không hiển thị lịch cũ hay mẫu; chỉ tư vấn, không xác minh sự kiện thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        }
       ]
     },
     {
-      "id":"teaching:v1:N5:transport","revision":2,"order":24,"level":"N5",
-      "title":"Đi xe: hỏi đúng hướng và đọc đúng chuyến","goal":"Phân biệt xe đang hỏi với chuyến tiếp theo, hỏi đích đến và diễn đạt nơi xuống.",
-      "prerequisites":["teaching:v1:N5:time"],"authorship":"ai_authored",
+      "id":"teaching:v1:N5:transport","revision":3,"order":24,"level":"N5",
+      "title":"Đi xe: hỏi đúng hướng và đọc đúng chuyến","goal":"Phân biệt xe hiện tại/chuyến tiếp, tự chọn đích và câu hỏi hư cấu, kiểm chiều đi rồi chuyển sang báo nơi xuống ở phiên sau.",
+      "prerequisites":["n5-teaching:v1:question","n5-teaching:v1:polite-verbs","n5-teaching:v1:demonstratives","n5-teaching:v1:action-place"],"authorship":"ai_authored",
+      "support":[
+        {"term":"Từ đi xe tại chỗ","explanation":"バス xe buýt; 空港（くうこう）sân bay; 駅（えき）ga; 次（つぎ）tiếp theo; 待ちます（まちます）đợi; 降ります（おります）xuống xe; 運転手（うんてんしゅ）lái xe. Không cần học practical giờ hẹn trước để phân biệt đích đi."},
+        {"term":"Nhãn chuyến và điểm lên","explanation":"N行き（いき）= đi tới N trong nhãn xe; 乗り場（のりば）điểm lên xe; 二番（にばん）số 2; 三番（さんばん）số 3. この＋N là N này, 次の＋N là N tiếp theo. Đây là từ hỗ trợ, không cho sẵn chuyến đúng cho đoạn đọc."},
+        {"term":"Đích, xuất phát, nơi xuống","explanation":"行きます（いきます）đi, 来ます（きます）đến; に／へ với 行きます nêu đích/hướng, から nêu nơi xuất phát. Nơi＋で降ります nói nơi xuống; phương tiện＋を降ります nói phương tiện rời khỏi. Chỉ tập ngôn ngữ trong tuyến xe hư cấu, không là hướng dẫn đi xe thực tế."}
+      ],
+      "practice_path":["teaching:v1:N5:transport:task:0","teaching:v1:N5:transport:task:1","teaching:v1:N5:transport:task:2","teaching:v1:N5:transport:task:3","teaching:v1:N5:transport:task:4","teaching:v1:N5:transport:cycle:produce","teaching:v1:N5:transport:cycle:revise"],
+      "delayed_review_task_id":"teaching:v1:N5:transport:cycle:delayed",
       "review":{"status":"ai_draft","human_approved":false},
       "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
       "source_refs":[{"chunk_id":"practical:v1:N5:transport","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Atransport%3Asituation","source_name":"VJBot · Chọn xe đến đúng nơi","role":"background_reference_not_approval"}],
@@ -4632,13 +5163,41 @@
         {"id":"teaching:v1:N5:transport:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Thông báo mới, chỉ dùng trong câu này: 空港行きのバスは三番乗り場です。駅行きのバスは二番乗り場です。 Từ hỗ trợ: 乗り場 = điểm lên xe; 行き = đi tới.","prompt":"Muốn lên xe đi sân bay theo thông báo này, cần đến điểm nào?","options":[{"id":"option:0","text":"Điểm số 2."},{"id":"option:1","text":"Điểm số 1."},{"id":"option:2","text":"Điểm số 3."}],"answer_option_id":"option:2","rationale":"空港行き gắn với 三番. 二番 là xe đi ga; không có thông tin dùng điểm số 1. Đây là thông báo mới, không tự suy số điểm từ hội thoại gốc.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:transport:task:2","objective":"communication","mode":"choice","skill":"grammar","prompt":"Em chỉ muốn hỏi chiếc xe này có đi đến sân bay không, chưa hỏi giá và không hỏi nó xuất phát từ đâu. Chọn câu phù hợp.","options":[{"id":"option:0","text":"このバスは空港に行きますか。"},{"id":"option:1","text":"このバスは空港から来ますか。"},{"id":"option:2","text":"空港までいくらですか。"}],"answer_option_id":"option:0","rationale":"に行きます hỏi đích đến. から来ます hỏi nơi xuất phát, còn いくら hỏi giá; hai câu ấy có thể hợp ngữ cảnh khác nhưng không hỏi đúng điều cần biết.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:transport:task:3","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Hoàn thành mẫu nêu địa điểm thực hiện việc xuống xe: 駅（　）降ります。 Bài này yêu cầu đúng trợ từ chỉ nơi xảy ra hành động trong mẫu ［nơi］で降ります; chỉ viết một chữ hiragana.","accepted_variants":["で"],"rationale":"Theo mẫu được chỉ định, 駅で nêu nơi xuống. バスを降ります dùng を với phương tiện rời khỏi; bài không kết luận các cách diễn đạt khác đều sai ở mọi ngữ cảnh.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:transport:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Xe đang hỏi không đi sân bay; em sẽ đợi chuyến tiếp theo. Ghép 次のバス／を／待ちます thành một câu lịch sự, giữ kanji, có 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["次のバスを待ちます。"],"rationale":"を gắn đối tượng được đợi với 待ちます; 次の giữ thông tin ‘tiếp theo’, không đổi thành chiếc đang hỏi.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+        {"id":"teaching:v1:N5:transport:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Xe đang hỏi không đi sân bay; em sẽ đợi chuyến tiếp theo. Ghép 次のバス／を／待ちます thành một câu lịch sự, giữ kanji, có 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["次のバスを待ちます。"],"rationale":"を gắn đối tượng được đợi với 待ちます; 次の giữ thông tin ‘tiếp theo’, không đổi thành chiếc đang hỏi.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {
+          "id":"teaching:v1:N5:transport:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Em đứng trước một xe buýt trong thành phố hư cấu và chưa biết nó có tới nơi em cần không. Tự chọn một đích khác sân bay/ga của bài, ghi đích bằng Việt rồi viết câu hỏi Nhật lịch sự cho lái xe trước khi lên. Không tự cung cấp lời đáp, số tuyến hoặc giờ chạy.",
+          "criteria":["Nghĩa: hỏi đích đến của chính xe đang đứng trước, không hỏi nó xuất phát từ đâu hoặc tự nói xe đã đúng.", "Cấu trúc: câu hỏi lịch sự và に／へ với 行きます hợp đích tự chọn; この xác định xe nếu cần.", "Giao tiếp: hỏi để kiểm tra trước khi lên, không bịa lịch tuyến. Kana/kanji/dấu câu góp ý riêng."],
+          "exchange":{"group":"n5-practical-transport-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Đích tự chọn không có đáp án câu duy nhất; chỉ thực hành hư cấu, không xác minh xe thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:transport:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Kiểm chính câu hỏi vừa viết với đích em đã chọn. Viết bản cuối giữ đích và chiếc xe đang hỏi, sửa hoặc giữ nguyên. Thêm ghi chú Việt nêu câu đang hỏi hướng tới hay nơi xuất phát và vì sao chưa thể quyết định lên xe khi chưa có trả lời. Không bịa lái xe đã đồng ý.",
+          "criteria":["Nối tiếp: dùng đúng đích/câu hỏi thực tế, không chuyển về câu sân bay mẫu.", "Nghĩa/cấu trúc: giữ hướng hỏi đích, không nhầm から来ます; hỏi không đồng nghĩa xác nhận tuyến.", "Không ép sửa câu đúng hoặc cấm へ hợp lệ; thiếu câu trước thì chưa kiểm được."],
+          "exchange":{"group":"n5-practical-transport-cycle-v1","stage":"revise","prior_task_ids":["teaching:v1:N5:transport:cycle:produce"]},
+          "rationale":"Tự kiểm câu hỏi, không giả lập đáp ứng của lái xe hay cấp điểm giao tiếp.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:transport:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: trên một xe đưa đón trong khu tham quan hư cấu, em cần báo cho người phụ trách nơi mình sẽ xuống, không hỏi đích tuyến. Tự chọn một điểm dừng mới khác đích phiên trước, viết câu Nhật lịch sự nêu nơi xuống. Không bịa số tuyến/giờ chạy thật.",
+          "criteria":["Chuyển giao: báo điểm xuống cho người phụ trách khi đang trên xe, không chép câu hỏi trước khi lên.", "Cấu trúc/nghĩa: nơi xuống và 降ります rõ, trợ từ hợp cách diễn đạt; không dùng nơi xuất phát thay điểm xuống.", "Bài/trợ giúp mới ghi riêng; lịch 24 giờ không chứng minh tự lực hay ghi nhớ."],
+          "exchange":{"group":"n5-practical-transport-cycle-v1","stage":"delayed","prior_task_ids":["teaching:v1:N5:transport:cycle:produce","teaching:v1:N5:transport:cycle:revise"],"delay_hours":24},
+          "rationale":"Không cấp câu cũ hoặc điểm dừng/câu mẫu; AI chỉ tư vấn ngôn ngữ.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        }
       ]
     },
     {
-      "id":"teaching:v1:N5:shopping","revision":2,"order":25,"level":"N5",
-      "title":"Mua ô: giữ đúng đơn giá, số lượng và ngân sách","goal":"Đọc giá một chiếc, tính tổng theo số lượng và viết lời mua đúng vật.",
-      "prerequisites":["teaching:v1:N5:transport"],"authorship":"ai_authored",
+      "id":"teaching:v1:N5:shopping","revision":3,"order":25,"level":"N5",
+      "title":"Mua ô: giữ đúng đơn giá, số lượng và ngân sách","goal":"Đọc đơn giá/lượng; tự chọn yêu cầu mua hư cấu trong giới hạn đã đặt, kiểm tổng và chuyển sang hỏi giá ở phiên sau.",
+      "prerequisites":["n5-teaching:v1:question","n5-teaching:v1:demonstratives"],"authorship":"ai_authored",
+      "support":[
+        {"term":"Chỉ vật và yêu cầu tại quầy","explanation":"この＋N là N này; これ tự đứng như danh từ. Danh từ＋を＋lượng＋ください xin lấy đồ, không cần chia thể て và không cần hoàn thành bài xe buýt practical. 傘（かさ）ô; 店員（てんいん）nhân viên."},
+        {"term":"Đơn vị và số tiền tại chỗ","explanation":"Ô là vật dài thường dùng 本: 一本（いっぽん）một chiếc; 二本（にほん）hai; 三本（さんぼん）ba. 円（えん）yên; 五百（ごひゃく）500; 八百（はっぴゃく）800; 千（せん）1000. 単価（たんか）đơn giá là giá một đơn vị; tổng cần nhân lượng khi không có phí/giảm."},
+        {"term":"Giới hạn hư cấu","explanation":"Các số tiền chỉ phục vụ đọc nghĩa và phép tính cơ bản; không phải lời khuyên tài chính hay mua hàng thật. Bài mở tự đặt dữ kiện rõ, không suy ngân sách của người thật. Không cấp tổng hoặc đáp án cho đoạn đọc trước."}
+      ],
+      "practice_path":["teaching:v1:N5:shopping:task:0","teaching:v1:N5:shopping:task:1","teaching:v1:N5:shopping:task:2","teaching:v1:N5:shopping:task:3","teaching:v1:N5:shopping:task:4","teaching:v1:N5:shopping:cycle:produce","teaching:v1:N5:shopping:cycle:revise"],
+      "delayed_review_task_id":"teaching:v1:N5:shopping:cycle:delayed",
       "review":{"status":"ai_draft","human_approved":false},
       "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
       "source_refs":[{"chunk_id":"practical:v1:N5:shopping","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Ashopping%3Asituation","source_name":"VJBot · Mua đồ trong ngân sách","role":"background_reference_not_approval"}],
@@ -4659,13 +5218,41 @@
         {"id":"teaching:v1:N5:shopping:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"Tình huống ngân sách mới: em có 800 yên. 傘は一本五百円です。 Không giảm giá, không phụ phí, không vay hoặc trả góp.","prompt":"Với số tiền đang có, mua tối đa được bao nhiêu chiếc ô?","options":[{"id":"option:0","text":"Hai chiếc."},{"id":"option:1","text":"Một chiếc."},{"id":"option:2","text":"Không mua được chiếc nào."}],"answer_option_id":"option:1","rationale":"Một chiếc 500 ≤ 800; hai chiếc 1.000 > 800. Việc đơn trước mua hai chiếc không làm ngân sách mới đủ mua hai.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:shopping:task:2","objective":"structure","mode":"choice","skill":"grammar","prompt":"Muốn hỏi ‘cái ô này bao nhiêu tiền’, giữ cả từ chỉ ‘này’ và danh từ 傘. Chọn cách ghép đúng.","options":[{"id":"option:0","text":"これ傘はいくらですか。"},{"id":"option:1","text":"このはいくらですか。"},{"id":"option:2","text":"この傘はいくらですか。"}],"answer_option_id":"option:2","rationale":"この phải đi cùng danh từ 傘. Nếu muốn dùng これ, phải bỏ danh từ và nói これはいくらですか; không nối thành これ傘.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:shopping:task:3","objective":"meaning","mode":"short_text","skill":"reading","passage":"傘は一本五百円です。二本ください。 Không phụ phí hoặc giảm giá.","prompt":"Tự tính tổng. Chỉ nhập số tiền bằng chữ số 0–9, không dấu phân cách, không 円 và không dấu câu.","accepted_variants":["1000"],"rationale":"2 × 500 = 1000. Đây là đối chiếu một số tiền theo dữ kiện, không phải kiểm tra duy nhất một cách viết số trong tiếng Nhật nói chung.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:shopping:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết lời yêu cầu mua hai chiếc ô này bằng các cụm この傘／を／二本／ください, theo đúng thứ tự. Bài yêu cầu đơn vị 本, giữ kanji, viết 。 cuối câu, không thêm từ hoặc khoảng trắng.","accepted_variants":["この傘を二本ください。"],"rationale":"この bổ nghĩa 傘; を nêu vật cần lấy; 二本 giữ đúng hai chiếc. Ràng buộc 本 giúp đối chiếu hữu hạn, không khẳng định mọi cách đếm chung khác đều sai trong mọi tình huống.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+        {"id":"teaching:v1:N5:shopping:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Viết lời yêu cầu mua hai chiếc ô này bằng các cụm この傘／を／二本／ください, theo đúng thứ tự. Bài yêu cầu đơn vị 本, giữ kanji, viết 。 cuối câu, không thêm từ hoặc khoảng trắng.","accepted_variants":["この傘を二本ください。"],"rationale":"この bổ nghĩa 傘; を nêu vật cần lấy; 二本 giữ đúng hai chiếc. Ràng buộc 本 giúp đối chiếu hữu hạn, không khẳng định mọi cách đếm chung khác đều sai trong mọi tình huống.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {
+          "id":"teaching:v1:N5:shopping:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Dựng quầy đồ dùng học tập hư cấu: tự chọn một đồ loại dài có thể đếm bằng 本, đặt đơn giá và số tiền được dùng, không phụ phí/giảm giá. Tự chọn lượng từ một đến ba sao cho đủ tiền; ghi dữ kiện/tổng bằng Việt rồi viết lời yêu cầu mua Nhật lịch sự, tự chọn cách chỉ rõ vật. Không lặp đơn ô của bài.",
+          "criteria":["Nghĩa: đúng vật và lượng em chọn, tổng là đơn giá nhân lượng và không vượt giới hạn tự đặt.", "Cấu trúc: cụm chỉ vật, lượng đếm 本 phù hợp vật dài, yêu cầu lịch sự; この cần danh từ, これ đứng riêng.", "Giao tiếp: nhân viên biết vật nào và bao nhiêu; không coi đủ tiền là đã mua xong. Chính tả khác với sai lượng/số."],
+          "exchange":{"group":"n5-practical-shopping-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Số tiền và hàng hoàn toàn hư cấu; không mua thật, không khóa câu hoặc xác minh tư vấn tài chính.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:shopping:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Kiểm chính dữ kiện và lời mua vừa viết: vật/đơn vị, lượng, tổng và số tiền được dùng có khớp không? Viết bản cuối giữ đơn nếu hợp lý; nếu cần sửa, ghi rõ chi tiết cũ/mới và lý do bằng Việt. Không tự bịa giảm giá hoặc tăng ngân sách để né giới hạn.",
+          "criteria":["Nối tiếp: đối chiếu đúng vật/lượng/đơn giá của bài đã lưu; ghi thay đổi có lý do, không lập đơn mới không liên quan.", "Nghĩa/cấu trúc: lượng trong câu Nhật trùng dữ kiện cuối, tổng đủ giới hạn và cách chỉ vật phù hợp.", "Có thể giữ nguyên đơn đúng; thiếu dữ kiện thì nói chưa đủ, không giả vờ nhân viên đã bán."],
+          "exchange":{"group":"n5-practical-shopping-cycle-v1","stage":"revise","prior_task_ids":["teaching:v1:N5:shopping:cycle:produce"]},
+          "rationale":"Tự kiểm đơn hư cấu đã tạo, không phải giao dịch thật hoặc bằng chứng thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:shopping:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Sau ít nhất 24 giờ ở phiên khác, không xem mẫu: tại quầy vật liệu cho câu lạc bộ hư cấu, em cần hỏi đơn giá trước khi biết có thể lấy bao nhiêu. Tự chọn một đồ dài khác đơn cũ, viết câu hỏi Nhật lịch sự làm rõ giá của một đơn vị; chưa đặt lượng mua hoặc tự bịa tổng.",
+          "criteria":["Chuyển giao: xin thông tin đơn giá còn thiếu cho nhóm, không tái dùng lời mua đã có giá.", "Nghĩa/cấu trúc: xác định vật và một đơn vị 本 rõ, câu hỏi giá không hỏi giờ/số người; không tuyên bố đã mua.", "Ghi bài/trợ giúp mới; hẹn 24 giờ không chứng minh tự lực, nhớ lâu hay đủ năng lực giao dịch."],
+          "exchange":{"group":"n5-practical-shopping-cycle-v1","stage":"delayed","prior_task_ids":["teaching:v1:N5:shopping:cycle:produce","teaching:v1:N5:shopping:cycle:revise"],"delay_hours":24},
+          "rationale":"Không hiển thị đơn/câu cũ hay mẫu hỏi; tư vấn ngôn ngữ, không thực hiện mua hàng.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        }
       ]
     },
     {
-      "id":"teaching:v1:N5:asking-help","revision":2,"order":26,"level":"N5",
-      "title":"Nhờ giúp: hỏi cách đọc hay xin nhắc lại?","goal":"Nói rõ phần chưa hiểu và chọn lời nhờ đúng việc, không giả vờ đã hiểu.",
-      "prerequisites":["teaching:v1:N5:shopping"],"authorship":"ai_authored",
+      "id":"teaching:v1:N5:asking-help","revision":3,"order":26,"level":"N5",
+      "title":"Nhờ giúp: hỏi cách đọc hay xin nhắc lại?","goal":"Phân biệt cách đọc/nghĩa/nghe chưa rõ, tự chọn nhu cầu nhờ giúp, tự kiểm lời thật và chuyển kênh hỗ trợ ở phiên sau.",
+      "prerequisites":["n5-teaching:v1:question","n5-teaching:v1:request"],"authorship":"ai_authored",
+      "support":[
+        {"term":"Phân biệt nhu cầu tại chỗ","explanation":"読みます（よみます）đọc; 言います（いいます）nói; 意味（いみ）nghĩa; 教えます（おしえます）chỉ/cho biết. 何と trong câu hỏi cách đọc đọc なんと. Một chữ chưa biết cách đọc, một từ chưa biết nghĩa và một câu chưa nghe rõ là ba nhu cầu khác nhau; không tự coi lẫn nhau."},
+        {"term":"Mức độ và kênh hỗ trợ","explanation":"もう一度（もういちど）một lần nữa; ゆっくり chậm, không phải to; 書きます（かきます）viết. すみません là cách mở lời khi làm phiền. てください đã học ở bài nhờ làm; không cần mua sắm hay đi xe practical trước."},
+        {"term":"Phạm vi của chữ","explanation":"入口（いりぐち）lối vào; 出口（でぐち）lối ra là từ tham khảo cho hoạt động nhớ cách đọc, không chứng minh đọc được mọi chữ mới. Kana được cấp để học ví dụ; bài mở không cần bịa rằng người thật đã giải đáp. Trợ giúp thực tế dùng phải ghi, không đồng nhất với tự lực."}
+      ],
+      "practice_path":["teaching:v1:N5:asking-help:task:0","teaching:v1:N5:asking-help:task:1","teaching:v1:N5:asking-help:task:2","teaching:v1:N5:asking-help:task:3","teaching:v1:N5:asking-help:task:4","teaching:v1:N5:asking-help:cycle:produce","teaching:v1:N5:asking-help:cycle:revise"],
+      "delayed_review_task_id":"teaching:v1:N5:asking-help:cycle:delayed",
       "review":{"status":"ai_draft","human_approved":false},
       "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
       "source_refs":[{"chunk_id":"practical:v1:N5:asking-help","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aasking-help%3Asituation","source_name":"VJBot · Nhờ giúp khi chưa hiểu","role":"background_reference_not_approval"}],
@@ -4686,7 +5273,28 @@
         {"id":"teaching:v1:N5:asking-help:task:1","objective":"meaning","mode":"choice","skill":"reading","passage":"もう一度、ゆっくり言ってください。","prompt":"Lời nhờ yêu cầu đủ hai việc nào?","options":[{"id":"option:0","text":"Nói lại một lần nữa và nói chậm."},{"id":"option:1","text":"Nói to hơn và không cần lặp lại."},{"id":"option:2","text":"Viết nghĩa của từ bằng tiếng Việt."}],"answer_option_id":"option:0","rationale":"もう一度 là lặp lại một lần nữa; ゆっくり là chậm. Không có từ nào yêu cầu tăng âm lượng hoặc viết bản dịch.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:asking-help:task:2","objective":"communication","mode":"choice","skill":"grammar","passage":"Người kia vừa tự nói một câu, không đọc từ văn bản. Em biết các từ nhưng chưa nghe rõ câu, chỉ cần người đó nói lại.","prompt":"Chọn lời nhờ đúng nhu cầu này.","options":[{"id":"option:0","text":"意味を教えてください。"},{"id":"option:1","text":"もう一度言ってください。"},{"id":"option:2","text":"はい、わかりました。"}],"answer_option_id":"option:1","rationale":"言ってください nhờ nói; もう一度 nhờ lặp lại. Hỏi 意味 đổi sang hỏi nghĩa, còn わかりました tuyên bố đã hiểu. Không đánh đồng nghe chưa rõ với không biết nghĩa.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
         {"id":"teaching:v1:N5:asking-help:task:3","objective":"orthography","mode":"short_text","skill":"reading","prompt":"Nhớ lại cách đọc của 入口 đã được người kia hướng dẫn. Chỉ viết toàn hiragana, không dấu ngoặc hoặc dấu câu.","accepted_variants":["いりぐち"],"rationale":"Cách đọc được cho là いりぐち; không nhầm với 出口／でぐち. Bài đang kiểm tra đúng chữ 入口.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
-        {"id":"teaching:v1:N5:asking-help:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Ghép lời nhờ ‘nói lại chậm một lần nữa’ bằng đúng もう一度／ゆっくり／言ってください, theo thứ tự. Giữ kanji; có thể dùng hoặc bỏ 、 sau もう一度 và 。 cuối câu; không thêm từ hoặc khoảng trắng.","accepted_variants":["もう一度、ゆっくり言ってください。","もう一度ゆっくり言ってください。","もう一度、ゆっくり言ってください","もう一度ゆっくり言ってください"],"rationale":"Lời nhờ giữ cả việc lặp lại và tốc độ nói. Các biến thể dấu câu được liệt kê theo giới hạn của đề; không coi một lời nhờ tương đương ngoài giới hạn là sai tiếng Nhật nói chung.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+        {"id":"teaching:v1:N5:asking-help:task:4","objective":"structure","mode":"short_text","skill":"grammar","prompt":"Ghép lời nhờ ‘nói lại chậm một lần nữa’ bằng đúng もう一度／ゆっくり／言ってください, theo thứ tự. Giữ kanji; có thể dùng hoặc bỏ 、 sau もう一度 và 。 cuối câu; không thêm từ hoặc khoảng trắng.","accepted_variants":["もう一度、ゆっくり言ってください。","もう一度ゆっくり言ってください。","もう一度、ゆっくり言ってください","もう一度ゆっくり言ってください"],"rationale":"Lời nhờ giữ cả việc lặp lại và tốc độ nói. Các biến thể dấu câu được liệt kê theo giới hạn của đề; không coi một lời nhờ tương đương ngoài giới hạn là sai tiếng Nhật nói chung.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {
+          "id":"teaching:v1:N5:asking-help:cycle:produce","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Trong lớp giao lưu hư cấu, em cần giúp về một thông tin ngôn ngữ. Tự chọn một từ/chữ mới không phải 入口, rồi chọn em chưa biết cách đọc hay chưa biết nghĩa; nêu nhu cầu Việt và viết lời nhờ Nhật lịch sự hỏi đúng điều ấy. Em chọn cả từ và cách mở lời, không cần tự cung cấp đáp án hoặc giả vờ đã hiểu.",
+          "criteria":["Nghĩa: lời nhờ đúng nhu cầu tự chọn là cách đọc hoặc nghĩa, nêu rõ từ/chữ cần giúp.", "Cấu trúc: câu hỏi hoặc lời nhờ lịch sự hợp việc; không dùng hỏi giá/địa điểm thay vấn đề ngôn ngữ.", "Giao tiếp: không tuyên bố đã hiểu khi đang xin giúp; không cần đọc/giải nghĩa chính từ đang hỏi. Chính tả góp ý riêng."],
+          "exchange":{"group":"n5-practical-asking-help-cycle-v1","stage":"produce","prior_task_ids":[]},
+          "rationale":"Người học chọn từ và nhu cầu, không chép một câu cho sẵn; tư vấn chỉ xét yêu cầu, không giả lập đáp án thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:asking-help:cycle:revise","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Đọc chính nhu cầu Việt và lời nhờ em vừa viết. Viết bản cuối giữ từ/chữ và điều cần giúp, làm rõ nếu cần; có thể giữ nguyên nếu đã rõ. Thêm ghi chú Việt người nghe cần cung cấp loại thông tin gì và câu nào trong bài em hỏi điều đó. Không tự bịa đã nhận trả lời.",
+          "criteria":["Nối tiếp: giữ từ/chữ và nhu cầu trong lượt thực tế, không chuyển về 入口 mẫu.", "Nghĩa/cấu trúc: phân biệt cách đọc/nghĩa, lời nhờ rõ và lịch sự; không yêu cầu người học biết trước đáp án.", "Không buộc sửa câu đúng; thiếu bài trước thì chưa kiểm được, lỗi chữ không tự chứng minh sai ý định."],
+          "exchange":{"group":"n5-practical-asking-help-cycle-v1","stage":"revise","prior_task_ids":["teaching:v1:N5:asking-help:cycle:produce"]},
+          "rationale":"Tự kiểm yêu cầu đã viết, không chấm kiến thức từ đang hỏi hoặc xác nhận thành thạo.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        },
+        {
+          "id":"teaching:v1:N5:asking-help:cycle:delayed","mode":"writing","skill":"grammar","objective":"communication",
+          "prompt":"Phiên khác sau ít nhất 24 giờ, không xem mẫu: trong buổi làm đồ thủ công hư cấu, một bạn vừa nói hướng dẫn nhưng em không nghe rõ chỗ quan trọng. Tự chọn loại thông tin bị lỡ, mô tả ngắn bằng Việt rồi viết lời nhờ Nhật lịch sự xin nhắc lại theo cách giúp nghe rõ. Không hỏi nghĩa/cách đọc từ trên giấy như phiên trước, không giả vờ đã hiểu.",
+          "criteria":["Chuyển giao: xin phục hồi thông tin nghe bị lỡ trong hướng dẫn, không chép câu hỏi cách đọc/nghĩa cũ.", "Nghĩa/cấu trúc: lời nhờ nói lại và điều chỉnh cách nói phù hợp nhu cầu; không đánh đồng chậm với to hoặc tuyên bố đã hiểu.", "Bài mới và trợ giúp ghi riêng; hoàn thành lịch ôn không chứng minh nghe thực tế, tự lực hay nhớ lâu."],
+          "exchange":{"group":"n5-practical-asking-help-cycle-v1","stage":"delayed","prior_task_ids":["teaching:v1:N5:asking-help:cycle:produce","teaching:v1:N5:asking-help:cycle:revise"],"delay_hours":24},
+          "rationale":"Tình huống viết giả định, không có âm thanh hay lời cũ được cấp; không được coi là kiểm chứng nghe nói thật.", "assessment_basis":"ai_authored_provisional_not_verified","scored":false
+        }
       ]
     }
   ],
@@ -4746,6 +5354,21 @@
       ],
       "decision": "Author self-review only, not a new independent linguistic review or human approval. Guided supplementary use remains the limit. No build, tests, actual UI, real-model inference or delayed human retention was verified by the content author; parent owns cross-layer verification. All sources remain advisory, unscored and without mastery credit.",
       "human_approved": false
+    },
+    {
+      "checkpoint":"n5_all_remaining_learning_cycles_revision_3",
+      "reviewed_on":"2026-11-14",
+      "review_kind":"ai_author_self_review_not_independent",
+      "reviewers":["CompleteN5Cycles"],
+      "scope":"Authored additions to 25 packages: 19 original source-concept lessons and six practical lessons, 75 new writing tasks (25 learner-chosen production, 25 actual-prior-response revision/application, 25 different delayed transfers). Each changed lesson revision is 3 with stable cycle IDs, immediate practice paths preserving historical constrained tasks, and held-out delayed review pointers. The complete invitation revision-2 package and all nine te-form guided stages are retained unchanged; te-form application follows its original staged path. Historical IDs, task positions, options, keys, examples, source references and editorial review records remain historical.",
+      "findings_resolved":[
+        "Open tasks choose content and have semantic/structural criteria rather than accepted-variant keys or supplied complete answers. Narrow form objectives remain form-focused instead of pretending every drill is live conversation.",
+        "Every new immediate continuation explicitly reuses the learner's actual stored production. Sound originals can be retained with a concrete check; no fictional partner asserts unknown learner facts.",
+        "Delayed tasks require the two new immediate tasks at current revisions in an earlier different session, all at least 24 hours old under the parent runtime contract; they supply no old response or model answer and change purpose, role or context.",
+        "Six practical packages use genuine original-concept prerequisites rather than an arbitrary practical-to-practical chain, with bounded local readings, vocabulary, counters, register and context support."
+      ],
+      "decision":"Author self-review only, not independent linguistic review or human approval. All tasks remain advisory, unscored and without mastery credit. The author ran no tests, builds, formatters, UI checks, inference or Git commands. Parent owns schema/runtime integration and independent review; user must review quality BEFORE MERGE. Scheduling metadata does not demonstrate actual 24-hour retention, unaided communication or suitability as a primary beginner self-study curriculum.",
+      "human_approved":false
     }
   ]
 }

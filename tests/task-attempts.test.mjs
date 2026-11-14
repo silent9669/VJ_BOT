@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync,readdirSync} from 'node:fs';
-import {recordTaskAttempt,taskEvidenceSummary} from '../src/task-attempts.js';
+import {recordTaskAttempt,taskEvidenceSummary,priorTaskResponses} from '../src/task-attempts.js';
 import {groundLesson,resolveTaskReference,taskEvidence} from '../src/tutor-context.js';
 import {assessTaskResponse} from '../src/task-response.js';
 
@@ -213,4 +213,42 @@ test('session answer timestamps strictly order answers even when pending assista
   assert.equal((await recordTaskAttempt(answer(1),env)).status,200);
   const saved=sqlite.prepare("SELECT answered_at FROM task_attempt_evidence WHERE task_id='ordered-accept'").get();
   assert.equal(Date.parse(saved.answered_at),Date.parse(latest)+1);
+});
+
+for(const stage of ['respond','revise'])test(`${stage} uses only earlier owned production and delayed transfer requires the complete different-session cycle`,async t=>{
+  const {env,canonical,sqlite}=fixture(t),session_id='production-session-0001';
+  const production={...task,task_id:'open-production',mode:'writing',objective:'communication',opts:[],answer_index:null,
+    accepted_answers:[],exchange:{group:'production-group',stage:'produce',prior_task_ids:[]}};
+  const followup={...production,task_id:'actual-continuation',exchange:{group:'production-group',stage,prior_task_ids:[production.task_id]}};
+  const delayed={...production,task_id:'heldout-transfer',exchange:{group:'production-group',stage:'delayed',
+    prior_task_ids:[production.task_id,followup.task_id],delay_hours:24}};
+  canonical.questions=[production,followup,delayed];
+  const epoch=sqlite.prepare("SELECT task_evidence_epoch FROM profiles WHERE user_id='learner'").get().task_evidence_epoch;
+  const answer=(index,text,extra={})=>submission({question_index:index,task:{id:canonical.questions[index].task_id,revision},
+    answer_index:undefined,response_text:text,session_id,attempt_id:`production-attempt-000${index}`,...extra});
+  assert.equal((await recordTaskAttempt(answer(0,'私の内容。',{session_id:undefined}),env)).status,409);
+  assert.equal((await recordTaskAttempt(answer(1,'まだ前の回答がない。'),env)).status,409);
+  const raw='  来週の説明会の資料を水曜日までに送ります。  ';
+  const first=await recordTaskAttempt(answer(0,raw),env);assert.equal(first.status,200);
+  assert.equal((await first.json()).source_correct,null);
+  assert.equal((await recordTaskAttempt(answer(1,'別アカウントの文。',{session_id:'production-session-other'}),env)).status,409);
+  const prior=await priorTaskResponses(env,'learner',canonical,followup,session_id,epoch);
+  assert.equal(prior.responses[0].response_text,raw);assert.equal(prior.responses[0].stage,'produce');
+  assert.deepEqual((await priorTaskResponses(env,'another-user',canonical,followup,session_id,epoch)).responses,undefined);
+  assert.equal((await recordTaskAttempt(answer(2,'新しい役割で書きます。',{session_id:'later-session-0001'}),env)).status,409);
+  assert.equal((await recordTaskAttempt(answer(1,'木曜日ではなく、水曜日までに送ります。'),env)).status,200);
+  assert.equal((await recordTaskAttempt(answer(2,'新しい役割で書きます。',{session_id:'later-session-0001'}),env)).status,409);
+  sqlite.prepare('UPDATE task_attempt_evidence SET answered_at=?').run(new Date(Date.now()-25*3600000).toISOString());
+  assert.equal((await recordTaskAttempt(answer(2,'同じセッション。'),env)).status,409);
+  const heldout=await priorTaskResponses(env,'learner',canonical,delayed,'later-session-0001',epoch);
+  assert.deepEqual(heldout,{responses:[]},'due eligibility must not return old response text to later review');
+  const later=await recordTaskAttempt(answer(2,'新しい役割で書きます。',{session_id:'later-session-0001'}),env);
+  assert.equal(later.status,200);assert.equal((await later.json()).source_correct,null);
+});
+
+test('legacy recall still exposes bounded diagnostic uncertainty instead of turning cosmetic differences into grammar failure',()=>{
+  const legacy={...task,mode:'recall',accepted_answers:['私は学生です。']};
+  const result=assessTaskResponse(legacy,{response_text:' 私 は学生です '});
+  assert.equal(result.source_correct,false);assert.equal(result.assessment.objective,null);
+  assert.equal(result.assessment.comparison,'orthographic_difference');assert.equal(result.assessment.semantic_verified,false);
 });
