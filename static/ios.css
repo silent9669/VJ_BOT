@@ -402,3 +402,6 @@ dialog :focus:not(:focus-visible) { outline: 0; }
 
 /* Safari paints unstyled buttons in the system blue; they should read as normal text. */
 :where(button, summary) { color: inherit; }
+
+/* Lâm's avatar in the drawer header: round, not a square tile. */
+.sidebar-brand img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--raised); box-shadow: 0 0 0 .5px var(--glass-hair); }
