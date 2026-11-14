@@ -36,6 +36,7 @@ async function page(learningData=structuredClone(catalog)){
       return {ok:true,json:async()=>({resources:[]})};
     }
   });
+  vm.runInContext(fs.readFileSync(new URL('../static/vi-labels.js',import.meta.url),'utf8'),context);
   vm.runInContext(script,context);
   await new Promise(resolve=>setImmediate(resolve));
   return {elements,failLearning(value){failLearning=value;},failCorpus(value){failCorpus=value;}};
