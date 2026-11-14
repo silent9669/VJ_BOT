@@ -825,3 +825,43 @@ It covers all 804 actual curriculum/plan formula occurrences, source/accepted-an
 Freshly reloaded actual pages exercised ten lessons at both 1280×900 and 390×844: all five levels, both そうだ variants, たら, compound/optional notation, the N2 policy, vocabulary and Kanji. All 20 scenarios had no horizontal overflow; shared groups were centered within 0.008px, with 18px suffixes and intact parenthetical instructions. Visible ruby contained hiragana; the actual Kanji lesson had no automatic inline readings. Screenshots were inspected. One initial font assertion read the preceding SPA document's cached stylesheet; a full reload loaded the final assets before the successful run.
 
 The local preview serves real application/source assets with synthetic, process-local account/API responses. Model calls and persistence are disabled; it does not establish live-model compliance, production acceptance or pedagogical approval. Existing installed dependencies were reused through an ignored junction; none were installed. This checkpoint does not merge, deploy, run a migration or modify production learner data.
+
+## 24. One formatting owner for every formula
+
+The user found that PR45 centered only explicit shared-suffix groups; ordinary formulas such as が好き／が嫌い remained left aligned. The correction starts from main `aa3269d` in `fix/all-formula-centering`.
+
+`grammarFormulaHtml` remains the single display projection for initial lessons and AI/original/account restoration. `practice.css` now owns the formula box, typography, operators, component spacing and responsive layout. Obsolete formula rules were removed from `surfaces.css` and `refinements.css`, rather than adding another overriding stylesheet. `--formula-font` and `--formula-gap` govern the shared presentation.
+
+The common `.grammar-layout` fits its content and centers the complete block. Internal rows remain left-aligned with each other; ordinary single/multi-row, optional/compound and shared-suffix formulas use the same container. Shared suffixes retain their centered vertical position and 18px size beside 16px labels.
+
+Sentence templates use native Japanese word boundaries for display-only spacing, with atomic ASCII/full-width placeholders and separate N/V symbols. Short grammar labels/suffixes are not segmented as sentence templates. This is not a morphological lesson, grammatical parse or change to Japanese source text. Raw formulas, grading answers, task identities, examples and answer choices remain unchanged. Previously authored explanation/note strings were restructured in 38 cells across N5–N1 and the practical course: Vietnamese guidance, separate Japanese sample lines, then meaning or calculation. Short particles/patterns remain inline; qualifications and fictional/privacy boundaries remain. Main and support explanations honor explicit source newlines instead of guessing paragraph boundaries from arbitrary prose.
+
+### Verification
+
+The corpus contains 804 formula occurrences across curriculum and study-plan references, resolving to **601 unique addressable lesson routes**:
+
+| Level | Unique routes |
+| --- | ---: |
+| N5 | 123 |
+| N4 | 110 |
+| N3 | 110 |
+| N2 | 130 |
+| N1 | 128 |
+
+Actual browser navigation visited all 601 routes at both 1280×900 and 390×844: **1,202 successful layout scenarios**, including 472 ordinary and 129 shared-suffix layouts per width. Blocks were centered within 0.008px of the content area, with no formula/page horizontal overflow, 16px labels and 18px shared suffixes. Collapsed full-reference sections were opened through their real disclosure controls before measurement.
+
+The first traversal incorrectly used `item.id` for legacy lessons; 15 such lessons use the existing `activityId` fallback. It also found one genuine mobile overflow in ながら（も）. The final traversal uses canonical activity IDs, guards transient route descriptors, reserves the suffix's actual width and preserves short Japanese label chunks. The prior failed traversals are not counted as successful coverage.
+
+```sh
+node --test tests/tutor-ui.test.mjs tests/lesson-flow.test.mjs tests/study-teacher-ui.test.mjs tests/task-contract.test.mjs
+```
+
+Observed: 119/120 passed; the existing N/V symbol assertion caught a real tokenization omission. The formatter was corrected to keep these symbols when native segmentation separates them from Japanese. The final affected command passed 4/4:
+
+```sh
+node --test --test-name-pattern="grammar formulas show|sentence-template spacing|all N5|lesson teaching reformats" tests/tutor-ui.test.mjs
+```
+
+These cases cover literal/unsafe placeholders, original Japanese/source preservation, suffix integrity, all 804 formula occurrences and AI/original restoration. Combined evidence is 120 unique passing cases across the recorded runs, not a second full-suite execution. `npm run build` passed after the final support-newline CSS change, regenerated all five catalogs and exited at dry-run. A bounded formatter/CSS review found no actionable findings; it is not pedagogical approval.
+
+Actual mobile screenshots checked the reported transport template, the corrected overflow case and the shopping explanation, including the separate Japanese sample and `2 × 500 = 1.000 yên` line. Main/support text computed `white-space: pre-line`. The preview uses real source/application assets with synthetic process-local account/API responses; inference and persistence are disabled. No production session, provider, model, migration, deployment or independently approved Japanese is implied by these local checks.

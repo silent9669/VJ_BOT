@@ -928,6 +928,23 @@ test('grammar formulas show complete compact alternatives without changing optio
   assert.match(b.document.querySelector('.grammar-layout').textContent,/<img src=x onerror=attack\(\)>/);
 });
 
+test('sentence-template spacing preserves Japanese and placeholders without splitting shared grammar suffixes',()=>{
+  const b=lesson(),formula='このバスは [đích] に行きますか。[nơi] で降ります。次のバスを待ちます。';
+  b.c.showLessonDetail({id:'transport-format',title:'Đi xe',formula},'N5','grammar');
+  assert.equal(b.document.querySelector('.lesson-formula code').textContent,formula);
+  assert.deepEqual(b.document.querySelectorAll('.grammar-row').map(row=>row.textContent),
+    ['このバスは [đích] に行きますか。','[nơi] で降ります。','次のバスを待ちます。']);
+  assert.deepEqual(b.document.querySelectorAll('.grammar-slot').map(slot=>slot.textContent),['[đích]','[nơi]']);
+  assert.ok(b.document.querySelectorAll('.grammar-word').length>3);
+  assert.equal(b.document.querySelector('.grammar-word').textContent,'この');
+  b.c.showLessonDetail({id:'suffix-format',title:'そうだ',formula:'Danh từ + そうだ / Tính từ な + そうだ'},'N4','grammar');
+  assert.equal(b.document.querySelector('.grammar-shared .grammar-part').textContent,'そうだ');
+  assert.equal(b.document.querySelector('.grammar-shared .grammar-word'),null);
+  b.c.showLessonDetail({id:'slot-markup',title:'Literal slot',formula:'[<img src=x onerror=attack()>] に行きます。'},'N5','grammar');
+  assert.equal(b.document.querySelector('.grammar-layout img'),null);
+  assert.equal(b.document.querySelector('.grammar-slot').textContent,'[<img src=x onerror=attack()>]');
+});
+
 test('lesson teaching reformats both AI and original formulas and restores them on account invalidation',async()=>{
   const formula='Động từ + て + ください',translated='Động từ thể て + ください';
   let mutate;

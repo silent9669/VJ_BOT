@@ -60,7 +60,7 @@
       ],
       "source_header": "Nguồn tham khảo: Naoki [NK-80d5cf658c54-1] · Irodori [IR-895efe7d50ad-1]",
       "formula": "N1 は N2 です。",
-      "explanation": "は nêu người hoặc điều đang được nói đến. 私はリンです。 nghĩa là tôi là Linh. Trong công thức N1はN2です, N1 là người hoặc điều ta đang nói tới, còn N2です cho biết thông tin về người hoặc điều đó. Khi làm trợ từ, は đọc là wa.\n\nNếu người nghe đã biết đang nói về ai hoặc điều gì, ta thường có thể lược bỏ phần ấy. は không thay được が trong mọi câu. が có thể dùng để giới thiệu hoặc xác định ai, vật gì.",
+      "explanation": "は nêu người hoặc điều đang được nói đến. Ví dụ giới thiệu tên:\n私はリンです。\nTôi là Linh.\n\nTrong công thức N1はN2です, N1 là người hoặc điều ta đang nói tới, còn N2です cho biết thông tin về người hoặc điều đó. Khi làm trợ từ, は đọc là wa.\n\nNếu người nghe đã biết đang nói về ai hoặc điều gì, ta thường có thể lược bỏ phần ấy. は không thay được が trong mọi câu. が có thể dùng để giới thiệu hoặc xác định ai, vật gì.",
       "examples": [
         {
           "id": "n5-teaching:v1:topic:example:0",
@@ -248,7 +248,7 @@
       "support": [
         {
           "term": "Vai giao tiếp và trợ từ",
-          "explanation": "Đã học tạo thể て, nay ghép với ください. を chỉ đối tượng được đọc/viết/mở; に trong ここに座ります chỉ chỗ ngồi xuống. ここ = ở đây; この＋N = N này. Không phải mọi に đều chỉ nơi tồn tại."
+          "explanation": "Đã học tạo thể て, nay ghép với ください. を chỉ đối tượng được đọc/viết/mở. Ví dụ với に:\nここに座ります\nに chỉ chỗ ngồi xuống trong câu này. ここ = ở đây; この＋N = N này. Không phải mọi に đều chỉ nơi tồn tại."
         },
         {
           "term": "Động từ cần dùng",
@@ -280,7 +280,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-c2bb02acc5d3-1]",
       "formula": "V-て + ください。",
-      "explanation": "Dùng động từ thể て + ください để nhờ hoặc hướng dẫn ai làm một việc. 名前を書いてください。 nghĩa là hãy viết tên. Cách chia tùy nhóm động từ: 書く→書いて, 読む→読んで, する→して.\n\nKhông phải động từ nào cũng chỉ cần bỏ ます rồi thêm て. Với cấp trên hoặc trong một số tình huống phục vụ, てください có thể còn trực tiếp; cần chọn cách nhờ mềm hơn.",
+      "explanation": "Dùng động từ thể て + ください để nhờ hoặc hướng dẫn ai làm một việc. Ví dụ:\n名前を書いてください。\nHãy viết tên.\n\nCách chia tùy nhóm động từ: 書く→書いて, 読む→読んで, する→して. Không phải động từ nào cũng chỉ cần bỏ ます rồi thêm て.\n\nVới cấp trên hoặc trong một số tình huống phục vụ, てください có thể còn trực tiếp; cần chọn cách nhờ mềm hơn.",
       "examples": [
         {
           "id": "n5-teaching:v1:request:example:0",
@@ -469,7 +469,7 @@
       "support": [
         {
           "term": "Nền 1: vị ngữ tính từ い và な",
-          "explanation": "Tập hai câu trước khi thêm より: この本は安いです。（このほんはやすいです。）Cuốn sách này rẻ. この問題は簡単です。（このもんだいはかんたんです。）Câu này dễ.\n\n高い（たかい）cao/đắt, 安い（やすい）rẻ, 軽い（かるい）nhẹ là tính từ い: giữ い＋です, không thêm だ. 簡単（かんたん）dễ, 好き（すき）thích là tính từ な: thêm です ngay sau từ, không thêm な."
+          "explanation": "Tập hai câu trước khi thêm より:\nこの本は安いです。\n（このほんはやすいです。）\nCuốn sách này rẻ.\n\nこの問題は簡単です。\n（このもんだいはかんたんです。）\nCâu này dễ.\n\n高い（たかい）cao/đắt, 安い（やすい）rẻ, 軽い（かるい）nhẹ là tính từ い: giữ い＋です, không thêm だ. 簡単（かんたん）dễ, 好き（すき）thích là tính từ な: thêm です ngay sau từ, không thêm な."
         },
         {
           "term": "Nền 2: tính từ trước danh từ và từ chỉ vật",
@@ -782,7 +782,7 @@
       ],
       "source_header": "Nguồn tham khảo: Naoki [NK-002ef04d556a-1]",
       "formula": "A は N です。B も N です。／A は N ではありません。B も N ではありません。",
-      "explanation": "も nghĩa là 'cũng', dùng khi người hoặc vật tiếp theo có cùng thông tin với đối tượng đã nói đến. 姉は大学生です。私も大学生です。 nghĩa là chị gái là sinh viên đại học, tôi cũng vậy. Trong mẫu BもNです, も thay cho は, không ghép thành はも.\n\nBもNではありません nghĩa là B cũng không phải N. Nghĩa 'không' nằm ở phần phủ định cuối câu; chỉ thêm も vào câu khẳng định chưa diễn đạt được 'cũng không'. Với mẫu khác, không thể tùy ý thay mọi trợ từ bằng も.",
+      "explanation": "も nghĩa là 'cũng', dùng khi người hoặc vật tiếp theo có cùng thông tin với đối tượng đã nói đến. Ví dụ:\n姉は大学生です。私も大学生です。\nChị gái là sinh viên đại học, tôi cũng vậy.\n\nTrong mẫu BもNです, も thay cho は, không ghép thành はも. BもNではありません nghĩa là B cũng không phải N. Nghĩa 'không' nằm ở phần phủ định cuối câu; chỉ thêm も vào câu khẳng định chưa diễn đạt được 'cũng không'. Với mẫu khác, không thể tùy ý thay mọi trợ từ bằng も.",
       "examples": [
         {
           "id": "n5-teaching:v1:also:example:0",
@@ -1412,7 +1412,7 @@
       "support": [
         {
           "term": "Đối tượng và nơi đến trước các bài trợ từ",
-          "explanation": "を (đọc o) đánh dấu thứ chịu hành động: 新聞を読む（しんぶんをよむ）đọc báo. に trong 図書館に行きます chỉ đích đến. Các cụm này được cấp để tập đuôi động từ, chưa yêu cầu tự suy mọi cách dùng を・に."
+          "explanation": "を (đọc o) đánh dấu thứ chịu hành động: 新聞を読む（しんぶんをよむ）đọc báo. Ví dụ với に:\n図書館に行きます\nに chỉ đích đến trong câu này. Các cụm này được cấp để tập đuôi động từ, chưa yêu cầu tự suy mọi cách dùng を・に."
         },
         {
           "term": "Dạng đầu vào và thời gian",
@@ -2569,7 +2569,7 @@
       "support": [
         {
           "term": "に・で đối chiếu được dạy ngay tại đây",
-          "explanation": "Không cần học bài で trước: 図書館にいます（としょかんにいます）ở thư viện; 図書館で勉強します（としょかんでべんきょうします）học tại thư viện. Hai trợ từ phụ thuộc nội dung vị ngữ; không chọn chỉ từ tên nơi."
+          "explanation": "Không cần học bài で trước. So sánh hai câu:\n図書館にいます\n（としょかんにいます）\nỞ thư viện.\n\n図書館で勉強します\n（としょかんでべんきょうします）\nHọc tại thư viện.\n\nHai trợ từ phụ thuộc nội dung vị ngữ; không chọn chỉ từ tên nơi."
         },
         {
           "term": "Từ vựng cảnh tồn tại",
@@ -3063,7 +3063,7 @@
       ],
       "source_header": "Nguồn tham khảo: Naoki [NK-945d8cf4a5d4-1; NK-945d8cf4a5d4-2] — phần giải thích nền về nơi hoạt động; ví dụ và bài tập do AI biên soạn.",
       "formula": "Địa điểm + で + hành động。 / Địa điểm + で + sự kiện + があります。 / Địa điểm + に + người/vật + がいます／あります。",
-      "explanation": "で chỉ nơi diễn ra một hoạt động. 台所で料理をします nghĩa là nấu ăn ở bếp. Nếu chỉ nói ai đang ở đó, dùng に: 台所に母がいます là mẹ đang ở bếp.\n\nMột sự kiện diễn ra ở đâu cũng có thể dùng で: 教室でテストがあります. Dù có あります, テスト ở đây là sự kiện, khác với 本 là đồ vật nằm ở một nơi. Hãy xem câu nói về hoạt động, sự kiện hay sự có mặt, thay vì chỉ nhìn động từ cuối.\n\nで còn có nghĩa khác, chẳng hạn chỉ phương tiện; ở đây ta luyện nghĩa địa điểm.",
+      "explanation": "で chỉ nơi diễn ra một hoạt động. Ví dụ:\n台所で料理をします\nNấu ăn ở bếp.\n\nNếu chỉ nói ai đang ở đó, dùng に:\n台所に母がいます\nMẹ đang ở bếp.\n\nMột sự kiện diễn ra ở đâu cũng có thể dùng で:\n教室でテストがあります\nDù có あります, テスト ở đây là sự kiện, khác với 本 là đồ vật nằm ở một nơi. Hãy xem câu nói về hoạt động, sự kiện hay sự có mặt, thay vì chỉ nhìn động từ cuối.\n\nで còn có nghĩa khác, chẳng hạn chỉ phương tiện; ở đây ta luyện nghĩa địa điểm.",
       "examples": [
         {
           "id": "n5-teaching:v1:action-place:example:0",
@@ -3308,7 +3308,7 @@
       ],
       "source_header": "Nguồn tham khảo: Naoki [NK-38e01c01e8ec-1; NK-38e01c01e8ec-2] — phần giải thích nền; các tình huống và câu luyện do AI biên soạn.",
       "formula": "Vます → bỏ ます + ませんか。 / 一緒に + Vませんか。",
-      "explanation": "Dùng Vませんか để mời người nghe cùng làm một việc: 行きます→行きませんか, します→しませんか. 一緒に nghĩa là 'cùng nhau', giúp lời mời rõ hơn. Cần bỏ ます trước khi thêm ませんか.\n\nKhi nhận lời, có thể nói いいですね. Khi không tham gia được, すみません、今日はちょっと…… có thể là lời từ chối nhẹ; không nói thẳng いいえ chưa có nghĩa là đồng ý.\n\nTrong ngữ cảnh khác, ませんか cũng có thể là câu hỏi phủ định. Hãy xem người nói có đang rủ cùng tham gia hay không.",
+      "explanation": "Dùng Vませんか để mời người nghe cùng làm một việc: 行きます→行きませんか, します→しませんか. 一緒に nghĩa là 'cùng nhau', giúp lời mời rõ hơn. Cần bỏ ます trước khi thêm ませんか.\n\nKhi nhận lời, có thể nói いいですね. Khi không tham gia được, có thể nói:\nすみません、今日はちょっと……\nĐây có thể là lời từ chối nhẹ; không nói thẳng いいえ chưa có nghĩa là đồng ý.\n\nTrong ngữ cảnh khác, ませんか cũng có thể là câu hỏi phủ định. Hãy xem người nói có đang rủ cùng tham gia hay không.",
       "examples": [
         {
           "id": "n5-teaching:v1:invitation:example:0",
@@ -3635,7 +3635,7 @@
       ],
       "source_header": "Nguồn tham khảo: Naoki [NK-96c295e713bb-1; NK-96c295e713bb-2] — phần giải thích nền về lý do; ví dụ và bài tập do AI biên soạn.",
       "formula": "Mệnh đề lý do + から、hành động/kết quả。 Bài này dùng Vます／Vませんから、Nですから、tính từですから。",
-      "explanation": "から nối lý do với hành động hoặc kết quả. Trong 眠いですから、寝ます, buồn ngủ là lý do, đi ngủ là việc sẽ làm.\n\nỞ cách nói lịch sự, danh từ và tính từ な dùng ですから; tính từ い có thể dùng いですから; động từ giữ đuôi ます・ません trước から. Ở thể thường, danh từ và tính từ な dùng だから, còn tính từ い không thêm だ. Không ghép thành だですから.\n\nKhi đáp どうしてですか, có thể dừng ở phần lý do＋から nếu kết quả đã rõ. Phân biệt với 三時から: ở đó から nghĩa là 'từ 3 giờ', không phải 'vì 3 giờ'.",
+      "explanation": "から nối lý do với hành động hoặc kết quả. Ví dụ:\n眠いですから、寝ます\nBuồn ngủ là lý do, đi ngủ là việc sẽ làm.\n\nỞ cách nói lịch sự, danh từ và tính từ な dùng ですから; tính từ い có thể dùng いですから; động từ giữ đuôi ます・ません trước から. Ở thể thường, danh từ và tính từ な dùng だから, còn tính từ い không thêm だ. Không ghép thành だですから.\n\nKhi đáp どうしてですか, có thể dừng ở phần lý do＋から nếu kết quả đã rõ. Phân biệt với 三時から: ở đó から nghĩa là 'từ 3 giờ', không phải 'vì 3 giờ'.",
       "examples": [
         {
           "id": "n5-teaching:v1:reason:example:0",
@@ -3830,7 +3830,7 @@
         },
         {
           "term": "Giữ đúng mong muốn và hành động",
-          "explanation": "Trong cảnh khát, 水を飲みたいです và 水が飲みたいです đều là muốn uống nước. たくない là không muốn, chưa chứng tỏ đã không làm; たかった là đã muốn, chưa chứng tỏ đã làm xong. Không áp dụng を／が cho mọi trợ từ hay cấu trúc khác."
+          "explanation": "Trong cảnh khát, cả hai cách nói sau đều là muốn uống nước:\n水を飲みたいです\n水が飲みたいです\n\nたくない là không muốn, chưa chứng tỏ đã không làm; たかった là đã muốn, chưa chứng tỏ đã làm xong. Không áp dụng を／が cho mọi trợ từ hay cấu trúc khác."
         }
       ],
       "authorship": "ai_authored",
@@ -3854,7 +3854,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-faf17fe4f639-1] — phần giải thích nền về たい・ほしい; các ví dụ, lưu ý và bài tập do AI biên soạn.",
       "formula": "Vます → bỏ ます + たいです。 / V-たくないです。 / V-たかったです。",
-      "explanation": "たい nói muốn làm: bỏ ます thêm たいです, như 行きます→行きたいです, します→したいです. Đuôi đổi như tính từ い: たくないです là không muốn, たかったです là đã muốn, chưa có nghĩa đã làm.\n\nThường dùng để khẳng định mong muốn của mình hoặc hỏi người nghe. Với người thứ ba, cần căn cứ như lời họ nói hoặc ngữ cảnh phù hợp, không tự đoán; không phải cứ dùng たい là sai.\n\n水を飲みたいです và 水が飲みたいです đều có thể tự nhiên, nhưng không đổi mọi trợ từ sang が. Trong 京都へ行きたいです, nơi đến vẫn dùng へ hoặc に. Nếu đề yêu cầu cách nói cụ thể, dùng đúng yêu cầu.",
+      "explanation": "たい nói muốn làm: bỏ ます thêm たいです, như 行きます→行きたいです, します→したいです. Đuôi đổi như tính từ い: たくないです là không muốn, たかったです là đã muốn, chưa có nghĩa đã làm.\n\nThường dùng để khẳng định mong muốn của mình hoặc hỏi người nghe. Với người thứ ba, cần căn cứ như lời họ nói hoặc ngữ cảnh phù hợp, không tự đoán; không phải cứ dùng たい là sai.\n\nHai cách nói sau đều có thể tự nhiên:\n水を飲みたいです\n水が飲みたいです\nKhông vì vậy mà đổi mọi trợ từ sang が. Ví dụ nói về nơi đến:\n京都へ行きたいです\nNơi đến vẫn dùng へ hoặc に. Nếu đề yêu cầu cách nói cụ thể, dùng đúng yêu cầu.",
       "examples": [
         {
           "id": "n5-teaching:v1:want-action:example:0",
@@ -4079,7 +4079,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-faf17fe4f639-1] — phần giải thích nền về たい・ほしい; ví dụ và bài tập do AI biên soạn, không phải câu hỏi của nguồn.",
       "formula": "Nがほしいです。 / Nはほしくないです。 / Nがほしかったです。",
-      "explanation": "Nがほしいです là muốn có, Vたいです là muốn làm: パソコンがほしいです chưa nói sẽ mua; パソコンを買いたいです mới nêu hành động mua.\n\nThứ muốn có thường đi với が, không áp dụng を／が của 飲みたい thành Nをほしいです. は có thể nêu chủ đề hoặc đối chiếu, như 新しい時計はほしくないです.\n\nほしい đổi như tính từ い: ほしくないです là không muốn có, ほしかったです là đã muốn có. Câu trực tiếp thường nói ý mình hoặc hỏi người nghe, không đoán chắc nhu cầu người thứ ba. Bài này học muốn có N, khác Vてほしい nhờ/mong người khác làm gì.",
+      "explanation": "Nがほしいです là muốn có, Vたいです là muốn làm. So sánh:\nパソコンがほしいです\nCâu này chưa nói sẽ mua.\n\nパソコンを買いたいです\nCâu này mới nêu hành động mua.\n\nThứ muốn có thường đi với が, không áp dụng を／が của 飲みたい thành Nをほしいです. は có thể nêu chủ đề hoặc đối chiếu, như trong câu:\n新しい時計はほしくないです\n\nほしい đổi như tính từ い: ほしくないです là không muốn có, ほしかったです là đã muốn có. Câu trực tiếp thường nói ý mình hoặc hỏi người nghe, không đoán chắc nhu cầu người thứ ba. Bài này học muốn có N, khác Vてほしい nhờ/mong người khác làm gì.",
       "examples": [
         {
           "id": "n5-teaching:v1:want-object:example:0",
@@ -4531,7 +4531,7 @@
       ],
       "source_header": "Nguồn tham khảo: Irodori [IR-3f7929f1cb57-1] — phần giải thích nền về quyết định chọn món; các ví dụ mở rộng và bài tập do AI biên soạn.",
       "formula": "Nにします。 / 何にしますか。",
-      "explanation": "Nにします nói quyết định chọn N trong các phương án có sẵn. そばにします nghĩa là 'tôi chọn mì soba'. に đánh dấu phương án chọn; します là dạng lịch sự của する. 何にしますか hỏi người nghe chọn gì.\n\nほしいです chỉ nói muốn có, chưa chắc đã chốt lựa chọn. Ngược lại, chọn món cũng chưa có nghĩa là món đã được mang tới, đã trả tiền hoặc đã ăn.\n\nMẫu này không chỉ dùng khi gọi món. Trong bài, em còn chọn đồ uống, màu bút hoặc lịch học; ở ngữ cảnh khác, にします có thể mang nghĩa khác.",
+      "explanation": "Nにします nói quyết định chọn N trong các phương án có sẵn. Ví dụ:\nそばにします\nTôi chọn mì soba.\n\nに đánh dấu phương án chọn; します là dạng lịch sự của する. 何にしますか hỏi người nghe chọn gì.\n\nほしいです chỉ nói muốn có, chưa chắc đã chốt lựa chọn. Ngược lại, chọn món cũng chưa có nghĩa là món đã được mang tới, đã trả tiền hoặc đã ăn.\n\nMẫu này không chỉ dùng khi gọi món. Trong bài, em còn chọn đồ uống, màu bút hoặc lịch học; ở ngữ cảnh khác, にします có thể mang nghĩa khác.",
       "examples": [
         {
           "id": "n5-teaching:v1:choice:example:0",
@@ -4720,7 +4720,7 @@
       "support": [
         {
           "term": "Vai trợ từ trong các hành động",
-          "explanation": "先生に渡します（せんせいにわたします）đưa cho giáo viên: に chỉ người nhận. 電車に乗ります（でんしゃにのります）lên tàu; 家を出ます（いえをでます）ra khỏi nhà: を ở đây chỉ nơi rời khỏi, không phải thứ bị ăn/đọc. Đây là các cụm cấp tại chỗ."
+          "explanation": "Các cụm sau được cấp tại chỗ:\n先生に渡します\n（せんせいにわたします）\nĐưa cho giáo viên: に chỉ người nhận.\n\n電車に乗ります\n（でんしゃにのります）\nLên tàu.\n\n家を出ます\n（いえをでます）\nRa khỏi nhà: を ở đây chỉ nơi rời khỏi, không phải thứ bị ăn/đọc."
         },
         {
           "term": "Nhóm và từ vựng để nối",
@@ -4943,7 +4943,7 @@
       "source_refs": [{"chunk_id":"practical:v1:N5:introductions","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aintroductions%3Asituation","source_name":"VJBot · Gặp đồng nghiệp lần đầu","role":"background_reference_not_approval"}],
       "source_header": "Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
       "formula": "私は［tên］です。［nước］から来ました。［nghề］です。",
-      "explanation": "Nです dùng để giới thiệu tên hoặc nghề; から来ました nói đến từ đâu. はじめまして。私はアンです。 là lời chào và giới thiệu tên của An. Hãy nghe riêng tên, nơi đến và nghề nghiệp, vì mỗi câu cho một thông tin khác nhau.\n\n学生ですか mới là câu hỏi, chưa khẳng định người kia là sinh viên. は đọc là wa khi làm trợ từ. 来ました đã lịch sự nên không thêm です.\n\nHãy dùng hồ sơ hư cấu trong bài, không cần khai thông tin cá nhân.",
+      "explanation": "Nです dùng để giới thiệu tên hoặc nghề; から来ました nói đến từ đâu. Ví dụ An chào và giới thiệu tên:\nはじめまして。私はアンです。\n\nHãy nghe riêng tên, nơi đến và nghề nghiệp, vì mỗi câu cho một thông tin khác nhau. 学生ですか mới là câu hỏi, chưa khẳng định người kia là sinh viên. は đọc là wa khi làm trợ từ. 来ました đã lịch sự nên không thêm です.\n\nHãy dùng hồ sơ hư cấu trong bài, không cần khai thông tin cá nhân.",
       "examples": [
         {"context":"An tự giới thiệu tên trong lần đầu gặp","jp":"はじめまして。私はアンです。","reading":"はじめまして。わたしはアンです。","vi":"Rất vui được gặp bạn. Tôi là An.","authorship":"ai_authored"},
         {"context":"An nói mình đến từ đâu, không nói địa điểm đang làm việc","jp":"ベトナムから来ました。","reading":"ベトナムからきました。","vi":"Tôi đến từ Việt Nam.","authorship":"ai_authored"},
@@ -4998,7 +4998,7 @@
       "source_refs":[{"chunk_id":"practical:v1:N5:ordering","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aordering%3Asituation","source_name":"VJBot · Gọi món và xác nhận số lượng","role":"background_reference_not_approval"}],
       "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
       "formula":"［món］を［số lượng］ください。全部でいくらですか。",
-      "explanation":"Dùng tên món + を + số lượng + ください để gọi món. 一つ là một phần, 二つ là hai phần. Trong 定食を一つ、お茶を二つください。, mỗi số lượng gắn với món đứng ngay trước nó.\n\n全部でいくらですか hỏi tổng tiền, còn いくつ hỏi số lượng. Tổng 千二百円 là 1.200 yên cho cả đơn, chưa cho biết riêng giá từng món. Khi kiểm đơn, hãy tách tên món, lượng và giá, không cộng số phần vào số tiền.",
+      "explanation":"Dùng tên món + を + số lượng + ください để gọi món. 一つ là một phần, 二つ là hai phần. Ví dụ:\n定食を一つ、お茶を二つください。\nMỗi số lượng gắn với món đứng ngay trước nó.\n\n全部でいくらですか hỏi tổng tiền, còn いくつ hỏi số lượng. Tổng 千二百円 là 1.200 yên cho cả đơn, chưa cho biết riêng giá từng món. Khi kiểm đơn, hãy tách tên món, lượng và giá, không cộng số phần vào số tiền.",
       "examples":[
         {"context":"Đặt một suất ăn và hai phần trà","jp":"定食を一つ、お茶を二つください。","reading":"ていしょくをひとつ、おちゃをふたつください。","vi":"Cho tôi một suất ăn và hai phần trà.","authorship":"ai_authored"},
         {"context":"Nhân viên xác nhận tổng tiền của đơn đang nói đến","jp":"全部で千二百円です。","reading":"ぜんぶでせんにひゃくえんです。","vi":"Tổng cộng là 1.200 yên.","authorship":"ai_authored"},
@@ -5053,7 +5053,7 @@
       "source_refs":[{"chunk_id":"practical:v1:N5:time","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Atime%3Asituation","source_name":"VJBot · Đọc giờ làm và hẹn gặp","role":"background_reference_not_approval"}],
       "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
       "formula":"［bắt đầu］から［kết thúc］までです。［giờ hẹn］に会います。",
-      "explanation":"から và まで nêu khoảng thời gian; に gắn với mốc hẹn cụ thể. 仕事は午前九時から午後五時までです。 nói giờ làm từ 9 giờ sáng đến 5 giờ chiều, chưa cho biết giờ hẹn gặp.\n\n午前 chỉ buổi sáng, 午後 chỉ buổi chiều hoặc tối theo đồng hồ 12 giờ. 半 thêm nửa giờ, không phải nửa ngày. Nếu hội thoại nêu riêng giờ tan làm và giờ hẹn, cần giữ đúng cả hai mốc.",
+      "explanation":"から và まで nêu khoảng thời gian; に gắn với mốc hẹn cụ thể. Ví dụ:\n仕事は午前九時から午後五時までです。\nGiờ làm từ 9 giờ sáng đến 5 giờ chiều, chưa cho biết giờ hẹn gặp.\n\n午前 chỉ buổi sáng, 午後 chỉ buổi chiều hoặc tối theo đồng hồ 12 giờ. 半 thêm nửa giờ, không phải nửa ngày. Nếu hội thoại nêu riêng giờ tan làm và giờ hẹn, cần giữ đúng cả hai mốc.",
       "examples":[
         {"context":"Nêu khoảng làm việc, không khẳng định tám giờ đều làm liên tục","jp":"仕事は午前九時から午後五時までです。","reading":"しごとはごぜんくじからごごごじまでです。","vi":"Giờ làm từ 9 giờ sáng đến 5 giờ chiều.","authorship":"ai_authored"},
         {"context":"Nêu riêng khoảng nghỉ trưa","jp":"昼休みは十二時から一時までです。","reading":"ひるやすみはじゅうにじからいちじまでです。","vi":"Nghỉ trưa từ 12 giờ đến 1 giờ.","authorship":"ai_authored"},
@@ -5108,7 +5108,7 @@
       "source_refs":[{"chunk_id":"practical:v1:N5:transport","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Atransport%3Asituation","source_name":"VJBot · Chọn xe đến đúng nơi","role":"background_reference_not_approval"}],
       "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
       "formula":"このバスは［đích］に行きますか。［nơi］で降ります。次のバスを待ちます。",
-      "explanation":"に hoặc へ có thể chỉ hướng hay đích đến với 行きます; から chỉ nơi xuất phát. このバスは空港に行きますか。 hỏi chiếc xe này có đi sân bay không. このバス là xe đang hỏi, còn 次のバス là chuyến tiếp theo.\n\n駅で降ります nói nơi xuống xe bằng で; バスを降ります nói phương tiện rời khỏi bằng を. Đây là hai mẫu cần phân biệt, không phải quy tắc cấm mọi cách dùng trợ từ khác trong ngữ cảnh khác.",
+      "explanation":"に hoặc へ có thể chỉ hướng hay đích đến với 行きます; から chỉ nơi xuất phát. Ví dụ hỏi chiếc xe này có đi sân bay không:\nこのバスは空港に行きますか。\nこのバス là xe đang hỏi, còn 次のバス là chuyến tiếp theo.\n\nHai mẫu cần phân biệt:\n駅で降ります\nで chỉ nơi xuống xe.\n\nバスを降ります\nを chỉ phương tiện rời khỏi.\n\nĐây không phải quy tắc cấm mọi cách dùng trợ từ khác trong ngữ cảnh khác.",
       "examples":[
         {"context":"Hỏi lái xe về đích đến trước khi lên","jp":"このバスは空港に行きますか。","reading":"このバスはくうこうにいきますか。","vi":"Xe buýt này có đi sân bay không?","authorship":"ai_authored"},
         {"context":"Câu trả lời phân biệt xe hiện tại với chuyến cần đi","jp":"いいえ。このバスは駅に行きます。空港へは次のバスです。","reading":"いいえ。このバスはえきにいきます。くうこうへはつぎのバスです。","vi":"Không. Xe buýt này đi ga. Đến sân bay thì đi chuyến tiếp theo.","authorship":"ai_authored"},
@@ -5163,7 +5163,7 @@
       "source_refs":[{"chunk_id":"practical:v1:N5:shopping","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Ashopping%3Asituation","source_name":"VJBot · Mua đồ trong ngân sách","role":"background_reference_not_approval"}],
       "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
       "formula":"この傘はいくらですか。一本五百円です。この傘を二本ください。",
-      "explanation":"Dùng この傘はいくらですか。 để hỏi giá chiếc ô này. この đứng trước danh từ như この傘; これ tự đứng được, như これはいくらですか.\n\n一本五百円 là 500 yên một chiếc. 二本 là hai chiếc ô, nên 2 × 500 = 1.000 yên; đơn giá không phải tổng cho mọi số lượng.\n\nEm chỉ tính với ngân sách hư cấu của bài, không phải quyết định mua hàng thật.",
+      "explanation":"Để hỏi giá chiếc ô này, em nói:\nこの傘はいくらですか。\n\nこの đứng trước danh từ như この傘; これ tự đứng được, như trong câu hỏi:\nこれはいくらですか\n\nĐọc riêng đơn giá:\n一本五百円\n500 yên một chiếc. 二本 là hai chiếc ô, nên tính:\n2 × 500 = 1.000 yên\nĐơn giá không phải tổng cho mọi số lượng.\n\nEm chỉ tính với ngân sách hư cấu của bài, không phải quyết định mua hàng thật.",
       "examples":[
         {"context":"Chỉ chiếc ô ở gần mình rồi hỏi giá","jp":"この傘はいくらですか。","reading":"このかさはいくらですか。","vi":"Cái ô này bao nhiêu tiền?","authorship":"ai_authored"},
         {"context":"Nhân viên nêu rõ giá cho một chiếc","jp":"一本五百円です。","reading":"いっぽんごひゃくえんです。","vi":"Một chiếc là 500 yên.","authorship":"ai_authored"},
@@ -5218,7 +5218,7 @@
       "source_refs":[{"chunk_id":"practical:v1:N5:asking-help","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aasking-help%3Asituation","source_name":"VJBot · Nhờ giúp khi chưa hiểu","role":"background_reference_not_approval"}],
       "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
       "formula":"［từ］は何と読みますか。もう一度、ゆっくり言ってください。",
-      "explanation":"何と読みますか hỏi chữ đọc thế nào, không hỏi nghĩa. Trong すみません。「入口」は何と読みますか。, người nói cần biết cách đọc chữ 入口.\n\nNếu chưa nghe rõ, dùng もう一度 để xin nhắc lại và ゆっくり để xin nói chậm. 言ってください nhờ người kia nói; てください là mẫu nhờ làm một việc. Hãy chọn lời nhờ đúng nhu cầu: chưa biết cách đọc, chưa hiểu nghĩa hay chưa nghe rõ.",
+      "explanation":"何と読みますか hỏi chữ đọc thế nào, không hỏi nghĩa. Ví dụ:\nすみません。「入口」は何と読みますか。\nNgười nói cần biết cách đọc chữ 入口.\n\nNếu chưa nghe rõ, dùng もう一度 để xin nhắc lại và ゆっくり để xin nói chậm. 言ってください nhờ người kia nói; てください là mẫu nhờ làm một việc. Hãy chọn lời nhờ đúng nhu cầu: chưa biết cách đọc, chưa hiểu nghĩa hay chưa nghe rõ.",
       "examples":[
         {"context":"Nhìn thấy chữ 入口 nhưng chưa biết đọc","jp":"すみません。「入口」は何と読みますか。","reading":"すみません。「いりぐち」はなんとよみますか。","vi":"Xin lỗi, chữ 入口 đọc thế nào?","authorship":"ai_authored"},
         {"context":"Người kia cho cách đọc của chính từ vừa hỏi","jp":"「いりぐち」です。","reading":"「いりぐち」です。","vi":"Đọc là iriguchi.","authorship":"ai_authored"},

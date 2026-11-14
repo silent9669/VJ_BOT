@@ -46,7 +46,7 @@
       ],
       "source_header": "Nguồn nội bộ: VJBot · Phân tích luận điểm và phản biện [practical:v1:N1:argument]. Bài giảng AI chưa có phê duyệt của con người; ví dụ trong lập luận không phải dữ liệu khảo sát đã đo.",
       "formula": "Pからといって、必ずしもQとはいえない。必要なのは、Aことではなく、Bことである。",
-      "explanation": "～からといって、必ずしも～とはいえない bác suy luận quá mạnh, không bác mọi lợi ích của tiền đề. Thống nhất thủ tục có thể giảm chênh lệch xử lý nhưng chưa chắc tối ưu cho mọi người. Chỉ nhận hồ sơ trực tuyến minh họa lợi ích và gánh nặng khác nhau; ～となりうる là khả năng, không chứng minh mọi dịch vụ đều có hại hay hỗ trợ đã thành công. Kết luận giữ tiêu chuẩn chung, nêu điều kiện thêm hỗ trợ và kiểm chứng, không trao quyền tự quyết vô hạn. Phản biện mới phải tách khả năng em nêu khỏi dữ kiện trong bài.",
+      "explanation": "～からといって、必ずしも～とはいえない bác suy luận quá mạnh, không bác mọi lợi ích của tiền đề. Thống nhất thủ tục có thể giảm chênh lệch xử lý nhưng chưa chắc tối ưu cho mọi người.\n\nChỉ nhận hồ sơ trực tuyến minh họa lợi ích và gánh nặng khác nhau; ～となりうる là khả năng, không chứng minh mọi dịch vụ đều có hại hay hỗ trợ đã thành công.\n\nKết luận giữ tiêu chuẩn chung, nêu điều kiện thêm hỗ trợ và kiểm chứng, không trao quyền tự quyết vô hạn. Phản biện mới phải tách khả năng em nêu khỏi dữ kiện trong bài.",
       "examples": [
         {
           "id": "teaching:v1:N1:argument:example:0",
@@ -244,7 +244,7 @@
       "support": [
         { "term": "Tổng hợp không xóa khác biệt", "explanation": "Trước khi viết, xác định mỗi người khẳng định gì, hạn định điều gì, có điểm giao nào và còn khác trọng tâm/thời gian ra sao. Điểm giao suy được từ hai ý kiến không tự là một thỏa thuận họ đã thông qua." },
         { "term": "指標・事例・資源配分", "explanation": "指標（しひょう）chỉ số; 事例（じれい）trường hợp cụ thể; 資源配分（しげんはいぶん）phân bổ nguồn lực. Khi tự đề nghị đo, cần định nghĩa đại lượng và thời điểm; một câu chuyện hoặc số thay đổi riêng lẻ chưa chứng minh nguyên nhân." },
-        { "term": "Nguồn phát ngôn và đề xuất mới", "explanation": "Giữ đúng ý A/B và nói rõ phần em đề nghị. 数か月後 là vài tháng sau; nếu thêm mốc cụ thể, hãy nói đó là đề nghị của em, không phải thời điểm bài đã nêu. 両者は～点で一致する一方、… nêu điểm chung rồi khác biệt; ～を踏まえ là tính đến điều đã bàn; ～のみならず、…も… là không chỉ… mà còn…. Không cần viết dài hay dùng liên tiếp mọi mẫu nâng cao." }
+        { "term": "Nguồn phát ngôn và đề xuất mới", "explanation": "Giữ đúng ý A/B và nói rõ phần em đề nghị. 数か月後 là vài tháng sau; nếu thêm mốc cụ thể, hãy nói đó là đề nghị của em, không phải thời điểm bài đã nêu.\n\n両者は～点で一致する一方、… nêu điểm chung rồi khác biệt; ～を踏まえ là tính đến điều đã bàn; ～のみならず、…も… là không chỉ… mà còn…. Không cần viết dài hay dùng liên tiếp mọi mẫu nâng cao." }
       ],
       "practice_path": [
         "teaching:v1:N1:synthesis:task:0",
@@ -269,7 +269,7 @@
       ],
       "source_header": "Nguồn nội bộ: VJBot · Tổng hợp hai quan điểm [practical:v1:N1:synthesis]. Bản tổng hợp và kế hoạch ứng dụng là nội dung AI soạn; không phải kết quả đào tạo đã được xác minh.",
       "formula": "～を否定するわけではないが、…。両者は～点で一致する一方、～を重視する点で異なる。～を踏まえ、～のみならず、…も…。",
-      "explanation": "A cần căn cứ đo được để phân bổ nguồn lực, không chỉ một con số ngay sau học; B cũng chấp nhận số liệu nhưng muốn xem thêm việc hỗ trợ đồng nghiệp và xử lý vấn đề mới bộc lộ về sau. Hai bên cùng thấy đánh giá hẹp chưa đủ, khác trọng tâm bằng chứng và thời gian. Có thể đề nghị kết hợp nhiều chỉ số ngay sau học với trường hợp cụ thể vài tháng sau. Đây chưa phải kết quả đo hay bằng chứng đào tạo là nguyên nhân duy nhất. Số tháng cụ thể phải ghi là mốc em đề nghị, không phải dữ kiện trong bài.",
+      "explanation": "A cần căn cứ đo được để phân bổ nguồn lực, không chỉ một con số ngay sau học; B cũng chấp nhận số liệu nhưng muốn xem thêm việc hỗ trợ đồng nghiệp và xử lý vấn đề mới bộc lộ về sau. Hai bên cùng thấy đánh giá hẹp chưa đủ, khác trọng tâm bằng chứng và thời gian.\n\nCó thể đề nghị kết hợp nhiều chỉ số ngay sau học với trường hợp cụ thể vài tháng sau. Đây chưa phải kết quả đo hay bằng chứng đào tạo là nguyên nhân duy nhất. Số tháng cụ thể phải ghi là mốc em đề nghị, không phải dữ kiện trong bài.",
       "examples": [
         {
           "id": "teaching:v1:N1:synthesis:example:0",

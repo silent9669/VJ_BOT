@@ -61,19 +61,23 @@
 .production-model{border-left:3px solid var(--practice-green);padding:12px 16px;line-height:1.8}.production-task [hidden],.lesson-exercise [hidden]{display:none}
 
 /* Keep instruction primary; source notes stay available without interrupting each task. */
-#lesson-page .lesson-formula{display:grid;gap:14px;padding:20px;min-width:0}
+.lesson-formula{--formula-font:16px;--formula-gap:12px;display:grid;gap:var(--formula-gap);padding:20px;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--study-accent,var(--c-38594c,#38594c));border-radius:var(--r-1)}
 .lesson-formula code[hidden]{display:none}
-.grammar-layout{display:grid;gap:8px;min-width:0;max-width:100%}
-.grammar-row{display:flex;flex-wrap:wrap;gap:4px 8px;min-width:0;max-width:100%;font:500 16px/1.65 var(--font-sans);overflow-wrap:anywhere}
-.grammar-chunk{display:inline-flex;align-items:baseline;gap:6px;min-width:0;max-width:100%}
-.lesson-formula .grammar-part{min-width:0;font:inherit;letter-spacing:0;text-transform:none;color:var(--ink);white-space:normal}
-.lesson-formula .grammar-plus{flex:none;font:600 16px/1.65 var(--font-sans);color:var(--practice-green);margin:0;letter-spacing:0}
-.grammar-group{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,max-content);justify-content:center;align-items:center;gap:clamp(20px,4vw,40px);min-width:0;max-width:100%;font:500 16px/1.65 var(--font-sans)}
-.grammar-alternatives{display:grid;gap:12px;min-width:0}
-.lesson-formula .grammar-shared{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%;font:500 18px/1.65 var(--font-sans)}
+.grammar-layout{display:grid;gap:var(--formula-gap);inline-size:fit-content;margin-inline:auto;min-width:0;max-width:100%;color:var(--ink);font:500 var(--formula-font)/1.65 var(--font-sans)}
+.grammar-row{display:flex;flex-wrap:wrap;gap:4px 8px;min-width:0;max-width:100%;overflow-wrap:anywhere}
+.grammar-chunk{display:inline-flex;align-items:baseline;gap:8px;min-width:0;max-width:100%}
+.grammar-layout span{font:inherit;letter-spacing:0;text-transform:none;color:inherit}
+.grammar-part{min-width:0;white-space:normal}
+.grammar-layout .grammar-plus{flex:none;font-weight:600;color:var(--practice-green);margin:0}
+.grammar-group{display:grid;grid-template-columns:minmax(0,max-content) max-content;align-items:center;gap:clamp(20px,4vw,40px);min-width:0;max-width:100%}
+.grammar-alternatives{display:grid;gap:var(--formula-gap);min-width:0}
+.grammar-shared{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%;font-size:18px}
 .grammar-shared>.grammar-part{max-inline-size:18ch}
 .grammar-symbol{display:inline-block;margin-inline-end:.45em}
 .grammar-instruction{white-space:nowrap}
+.grammar-word,.grammar-script{display:inline-block}
+.grammar-word+.grammar-word{margin-inline-start:.35em}
+.grammar-slot{display:inline-block;margin-inline:.4em;white-space:nowrap}
 #lesson-reference ruby{ruby-position:over;ruby-align:center}
 #lesson-reference rt{font-size:.55em;font-weight:400;color:var(--muted);line-height:1.2}
 #lesson-reference .example-jp:has(ruby){line-height:2}
@@ -82,6 +86,7 @@
 .lesson-support,.lesson-info{margin:24px 0}
 .lesson-info{border-top:1px solid var(--practice-line);padding-top:12px}
 .lesson-info p,.lesson-support p{font-size:16px;line-height:1.75;overflow-wrap:anywhere}
+.lesson-support p{white-space:pre-line}
 .lesson-info>summary,.lesson-support>summary{cursor:pointer;min-height:44px;align-content:center}
 .lesson-info summary:focus-visible,.lesson-support summary:focus-visible{outline:3px solid var(--practice-green);outline-offset:3px}
 .practice-feedback{font-size:16px}
@@ -91,7 +96,7 @@
 .practice-reason summary:focus-visible{outline:3px solid var(--practice-green);outline-offset:3px}
 .practice-reason p{white-space:pre-line;margin:8px 0 0}
 .study-teacher .study-teacher-status:empty{display:none}
-@media(max-width:600px){#lesson-page .lesson-formula{padding:16px}.lesson-formula .grammar-part{font-size:16px}.lesson-explain{line-height:1.8}}
+@media(max-width:600px){.lesson-formula{padding:16px}.lesson-explain{line-height:1.8}}
 .task-number{margin:0 0 12px;font-size:16px;font-weight:600}
 .task-instruction{font-size:16px;line-height:1.6;margin:0 0 12px}
 .task-reference-list .task-stem{margin:12px 0 20px}

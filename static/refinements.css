@@ -88,7 +88,7 @@ body[data-page=landing] .sketch-canvas { padding:0!important; }
 .feature-lesson-card h2 { font-size:16px; }.feature-lesson-card p { font-size:14px; }
 .feature-back { color:var(--muted);min-height:44px;font-family:inherit;font-size:14px; }
 .lesson-page,.lesson-outline,#lesson-page { background:var(--sheet);border-color:var(--line);border-radius:8px; }
-.lesson-footer,.lesson-page .practice-actions { background:var(--sheet); }.lesson-source,.lesson-section-title,.lesson-formula span { font-family:inherit;letter-spacing:0;text-transform:none;font-size:13px; }
+.lesson-footer,.lesson-page .practice-actions { background:var(--sheet); }.lesson-source,.lesson-section-title { font-family:inherit;letter-spacing:0;text-transform:none;font-size:13px; }
 .example-ro { font-family:inherit; }.lesson-page-header h1 { font-size:26px; }.lesson-explain,.lesson-reading { color:var(--ink);font-size:16px; }
 .exam-grid,.kanji-library { gap:16px; }.exam-set { padding:24px; }.exam-set h3 { font-size:20px; }.exam-set p { font-size:14px; }
 .stage-btn,.prompt-chip,.welcome-chip-btn,.card-audio-btn { font:500 13px var(--font-sans);min-height:44px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);color:var(--ink);box-shadow:none; }

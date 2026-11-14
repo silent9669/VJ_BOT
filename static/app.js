@@ -688,8 +688,23 @@ function grammarFormulaHtml(formula) {
       }
     }
   }
-  const partHtml=part=>escapeHtml(viFormulaLabel(part)).replace(/(?<![A-Za-z])([NV])(?=[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}])/gu,
+  const literalHtml=value=>escapeHtml(value).replace(/(?<![A-Za-z])([NV]\d*)(?=[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}])/gu,
     '<span class="grammar-symbol">$1</span>').replace(/\(bỏ (ます|ない|い)\)/g,'<span class="grammar-instruction">(bỏ $1)</span>');
+  const partHtml=part=>{
+    const text=viFormulaLabel(part),sentence=/[。！？?]/u.test(text);
+    return text.split(/(\[[^\]\n]+\]|［[^］\n]+］)/u).map(piece=>{
+      if(/^(?:\[.*\]|［.*］)$/u.test(piece))return `<span class="grammar-slot">${escapeHtml(piece)}</span>`;
+      if(!sentence)return literalHtml(piece).replace(/([\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー]+)/gu,'<span class="grammar-script">$1</span>');
+      if(!/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(piece))return literalHtml(piece);
+      // Word boundaries are display aids, not a grammar analysis or a source rewrite.
+      const segmenter=grammarFormulaHtml.segmenter ||= new Intl.Segmenter('ja',{granularity:'word'});
+      return [...segmenter.segment(piece)].map(({segment,isWordLike})=>{
+        if(isWordLike && /^[NV]\d*$/u.test(segment))return `<span class="grammar-symbol">${escapeHtml(segment)}</span>`;
+        return isWordLike && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(segment)
+          ?`<span class="grammar-word">${literalHtml(segment)}</span>`:literalHtml(segment);
+      }).join('');
+    }).join('');
+  };
   const rowHtml=parts=>`<div class="grammar-row">${parts.map((part,index)=>
     `<span class="grammar-chunk">${index?'<span class="grammar-plus" aria-label="cộng">+</span>':''}<span class="grammar-part">${partHtml(part)}</span></span>`).join(' ')}</div>`;
   const parts=rows.map(row=>split(row,'+＋')),suffix=parts[0]?.at(-1);

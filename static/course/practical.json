@@ -475,7 +475,7 @@
         }
       ],
       "formula": "これはいくらですか。［vật］を［số lượng］ください。",
-      "note": "これ chỉ vật ở gần người nói. この đứng trước danh từ: この傘. Xác nhận tổng bằng 全部でいくらですか.",
+      "note": "これ chỉ vật ở gần người nói. この đứng trước danh từ: この傘.\n\nXác nhận tổng bằng câu:\n全部でいくらですか",
       "dialogue": [
         {
           "jp": "この傘はいくらですか。",
