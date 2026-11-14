@@ -109,3 +109,57 @@ test('inferred lesson scope restores its history before main chat sends a new tu
   await b.c.sendMessage('Tiếp tục bài này');
   assert.deepEqual(requests,['/api/history','/api/history?lesson_id=remembered&level=N3','/api/chat']);
 });
+
+function welcomeActions(b){
+  const html=readFileSync('static/index.html','utf8');
+  const buttons=[...html.matchAll(/class="welcome-chip-btn" data-preset="([^"]+)"/g)].map((match,index)=>{
+    const button=b.element(`welcome-${index}`);button.dataset={preset:match[1]};return button;
+  });
+  const query=b.c.document.querySelectorAll;
+  b.c.document.querySelectorAll=selector=>selector==='.welcome-chip-btn[data-preset]'?buttons:query(selector);
+  vm.runInContext(source.slice(source.indexOf('function setupEventListeners()'),source.indexOf('  setupMicrophoneControls();'))+'\n}',b.c);
+  b.c.setupEventListeners();
+  return buttons;
+}
+test('each welcome action sends its own request through normal chat instead of remaining inert',async()=>{
+  const sent=[],b=chat(async(path,options)=>{
+    if(path.startsWith('/api/history'))return Response.json([]);
+    sent.push(JSON.parse(options.body));return Response.json({reply:'こんにちは。'});
+  });
+  const buttons=welcomeActions(b);
+  await b.c.loadChatHistory();
+  for(const button of buttons)await button.click();
+  assert.equal(buttons.length,3);assert.equal(sent.length,3);
+  assert.deepEqual(sent.map(body=>body.message),buttons.map(button=>button.dataset.preset));
+  assert.ok(sent.every(body=>body.intent==='message'&&body.request_id));
+  assert.equal(b.rows.filter(row=>row.role==='bot').length,3);
+});
+test('welcome actions respect history loading, in-flight sends and explicit failed-request retry',async()=>{
+  let finishHistory,finishReply;
+  const sent=[],b=chat((path,options)=>{
+    if(path.startsWith('/api/history'))return new Promise(resolve=>{finishHistory=resolve;});
+    sent.push(JSON.parse(options.body));return new Promise(resolve=>{finishReply=resolve;});
+  }),buttons=welcomeActions(b);
+  const loading=b.c.loadChatHistory();await buttons[0].click();assert.equal(sent.length,0);
+  finishHistory(Response.json([]));await loading;
+  const sending=buttons[0].click();await buttons[1].click();assert.equal(sent.length,1);
+  finishReply(Response.json({detail:'Offline'},{status:503}));await sending;
+  await buttons[2].click();assert.equal(sent.length,1);
+  const retry=b.element('chat-retry').onclick();
+  assert.equal(sent.length,2);assert.deepEqual(sent[1],sent[0]);
+  finishReply(Response.json({reply:'もう一度。'}));await retry;
+  assert.equal(b.rows.filter(row=>row.role==='user').length,1);
+});
+test('reply paragraphs preserve Japanese and single line breaks without blank-line towers or executable markup',()=>{
+  let rendered;
+  const c=vm.createContext({document:{getElementById:id=>id==='chat-welcome'?{style:{}}:{appendChild(row){rendered=row;}},createElement:()=>({})},
+    MASCOTS:{teacher:{avatar:'teacher.svg',name:'Thầy Lâm'}},mascotMgr:{current:'teacher'},
+    escapeHtml:text=>text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')});
+  vm.runInContext(source.slice(source.indexOf('function renderBubble('),source.indexOf('function markLevel(')),c);
+  c.renderBubble('bot','  Em thử nhé.\r\n\r\n\r\n私は音楽を聞くのが好きです。\n次の文です。\n\n<script>alert(1)</script>  ');
+  const body=rendered.innerHTML.split('<div class="bubble-body-text">')[1].split('</div>')[0];
+  assert.equal((body.match(/<p>/g)||[]).length,3);
+  assert.ok(body.includes('私は音楽を聞くのが好きです。<br>次の文です。'));
+  assert.ok(body.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+  assert.ok(!body.includes('<br><br>'));assert.ok(!body.includes('<script>'));
+});

@@ -387,16 +387,14 @@ function renderBubble(role, content) {
   const currentMascot = MASCOTS[mascotMgr.current];
   const avatarSrc = currentMascot.avatar;
 
-  const formattedContent = escapeHtml(content).replace(/\n/g, "<br>");
+  const formattedContent = content.replace(/\r\n?/g, '\n').trim().split(/\n[ \t]*\n(?:[ \t]*\n)*/)
+    .map(paragraph => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`).join('');
 
   row.innerHTML = `
     <div class="bubble-avatar-box">
       ${role === "user" ? '<span class="learner-avatar">Em</span>' : `<img src="${avatarSrc}" alt="Thầy Lâm" class="bubble-avatar-img pixel-sprite">`}
     </div>
     <div class="bubble-speech-card ${role}">
-      <div class="bubble-header-meta">
-        <span class="bubble-name">${role === "user" ? "Em" : currentMascot.name}</span>
-      </div>
       <div class="bubble-body-text">${formattedContent}</div>
     </div>
   `;
@@ -745,12 +743,6 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     ${listeningHtml}
     ${taskReferenceHtml}
     ${item.externalResources?.length?`<div class="external-resources">${item.externalResources.map(r=>`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)} ↗</a>`).join('')}</div>`:''}
-    ${item.sourceLabel || item.source || item.source_header || item.resources?.length?`<details class="lesson-disclosure lesson-info"><summary>Về bài học này${item.editorial?' · AI biên soạn':''}</summary>
-      <p>${escapeHtml(item.sourceLabel || item.source || 'VJBot')}</p>
-      ${item.editorial?'<p>Bài chưa được giáo viên duyệt.</p>':''}
-      ${item.source_header?`<p>${escapeHtml(item.source_header)}</p>`:''}
-      ${item.resources?.length?`<div class="lesson-resources">${item.resources.map(r=>`<p>${escapeHtml(r.publisher)} · ${escapeHtml(r.title)}</p><a href="${escapeHtml(r.pdf_url)}" target="_blank" rel="noopener">Đọc tài liệu</a> ${r.audio_page_url?`<a href="${escapeHtml(r.audio_page_url)}" target="_blank" rel="noopener">Nghe bài gốc</a>`:''}`).join('')}</div>`:''}
-    </details>`:''}
     </div><div id="lesson-exercises" hidden></div><div id="lesson-completion"></div>
     <div class="lesson-footer">
       <button type="button" class="sketch-btn-cta modal-practice-btn">Luyện với thầy Lâm</button>
@@ -1374,6 +1366,9 @@ function setupMicrophoneControls(){
 // 16. EVENT LISTENERS SETUP
 // ==========================================
 function setupEventListeners() {
+  document.querySelectorAll('.welcome-chip-btn[data-preset]').forEach(button => {
+    button.addEventListener('click', () => sendMessage(button.dataset.preset));
+  });
   document.getElementById('btn-practice-topic-now').addEventListener('click',()=>sendMessage(`Thầy Lâm ơi, giúp em luyện ${document.getElementById('hero-topic-display').textContent}.`));
   document.getElementById('btn-change-curriculum-stage').addEventListener('click',()=>switchTab('curriculum'));
   setupMicrophoneControls();
