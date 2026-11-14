@@ -97,7 +97,7 @@ function renderBookmarks() {
   if (!container) return;
   const list = getBookmarks();
   if (!list || list.length === 0) {
-    container.innerHTML = `<p class="empty-bookmark-msg">Chưa có mục nào được lưu. Hãy bấm nút <strong>Lưu chủ đề</strong> trong phòng học Sensei!</p>`;
+    container.innerHTML = `<p class="empty-bookmark-msg">Chưa có mục nào được lưu. Hãy bấm nút <strong>Lưu chủ đề</strong> trong lớp của thầy Lâm!</p>`;
     return;
   }
   container.innerHTML = list.map((item) => `
@@ -256,7 +256,7 @@ function initLoadingScreen() {
   setTimeout(() => {
     if (progressFill) progressFill.style.width = "100%";
     if (percentText) percentText.textContent = "100%";
-    if (statusText) statusText.textContent = "Sẵn sàng cùng VJBot Sensei!";
+    if (statusText) statusText.textContent = "Thầy Lâm đã sẵn sàng!";
     setTimeout(() => {
       loadingOverlay.classList.add("fade-out");
       setTimeout(() => loadingOverlay.remove(), 350);
@@ -396,24 +396,20 @@ function renderBubble(role, content) {
     <div class="bubble-speech-card ${role}">
       <div class="bubble-header-meta">
         <span class="bubble-name">${role === "user" ? "Em" : currentMascot.name}</span>
-        ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe thầy đọc tiếng Nhật">Nghe</button>` : ""}
       </div>
       <div class="bubble-body-text">${formattedContent}</div>
     </div>
   `;
-
-  if (role === "bot") {
-    const ttsBtn = row.querySelector(".bubble-tts-btn");
-    if (ttsBtn) {
-      ttsBtn.addEventListener("click", () => playGeminiTTS(content));
-    }
-  }
 
   container.appendChild(row);
   container.scrollTop = container.scrollHeight;
   return row;
 }
 
+function markLevel(level){
+  const chip=document.getElementById('level-chip');if(chip)chip.dataset.level=level;
+  document.querySelectorAll('.picker-opt-btn').forEach(button=>{if(button.dataset.level===level)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');});
+}
 let sendingMessage=false,chatHistoryReady=false,chatHistoryLoading=false,clearingChat=false,failedChatMessage=null,chatHistoryScope=null;
 function chatHistoryPath() {
   const lesson=chatLessonContext || globalThis.teacherContext?.()?.lesson;
@@ -1549,6 +1545,7 @@ function setupEventListeners() {
         if(!response.ok)throw new Error("save");
         activeCurriculumLevel = lvl;
         document.getElementById("level-chip-text").textContent = `JLPT ${lvl}`;
+        markLevel(lvl);
         status.textContent="";
         if (levelPicker) levelPicker.hidden = true;
         if(location.hash.startsWith('#curriculum/'))openLevelCourse(lvl);else restoreAppRoute();
@@ -1829,6 +1826,7 @@ function setupEventListeners() {
       const chipText = document.getElementById("level-chip-text");
       if (chipText && prof.level) {
         chipText.textContent = `JLPT ${prof.level}`;
+        markLevel(prof.level);
         activeCurriculumLevel = prof.level;
       }
     }

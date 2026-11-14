@@ -27,7 +27,7 @@ body {font-size:14px;line-height:1.5}
   body.sidebar-expanded #lam-walker {left:64px;right:auto;bottom:64px}
   .sidebar-nav-section {margin-bottom:16px!important}
 }
-.app-sidebar .sidebar-nav-item.active {font-weight:600;background:#e8ebe6!important}
+.app-sidebar .sidebar-nav-item.active {font-weight:600;background:var(--c-e8ebe6,#e8ebe6)!important}
 .sidebar-brand .brand-name {font-size:21px;letter-spacing:-.05em}
 .sidebar-brand img {width:32px!important;height:32px!important;image-rendering:pixelated}
 .main-topbar {height:56px!important;min-height:56px;padding:8px 24px!important}

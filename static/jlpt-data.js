@@ -2611,7 +2611,7 @@ window.JLPT_DATA = {
       "id": "freestyle",
       "level": "ALL",
       "title": "Trò chuyện tự do",
-      "desc": "Trò chuyện tự do không kịch bản cùng Sensei về mọi đề tài cuộc sống, sở thích, kế hoạch và ước mơ bằng tiếng Nhật tự nhiên.",
+      "desc": "Trò chuyện tự do không kịch bản cùng thầy Lâm về mọi đề tài cuộc sống, sở thích, kế hoạch và ước mơ bằng tiếng Nhật tự nhiên.",
       "prompts": [
         {
           "jp": "こんにちは！今日はどんな一日でしたか？何か面白いことがありましたか？",
@@ -2635,7 +2635,7 @@ window.JLPT_DATA = {
         {
           "jp": "あなたの好きな日本のアニメや料理は何ですか？理由も教えてくださいね！",
           "ro": "Anata no sukina nihon no anime ya ryouri wa nan desu ka? Riyuu mo oshiete kudasai ne!",
-          "vi": "Món ăn hay bộ anime Nhật Bản bạn yêu thích nhất là gì? Hãy chia sẻ cho Sensei lý do nhé!",
+          "vi": "Món ăn hay bộ anime Nhật Bản em yêu thích nhất là gì? Hãy chia sẻ với thầy Lâm lý do nhé!",
           "hints": [
             "寿司が一番好きです (Tôi thích món sushi nhất)",
             "NARUTOが大好きです (Tôi rất thích bộ Naruto)"

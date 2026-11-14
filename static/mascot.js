@@ -35,8 +35,31 @@
   button.addEventListener('pointerleave', () => { speech.hidden = true; });
   button.addEventListener('focus', () => { speech.hidden = false; });
   button.addEventListener('blur', () => { speech.hidden = true; });
+  // Phones: Lâm floats above the tab bar and shrinks to a small avatar to leave room.
+  const float = document.createElement('div');
+  float.id = 'lam-float';
+  float.innerHTML = '<button type="button" class="lam-float-main" aria-label="Hỏi thầy Lâm"><span class="lam-float-hint" hidden>Hỏi thầy nhé</span><img src="'+base+'south.png" alt="" width="66" height="120" draggable="false"></button><button type="button" class="lam-float-toggle"></button>';
+  document.body.append(float);
+  const main = float.querySelector('.lam-float-main'), toggle = float.querySelector('.lam-float-toggle'), hint = float.querySelector('.lam-float-hint'), face = main.querySelector('img');
+  let hintTimer;
+  const store = { get() { try { return localStorage.getItem('vjbot_lam_float') === 'min' ? 'min' : 'open'; } catch { return 'open'; } }, set(value) { try { localStorage.setItem('vjbot_lam_float', value); } catch {} } };
+  function setState(state) {
+    float.dataset.state = state;
+    toggle.textContent = state === 'min' ? '+' : '–';
+    toggle.setAttribute('aria-label', state === 'min' ? 'Mở rộng thầy Lâm' : 'Thu nhỏ thầy Lâm');
+    if (state === 'min') hint.hidden = true;
+  }
+  function showHint() {
+    if (float.dataset.state !== 'open' || reduce.matches) return;
+    hint.hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => hint.hidden = true, 3500);
+  }
+  setState(store.get());
+  toggle.addEventListener('click', () => { const next = float.dataset.state === 'min' ? 'open' : 'min'; setState(next); store.set(next); if (next === 'open') showHint(); });
+  main.addEventListener('click', () => { hint.hidden = true; globalThis.closeAppSidebar?.(); document.getElementById('btn-topbar-summon').click(); });
+  new MutationObserver(() => showHint()).observe(document.body, {attributes:true,attributeFilter:['data-page']});
+  setTimeout(showHint, 1200);
   const animateIdle = () => {
-    if (!document.hidden && button.getClientRects().length && !reduce.matches) { frame = (frame+1)%4; sprite.src = `${base}idle/${frame}.png`; }
+    if (!document.hidden && !reduce.matches) { const visible = button.getClientRects().length ? sprite : float.getClientRects().length && float.dataset.state === 'open' ? face : null; if (visible) { frame = (frame+1)%4; visible.src = `${base}idle/${frame}.png`; } }
   };
   setInterval(animateIdle, 650);
   reduce.addEventListener('change', () => { if (reduce.matches) { button.getAnimations().forEach(a=>a.cancel()); sprite.src=base+'south.png'; } });

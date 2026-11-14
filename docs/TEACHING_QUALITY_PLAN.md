@@ -642,3 +642,27 @@ The converted tasks retain their original IDs, positions, objectives, Japanese p
 
 These checks establish the implementation, finite scope and transport/ownership behavior. They do **not** establish that a real selected model now accepts every valid alternative or reliably detects every semantic error. Independent Japanese review, bounded live-model rubric evaluation and actual learner-quality review remain separate evidence requirements. No new PR merge, production migration or deployment is included in this checkpoint.
 
+## 19. Synchronize the published learner-UX branch with main
+
+The user authorized resolving conflicts against main and opening a PR, not merging or deploying it. The published `fix/practice-plain-submit` history is preserved: merge main `efc7bbe6b07cbcf454d50bf1e6f8cadcf2e71373` into task head `0f7d7f0feedb60bceb392cbc7e1f951050958895`, without rebasing or force-pushing.
+
+The four conflicting files are resolved by combining behavior, not choosing an entire side:
+
+- `static/practice.css`: retain readable 16px row options, the single native help disclosure and existing task cards; adopt upstream dark-mode color tokens. Do not restore removed answer-basis fine print or the old duplicated help card.
+- `static/surfaces.css`: retain 48px outline controls and the single-row title layout, with upstream themed borders.
+- `static/workspace.css`: retain themed footer colors and the non-sticky mobile footer.
+- `tests/worker.test.mjs`: retain both independent regressions: open rewrites must not become source-key verdicts, and history threads must belong only to the authenticated learner.
+
+Main's PR39 history, account menu, dark mode, mascot and iOS changes are otherwise inherited without custom edits. Scoped read-only integration reviews found no synchronization-specific defect.
+
+### Integrated acceptance
+
+- `node --test --test-concurrency=2 tests/worker.test.mjs tests/chat-ui.test.mjs tests/tutor-ui.test.mjs tests/navigation.test.mjs tests/task-contract.test.mjs tests/account.test.mjs`: **199/199 passed**, no failures or skips.
+- `node "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js" run build`: all five catalogs regenerated and Worker/static **dry-run passed**. No production upload or migration.
+- Actual Edge proof used the merged Worker and static assets, all migrations in an isolated in-memory D1, a synthetic account and disabled external inference. Desktop 1280×1000 and mobile 390×844 screenshots were inspected.
+- The history dialog listed only the synthetic learner's general and lesson threads. Opening the lesson restored its own messages without general-chat content; returning to general chat restored its scope. A foreign learner's seeded thread was absent.
+- The account menu changed dark/light themes and closed on Escape. Desktop options remained flex rows with 16px text and a 52px minimum height. The outline showed five nearby lessons and kept the other 21 behind a closed disclosure. Finite-answer help remained a closed native disclosure without a repeated verdict paragraph.
+- Mobile dark mode had no horizontal overflow. The lesson footer remained in document flow, with 44px controls. Ordinary navigation reached the N1 open rewrite: short goal, separate Japanese sentence, three visible 16px criteria, optional help and “Gửi thầy nhận xét.” No forced lexical sentence key was restored.
+
+This synchronization makes no new claim about model accuracy, prompt-injection resistance or learner outcomes. No live inference, account/provider/voice change, main-branch push, PR merge or deployment is authorized by this task.
+
