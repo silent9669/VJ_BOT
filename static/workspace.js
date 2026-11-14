@@ -58,8 +58,43 @@ async function renderFeaturePage(feature,route){
     setupLessonFilter(work,lessons,'.kanji-set',lessons.map(lesson=>completionRecords.has(activityId(lesson,route.level,'kanji'))));
   }catch{host.textContent='Chưa tải được Kanji. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeaturePage(feature,route);host.append(retry);}
 }
+// Persist canonical references only; titles and links are resolved from the current catalog.
+function learningResumeKey(userId,level){return `vjbot_learning_resume:${encodeURIComponent(userId)}:${level}`;}
+function validLearningReference(reference){
+  return reference && typeof reference==='object' && !Array.isArray(reference)
+    && typeof reference.id==='string' && reference.id.length>0 && reference.id.length<=240
+    && learningSkills.includes(reference.skill)
+    && (reference.owner===null || ['flashcards','kaiwa','quiz'].includes(reference.owner));
+}
+function rememberLearningLesson(item,level,skill,owner=null){
+  const userId=typeof signedInUser==='undefined'?null:signedInUser?.user_id;
+  const reference={id:owner?item.id:activityId(item,level,skill),skill,owner};
+  if(!userId || !learningLevels.includes(level) || !validLearningReference(reference))return;
+  try{localStorage.setItem(learningResumeKey(userId,level),JSON.stringify(reference));}catch{}
+}
+globalThis.rememberLearningLesson=rememberLearningLesson;
+function dashboardLearningTarget(userId,level,units,completed){
+  const steps=units.filter(unit=>!unit.optional).flatMap(unit=>unit.steps.map(step=>({...step,unitId:unit.id})));
+  const unfinished=step=>!completed.has(step.unitId) && !completed.has(activityId(step.lesson,level,step.skill));
+  let reference;
+  try{reference=JSON.parse(localStorage.getItem(learningResumeKey(userId,level)));}catch{}
+  if(validLearningReference(reference)){
+    const lesson=reference.owner?findFeatureLesson(reference.owner,level,reference.id)
+      :window.JLPT_DATA.curriculum[level].skills[reference.skill]?.find(item=>activityId(item,level,reference.skill)===reference.id)
+        || steps.find(step=>step.skill===reference.skill && activityId(step.lesson,level,step.skill)===reference.id)?.lesson;
+    if(lesson){
+      const index=steps.findIndex(step=>step.skill===reference.skill && activityId(step.lesson,level,step.skill)===activityId(lesson,level,reference.skill));
+      const finished=completed.has(activityId(lesson,level,reference.skill)) || index>=0 && completed.has(steps[index].unitId);
+      if(!finished)return {lesson,skill:reference.skill,owner:reference.owner};
+      const following=index>=0 && steps.slice(index+1).find(unfinished);
+      if(following)return following;
+    }
+  }
+  return steps.find(unfinished);
+}
 async function renderDashboard(){
-  const version=featureVersion;
+  const version=featureVersion,userId=signedInUser?.user_id,level=activeCurriculumLevel;
+  const current=()=>version===featureVersion && signedInUser?.user_id===userId && activeCurriculumLevel===level;
   const host=document.getElementById('dashboard-content');
   document.getElementById('dashboard-greeting').textContent=`${signedInUser?.name || 'Học viên'} · ${activeCurriculumLevel}`;
   host.textContent='Đang tải tiến độ…';
@@ -67,12 +102,12 @@ async function renderDashboard(){
     const response=await apiFetch('/api/progress');if(!response.ok)throw new Error('progress');
     const [progress,completed]=await Promise.all([response.json(),loadCompletions()]);
     const due=(progress.items || []).filter(i=>i.next_review && new Date(i.next_review)<=new Date()).length;
-    await Promise.all([ensureLessons(activeCurriculumLevel),loadPracticalCourse()]);
-    if(version!==featureVersion)return;
-    const units=createStudyPlan(activeCurriculumLevel);
-    const next=units.filter(u=>!u.optional && !completed.has(u.id)).flatMap(u=>u.steps).find(step=>!completed.has(activityId(step.lesson,activeCurriculumLevel,step.skill)));
+    await Promise.all([ensureLessons(level),loadPracticalCourse()]);
+    if(!current())return;
+    const units=createStudyPlan(level);
+    const next=dashboardLearningTarget(userId,level,units,completed);
     const nextTitle=next?.lesson.title || 'Ôn lại bài học';
-    const nextHref=next?appRouteHash('lesson',{level:activeCurriculumLevel,skill:next.skill,id:activityId(next.lesson,activeCurriculumLevel,next.skill)}):`#curriculum/${activeCurriculumLevel}`;
+    const nextHref=next?appRouteHash('lesson',{level,skill:next.skill,owner:next.owner,id:next.owner?next.lesson.id:activityId(next.lesson,level,next.skill)}):`#curriculum/${level}`;
     const required=units.filter(unit=>!unit.optional);
     const chapterDone=unit=>completed.has(unit.id) || unit.steps.every(step=>completed.has(activityId(step.lesson,activeCurriculumLevel,step.skill)));
     const courseRows=required.slice(0,4);
@@ -85,7 +120,7 @@ async function renderDashboard(){
       <section class="dashboard-practice"><header class="dashboard-section-heading"><h2>Luyện tập</h2></header><div class="dashboard-tools"><a href="#classroom"><h3>Thầy Lâm</h3><span>Hỏi &amp; luyện phản xạ</span><span aria-hidden="true">↗</span></a>${Object.entries(featureNames).map(([key,name],index)=>`<a href="#${key}/${activeCurriculumLevel}"><h3>${name}</h3><span>${['Ghi nhớ từ','Hội thoại tình huống','Chữ & cách đọc','Bộ đề theo cấp độ'][index]}</span><span aria-hidden="true">↗</span></a>`).join('')}</div></section></div>
       <section class="dashboard-recent"><header class="dashboard-section-heading"><h2>Vừa hoàn thành</h2><a href="#mastery">Tiến độ ↗</a></header>${recent.map(item=>`<p><span>${escapeHtml(item.level)}</span><strong>${escapeHtml(item.title)}</strong><time>${item.completed_at?new Date(item.completed_at).toLocaleDateString('vi-VN'):''}</time></p>`).join('') || '<p class="dashboard-empty">Chưa có bài hoàn thành.</p>'}</section>`;
     globalThis.mountAiBanner?.(host);
-  }catch{host.textContent='Chưa tải được tiến độ. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=renderDashboard;host.append(retry);}
+  }catch{if(!current())return;host.textContent='Chưa tải được tiến độ. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=renderDashboard;host.append(retry);}
 }
 function addPracticeSets(level){
   const exams=window.JLPT_DATA.exams[level];

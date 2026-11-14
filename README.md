@@ -41,6 +41,10 @@ npm test
 
 Để dùng tài khoản kiểm thử cục bộ, đặt `LOCAL_TEST_ADMIN_PASSWORD` trong `.dev.vars`, rồi đăng nhập với tên `admin` và mật khẩu đó. Luồng này chỉ hoạt động trên localhost trong dev; không đặt secret kiểm thử trên Worker công khai.
 
+## Thử giao diện Manga Club
+
+Mở `http://127.0.0.1:8787/?ui=manga` để thử theme Manga Club trên localhost. Thanh đầu trang có công tắc về giao diện hiện tại. Theme không tự bật trên production. “Học tiếp” nhớ bài vừa mở theo tài khoản/cấp độ trong trình duyệt này; chưa đồng bộ giữa các thiết bị. Xem [hướng dẫn thử local](docs/LOCAL_UI_TRIAL.md).
+
 ## Triển khai
 
 Merge vào `main` là tự deploy qua Cloudflare Workers Builds (kèm migration); test chạy ở GitHub Actions và là check bắt buộc trước khi merge. Xem [Triển khai và CI](docs/DEPLOYMENT_CICD.md).

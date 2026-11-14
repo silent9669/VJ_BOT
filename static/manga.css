@@ -1,0 +1,196 @@
+/* B · Manga Club. Local-only activation is owned by local-ui.js.
+   Every application override is scoped: switching back preserves the current UI. */
+#manga-nav {display:none}
+html[data-ui=manga] {
+  --paper:#f7f7f2;--whiteboard:#f7f7f2;--paper-card:#fff;--sheet:#fff;--surface:#fff;
+  --surface-2:#eeeee7;--raised:#f7e34e;--ink:#181818;--pencil:#353532;
+  --muted:#50504c;--study-muted:#50504c;--pencil-light:#50504c;
+  --line:#b8b8ad;--border-dark:#181818;--accent:#181818;--accent-hover:#393933;
+  --yellow:#f7e34e;--coral:#9b3525;--radius-card:3px;--radius-control:3px;
+  --r-1:3px;--r-2:4px;--control-height:44px;
+  --font-sans:'Be Vietnam Pro','Noto Sans JP',sans-serif;
+  --font-display:'Barlow Condensed','Be Vietnam Pro',sans-serif;
+}
+html[data-ui=manga] body {font-family:var(--font-sans);font-size:15px;line-height:1.7;background:var(--paper);color:var(--ink)}
+html[data-ui=manga] ::selection {background:var(--yellow);color:var(--ink)}
+html[data-ui=manga] :is(button,a,input,select,textarea,summary):focus-visible {outline:3px dashed #9b3525;outline-offset:4px}
+html[data-ui=manga] :is(h1,h2,h3) {text-wrap:balance}
+html[data-ui=manga] :is(p,li) {text-wrap:pretty}
+html[data-ui=manga] .app-shell {min-height:calc(100dvh - 62px)}
+html[data-ui=manga] .sketch-canvas {background:var(--paper);background-image:none;padding:30px 36px 56px!important}
+html[data-ui=manga] .tab-panel {max-width:1200px;padding:0}
+html[data-ui=manga] .main-topbar {background:#fff;border-bottom:2px solid var(--ink);box-shadow:none;height:64px!important;min-height:64px;padding:8px 32px!important}
+html[data-ui=manga] .breadcrumb-current {font-size:13px;font-weight:700}
+html[data-ui=manga] .topbar-summon-btn {border:1.5px solid var(--ink);border-radius:3px;min-height:44px;box-shadow:2px 2px 0 var(--ink);background:var(--yellow)!important}
+html[data-ui=manga] .topbar-account-btn {border:1px solid var(--ink);border-radius:3px;min-height:44px}
+html[data-ui=manga] .sketch-kbd {background:#fff;border:1px solid var(--ink);border-radius:2px;color:var(--ink)}
+html[data-ui=manga] .app-shell #app-sidebar {background:#fff!important;border-right:2px solid var(--ink)!important;transition:none}
+html[data-ui=manga] #app-sidebar .brand-name {font-family:var(--font-display);font-weight:800;font-size:28px;letter-spacing:.3px;text-transform:uppercase}
+html[data-ui=manga] #app-sidebar .sidebar-nav-item {min-height:44px;height:auto;border-radius:2px;font-size:13px}
+html[data-ui=manga] #app-sidebar .sidebar-nav-item.active {border:1.5px solid var(--ink);background:var(--yellow)!important;box-shadow:2px 2px 0 var(--ink);font-weight:700}
+html[data-ui=manga] #app-sidebar .sidebar-group-label {font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);letter-spacing:.8px;text-transform:uppercase}
+html[data-ui=manga] #app-sidebar #lam-walker {border-bottom:2px solid var(--ink);animation:none}
+html[data-ui=manga] #app-sidebar #lam-walker img {filter:grayscale(1)}
+html[data-ui=manga] #level-chip {min-height:44px;border:1.5px solid var(--ink);border-radius:2px;font-weight:700}
+html[data-ui=manga] :is(.workspace-heading h1,.level-hub-heading h1,.settings-container>h1,.curriculum-title,.fc-title,.kaiwa-title,.quiz-title,.mastery-title) {font-family:var(--font-display);font-size:clamp(32px,3.5vw,46px)!important;font-weight:800!important;line-height:1.1;letter-spacing:-.5px;text-transform:uppercase}
+html[data-ui=manga] :is(.workspace-heading,.level-hub-heading) {margin-bottom:28px;align-items:center;flex-wrap:wrap}
+html[data-ui=manga] :is(.stage-btn,.feature-back,.card-audio-btn,.speech-icon-btn,.public-login,.public-signin) {min-height:44px;border-radius:3px}
+html[data-ui=manga] :is(.public-cta,.sketch-btn-cta,.modal-practice-btn,.simulation-start) {background:var(--ink)!important;color:#fff!important;border:2px solid var(--ink)!important;border-radius:2px;box-shadow:3px 3px 0 #b8b8ad!important;min-height:48px;font-weight:700}
+html[data-ui=manga] :is(input,select,textarea) {border:1.5px solid var(--ink);border-radius:3px;background:#fff;min-height:44px;font-size:15px}
+html[data-ui=manga] button:disabled {opacity:.6;box-shadow:none;cursor:not-allowed}
+html[data-ui=manga] :is(.dashboard-section-heading h2,.card-title,.dashboard-section-title,.study-unit-title) {font-family:var(--font-display);font-size:24px;font-weight:700;letter-spacing:.15px}
+/* Dashboard: one live lesson link, framed as the lead comic panel. */
+html[data-ui=manga] #panel-dashboard>.workspace-heading h1 {font-size:clamp(40px,5vw,62px)!important}
+html[data-ui=manga] #panel-dashboard>.workspace-heading h1::after {content:' / 日本語';font-family:var(--font-jp);font-size:.42em;letter-spacing:-1px;vertical-align:middle;margin-left:8px}
+html[data-ui=manga] #dashboard-greeting {font-size:13px;color:var(--muted);margin-top:10px}
+html[data-ui=manga] .dashboard-next {display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:12px 0;padding:0;min-height:290px;background:#fff;border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);overflow:hidden;text-decoration:none;position:relative;margin-bottom:24px}
+/* The supplied photo is 2048×1536: preserve all four people and its 4:3 ratio. */
+html[data-ui=manga] .dashboard-next::before {content:'';grid-column:1;grid-row:1/4;min-height:0;aspect-ratio:4/3;background:#fff url('/assets/knks.jpg') center/contain no-repeat;border-right:3px solid var(--ink)}
+html[data-ui=manga] .dashboard-next-label {grid-column:2;grid-row:1;justify-self:start;margin:27px 28px 0;font-size:12px;font-weight:800;letter-spacing:.3px;background:var(--yellow);color:var(--ink);padding:3px 9px}
+html[data-ui=manga] .dashboard-next h2 {grid-column:2;grid-row:2;align-self:center;font-size:clamp(23px,2.6vw,34px);line-height:1.35;font-weight:800;letter-spacing:-1px;padding:0 28px;overflow-wrap:anywhere}
+html[data-ui=manga] .dashboard-next .dashboard-next-action {grid-column:2;grid-row:3;justify-self:start;margin:0 28px 27px;padding:12px 18px;background:var(--ink);color:#fff;border-radius:1px;font-size:13px;font-weight:700;white-space:normal}
+html[data-ui=manga] .dashboard-numbers {background:transparent;border-bottom:2px solid var(--ink);margin:0 0 28px}
+html[data-ui=manga] .dashboard-numbers>div {padding:16px 0 20px}
+html[data-ui=manga] .dashboard-numbers>div+div {padding-left:24px}
+html[data-ui=manga] .dashboard-numbers>div+div::before {border-left:1px solid var(--line);top:17px;bottom:20px}
+html[data-ui=manga] .dashboard-numbers dd {font-family:var(--font-display);font-size:36px;font-weight:700;color:var(--ink)}
+html[data-ui=manga] .dashboard-numbers dt {color:var(--muted);font-size:12px}
+html[data-ui=manga] .dashboard-grid {gap:36px}
+html[data-ui=manga] .dashboard-section-heading {margin-bottom:14px}
+html[data-ui=manga] .dashboard-chapters {border-top:2px solid var(--ink)}
+html[data-ui=manga] .dashboard-chapters>a {min-height:61px;grid-template-columns:30px minmax(0,1fr) auto;font-size:13px}
+html[data-ui=manga] .dashboard-chapter-index {font:700 24px var(--font-display);color:var(--ink)}
+html[data-ui=manga] .dashboard-tools {border-top:2px solid var(--ink)}
+html[data-ui=manga] .dashboard-tools>a {padding:13px 0;min-height:61px}
+html[data-ui=manga] .dashboard-tools h3 {font-family:var(--font-sans);font-weight:700;font-size:13px}
+html[data-ui=manga] .dashboard-levels a {border:1px solid var(--ink);border-radius:2px;min-height:44px;min-width:44px}
+html[data-ui=manga] .dashboard-levels a[aria-current] {background:var(--yellow);box-shadow:2px 2px 0 var(--ink)}
+html[data-ui=manga] .dashboard-recent {border-top:2px solid var(--ink)}
+/* Keep learning screens calm inside the stronger exterior framing. */
+html[data-ui=manga] :is(.level-course-card,.feature-lesson-card) {background:#fff;border:1.5px solid var(--ink);padding:18px;margin-bottom:12px;border-radius:2px}
+html[data-ui=manga] .level-cards {border:0;gap:0}
+html[data-ui=manga] .level-cover {border:1px solid var(--ink);border-radius:0;background:var(--yellow)!important;width:86px;height:70px}
+html[data-ui=manga] .level-cover img {filter:grayscale(1) contrast(1.8)}
+html[data-ui=manga] .level-card-content h2 {font-family:var(--font-display);font-size:30px;font-weight:700}
+html[data-ui=manga] .curriculum-lesson-card {border:1px solid var(--ink)!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;margin-bottom:10px;padding:16px!important;min-height:80px}
+html[data-ui=manga] .curriculum-lesson-card .open-lesson-btn {background:transparent!important;color:var(--ink)!important;font-weight:700}
+html[data-ui=manga] :is(.curriculum-view-switch button[aria-pressed=true],.skill-tab-btn.active,.level-tab-btn.active,.fc-lvl-btn.active,.quiz-lvl-btn.active) {background:var(--yellow)!important;color:var(--ink)!important;border:1px solid var(--ink)!important;box-shadow:2px 2px 0 var(--ink)!important}
+html[data-ui=manga] :is(.curriculum-view-switch button,.skill-tab-btn,.level-tab-btn,.fc-lvl-btn,.quiz-lvl-btn) {min-height:44px!important;border-radius:2px!important}
+html[data-ui=manga] :is(.lesson-toolbar input,.lesson-toolbar select) {height:44px;min-height:44px}
+html[data-ui=manga] :is(.study-unit,.chapter-card,.study-chapter,.kanji-set) {background:#fff;border:1.5px solid var(--ink);border-radius:2px;box-shadow:none}
+html[data-ui=manga] #lesson-page {border:2px solid var(--ink);border-radius:2px;background:#fff}
+html[data-ui=manga] .lesson-page-header {border-bottom:2px solid var(--ink);background:#fff;padding:24px}
+html[data-ui=manga] .lesson-page-header h1 {font-size:clamp(24px,3vw,34px);line-height:1.45;font-weight:800;letter-spacing:-.6px}
+html[data-ui=manga] .lesson-page-header .modal-lesson-badge {background:var(--yellow)!important;color:var(--ink)!important;border:1px solid var(--ink);border-radius:0!important;font-weight:700}
+html[data-ui=manga] #modal-lesson-body {line-height:1.9;font-size:16px}
+html[data-ui=manga] .learning-breadcrumb button {color:var(--ink)}
+html[data-ui=manga] .lesson-source {color:var(--ink)}
+html[data-ui=manga] .lesson-formula {border:1px solid var(--ink);border-radius:2px;background:#fff9c9}
+html[data-ui=manga] .lesson-mode-switch button {min-height:44px;border-radius:2px;color:var(--ink)}
+html[data-ui=manga] .lesson-mode-switch button[aria-pressed=true] {background:var(--yellow);color:var(--ink);border:1px solid var(--ink)}
+html[data-ui=manga] :is(.lesson-mode-switch,.study-teacher-head,.lesson-footer) {background:#fff;border-color:var(--ink)}
+html[data-ui=manga] .lesson-page .practice-actions {background:#fff}
+html[data-ui=manga] .card-face {border:2px solid var(--ink)!important;border-radius:3px!important;box-shadow:5px 5px 0 var(--ink)!important;background:#fff}
+html[data-ui=manga] .card-back {background:#fffde5}
+html[data-ui=manga] :is(.kaiwa-prompt-card,.kaiwa-response-card,.settings-card,.weak-spots-card,.bookmarks-card) {background:#fff;border:1.5px solid var(--ink);border-radius:3px;box-shadow:none}
+html[data-ui=manga] #exam-catalog .exam-set {background:#fff;border:1.5px solid var(--ink);border-radius:0;margin-bottom:10px;padding:18px}
+html[data-ui=manga] #panel-quiz .quiz-question-area {background:#fff;border:2px solid var(--ink);border-radius:3px}
+html[data-ui=manga] #panel-quiz .quiz-option-btn {min-height:52px;border:1.5px solid var(--ink);border-radius:3px}
+html[data-ui=manga] .simulation-header {border:2px solid var(--ink);background:#fff}
+html[data-ui=manga] .answer-sheet label {border-radius:2px;border-color:var(--ink)}
+html[data-ui=manga] .answer-sheet label:has(input:checked) {background:var(--yellow);color:var(--ink)}
+/* Conversation: ink frame, generous readable messages, unchanged controls. */
+html[data-ui=manga] #panel-classroom {max-width:1040px}
+html[data-ui=manga] #panel-classroom .classroom-chat-window {border:2px solid var(--ink);border-radius:3px;box-shadow:5px 5px 0 var(--ink);background:#fff;height:calc(100dvh - 230px);min-height:480px}
+html[data-ui=manga] #panel-classroom .chat-header {border-bottom:2px solid var(--ink);background:#fff}
+html[data-ui=manga] #panel-classroom .chat-title {font-family:var(--font-display);font-size:24px!important;font-weight:700}
+html[data-ui=manga] #panel-classroom .welcome-title {font-family:var(--font-display);font-size:36px;font-weight:700;line-height:1.15;letter-spacing:0}
+html[data-ui=manga] #panel-classroom .chat-messages-stage {background:#fff}
+html[data-ui=manga] #panel-classroom .bubble-speech-card.user {background:#fff9c9;border:1px solid var(--ink);border-radius:8px 8px 0 8px}
+html[data-ui=manga] #panel-classroom .bubble-body-text {font-size:16px;line-height:1.9}
+html[data-ui=manga] #panel-classroom .chat-input-bar {border:2px solid var(--ink);border-radius:3px;box-shadow:none}
+html[data-ui=manga] #panel-classroom .chat-audio-btn {background:var(--yellow);border:1px solid var(--ink);border-radius:3px;min-height:44px}
+html[data-ui=manga] #panel-classroom .chat-chips-bar .prompt-chip {border:1px solid var(--line);border-radius:3px;min-height:44px;background:#fff}
+html[data-ui=manga] #panel-classroom .live-stage {background:#fff9c9;border:1px solid var(--ink);border-radius:3px}
+html[data-ui=manga] .ai-banner {background:#fff9c9;border:1.5px solid var(--ink);border-radius:2px}
+html[data-ui=manga] .ai-banner p {font-size:13px}
+html[data-ui=manga] .chat-ai-gate {border-color:var(--ink)}
+/* Public entry and account dialogs share the same club identity. */
+html[data-ui=manga] #panel-landing {background:var(--paper);max-width:1280px}
+html[data-ui=manga] .public-nav {border-bottom:2px solid var(--ink);padding-bottom:20px}
+html[data-ui=manga] .public-brand {font-family:var(--font-display);font-size:36px;font-weight:800;text-transform:uppercase}
+html[data-ui=manga] .public-hero {gap:40px;padding:44px 0 36px}
+html[data-ui=manga] .public-hero h1 {font-family:var(--font-display);font-size:clamp(52px,6.8vw,92px);font-weight:800;line-height:1.02;letter-spacing:-1px;text-transform:uppercase}
+html[data-ui=manga] .public-hero-copy {position:relative}
+html[data-ui=manga] .public-intro {font-size:16px;color:var(--muted)}
+html[data-ui=manga] .public-demo {background:#fff;border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:0;overflow:hidden}
+html[data-ui=manga] .demo-teacher-heading {padding:24px;background:var(--yellow);border-bottom:2px solid var(--ink)}
+html[data-ui=manga] .demo-teacher-heading h2 {font-family:var(--font-display);font-size:34px;font-weight:800;line-height:1.1}
+html[data-ui=manga] .demo-teacher-heading img {filter:grayscale(1)}
+html[data-ui=manga] .demo-chat {padding:24px}
+html[data-ui=manga] .demo-answers button {border:2px solid var(--ink);border-radius:2px;background:#fff;box-shadow:3px 3px 0 var(--ink);min-height:48px}
+html[data-ui=manga] .public-levels button {min-width:44px;min-height:44px;border:1.5px solid var(--ink);border-radius:2px;background:#fff;color:var(--ink)}
+html[data-ui=manga] .public-levels button[aria-pressed=true] {background:var(--yellow);box-shadow:2px 2px 0 var(--ink)}
+html[data-ui=manga] .public-steps {border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+html[data-ui=manga] .public-steps button {font-weight:700;min-height:60px}
+html[data-ui=manga] .public-footer {border-color:var(--ink)}
+html[data-ui=manga] :is(#auth-dialog,.admin-user-dialog,#simulation-confirm) {border:2px solid var(--ink);border-radius:4px;box-shadow:7px 7px 0 var(--ink);background:#fff}
+html[data-ui=manga] .auth-aside {background:var(--yellow);border-right:2px solid var(--ink)}
+html[data-ui=manga] #auth-dialog h2 {font-family:var(--font-display);font-size:32px;font-weight:800}
+html[data-ui=manga] .auth-tabs button[aria-pressed=true] {background:var(--yellow);color:var(--ink)}
+html[data-ui=manga] :is(#auth-submit,.chat-send-btn) {background:var(--ink);color:#fff;border-radius:2px}
+html[data-ui=manga] .settings-nav button[aria-current=true] {background:var(--yellow);border:1px solid var(--ink);font-weight:700}
+html[data-ui=manga] .speech-player {border:2px solid var(--ink);border-radius:3px;background:#fff;box-shadow:3px 3px 0 var(--ink)}
+html[data-ui=manga] :is(.sidebar-companion,.mascot-breathing,.lam-idle) {animation:none}
+@media(min-width:1200px) {
+  html[data-ui=manga] #manga-nav {display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:16px 32px;min-height:80px;background:#fff;border-bottom:3px solid var(--ink)}
+  html[data-ui=manga] #manga-nav .manga-wordmark {font-family:var(--font-display);font-size:32px;font-weight:800;letter-spacing:-.5px;margin-right:auto}
+  html[data-ui=manga] #manga-nav a {display:flex;align-items:center;justify-content:center;padding:10px 14px;min-height:44px;font-size:13px;font-weight:600;color:var(--ink);text-decoration:none;border:1.5px solid transparent}
+  html[data-ui=manga] #manga-nav a[aria-current] {border-color:var(--ink);background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
+  html[data-ui=manga] body:not([data-page=landing]) .app-shell #app-sidebar {display:none}
+  html[data-ui=manga] .app-main {width:100%}
+  html[data-ui=manga] .main-topbar {width:100%;max-width:1272px;margin:0 auto;border-bottom:0;background:var(--paper);flex-shrink:0}
+  html[data-ui=manga] .main-topbar .breadcrumb-current {white-space:nowrap}
+  html[data-ui=manga] .sketch-canvas {padding-top:16px!important}
+  html[data-ui=manga] body[data-page=landing] #manga-nav {display:none}
+}
+@media(hover:hover) and (pointer:fine) {
+  html[data-ui=manga] :is(.stage-btn,.public-cta,.demo-answers button) {transition:transform 140ms cubic-bezier(.23,1,.32,1)}
+  html[data-ui=manga] :is(.stage-btn,.public-cta,.demo-answers button):not(:disabled):hover {transform:translate(-1px,-1px)}
+  html[data-ui=manga] :is(.stage-btn,.public-cta,.demo-answers button):not(:disabled):active {transform:translate(1px,1px)}
+  html[data-ui=manga] :is(.dashboard-tools>a,.dashboard-chapters>a,.feature-lesson-card,.curriculum-lesson-card,.level-course-card):hover {background:#fff9c9!important}
+  html[data-ui=manga] #manga-nav a:hover {border-color:var(--ink)}
+}
+@media(max-width:739px) {
+  html[data-ui=manga] .sketch-canvas {padding:22px 18px 40px!important}
+  html[data-ui=manga] .main-topbar {padding:8px 16px!important;gap:8px}
+  html[data-ui=manga] .topbar-summon-btn {box-shadow:none;padding:6px 10px}
+  html[data-ui=manga] .topbar-summon-btn .sketch-kbd {display:none}
+  html[data-ui=manga] .account-user-name {max-width:75px}
+  html[data-ui=manga] #panel-dashboard>.workspace-heading h1 {font-size:38px!important}
+  html[data-ui=manga] .dashboard-next {grid-template-columns:1fr;grid-template-rows:auto auto auto auto;min-height:0;gap:12px;box-shadow:4px 4px 0 var(--ink)}
+  html[data-ui=manga] .dashboard-next::before {grid-column:1;grid-row:1;min-height:0;aspect-ratio:4/3;border-right:0;border-bottom:2px solid var(--ink)}
+  html[data-ui=manga] .dashboard-next-label {grid-column:1;grid-row:2;margin:10px 20px 0}
+  html[data-ui=manga] .dashboard-next h2 {grid-column:1;grid-row:3;font-size:27px;padding:0 20px}
+  html[data-ui=manga] .dashboard-next .dashboard-next-action {grid-column:1;grid-row:4;margin:2px 20px 20px}
+  html[data-ui=manga] .dashboard-grid {grid-template-columns:1fr;gap:24px}
+  html[data-ui=manga] .dashboard-numbers>div+div {padding-left:12px}
+  html[data-ui=manga] .dashboard-numbers dd {font-size:30px}
+  html[data-ui=manga] .dashboard-numbers dt {font-size:11px}
+  html[data-ui=manga] .dashboard-tools>a {grid-template-columns:minmax(0,1fr) auto 16px;gap:8px}
+  html[data-ui=manga] .dashboard-tools>a>span {font-size:11px}
+  html[data-ui=manga] .workspace-heading>a {min-height:44px}
+  html[data-ui=manga] #panel-classroom .classroom-chat-window {height:calc(100dvh - 190px);min-height:440px;box-shadow:3px 3px 0 var(--ink)}
+  html[data-ui=manga] #panel-classroom .chat-messages-stage {padding:20px 16px}
+  html[data-ui=manga] #panel-classroom .chat-header {padding:12px 16px}
+  html[data-ui=manga] #panel-classroom .chat-input-bar {margin:0 12px 12px}
+  html[data-ui=manga] .public-hero {padding:30px 0;gap:28px}
+  html[data-ui=manga] .public-hero h1 {font-size:60px}
+  html[data-ui=manga] .public-demo {box-shadow:4px 4px 0 var(--ink)}
+  html[data-ui=manga] .demo-teacher-heading,.demo-chat {padding:20px}
+  html[data-ui=manga] #modal-lesson-body {padding:20px!important;font-size:15px}
+  html[data-ui=manga] .lesson-page-header {padding:20px}
+}
+@media(prefers-reduced-motion:reduce) {
+  html[data-ui=manga] *,html[data-ui=manga] *::before,html[data-ui=manga] *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

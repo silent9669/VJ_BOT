@@ -803,6 +803,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   renderLessonOutline(item,level,skill,owner);
   body.scrollTop=0;
   title.focus({preventScroll:true});
+  globalThis.rememberLearningLesson?.(item,level,skill,owner);
 }
 
 // ==========================================

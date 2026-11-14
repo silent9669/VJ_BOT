@@ -1,0 +1,2 @@
+# Preserve byte-for-byte upstream checksums on Windows checkouts.
+/static/openjlpt/*.json text eol=lf
