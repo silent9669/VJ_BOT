@@ -12,23 +12,23 @@ export async function requestFingerprint(value) {
 export async function claimTutorRequest(env, userId, scope, requestId, fingerprint, now = Date.now()) {
   const token = crypto.randomUUID();
   const previous = await env.DB.prepare('SELECT * FROM tutor_requests WHERE user_id=? AND request_id=?').bind(userId, requestId).first();
-  if (previous && (previous.context_key !== scope || previous.fingerprint !== fingerprint)) return {error: 'Request ID belongs to another message or conversation.'};
+  if (previous && (previous.context_key !== scope || previous.fingerprint !== fingerprint)) return {error: 'Mã yêu cầu thuộc một tin nhắn hoặc cuộc trò chuyện khác.'};
   if (!previous) {
     const legacy = await env.DB.prepare('SELECT id FROM conversations WHERE user_id=? AND request_id=? LIMIT 1').bind(userId, requestId).first();
-    if (legacy) return {error: 'This older request cannot be replayed. Send it as a new message.'};
+    if (legacy) return {error: 'Không thể phát lại yêu cầu cũ này. Hãy gửi thành tin nhắn mới.'};
   }
   await env.DB.prepare("INSERT INTO tutor_requests(user_id,request_id,context_key,fingerprint,status,lease_token,lease_expires) VALUES(?,?,?,?,'pending',?,?) ON CONFLICT(user_id,request_id) DO NOTHING")
     .bind(userId, requestId, scope, fingerprint, token, now + LEASE_MS).run();
   const row = await env.DB.prepare('SELECT * FROM tutor_requests WHERE user_id=? AND request_id=?').bind(userId, requestId).first();
-  if (!row || row.context_key !== scope || row.fingerprint !== fingerprint) return {error: 'Request ID belongs to another message or conversation.'};
+  if (!row || row.context_key !== scope || row.fingerprint !== fingerprint) return {error: 'Mã yêu cầu thuộc một tin nhắn hoặc cuộc trò chuyện khác.'};
   if (row.status === 'complete') {
     const saved = await env.DB.prepare("SELECT content FROM conversations WHERE user_id=? AND request_id=? AND context_key=? AND role='bot'").bind(userId, requestId, scope).first();
-    return saved ? {cached: saved.content} : {error: 'The saved response is unavailable. Send a new message.'};
+    return saved ? {cached: saved.content} : {error: 'Phản hồi đã lưu không khả dụng. Hãy gửi tin nhắn mới.'};
   }
   if (row.lease_token === token) return {token};
   const renewed = await env.DB.prepare("UPDATE tutor_requests SET lease_token=?,lease_expires=? WHERE user_id=? AND request_id=? AND status='pending' AND lease_expires<=? RETURNING lease_token")
     .bind(token, now + LEASE_MS, userId, requestId, now).first();
-  return renewed ? {token} : {error: 'This message is still being answered. Retry after it finishes.'};
+  return renewed ? {token} : {error: 'Tin nhắn này vẫn đang được trả lời. Hãy thử lại sau khi hoàn tất.'};
 }
 
 export async function claimTutorScope(env, userId, scope, token, now = Date.now()) {

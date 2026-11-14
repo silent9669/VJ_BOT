@@ -97,14 +97,14 @@ test('recorded owner and route guards reject a late transcript before lifecycle 
 for(const setupFailure of ['constructor','start'])test(`recorded ${setupFailure} failure releases microphone without fallback`,async()=>{
   const h=recording({setupFailure});await h.controller.toggle();
   assert.equal(h.tracks[0].stopped,true);assert.equal(h.recognition,undefined);assert.equal(h.controller.active,false);
-  assert.match(h.status.textContent,/recorder.*failed/);assert.equal(h.requests.length,1);
+  assert.match(h.status.textContent,/Không xử lý được âm thanh/);assert.equal(h.errors.length,1);assert.equal(h.requests.length,1);
 });
 test('actual recording MIME survives upload and replay failure remains visible',async()=>{
   const h=recording({mimeType:'audio/mp4',playPromise:Promise.resolve()});
   await h.controller.toggle();await h.controller.toggle();await tick();
   assert.equal(h.requests[1].body.mime_type,'audio/mp4');assert.match(h.status.textContent,/văn bản/);
   h.context.Audio=class {play(){return Promise.reject(new Error('blocked replay'));}pause(){}removeAttribute(){}load(){}};
-  await h.playback.events.click();assert.match(h.status.textContent,/blocked replay/);assert.equal(h.input.value,'入力 こんにちは');
+  await h.playback.events.click();assert.match(h.status.textContent,/Không phát được bản ghi/);assert.equal(h.input.value,'入力 こんにちは');
 });
 test('late replay failures cannot overwrite a newer capture',async()=>{
   let reject;const h=recording({playPromise:new Promise((_done,fail)=>{reject=fail;})});
@@ -114,7 +114,7 @@ test('late replay failures cannot overwrite a newer capture',async()=>{
 });
 test('unsupported speech recognition retains explicit replay recording and manual text',async()=>{
   const h=recording({supported:false,noRecognition:true});await h.controller.toggle();
-  assert.match(h.status.textContent,/transcription.*unavailable/i);await h.controller.toggle();await tick();
+  assert.equal(h.recognition,undefined);await h.controller.toggle();await tick();
   assert.equal(h.input.value,'入力');assert.equal(h.playback.hidden,false);assert.equal(h.requests.length,1);
   h.controller.reset();
 });
@@ -130,4 +130,19 @@ test('transcription failures preserve manual text without switching to another s
   assert.match(h.status.textContent,/Selected STT quota exhausted/);assert.equal(h.input.value,'入力');
   assert.equal(h.recognition,undefined);assert.equal(h.requests.length,2);assert.equal(h.controller.active,false);
   assert.equal(h.tracks[0].stopped,true);assert.equal(h.playback.hidden,false);assert.equal(h.errors.length,1);h.controller.reset();
+});
+
+test('disconnected transcription preserves authored network recovery without retrying or capturing audio',async()=>{
+  const h=recording();
+  vm.runInContext(readFileSync('static/account.js','utf8'),h.context);
+  vm.runInContext("signedInUser={user_id:'owner',is_admin:true}",h.context);
+  let calls=0;
+  h.context.fetch=async()=>{calls++;throw Object.assign(new Error('Failed to fetch'),{name:'TypeError'});};
+  h.context.Headers=Headers;
+  await h.controller.toggle();
+  assert.match(h.status.textContent,/Kiểm tra mạng/);
+  assert.match(h.status.textContent,/không được tự động gửi lại/);
+  assert.doesNotMatch(h.status.textContent,/Kiểm tra thiết bị/);
+  assert.equal(calls,1);assert.equal(h.permissions,0);assert.equal(h.input.value,'入力');
+  assert.equal(h.controller.active,false);assert.equal(h.errors.length,1);
 });

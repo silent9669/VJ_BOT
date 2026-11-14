@@ -14,7 +14,7 @@ export async function liveTranslationRoute(request,env) {
   if(!user)return json({detail:'Đăng nhập để dịch hội thoại.'},401);
   if(!await isAdmin(env,user.user_id))return json({detail:'Dịch hội thoại trực tiếp dành cho quản trị viên.'},403);
   if(request.headers.get('X-VJBot-Account')!==user.user_id)return json({detail:'Tài khoản đã thay đổi. Hãy tải lại.'},409);
-  if(request.method!=='POST')return json({detail:'Method not allowed'},405);
+  if(request.method!=='POST')return json({detail:'Phương thức không được hỗ trợ.'},405);
   if(!env.OPENAI_API_KEY)return json({detail:'Chưa cấu hình OpenAI trên máy chủ.'},503);
   const raw=await request.text();
   if(new TextEncoder().encode(raw).length>16000)return json({detail:'Nội dung quá dài.'},413);
@@ -47,7 +47,7 @@ export async function liveRoute(request, env) {
   if (!user) return json({detail:'Đăng nhập để trò chuyện.'},401);
   if (!await isAdmin(env,user.user_id)) return json({detail:'Hội thoại trực tiếp dành cho quản trị viên.'},403);
   if (request.headers.get('X-VJBot-Account') !== user.user_id) return json({detail:'Tài khoản đã thay đổi. Hãy tải lại trang.'},409);
-  if (request.method !== 'POST') return json({detail:'Method not allowed'},405);
+  if (request.method !== 'POST') return json({detail:'Phương thức không được hỗ trợ.'},405);
   if (!env.OPENAI_API_KEY) return json({detail:'Chưa cấu hình OpenAI trên máy chủ.'},503);
   const raw = await request.text();
   if (new TextEncoder().encode(raw).length > 65536) return json({detail:'Yêu cầu quá dài.'},413);

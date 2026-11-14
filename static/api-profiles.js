@@ -8,8 +8,8 @@
   const BLOCKED = /(^|\.)(localhost|local|internal|localdomain|home|lan|workers\.dev|dangphuc\.me)$/i;
   const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/tts', '/api/stt', '/api/ai/test'];
   const encoder = new TextEncoder(), decoder = new TextDecoder('utf-8', {fatal: true});
-  const unavailable = () => problem('Device API profile unavailable. Open API settings and re-save or select a profile.', 'unavailable');
-  const storageError = () => problem('Browser storage unavailable. Allow site storage and use a supported browser with IndexedDB and Web Crypto; the profile was not saved.', 'storage');
+  const unavailable = () => problem('Kết nối API trên thiết bị không khả dụng. Mở cài đặt API để lưu lại hoặc chọn kết nối khác.', 'unavailable');
+  const storageError = () => problem('Bộ nhớ trình duyệt không khả dụng. Hãy cho phép lưu dữ liệu trang web và dùng trình duyệt hỗ trợ IndexedDB cùng Web Crypto; kết nối chưa được lưu.', 'storage');
   let opening = null, voiceVersion = 0;
 
   function problem(message, code = 'invalid') { return Object.assign(new Error(message), {code}); }
@@ -19,34 +19,34 @@
   const idOk = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
   const identityOk = value => value === null || (typeof value === 'string' && /^[A-Za-z0-9_+/=-]{1,256}$/.test(value));
   function account(owner) {
-    if (typeof owner !== 'string' || !owner.trim() || owner.length > 256 || /[\x00-\x1f\x7f]/.test(owner)) throw problem('Invalid account. Sign in before using device profiles.');
+    if (typeof owner !== 'string' || !owner.trim() || owner.length > 256 || /[\x00-\x1f\x7f]/.test(owner)) throw problem('Tài khoản không hợp lệ. Đăng nhập trước khi dùng kết nối trên thiết bị.');
     return owner;
   }
-  function identifier(id) { if (!idOk(id)) throw problem('Invalid profile id.'); return id; }
+  function identifier(id) { if (!idOk(id)) throw problem('Mã kết nối không hợp lệ.'); return id; }
   function baseUrl(protocol, raw) {
-    if (!Object.hasOwn(BASES, protocol)) throw problem('Invalid API protocol.');
-    if (raw !== undefined && typeof raw !== 'string') throw problem('Invalid API URL.');
+    if (!Object.hasOwn(BASES, protocol)) throw problem('Giao thức API không hợp lệ.');
+    if (raw !== undefined && typeof raw !== 'string') throw problem('URL API không hợp lệ.');
     const text = raw?.trim() || '';
     if (!text) return BASES[protocol];
     let url;
-    try { url = new URL(text); } catch { throw problem('Invalid API URL.'); }
+    try { url = new URL(text); } catch { throw problem('URL API không hợp lệ.'); }
     const host = url.hostname;
     if (text.length > 200 || url.protocol !== 'https:' || url.username || url.password || url.search || url.hash
       || !host.includes('.') || host.includes(':') || /^[\d.]+$/.test(host) || BLOCKED.test(host)) {
-      throw problem('API URL must be public HTTPS without credentials, query, fragment or IP address.');
+      throw problem('URL API phải là địa chỉ HTTPS công khai, không chứa thông tin đăng nhập, chuỗi truy vấn, phần neo hoặc địa chỉ IP.');
     }
     return url.origin + url.pathname.replace(/\/+$/, '').replace(SUFFIX[protocol], '');
   }
   function fields(profile) {
-    if (!object(profile)) throw problem('Invalid profile.');
-    if (typeof profile.name !== 'string' || !profile.name.trim() || profile.name.trim().length > 80 || /[\x00-\x1f\x7f]/.test(profile.name)) throw problem('Invalid profile name (1–80 characters).');
-    if (profile.model !== '' && !modelOk(profile.model)) throw problem('Invalid model ID.');
+    if (!object(profile)) throw problem('Kết nối không hợp lệ.');
+    if (typeof profile.name !== 'string' || !profile.name.trim() || profile.name.trim().length > 80 || /[\x00-\x1f\x7f]/.test(profile.name)) throw problem('Tên kết nối không hợp lệ (cần 1–80 ký tự).');
+    if (profile.model !== '' && !modelOk(profile.model)) throw problem('Mã mô hình không hợp lệ.');
     return {name: profile.name.trim(), protocol: profile.protocol, base_url: baseUrl(profile.protocol, profile.base_url), model: profile.model};
   }
   function historyInput(profile) {
     const identity = profile.connection_id ?? null, models = profile.models === undefined ? [] : profile.models, checked = profile.checked_at ?? null;
     if (!identityOk(identity) || !Array.isArray(models) || models.length > 1000 || !models.every(modelOk)
-      || (checked !== null && (!Number.isFinite(checked) || checked <= 0 || checked > Date.now() + 60000))) throw problem('Invalid model check history.');
+      || (checked !== null && (!Number.isFinite(checked) || checked <= 0 || checked > Date.now() + 60000))) throw problem('Lịch sử kiểm tra mô hình không hợp lệ.');
     return {connection_id: identity, models: [...new Set(models)], checked_at: checked};
   }
   function publicProfile(row) {
@@ -164,16 +164,16 @@
     account(owner);
     const clean = fields(profile), suppliedHistory = historyInput(profile);
     const suppliedKey = profile.api_key, hasKey = suppliedKey !== undefined && suppliedKey !== '';
-    if (hasKey && !keyOk(suppliedKey)) throw problem('Invalid API key (8–512 printable non-space characters).');
+    if (hasKey && !keyOk(suppliedKey)) throw problem('Khóa API không hợp lệ (cần 8–512 ký tự hiển thị được, không có khoảng trắng).');
     const updating = profile.id !== undefined;
     if (updating) identifier(profile.id);
-    if (!updating && !hasKey) throw problem('Enter an API key to save a new profile.');
+    if (!updating && !hasKey) throw problem('Nhập khóa API để lưu kết nối mới.');
     const hasHistory = ['connection_id', 'models', 'checked_at'].some(field => Object.hasOwn(profile, field));
     cryptoReady();
     const id = updating ? profile.id : crypto.randomUUID();
     const previous = updating ? await read(owner, id) : null;
     const sameEndpoint = previous && previous.protocol === clean.protocol && previous.base_url === clean.base_url;
-    if (previous && !hasKey && !sameEndpoint) throw problem('Enter an API key for the new endpoint and protocol.');
+    if (previous && !hasKey && !sameEndpoint) throw problem('Nhập khóa API cho địa chỉ và giao thức mới.');
     const key = await accountKey(owner, !updating);
     const oldKey = previous ? await decrypt(previous, key) : null;
     const apiKey = hasKey ? suppliedKey : oldKey;
@@ -194,9 +194,9 @@
     await transaction(['profiles'], 'readwrite', async tx => {
       const store = tx.objectStore('profiles');
       const current = await requestResult(store.get([owner, id]));
-      if ((previous && current?.revision !== previous.revision) || (!previous && current)) throw problem('Profile changed in another tab. Reload API settings and try again.', 'conflict');
+      if ((previous && current?.revision !== previous.revision) || (!previous && current)) throw problem('Kết nối đã thay đổi ở thẻ khác. Tải lại cài đặt API rồi thử lại.', 'conflict');
       const rows = await requestResult(store.index('owner').getAll(owner));
-      if (!previous && rows.length >= 20) throw problem('A maximum of 20 device profiles can be saved for this account.');
+      if (!previous && rows.length >= 20) throw problem('Mỗi tài khoản chỉ lưu được tối đa 20 kết nối trên thiết bị.');
       await requestResult(store.put(row));
     });
     let selectedVoice;
@@ -227,7 +227,7 @@
   }
   function setSelection(owner, choice, prefix) {
     account(owner);
-    if (choice !== null && !validSelection(choice, prefix)) throw problem('Invalid active profile choice.');
+    if (choice !== null && !validSelection(choice, prefix)) throw problem('Lựa chọn kết nối đang dùng không hợp lệ.');
     try {
       if (choice === null) {
         localStorage.removeItem(prefix + owner);
@@ -281,8 +281,8 @@
     const speech = path === '/api/tts' || path === origin + '/api/tts';
     const revision = voiceVersion;
     const selected = speech ? voice(owner) : active(owner);
-    if (speech && (!selected || selected.scope === 'none')) throw problem('No voice profile selected. Choose a voice account in Settings.');
-    if (selected?.scope === 'none') throw problem('No API profile selected. Choose a profile in API settings before continuing.');
+    if (speech && (!selected || selected.scope === 'none')) throw problem('Chưa chọn kết nối đọc thành tiếng. Hãy chọn tài khoản trong phần Âm thanh của Cài đặt.');
+    if (selected?.scope === 'none') throw problem('Chưa chọn kết nối API. Hãy chọn kết nối trong cài đặt API trước khi tiếp tục.');
     if (speech && selected?.scope === 'platform' && selected.id === 'openai') {
       const headers = new Headers(options.headers);
       headers.set('X-VJBot-Profile', 'platform_openai');
@@ -301,15 +301,15 @@
       if (typeof options.body !== 'string') throw unavailable();
       body = JSON.parse(options.body);
       if (!object(body)) throw unavailable();
-    } catch { throw problem('Invalid JSON request. Reopen this page before using the device profile.'); }
+    } catch { throw problem('Yêu cầu JSON không hợp lệ. Mở lại trang này trước khi dùng kết nối trên thiết bị.'); }
     let profile;
     try { profile = await load(owner, selected.id); } catch { throw unavailable(); }
     const current = speech ? voice(owner) : active(owner);
     if (speech && revision !== voiceVersion) throw unavailable();
     if (current?.scope !== 'local' || current.id !== selected.id) throw unavailable();
     if (speech && !((profile.protocol === 'gemini' && profile.base_url === BASES.gemini)
-      || (profile.protocol === 'openai' && profile.base_url === BASES.openai))) throw problem('Voice requires native Gemini or official OpenAI.');
-    if (!speech && !profile.model) throw problem('Choose and check a model in API settings before using this device profile.');
+      || (profile.protocol === 'openai' && profile.base_url === BASES.openai))) throw problem('Đọc thành tiếng cần API gốc của Gemini hoặc API chính thức của OpenAI.');
+    if (!speech && !profile.model) throw problem('Chọn và kiểm tra mô hình trong cài đặt API trước khi dùng kết nối trên thiết bị này.');
     const headers = new Headers(options.headers);
     headers.delete('X-VJBot-Profile');
     result.headers = Object.fromEntries(headers);

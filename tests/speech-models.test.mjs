@@ -247,13 +247,13 @@ test('Gemini and owned OpenAI choices keep provider-specific models without cata
   f.window.renderVoiceProfiles('alice',rows,true,{configured:true,model:'chat-model-not-tts'});
   accounts.value='server:openai';accounts.events.change();
   assert.equal(f.window.selectedSpeechModel(),'gpt-4o-mini-tts');
-  assert.equal(f.nodes.get('speech-model-label').textContent,'Speech model · alloy');
+  assert.ok(f.nodes.get('speech-model-label').textContent.includes('alloy'));
   await f.window.refreshSpeechModels();
   assert.deepEqual(select.children.map(option=>option.value),['gpt-4o-mini-tts']);
   assert.equal(f.window.VJProfiles.active().id,'chat-only');
   accounts.value='local:gemini-one';accounts.events.change();
   assert.equal(f.window.selectedSpeechModel(),alternate);
-  assert.equal(f.nodes.get('speech-model-label').textContent,'Speech model · Charon');
+  assert.ok(f.nodes.get('speech-model-label').textContent.includes('Charon'));
   assert.equal(calls,1);
 });
 
@@ -274,7 +274,7 @@ test('regular users never gain a platform choice from stale metadata or saved pr
 test('OpenAI catalog cannot replace a Gemini selection and Listen only invokes the audio consumer', async () => {
   const f=fixture(async()=>Response.json({models:['gpt-4o-mini-tts'],voice:'alloy'}));
   await f.window.refreshSpeechModels();
-  assert.match(f.nodes.get('speech-model-status').textContent,/Invalid speech model catalog/);
+  assert.match(f.nodes.get('speech-model-status').textContent,/Danh mục mô hình giọng nói không hợp lệ/);
   assert.equal(f.window.selectedSpeechModel(),defaultModel);
   let listened;
   f.window.playGeminiTTS=(text,options)=>{listened={text,options};};

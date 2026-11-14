@@ -126,13 +126,18 @@
       const result=await response.json();
       if(run!==version)return;
       if(owner!==signedInUser?.user_id){cleanup('Tài khoản đã thay đổi.');return;}
-      if(!response.ok)throw new Error(result.detail || 'Không mở được GPT-Live.');
+      if(!response.ok)throw Object.assign(new Error(result.detail || 'Không mở được GPT-Live.'),{userFacing:true});
       greeting=result.greeting;
       el('live-model-name').textContent=result.model+' · '+result.voice;
       await connection.setRemoteDescription({type:'answer',sdp:result.sdp});
     } catch(error) {
       if(run!==version)return;
-      cleanup(error.name==='NotAllowedError'?'Micro chưa được cho phép. Bật quyền micro rồi thử lại.':error.message || 'Không kết nối được. Hãy thử lại.');
+      cleanup(error.userFacing?error.message
+        : ['NotAllowedError','SecurityError'].includes(error.name)?'Micro chưa được cho phép. Bật quyền micro rồi thử lại.'
+        : ['NotFoundError','DevicesNotFoundError'].includes(error.name)?'Không tìm thấy micro. Kết nối micro rồi thử lại.'
+        : error.name==='NotReadableError'?'Micro đang bận hoặc không khả dụng. Đóng ứng dụng đang dùng micro rồi thử lại.'
+        : error.name==='SyntaxError'?'Phản hồi kết nối không hợp lệ. Hãy thử lại.'
+        : 'Không kết nối được cuộc trò chuyện trực tiếp. Kiểm tra mạng và thiết bị rồi thử lại.');
     }
   }
   function mode(live) {

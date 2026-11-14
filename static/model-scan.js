@@ -47,7 +47,7 @@
       const until = Math.max(state.cooldownUntil, now + Math.max(INTERVAL_MS, delay));
       next = {...next, limit: adaptive ? 1 : state.limit, healthy: 0, cooldownUntil: until,
         cooldownBudgetMs: state.cooldownBudgetMs + Math.max(0, until - Math.max(now, state.cooldownUntil))};
-      if (next.cooldownBudgetMs > maxCooldownMs) next.halted = 'Quota cooldown exceeds the scan wait budget; remaining models were not tested.';
+      if (next.cooldownBudgetMs > maxCooldownMs) next.halted = 'Thời gian chờ hạn mức vượt giới hạn chờ của lượt quét; các mô hình còn lại chưa được kiểm tra.';
     } else if (adaptive) {
       // Compare latency only with this model's history, not unrelated model families.
       const slowdown = outcome.ok && previous?.latencyMs && latencyMs > previous.latencyMs * 2;
@@ -62,7 +62,7 @@
   }
   function failure(error) {
     const status = error.providerStatus ?? error.status;
-    return {ok: false, status, retryAfterMs: error.retryAfterMs, message: error.message || 'Verification failed.',
+    return {ok: false, status, retryAfterMs: error.retryAfterMs, message: error.message || 'Kiểm tra thất bại.',
       fatal: status !== 429 && (!error.providerStatus || error.providerStatus === 401),
       invalidate: error.status === 409 || (!error.providerStatus && [401, 403].includes(error.status)) || error.providerStatus === 401};
   }

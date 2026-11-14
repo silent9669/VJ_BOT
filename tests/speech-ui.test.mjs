@@ -80,6 +80,8 @@ test('managed voice markup retains Listen and quota notice without a duplicate p
   assert.doesNotMatch(html,/id="ai-platform(?:-test|-model)?"/);
   assert.match(html,/id="speech-managed-summary"[^>]*hidden[^>]*>OpenAI quản trị · gpt-4o-mini-tts · alloy/);
   assert.match(html,/id="speech-test"[^>]*aria-describedby="speech-test-hint"/);
-  assert.match(html,/id="speech-test-hint"[^>]*>[^<]*quota[^<]*charges/i);
+  const notice=html.match(/id="speech-test-hint"[^>]*>([^<]+)/)?.[1] || '';
+  assert.match(notice,/dùng hạn mức/);
+  assert.match(notice,/có thể phát sinh phí/);
   assert.match(html,/id="speech-personal-setup"/);
 });

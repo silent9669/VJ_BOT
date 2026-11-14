@@ -64,7 +64,7 @@ async function passwordRoute(request,env,register) {
       || !equalHash(await hashToken(password), await hashToken(env.LOCAL_TEST_ADMIN_PASSWORD))) return json({detail:'Tài khoản hoặc mật khẩu không đúng.'},401);
     await env.DB.prepare('INSERT OR IGNORE INTO admin_grants(user_id,granted_by,granted_at) VALUES(?,?,?)')
       .bind(LOCAL_ADMIN_ID, LOCAL_ADMIN_ID, new Date().toISOString()).run();
-    return createSession(request, env, LOCAL_ADMIN_ID, 'Admin local');
+    return createSession(request, env, LOCAL_ADMIN_ID, 'Quản trị viên cục bộ');
   }
   const account=await env.DB.prepare('SELECT * FROM password_accounts WHERE email=?').bind(email).first();
   // Missing accounts still perform the same expensive hash to avoid a timing oracle.
@@ -105,12 +105,12 @@ export async function authRoute(request,env) {
     return json({ok:true},200,{'Set-Cookie':cookie('vj_session','',0,request)});
   }
   if(path==='/api/auth/google' && request.method==='POST') {
-    if(!env.GOOGLE_CLIENT_ID) return json({detail:'Google sign-in chưa được cấu hình.'},503);
+    if(!env.GOOGLE_CLIENT_ID) return json({detail:'Đăng nhập bằng Google chưa được cấu hình.'},503);
     const raw=await request.text();
-    if(raw.length>12000)return json({detail:'Credential too large'},413);
-    let body;try{body=JSON.parse(raw);}catch{return json({detail:'Invalid JSON'},400);}
+    if(raw.length>12000)return json({detail:'Thông tin xác thực quá dài.'},413);
+    let body;try{body=JSON.parse(raw);}catch{return json({detail:'Dữ liệu JSON không hợp lệ.'},400);}
     const credential=body?.credential;
-    if(typeof credential!=='string' || credential.length>10000) return json({detail:'Invalid credential'},400);
+    if(typeof credential!=='string' || credential.length>10000) return json({detail:'Thông tin xác thực không hợp lệ.'},400);
     let payload;
     try {
       ({payload}=await jwtVerify(credential,googleKeys,{issuer:['https://accounts.google.com','accounts.google.com'],audience:env.GOOGLE_CLIENT_ID,algorithms:['RS256']}));
@@ -122,5 +122,5 @@ export async function authRoute(request,env) {
     await recordAdminLogin(env,userId,payload.email);
     return createSession(request,env,userId,name,payload.email.toLowerCase());
   }
-  return json({detail:'Not found'},404);
+  return json({detail:'Không tìm thấy đường dẫn.'},404);
 }

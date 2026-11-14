@@ -20,7 +20,7 @@ export async function transcriptionRoute(request,env) {
   const user=await sessionUser(request,env);
   if(!user)return json({detail:'Đăng nhập để nhập bằng giọng nói.'},401);
   if(request.headers.get('X-VJBot-Account')!==user.user_id)return json({detail:'Tài khoản đã thay đổi. Hãy tải lại.'},409);
-  if(request.method!=='POST')return json({detail:'Method not allowed'},405);
+  if(request.method!=='POST')return json({detail:'Phương thức không được hỗ trợ.'},405);
   const raw=await request.text();
   if(new TextEncoder().encode(raw).length>3*1024*1024)return json({detail:'Bản ghi quá lớn. Ghi tối đa 60 giây.'},413);
   let data;try{data=JSON.parse(raw);}catch{return json({detail:'Dữ liệu không hợp lệ.'},400);}

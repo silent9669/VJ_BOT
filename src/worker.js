@@ -65,7 +65,7 @@ export default {
     let progressEpoch=null;
 
     if (request.method !== "GET" && request.method !== "HEAD" && request.headers.get("Origin") && request.headers.get("Origin") !== url.origin) {
-      return jsonResponse({detail: "Origin not allowed"}, 403);
+      return jsonResponse({detail: "Nguồn gửi yêu cầu không được phép."}, 403);
     }
     if (request.method === "OPTIONS") return new Response(null, {status:204});
     try {
@@ -78,30 +78,30 @@ export default {
       const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
-        if(!user) return jsonResponse({detail:'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'},401);
+        if(!user) return jsonResponse({detail:'Đăng nhập để học cùng thầy Lâm và đồng bộ tiến độ.'},401);
         const expectedAccount=request.headers.get('X-VJBot-Account');
-        if(expectedAccount!==null&&expectedAccount!==user.user_id)return jsonResponse({detail:'The signed-in account changed. Reload before using API profiles.',code:'account_changed'},409);
+        if(expectedAccount!==null&&expectedAccount!==user.user_id)return jsonResponse({detail:'Tài khoản đăng nhập đã thay đổi. Hãy tải lại trước khi dùng cấu hình API.',code:'account_changed'},409);
         if(url.pathname==='/api/progress/record' || url.pathname==='/api/practice/coach'){
           const profile=await env.DB.prepare('SELECT task_evidence_epoch FROM profiles WHERE user_id=?').bind(user.user_id).first();
           progressEpoch=profile?.task_evidence_epoch || null;
-          if(!progressEpoch)return jsonResponse({detail:'The learner account changed. Reopen the activity.'},409);
+          if(!progressEpoch)return jsonResponse({detail:'Tài khoản học viên đã thay đổi. Hãy mở lại hoạt động.'},409);
         }
         url.searchParams.set('user_id',user.user_id);
         if(['POST','PUT','PATCH'].includes(request.method)) {
           const raw=await request.text();
           if(raw.length>20000) return jsonResponse({detail:'Nội dung quá dài.'},413);
           let body;
-          try { body=JSON.parse(raw || '{}'); } catch { return jsonResponse({detail:'Invalid JSON'},400); }
-          if(!body || Array.isArray(body) || typeof body!=='object') return jsonResponse({detail:'Invalid body'},400);
+          try { body=JSON.parse(raw || '{}'); } catch { return jsonResponse({detail:'Dữ liệu JSON không hợp lệ.'},400); }
+          if(!body || Array.isArray(body) || typeof body!=='object') return jsonResponse({detail:'Nội dung yêu cầu không hợp lệ.'},400);
           body.user_id=user.user_id;
           delete body.api_key;
           if (['/api/chat','/api/kaiwa/evaluate','/api/practice/coach'].includes(url.pathname)
             && Object.hasOwn(body, 'api_connection') && (await resolveProvider(env,user.user_id,body.api_connection))?.error) {
             return jsonResponse({detail:'Kết nối API không hợp lệ.',code:'invalid_connection'},400);
           }
-          if(body.level && !['N5','N4','N3','N2','N1'].includes(body.level)) return jsonResponse({detail:'Invalid level'},400);
+          if(body.level && !['N5','N4','N3','N2','N1'].includes(body.level)) return jsonResponse({detail:'Cấp độ không hợp lệ.'},400);
           for(const field of ['message','text','user_speech','prompt_jp','context','scenario_title']) {
-            if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Invalid '+field},400);
+            if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Trường dữ liệu không hợp lệ: '+field},400);
           }
           request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
         }
@@ -126,7 +126,7 @@ export default {
       if (url.pathname === "/api/profile") {
         if (request.method === "GET") {
           const userId = url.searchParams.get("user_id");
-          if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+          if (!userId) return jsonResponse({ detail: "Thiếu mã người dùng." }, 400);
 
           let row = await env.DB.prepare("SELECT user_id, level, track, updated_at FROM profiles WHERE user_id = ?").bind(userId).first();
           if (!row) {
@@ -146,7 +146,7 @@ export default {
           const userId = body.user_id;
           const level = body.level || "N5";
           const track = body.track || (level === "beginner" ? "kana" : "minna");
-          if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+          if (!userId) return jsonResponse({ detail: "Thiếu mã người dùng." }, 400);
 
           const now = new Date().toISOString();
           await env.DB.prepare(`
@@ -182,7 +182,7 @@ export default {
       // 4. Next Topic API
       if (url.pathname === "/api/next-topic") {
         const userId = url.searchParams.get("user_id");
-        if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+        if (!userId) return jsonResponse({ detail: "Thiếu mã người dùng." }, 400);
 
         const profile = await env.DB.prepare("SELECT level, track FROM profiles WHERE user_id = ?").bind(userId).first();
         const level = profile ? profile.level : "N5";
@@ -236,7 +236,7 @@ export default {
       // 5. Progress API
       if (url.pathname === "/api/progress") {
         const userId = url.searchParams.get("user_id");
-        if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+        if (!userId) return jsonResponse({ detail: "Thiếu mã người dùng." }, 400);
 
         const rows = await env.DB.prepare(`
           SELECT p.item_id, p.item_type, p.jlpt_level, p.correct, p.incorrect, p.last_reviewed, p.next_review, p.interval_days, p.ease_factor, p.last_correct, p.response_text, COALESCE(c.display, p.display, p.item_id) AS display, c.meaning_vi, c.meaning_en
@@ -301,9 +301,9 @@ export default {
           const rows=await env.DB.prepare('SELECT activity_id,kind,level,title,completed_at FROM completions WHERE user_id=? ORDER BY completed_at DESC').bind(owner).all();
           return jsonResponse({items:rows.results});
         }
-        if(request.method!=='POST')return jsonResponse({detail:'Method not allowed'},405);
+        if(request.method!=='POST')return jsonResponse({detail:'Phương thức không được hỗ trợ.'},405);
         const body=await request.json();
-        if(typeof body.activity_id!=='string' || !body.activity_id.trim() || body.activity_id.length>300 || /[<>\u0000-\u001f]/.test(body.activity_id) || typeof body.completed!=='boolean' || !['lesson','kaiwa','test','roadmap','chat'].includes(body.kind) || !['N5','N4','N3','N2','N1'].includes(body.level) || typeof body.title!=='string' || !body.title.trim() || body.title.length>500)return jsonResponse({detail:'Invalid completion'},400);
+        if(typeof body.activity_id!=='string' || !body.activity_id.trim() || body.activity_id.length>300 || /[<>\u0000-\u001f]/.test(body.activity_id) || typeof body.completed!=='boolean' || !['lesson','kaiwa','test','roadmap','chat'].includes(body.kind) || !['N5','N4','N3','N2','N1'].includes(body.level) || typeof body.title!=='string' || !body.title.trim() || body.title.length>500)return jsonResponse({detail:'Thông tin hoàn thành không hợp lệ.'},400);
         if(body.completed)await env.DB.prepare('INSERT INTO completions(user_id,activity_id,kind,level,title,completed_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id,activity_id) DO UPDATE SET completed_at=excluded.completed_at,title=excluded.title').bind(owner,body.activity_id,body.kind,body.level,body.title.trim(),new Date().toISOString()).run();
         else await env.DB.prepare('DELETE FROM completions WHERE user_id=? AND activity_id=?').bind(owner,body.activity_id).run();
         return jsonResponse({completed:body.completed});
@@ -313,23 +313,23 @@ export default {
       if (url.pathname === "/api/progress/record" && request.method === "POST") {
         const body = await request.json();
         if(Object.hasOwn(body,'lesson') || Object.hasOwn(body,'task') || Object.hasOwn(body,'event'))return recordTaskAttempt(body,env,progressEpoch);
-        if (body.basis !== undefined && body.basis !== 'self_report') return jsonResponse({detail:'Invalid progress basis'},400);
+        if (body.basis !== undefined && body.basis !== 'self_report') return jsonResponse({detail:'Căn cứ ghi nhận tiến độ không hợp lệ.'},400);
         const submission=JSON.stringify(Object.fromEntries(Object.entries(body).filter(([key])=>key!=='user_id').sort(([a],[b])=>a.localeCompare(b))));
         const { user_id, item_id, correct, quality = 4 } = body;
-        if (!user_id || typeof item_id!=='string' || !item_id.trim() || item_id.length>300 || typeof correct!=='boolean' || !Number.isInteger(quality) || quality<0 || quality>5) return jsonResponse({ detail: "Invalid progress record" }, 400);
+        if (!user_id || typeof item_id!=='string' || !item_id.trim() || item_id.length>300 || typeof correct!=='boolean' || !Number.isInteger(quality) || quality<0 || quality>5) return jsonResponse({ detail: "Bản ghi tiến độ không hợp lệ." }, 400);
 
-        if (body.display !== undefined && (typeof body.display !== 'string' || body.display.length > 2000)) return jsonResponse({detail: 'Invalid display'}, 400);
-        if (body.item_type !== undefined && !['grammar','vocabulary','kanji','kana','reading','listening','exam','production'].includes(body.item_type)) return jsonResponse({detail: 'Invalid item type'}, 400);
+        if (body.display !== undefined && (typeof body.display !== 'string' || body.display.length > 2000)) return jsonResponse({detail: 'Nội dung hiển thị không hợp lệ.'}, 400);
+        if (body.item_type !== undefined && !['grammar','vocabulary','kanji','kana','reading','listening','exam','production'].includes(body.item_type)) return jsonResponse({detail: 'Loại mục học không hợp lệ.'}, 400);
 
-        if(body.response_text !== undefined && (typeof body.response_text !== 'string' || body.response_text.length>4000))return jsonResponse({detail:'Invalid response text'},400);
+        if(body.response_text !== undefined && (typeof body.response_text !== 'string' || body.response_text.length>4000))return jsonResponse({detail:'Văn bản trả lời không hợp lệ.'},400);
         const attemptId = body.attempt_id ?? crypto.randomUUID();
-        if(attemptId !== undefined && (typeof attemptId !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(attemptId))) return jsonResponse({detail:'Invalid attempt'},400);
+        if(attemptId !== undefined && (typeof attemptId !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(attemptId))) return jsonResponse({detail:'Lượt làm bài không hợp lệ.'},400);
         if(attemptId){
           const saved=await env.DB.prepare('SELECT result,submission FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
           if(saved)return saved.submission===submission ? jsonResponse(JSON.parse(saved.result))
-            : jsonResponse({detail:'Attempt ID already belongs to another or historical submission.'},409);
+            : jsonResponse({detail:'Mã lượt làm bài đã thuộc về một bài nộp khác hoặc bài nộp cũ.'},409);
           const canonical=await env.DB.prepare('SELECT attempt_id FROM task_attempt_evidence WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
-          if(canonical)return jsonResponse({detail:'Attempt ID already belongs to another submission.'},409);
+          if(canonical)return jsonResponse({detail:'Mã lượt làm bài đã thuộc về một bài nộp khác.'},409);
         }
         const item = await env.DB.prepare("SELECT item_type, level FROM curriculum_items WHERE item_id = ?").bind(item_id).first();
         const itemType = item ? item.item_type : (body.item_type || "grammar");
@@ -382,23 +382,23 @@ export default {
           .bind(user_id,now.slice(0,10),user_id,attemptId,submission,user_id,progressEpoch));
         await env.DB.batch(writes);
         if(attemptId){const saved=await env.DB.prepare('SELECT result,submission FROM progress_attempts WHERE user_id=? AND attempt_id=?').bind(user_id,attemptId).first();
-          return saved?.submission===submission?jsonResponse(JSON.parse(saved.result)):jsonResponse({detail:'Attempt ID changed before saving.'},409);}
+          return saved?.submission===submission?jsonResponse(JSON.parse(saved.result)):jsonResponse({detail:'Mã lượt làm bài đã thay đổi trước khi lưu.'},409);}
         return jsonResponse(result);
       }
 
       // 7. Chat History API
       if (url.pathname === "/api/history") {
         const userId = url.searchParams.get("user_id");
-        if (!userId) return jsonResponse({ detail: "user_id required" }, 400);
+        if (!userId) return jsonResponse({ detail: "Thiếu mã người dùng." }, 400);
         const reference = url.searchParams.has('lesson_id') ? {id: url.searchParams.get('lesson_id'), level: url.searchParams.get('level')} : null;
-        if (reference && !validLessonReference(reference)) return jsonResponse({detail: 'Invalid lesson reference'}, 400);
+        if (reference && !validLessonReference(reference)) return jsonResponse({detail: 'Tham chiếu bài học không hợp lệ.'}, 400);
         const archived = url.searchParams.get('archive') === 'legacy';
         const scope = archived ? 'legacy' : conversationScope('chat', reference);
 
         if (request.method === "DELETE") {
-          if (archived) return jsonResponse({detail: 'Legacy history is read-only'}, 405);
+          if (archived) return jsonResponse({detail: 'Lịch sử cũ chỉ có thể xem.'}, 405);
           await clearTutorConversation(env, userId, scope);
-          return jsonResponse({ success: true, message: "Chat history cleared" });
+          return jsonResponse({ success: true, message: "Đã xóa lịch sử trò chuyện." });
         }
 
         const rows = await env.DB.prepare("SELECT role, content, timestamp FROM (SELECT id, role, content, timestamp FROM conversations WHERE user_id = ? AND context_key = ? ORDER BY id DESC LIMIT 50) ORDER BY id ASC").bind(userId, scope).all();
@@ -409,16 +409,16 @@ export default {
       if (url.pathname === "/api/tts" && request.method === "POST") {
         const body = await request.json();
         if(body.lesson !== undefined || body.task !== undefined) {
-          if(!validLessonReference(body.lesson) || body.focus != null && !validFocusReference(body.focus))return jsonResponse({detail:'Invalid speech reference'},400);
+          if(!validLessonReference(body.lesson) || body.focus != null && !validFocusReference(body.focus))return jsonResponse({detail:'Tham chiếu nội dung đọc không hợp lệ.'},400);
           const catalog=await teacherCatalog(env,body.lesson.level),lesson=catalog && catalogLesson(catalog,body.lesson);
-          if(!lesson || !processingAllowed(lesson))return jsonResponse({detail:'This source is unavailable for provider processing.'},409);
+          if(!lesson || !processingAllowed(lesson))return jsonResponse({detail:'Nguồn này không khả dụng để gửi tới nhà cung cấp xử lý.'},409);
           if(body.focus?.kind==='question') {
             const resolved=resolveTaskReference(lesson,body.focus,body.view??'checks',body.task);
             if(resolved.error)return jsonResponse({detail:resolved.error},resolved.status);
-          } else if(body.task !== undefined)return jsonResponse({detail:'A task needs a canonical question focus.'},400);
+          } else if(body.task !== undefined)return jsonResponse({detail:'Bài tập cần gắn với câu hỏi gốc đang chọn.'},400);
           else if(body.focus){
             const selected=lesson[{word:'words',example:'examples'}[body.focus.kind]]?.[body.focus.index];
-            if(!selected || !processingAllowed(selected))return jsonResponse({detail:'This source item is unavailable for provider processing.'},409);
+            if(!selected || !processingAllowed(selected))return jsonResponse({detail:'Mục nguồn này không khả dụng để gửi tới nhà cung cấp xử lý.'},409);
           }
         }
         const speech = await resolveSpeechProvider(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
@@ -434,23 +434,23 @@ export default {
         const {user_speech, level = 'N5', scenario_id, prompt_index = 0} = body;
         if (['scenario_title', 'context', 'prompt_jp', 'rubric', 'requirements', 'weights', 'score'].some(key => Object.hasOwn(body, key))
           || typeof scenario_id !== 'string' || scenario_id.length > 300 || !Number.isInteger(prompt_index) || prompt_index < 0) {
-          return jsonResponse({detail: 'Invalid scenario reference'}, 400);
+          return jsonResponse({detail: 'Tham chiếu tình huống không hợp lệ.'}, 400);
         }
         const catalog = await teacherCatalog(env, level);
-        if (!catalog) return jsonResponse({detail: 'The lesson catalog is unavailable. Please try again later.'}, 503);
+        if (!catalog) return jsonResponse({detail: 'Danh mục bài học không khả dụng. Hãy thử lại sau.'}, 503);
         const scenario = Object.hasOwn(catalog.scenarios, scenario_id) ? catalog.scenarios[scenario_id] : null;
         const question = scenario?.prompts[prompt_index];
-        if (!question) return jsonResponse({detail: 'Unknown scenario or question'}, 400);
+        if (!question) return jsonResponse({detail: 'Không tìm thấy tình huống hoặc câu hỏi.'}, 400);
         const rubric = scenario.rubrics?.[prompt_index];
         let schema;
         try {
           if (rubric?.question !== question) throw new Error('Question rubric mismatch');
           schema = kaiwaSchema(rubric);
         } catch {
-          return jsonResponse({detail: 'The question rubric is unavailable. No score was estimated.'}, 503);
+          return jsonResponse({detail: 'Tiêu chí đánh giá câu hỏi không khả dụng. Chưa có điểm nào được ước tính.'}, 503);
         }
         if (user_speech !== undefined && typeof user_speech !== 'string') {
-          return jsonResponse({detail: 'Invalid submission'}, 400);
+          return jsonResponse({detail: 'Bài nộp không hợp lệ.'}, 400);
         }
         const cleanSpeech = (user_speech || "").trim();
 
@@ -458,7 +458,7 @@ export default {
           return jsonResponse({
             status: 'ungraded', reason: 'empty_submission', score: null, rating: null,
             estimated_score: null, conclusion: 'empty',
-            feedback: 'No answer was submitted. Nothing has been assessed.',
+            feedback: 'Chưa gửi câu trả lời. Chưa có nội dung nào được đánh giá.',
             model_answer: '', criteria: [], user_text: '', scenario: scenario.title
           });
         }
@@ -476,7 +476,7 @@ export default {
         return jsonResponse({
           status: 'ungraded', reason: 'invalid_feedback', score: null, rating: null,
           estimated_score: null, conclusion: 'uncertain',
-          detail: 'No consistent criterion assessment was returned. No score was estimated.'
+          detail: 'Chưa nhận được đánh giá nhất quán theo tiêu chí. Chưa có điểm nào được ước tính.'
         },503);
       }
 
@@ -489,7 +489,7 @@ export default {
       return jsonResponse({ detail: "Không thể xử lý yêu cầu. Vui lòng thử lại." }, 500);
     }
 
-    if (url.pathname.startsWith('/api/')) return jsonResponse({detail:'Not found'},404);
+    if (url.pathname.startsWith('/api/')) return jsonResponse({detail:'Không tìm thấy đường dẫn.'},404);
 
     // Default: safe static asset fallback
     if (env.ASSETS) {
@@ -518,6 +518,6 @@ export default {
         console.warn("Asset fetch error:", assetErr);
       }
     }
-    return new Response("Not Found", { status: 404 });
+    return new Response("Không tìm thấy trang.", { status: 404 });
   }
 };

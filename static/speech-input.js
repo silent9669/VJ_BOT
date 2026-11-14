@@ -19,14 +19,14 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
   const draw = () => {
     const recording = Boolean(active && !active.stopped);
     button.setAttribute('aria-pressed', String(recording));
-    label.textContent = recording ? 'Dừng ghi âm · Stop' : idleLabel;
+    label.textContent = recording ? 'Dừng ghi âm' : idleLabel;
   };
   const describe = error => {
     const code = error?.error || error?.name;
-    if (['NotAllowedError','SecurityError','not-allowed','service-not-allowed'].includes(code)) return 'Microphone permission denied. Chưa có quyền micro. Cho phép micro hoặc nhập câu trả lời.';
-    if (['NotFoundError','DevicesNotFoundError','audio-capture'].includes(code)) return 'No microphone is available. Connect a microphone or type your answer.';
-    if (code === 'NotReadableError') return 'The microphone is busy or unavailable. Close other capture apps or type your answer.';
-    return error?.message || (code ? `Speech transcription failed (${code}). Type your answer or try again.` : 'Microphone capture failed. Type your answer or try again.');
+    if (['NotAllowedError','SecurityError','not-allowed','service-not-allowed'].includes(code)) return 'Chưa có quyền micro. Cho phép micro hoặc nhập câu trả lời.';
+    if (['NotFoundError','DevicesNotFoundError','audio-capture'].includes(code)) return 'Không có micro khả dụng. Kết nối micro hoặc nhập câu trả lời.';
+    if (code === 'NotReadableError') return 'Micro đang bận hoặc không khả dụng. Đóng ứng dụng đang dùng micro hoặc nhập câu trả lời.';
+    return code ? `Không chép được lời nói (${code}). Nhập câu trả lời hoặc thử lại.` : 'Không thu được âm thanh từ micro. Nhập câu trả lời hoặc thử lại.';
   };
   const release = session => {
     clearTimeout(session.timer);
@@ -51,7 +51,7 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
     if (previous) {
       previous.stopped = true;
       try { previous.recognition?.abort(); } catch (error) { announce(describe(error)); }
-      try { release(previous); } catch (error) { announce(`Recorder stop failed: ${describe(error)}`); }
+      try { release(previous); } catch (error) { announce(`Không dừng được máy ghi âm: ${describe(error)}`); }
     }
     draw();
   };
@@ -65,9 +65,9 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
     try {
       release(session);
       if (!session.recognitionEnded) session.recognition?.stop();
-      announce(requested ? 'Recording stopped. AI feedback evaluates text, not acoustic pronunciation.'
-        : 'Browser transcription ended; recording stopped. Review the text before requesting AI feedback.');
-    } catch (error) { fail(session, `Microphone stop failed: ${describe(error)}`); }
+      announce(requested ? 'Đã dừng ghi âm. AI đánh giá văn bản, không chấm phát âm âm học.'
+        : 'Trình duyệt đã kết thúc chép lời và dừng ghi âm. Kiểm tra văn bản trước khi yêu cầu AI nhận xét.');
+    } catch (error) { fail(session, `Không dừng được micro: ${describe(error)}`); }
     draw();
   };
   const recognize = session => {
@@ -94,7 +94,7 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
   };
   const toggle = async () => {
     if (active && !active.stopped) { stop(active, true); return; }
-    if (!Recognition && !canRecord) { announce('Recording and browser transcription are unavailable. Nhập câu trả lời bằng bàn phím.'); return; }
+    if (!Recognition && !canRecord) { announce('Không thể ghi âm hoặc chép lời bằng trình duyệt. Nhập câu trả lời bằng bàn phím.'); return; }
     if (bindButton) stopJapaneseInputs();
     else { cancel(); discard(); }
     globalThis.stopSpeech?.();
@@ -103,7 +103,7 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
     active = session; draw();
     const chunks = [];
     if (canRecord) {
-      announce('Waiting for microphone permission. Click Stop to cancel.');
+      announce('Đang chờ quyền micro. Nhấn Dừng để hủy.');
       try {
         const stream = await navigator.mediaDevices.getUserMedia({audio:true});
         if (!owns(session) || session.stopped) { stream.getTracks().forEach(track => track.stop()); return; }
@@ -114,22 +114,22 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
           session.stream?.getTracks().forEach(track => track.stop()); session.stream = null;
           if (!owns(session)) return;
           if (!session.stopped) stop(session, false);
-          if (!chunks.length) { announce('No audio was recorded. Type your answer or record again.'); return; }
+          if (!chunks.length) { announce('Chưa ghi được âm thanh. Nhập câu trả lời hoặc ghi lại.'); return; }
           try {
             const mimeType = recorder.mimeType || chunks.find(chunk => chunk.type)?.type;
             const blob = new Blob(chunks, mimeType ? {type:mimeType} : {});
             discard(); audioUrl = URL.createObjectURL(blob); audioOwner = {owner:session.owner, route:session.route};
             playbackButton.hidden = false; playbackButton.style.display = 'inline-flex';
-          } catch (error) { fail(session, `Recording could not be saved: ${describe(error)}`); }
+          } catch (error) { fail(session, `Không lưu được bản ghi: ${describe(error)}`); }
         };
-        recorder.onerror = event => fail(session, `Recorder failed: ${describe(event.error || event)}`);
+        recorder.onerror = event => fail(session, `Máy ghi âm gặp lỗi: ${describe(event.error || event)}`);
         recorder.start();
-      } catch (error) { if (!session.stopped) fail(session, `Recording failed: ${describe(error)}`); return; }
+      } catch (error) { if (!session.stopped) fail(session, `Không ghi được âm thanh: ${describe(error)}`); return; }
     }
-    announce(canRecord ? (Recognition ? 'Recording; browser transcription is separate from text-based AI feedback.'
-      : 'Recording. Browser transcription is unavailable; type your answer for text-based AI feedback.')
-      : 'Recording is unavailable; browser transcription only. You can also type your answer.');
-    if (Recognition) try { recognize(session); } catch (error) { fail(session, `Browser transcription failed: ${describe(error)}`); }
+    announce(canRecord ? (Recognition ? 'Đang ghi âm; chép lời bằng trình duyệt tách biệt với nhận xét của AI dựa trên văn bản.'
+      : 'Đang ghi âm. Trình duyệt không hỗ trợ chép lời; hãy nhập câu trả lời để AI nhận xét dựa trên văn bản.')
+      : 'Không thể ghi âm; chỉ chép lời bằng trình duyệt. Em cũng có thể nhập câu trả lời.');
+    if (Recognition) try { recognize(session); } catch (error) { fail(session, `Trình duyệt không chép được lời nói: ${describe(error)}`); }
     if (owns(session) && !session.stopped) session.timer = setTimeout(() => stop(session, true), 60000);
   };
   if (bindButton) button.addEventListener('click', toggle);
@@ -140,11 +140,11 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
     const entry = {audio:null, owner:owner(), route:route()}; playback = entry;
     try {
       entry.audio = new Audio(audioUrl);
-      entry.audio.onended = () => { if (playbackOwns(entry)) { pauseReplay(); announce('Replay ended.'); } };
-      entry.audio.onerror = () => { if (playbackOwns(entry)) { pauseReplay(); announce('Recorded audio playback failed. Record again or use manual text.'); } };
-      announce('Playing your recording.');
+      entry.audio.onended = () => { if (playbackOwns(entry)) { pauseReplay(); announce('Đã phát xong bản ghi.'); } };
+      entry.audio.onerror = () => { if (playbackOwns(entry)) { pauseReplay(); announce('Không phát được bản ghi. Ghi lại hoặc nhập câu trả lời.'); } };
+      announce('Đang phát bản ghi của em.');
       await entry.audio.play();
-    } catch (error) { if (playbackOwns(entry)) { pauseReplay(); announce(`Recorded audio playback failed: ${describe(error)}`); } }
+    } catch (error) { if (playbackOwns(entry)) { pauseReplay(); announce(`Không phát được bản ghi: ${describe(error)}`); } }
   };
   if (bindButton) playbackButton?.addEventListener('click', replay);
   const controller = {toggle, replay, get active() { return Boolean(active && !active.stopped); }, reset() {
@@ -154,10 +154,10 @@ function createBrowserJapaneseInput({button, input, status, playbackButton, onEr
   if (status) { status.setAttribute?.('role','status'); status.setAttribute?.('aria-live','polite'); }
   if (bindButton) {
     button.disabled = !Recognition && !canRecord;
-    if (!Recognition && !canRecord) announce('Recording and browser transcription are unavailable. Nhập câu trả lời bằng bàn phím.');
-    else if (!Recognition) announce('Browser transcription is unavailable. You can record for replay or type your answer; AI feedback evaluates text only.');
-    else if (!canRecord) announce('Recording is unavailable. Browser transcription or manual text remains available.');
-    else announce('Microphone ready. AI feedback evaluates text, not acoustic pronunciation.');
+    if (!Recognition && !canRecord) announce('Không thể ghi âm hoặc chép lời bằng trình duyệt. Nhập câu trả lời bằng bàn phím.');
+    else if (!Recognition) announce('Trình duyệt không hỗ trợ chép lời. Em có thể ghi âm để nghe lại hoặc nhập câu trả lời; AI chỉ đánh giá văn bản.');
+    else if (!canRecord) announce('Không thể ghi âm. Em vẫn có thể chép lời bằng trình duyệt hoặc nhập câu trả lời.');
+    else announce('Micro sẵn sàng. AI đánh giá văn bản, không chấm phát âm âm học.');
     draw();
   }
   return controller;

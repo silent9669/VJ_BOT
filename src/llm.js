@@ -273,13 +273,13 @@ function probeEvent(protocol, raw) {
 }
 
 export function failureMessage(status) {
-  if (status === 401) return 'The provider rejected this API key. It may be invalid, expired or revoked.';
-  if (status === 402) return 'The provider requires credits or a higher spending limit for this model.';
-  if (status === 403) return 'The provider denied access to this model or endpoint. Check key permissions and provider policies.';
-  if (status === 429) return 'The provider rate limit or quota was reached. Model access is not verified; try later.';
-  if (status === 404 || status === 400) return 'The endpoint, model or request is not supported. Check your settings.';
-  if (status === 504) return 'The provider timed out. Model access is not verified; try later.';
-  return 'The provider request failed. Model access is not verified.';
+  if (status === 401) return 'Nhà cung cấp từ chối khóa API này. Khóa có thể không hợp lệ, đã hết hạn hoặc bị thu hồi.';
+  if (status === 402) return 'Nhà cung cấp yêu cầu có số dư hoặc hạn mức chi tiêu cao hơn để dùng mô hình này.';
+  if (status === 403) return 'Nhà cung cấp từ chối quyền truy cập mô hình hoặc địa chỉ API này. Hãy kiểm tra quyền của khóa và chính sách nhà cung cấp.';
+  if (status === 429) return 'Đã chạm giới hạn tần suất hoặc hạn mức của nhà cung cấp. Quyền truy cập mô hình chưa được xác minh; hãy thử lại sau.';
+  if (status === 404 || status === 400) return 'Địa chỉ API, mô hình hoặc yêu cầu không được hỗ trợ. Hãy kiểm tra cài đặt.';
+  if (status === 504) return 'Nhà cung cấp không phản hồi kịp thời. Quyền truy cập mô hình chưa được xác minh; hãy thử lại sau.';
+  return 'Yêu cầu tới nhà cung cấp thất bại. Quyền truy cập mô hình chưa được xác minh.';
 }
 
 // Discovery does not generate content. Never follow a provider redirect with credentials.

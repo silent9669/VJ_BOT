@@ -7,11 +7,14 @@
   let rows = [], rowsOwner = null, rendering = 0, revision = 0, busy = false;
   let pending = null, timer = null, polling = 0, panel = null, panelOwner = null;
   let loaded = '', usageRequest = 0, catalogRequest = 0;
+  const errorText = error => ['SecurityError', 'QuotaExceededError'].includes(error.name)
+    ? 'Không truy cập được bộ nhớ trình duyệt. Cho phép lưu dữ liệu trang web hoặc giải phóng dung lượng rồi thử lại.'
+    : error.message;
   async function api(path = '', method = 'GET', body) {
     const response = await apiFetch(root + path, {method, headers:{'Content-Type':'application/json'},
       ...(body === undefined ? {} : {body:JSON.stringify(body)})});
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || 'Antigravity connection is unavailable.');
+    const data = await response.json().catch(() => { throw new Error('Máy chủ trả về dữ liệu không đọc được. Làm mới trạng thái kết nối rồi thử lại.'); });
+    if (!response.ok) throw new Error(data.detail || 'Kết nối Antigravity không khả dụng.');
     return data;
   }
   function current(id, connection, version) {
@@ -38,8 +41,8 @@
   }
   function choose(connection) {
     const id = owner();
-    if (!id) throw new Error('Sign in before choosing an AI connection.');
-    if (!validId(connection)) throw new Error('Choose a saved Antigravity connection.');
+    if (!id) throw new Error('Đăng nhập trước khi chọn kết nối AI.');
+    if (!validId(connection)) throw new Error('Chọn kết nối Antigravity đã lưu.');
     window.pauseApiModelScan?.();
     localStorage.setItem('vjbot_ai_oauth:' + id, connection);
     localStorage.setItem('vjbot_ai_method:' + id, 'antigravity');
@@ -50,8 +53,9 @@
   }
   function stopPolling() { polling++; clearTimeout(timer); timer = null; pending = null; }
   function authorizationUrl(value) {
-    const url = new URL(value);
-    if (url.origin !== 'https://accounts.google.com' || !['/o/oauth2/auth','/o/oauth2/v2/auth'].includes(url.pathname)) throw new Error('Invalid Antigravity sign-in address.');
+    let url;
+    try { url = new URL(value); } catch { throw new Error('Địa chỉ đăng nhập Antigravity không hợp lệ.'); }
+    if (url.origin !== 'https://accounts.google.com' || !['/o/oauth2/auth','/o/oauth2/v2/auth'].includes(url.pathname)) throw new Error('Địa chỉ đăng nhập Antigravity không hợp lệ.');
     return url.href;
   }
   function showPending(value) {
@@ -65,17 +69,17 @@
     const version = polling;
     async function tick() {
       if (version !== polling || owner() !== id) { if (version === polling) stopPolling(); return; }
-      if (Date.now() >= value.expires_at) { stopPolling(); el('ai-oauth-status').textContent = 'Sign-in expired. Refresh accounts and start again.'; return; }
+      if (Date.now() >= value.expires_at) { stopPolling(); el('ai-oauth-status').textContent = 'Phiên đăng nhập đã hết hạn. Làm mới danh sách tài khoản rồi bắt đầu lại.'; return; }
       try {
         const data = await api('/status', 'POST', {handle:value.handle});
         if (version !== polling || owner() !== id) return;
         if (data.status === 'ok') {
-          if (!validId(data.connection_id)) throw new Error('Sign-in did not return a saved connection ID. Refresh accounts.');
+          if (!validId(data.connection_id)) throw new Error('Đăng nhập không trả về mã kết nối đã lưu. Hãy làm mới danh sách tài khoản.');
           stopPolling(); showPending(null); el('ai-oauth-name').value = ''; choose(data.connection_id); await render(); return;
         }
         timer = setTimeout(tick, 2000);
       } catch (error) {
-        if (version === polling && owner() === id) { stopPolling(); el('ai-oauth-status').textContent = error.message; }
+        if (version === polling && owner() === id) { stopPolling(); el('ai-oauth-status').textContent = errorText(error); }
       }
     }
     timer = setTimeout(tick, 1000);
@@ -88,14 +92,14 @@
     el('ai-oauth-use').disabled = !model;
     el('ai-oauth-test-hint').hidden = !changed;
     el('ai-oauth-model-hint').textContent = changed
-      ? 'New selection. Test and save it before using it in chat.'
+      ? 'Lựa chọn mới. Hãy kiểm tra và lưu trước khi dùng để trò chuyện.'
       : '';
   }
   async function catalog(connection, savedModel = '') {
     const id = owner(), version = revision, request = ++catalogRequest;
     const data = await api('/models?connection_id=' + encodeURIComponent(connection));
     if (!current(id, connection, version) || request !== catalogRequest) return;
-    if (!Array.isArray(data.models) || data.models.some(model => typeof model !== 'string')) throw new Error('Invalid Antigravity account catalog.');
+    if (!Array.isArray(data.models) || data.models.some(model => typeof model !== 'string')) throw new Error('Danh mục mô hình của tài khoản Antigravity không hợp lệ.');
     const select = el('ai-oauth-model'); select.replaceChildren();
     const models = savedModel && !data.models.includes(savedModel) ? [savedModel, ...data.models] : data.models;
     for (const model of models) {
@@ -103,7 +107,7 @@
     }
     if (savedModel) select.value = savedModel;
     modelActionState();
-    el('ai-oauth-status').textContent = `${data.models.length} models listed · access not checked.`;
+    el('ai-oauth-status').textContent = `Đã liệt kê ${data.models.length} mô hình · chưa kiểm tra quyền truy cập.`;
   }
   async function usage() {
     const id = owner(), connection = selected(), version = revision, request = ++usageRequest;
@@ -111,29 +115,29 @@
     const section = el('ai-oauth-usage'), status = el('ai-oauth-usage-status');
     section.hidden = false; section.setAttribute('aria-busy', 'true');
     el('ai-oauth-usage-refresh').disabled = true;
-    el('ai-oauth-usage-models').replaceChildren(); status.textContent = 'Loading provider usage…';
-    el('ai-oauth-usage-overview').textContent = 'Loading quota…';
+    el('ai-oauth-usage-models').replaceChildren(); status.textContent = 'Đang tải mức sử dụng từ nhà cung cấp…';
+    el('ai-oauth-usage-overview').textContent = 'Đang tải hạn mức…';
     const overviewMeter = el('ai-oauth-usage-meter');
     overviewMeter.hidden = true;
     try {
       const data = await api('/usage?connection_id=' + encodeURIComponent(connection));
       if (!current(id, connection, version) || request !== usageRequest) return;
-      if (data.connection_id !== connection) throw new Error('Usage response does not match the selected connection.');
+      if (data.connection_id !== connection) throw new Error('Thông tin sử dụng trả về không khớp với kết nối đã chọn.');
       const checked = typeof data.checked_at === 'string' && Number.isFinite(Date.parse(data.checked_at))
-        ? new Date(data.checked_at).toLocaleString() : 'unknown';
-      const checkedTime = checked === 'unknown' ? checked : new Date(data.checked_at).toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
-      status.textContent = data.available ? `Updated ${checkedTime}` : `Usage unavailable · ${checkedTime}`;
-      status.title = `Provider-reported usage. Checked: ${checked}.`;
+        ? new Date(data.checked_at).toLocaleString('vi-VN') : 'chưa rõ';
+      const checkedTime = checked === 'chưa rõ' ? checked : new Date(data.checked_at).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+      status.textContent = data.available ? `Đã cập nhật ${checkedTime}` : `Chưa có thông tin sử dụng · ${checkedTime}`;
+      status.title = `Mức sử dụng do nhà cung cấp báo cáo. Kiểm tra lúc: ${checked}.`;
       const fractions = (Array.isArray(data.models) ? data.models : []).map(row => row.remaining_fraction)
         .filter(value => Number.isFinite(value) && value >= 0 && value <= 1);
-      const percent = value => (value * 100).toLocaleString(undefined, {maximumFractionDigits:1}) + '%';
+      const percent = value => (value * 100).toLocaleString('vi-VN', {maximumFractionDigits:1}) + '%';
       const low = Math.min(...fractions);
-      el('ai-oauth-usage-overview').textContent = fractions.length ? `${percent(low)} remaining` : 'Quota unavailable';
-      el('ai-oauth-usage-overview').title = fractions.length ? 'Lowest reported model limit, not an account-wide balance.' : '';
+      el('ai-oauth-usage-overview').textContent = fractions.length ? `Còn ${percent(low)}` : 'Chưa có thông tin hạn mức';
+      el('ai-oauth-usage-overview').title = fractions.length ? 'Hạn mức mô hình thấp nhất được báo cáo, không phải số dư chung của tài khoản.' : '';
       overviewMeter.hidden = !fractions.length;
       if (fractions.length) {
         overviewMeter.value = low;
-        overviewMeter.setAttribute('aria-valuetext', `${percent(low)} remaining in the lowest reported model limit`);
+        overviewMeter.setAttribute('aria-valuetext', `Còn ${percent(low)} ở hạn mức mô hình thấp nhất được báo cáo`);
       }
       for (const row of Array.isArray(data.models) ? data.models : []) {
         if (typeof row.model !== 'string') continue;
@@ -142,27 +146,27 @@
         const fraction = row.remaining_fraction;
         const known = Number.isFinite(fraction) && fraction >= 0 && fraction <= 1;
         const remaining = known
-          ? fraction === 0 ? '0% remaining · exhausted' : `${(fraction * 100).toLocaleString(undefined, {maximumFractionDigits:2})}% remaining`
-          : 'Remaining usage unknown';
+          ? fraction === 0 ? 'Còn 0% · đã hết hạn mức' : `Còn ${(fraction * 100).toLocaleString('vi-VN', {maximumFractionDigits:2})}%`
+          : 'Chưa rõ hạn mức còn lại';
         const reset = typeof row.reset_at === 'string' ? Date.parse(row.reset_at) : NaN;
         detail.textContent = remaining + (Number.isFinite(reset)
-          ? ` · ${reset < Date.now() ? 'Historical reset' : 'Resets'}: ${new Date(reset).toLocaleString()}` : ' · Reset unknown');
+          ? ` · ${reset < Date.now() ? 'Mốc khôi phục đã qua' : 'Khôi phục lúc'}: ${new Date(reset).toLocaleString('vi-VN')}` : ' · Chưa rõ thời điểm khôi phục');
         item.append(name, detail);
         if (known) {
           const meter = document.createElement('meter');
           meter.className = 'ai-quota-meter';
           meter.min = 0; meter.max = 1; meter.value = fraction;
-          meter.setAttribute('aria-label', row.model + ' remaining quota');
+          meter.setAttribute('aria-label', 'Hạn mức còn lại của ' + row.model);
           meter.setAttribute('aria-valuetext', remaining);
           item.append(meter);
         }
         el('ai-oauth-usage-models').append(item);
       }
-      if (!data.models?.length) status.textContent += ' No model quota reported.';
+      if (!data.models?.length) status.textContent += ' Nhà cung cấp chưa báo cáo hạn mức của mô hình nào.';
     } catch (error) {
       if (current(id, connection, version) && request === usageRequest) {
-        status.textContent = 'Usage unavailable. ' + error.message;
-        el('ai-oauth-usage-overview').textContent = 'Quota unavailable';
+        status.textContent = 'Chưa có thông tin sử dụng. ' + error.message;
+        el('ai-oauth-usage-overview').textContent = 'Chưa có thông tin hạn mức';
       }
     } finally {
       if (current(id, connection, version) && request === usageRequest) {
@@ -176,7 +180,7 @@
       stopPolling(); revision++; loaded = ''; rows = []; rowsOwner = null;
       el('ai-oauth-model').replaceChildren(); el('ai-oauth-usage-models').replaceChildren();
       el('ai-oauth-usage-status').textContent = ''; el('ai-oauth-usage').hidden = true;
-      el('ai-oauth-usage-overview').textContent = 'Quota unavailable';
+      el('ai-oauth-usage-overview').textContent = 'Chưa có thông tin hạn mức';
       showPending(null);
     }
     if (!id) { paint(); window.refreshSavedConnections?.(); return; }
@@ -199,18 +203,18 @@
       el('ai-oauth-selection').hidden = !oauth || !row || row.state !== 'active';
       el('ai-oauth-usage').hidden = !oauth || !row;
       el('ai-oauth-setup').hidden = data.configured;
-      el('ai-oauth-missing').textContent = 'Required server settings: ' + (data.missing || []).join(', ');
+      el('ai-oauth-missing').textContent = 'Các thiết lập máy chủ bắt buộc: ' + (data.missing || []).join(', ');
       if (oauth) {
-        el('ai-pill').textContent = row ? row.name : 'No OAuth connection selected';
+        el('ai-pill').textContent = row ? row.name : 'Chưa chọn kết nối OAuth';
         el('ai-pill').dataset.state = row ? 'saved' : 'none';
       }
       showPending(data.pending);
       if (data.pending) startPolling(data.pending, id); else stopPolling();
-      el('ai-oauth-status').textContent = data.pending ? 'Waiting for Google sign-in. Existing saved connections remain available.'
-        : !data.configured ? 'The server needs a dedicated Antigravity gateway. API-key connections remain available.'
-        : row && oauth ? row.state === 'active' ? '' : 'This account needs attention. Add another account or delete this connection.'
-        : connection && oauth ? 'The selected OAuth connection is unavailable. Choose another; no fallback is used.'
-        : 'Sign in to add an Antigravity account. Existing connections are kept.';
+      el('ai-oauth-status').textContent = data.pending ? 'Đang chờ đăng nhập Google. Các kết nối đã lưu vẫn dùng được.'
+        : !data.configured ? 'Máy chủ cần cổng kết nối Antigravity riêng. Các kết nối dùng khóa API vẫn dùng được.'
+        : row && oauth ? row.state === 'active' ? '' : 'Tài khoản này cần được xử lý. Thêm tài khoản khác hoặc xóa kết nối này.'
+        : connection && oauth ? 'Kết nối OAuth đã chọn không khả dụng. Hãy chọn kết nối khác; không tự động dùng kết nối thay thế.'
+        : 'Đăng nhập để thêm tài khoản Antigravity. Các kết nối hiện có được giữ nguyên.';
       const identity = `${id}:${connection}`;
       if (oauth && row && loaded !== identity) {
         loaded = identity; el('ai-oauth-model').replaceChildren();
@@ -219,8 +223,8 @@
       }
     } catch (error) {
       if (id === owner() && version === rendering) {
-        el('ai-oauth-status').textContent = error.message;
-        el('ai-connection-status').textContent = 'OAuth accounts unavailable. ' + error.message;
+        el('ai-oauth-status').textContent = errorText(error);
+        el('ai-connection-status').textContent = 'Không tải được tài khoản OAuth. ' + errorText(error);
       }
     }
   }
@@ -228,7 +232,7 @@
     if (busy) return;
     busy = true;
     rendering++;
-    el('ai-connection-status').textContent = 'Updating OAuth connection…';
+    el('ai-connection-status').textContent = 'Đang cập nhật kết nối OAuth…';
     el('ai-profile-list').setAttribute('aria-busy', 'true');
     const id = owner(), version = revision, connection = selected();
     const controls = [...el('ai-oauth-panel').querySelectorAll('input, select, button'), el('ai-method-oauth'), el('ai-profile-list'), el('ai-profile-new'), el('ai-add-connection'), el('ai-chat')]
@@ -236,7 +240,7 @@
     const previous = controls.map(control => control.disabled);
     controls.forEach(control => { control.disabled = true; }); el('ai-oauth-panel').setAttribute('aria-busy', 'true');
     try { await task(id, connection, version); if (id === owner()) el('ai-connection-status').textContent = ''; }
-    catch (error) { if (id === owner() && version === revision) { el('ai-oauth-status').textContent = error.message; el('ai-connection-status').textContent = error.message; } }
+    catch (error) { if (id === owner() && version === revision) { el('ai-oauth-status').textContent = errorText(error); el('ai-connection-status').textContent = errorText(error); } }
     finally {
       controls.forEach((control, index) => { control.disabled = previous[index]; });
       busy = false; el('ai-oauth-panel').setAttribute('aria-busy', 'false');
@@ -245,7 +249,7 @@
     }
   }
   window.selectAntigravityConnection = connection => action(async (id, _old, version) => {
-    if (rowsOwner !== id || !rows.some(row => row.id === connection)) throw new Error('Refresh accounts before choosing this connection.');
+    if (rowsOwner !== id || !rows.some(row => row.id === connection)) throw new Error('Làm mới danh sách tài khoản trước khi chọn kết nối này.');
     await api('/connections/' + encodeURIComponent(connection) + '/activate', 'POST', {});
     if (id !== owner() || version !== revision) return;
     choose(connection); await render();
@@ -262,7 +266,7 @@
         if (id !== owner()) { popup?.close(); return; }
         const url = authorizationUrl(data.authorization_url);
         showPending(data); startPolling(data, id); el('ai-oauth-connect').hidden = true;
-        el('ai-oauth-status').textContent = 'Waiting for Google sign-in. If no tab opened, choose Continue with Google.';
+        el('ai-oauth-status').textContent = 'Đang chờ đăng nhập Google. Nếu không có thẻ mới mở ra, chọn Tiếp tục với Google.';
         if (popup) popup.location.replace(url);
       } catch (error) { popup?.close(); throw error; }
     });
@@ -270,38 +274,38 @@
   el('ai-oauth-status-refresh').onclick = () => render();
   el('ai-oauth-refresh').onclick = () => action(async (_id, connection) => {
     const row = rows.find(row => row.id === connection);
-    if (!row) throw new Error('Choose a saved OAuth connection.');
+    if (!row) throw new Error('Chọn kết nối OAuth đã lưu.');
     await catalog(connection, row.model);
   });
   el('ai-oauth-usage-refresh').onclick = () => usage();
   el('ai-oauth-model').onchange = modelActionState;
   el('ai-oauth-use').onclick = () => action(async (id, connection, version) => {
-    if (!connection) throw new Error('Choose a saved OAuth connection.');
+    if (!connection) throw new Error('Chọn kết nối OAuth đã lưu.');
     const model = el('ai-oauth-model').value;
-    el('ai-oauth-status').textContent = 'Testing the selected Antigravity model…';
+    el('ai-oauth-status').textContent = 'Đang kiểm tra mô hình Antigravity đã chọn…';
     const data = await api('/model', 'PUT', {connection_id:connection, model});
     if (!current(id, connection, version)) return;
     rows = rows.map(row => row.id === connection ? {...row, model:data.model} : row);
-    el('ai-oauth-status').textContent = `${data.model} returned text. Read-aloud still uses its API-key profile.`;
+    el('ai-oauth-status').textContent = `${data.model} đã trả về văn bản. Đọc thành tiếng vẫn dùng kết nối khóa API riêng.`;
     window.refreshSavedConnections?.(); window.checkAiReady?.();
   });
   el('ai-oauth-cancel').onclick = () => action(async id => {
     const handle = pending?.handle;
-    if (!handle) throw new Error('Refresh the sign-in status before cancelling.');
+    if (!handle) throw new Error('Làm mới trạng thái đăng nhập trước khi hủy.');
     await api('/cancel', 'POST', {handle});
     if (id !== owner()) return;
     stopPolling(); showPending(null); el('ai-oauth-connect').hidden = false;
-    el('ai-oauth-status').textContent = 'Antigravity sign-in cancelled.';
+    el('ai-oauth-status').textContent = 'Đã hủy đăng nhập Antigravity.';
   });
   el('ai-oauth-callback-submit').onclick = () => action(async id => {
-    if (!pending || pending.owner !== id) throw new Error('Refresh the sign-in status before submitting a callback.');
+    if (!pending || pending.owner !== id) throw new Error('Làm mới trạng thái đăng nhập trước khi gửi URL chuyển hướng về ứng dụng.');
     await api('/callback', 'POST', {handle:pending.handle, redirect_url:el('ai-oauth-callback-url').value.trim()});
     if (id !== owner()) return;
     el('ai-oauth-callback-url').value = '';
-    el('ai-oauth-status').textContent = 'Callback submitted. Waiting for sign-in to finish…';
+    el('ai-oauth-status').textContent = 'Đã gửi URL chuyển hướng về ứng dụng. Đang chờ hoàn tất đăng nhập…';
   });
   el('ai-oauth-disconnect').onclick = () => action(async (id, connection, version) => {
-    if (!connection) throw new Error('Choose a saved OAuth connection.');
+    if (!connection) throw new Error('Chọn kết nối OAuth đã lưu.');
     await api('', 'DELETE', {connection_id:connection});
     if (!current(id, connection, version)) return;
     localStorage.setItem('vjbot_ai_oauth:' + id, '');

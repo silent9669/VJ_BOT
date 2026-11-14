@@ -102,11 +102,13 @@ test('quota rendering preserves native IDs, distinguishes zero from unknown, and
       {model:'native-half', remaining_fraction:0.375, reset_at:null} ]}) : null});
   await ui.context.renderAntigravityOAuth();
   const rows = ui.element('ai-oauth-usage-models').children.map(text);
-  assert.match(rows[0], /native-tiered<script>.*0% remaining · exhausted.*Historical reset/);
-  assert.match(rows[1], /Remaining usage unknown.*Reset unknown/);
-  assert.match(rows[2], /37.5% remaining/);
+  assert.match(rows[0], /native-tiered<script>.*Còn 0% · đã hết hạn mức.*Mốc khôi phục đã qua/);
+  assert.match(rows[1], /Chưa rõ hạn mức còn lại.*Chưa rõ thời điểm khôi phục/);
+  assert.match(rows[2], /Còn 37,5%/);
   assert.equal(ui.element('ai-oauth-usage-meter').value, 0);
   assert.equal(ui.element('ai-oauth-usage-meter').hidden, false);
+  assert.match(ui.element('ai-oauth-usage-overview').title, /không phải số dư chung của tài khoản/);
+  assert.match(ui.element('ai-oauth-usage-meter').attributes['aria-valuetext'], /hạn mức mô hình thấp nhất/);
   assert.deepEqual(ui.element('ai-oauth-usage-models').children.map(row => row.children
     .filter(child => child.tag === 'meter').map(meter => meter.value)), [[0], [], [0.375]]);
   assert.equal(ui.element('ai-oauth-usage').attributes['aria-busy'],'false');
@@ -220,4 +222,17 @@ test('promotion discards a late OAuth restore without replacing saved preference
   await resumed;
   assert.equal(ui.storage.get('vjbot_ai_oauth:test:owner'),'original');
   assert.equal(ui.context.savedOAuthConnections()[0].id,'original');
+});
+
+test('unreadable OAuth responses offer Vietnamese recovery and preserve authored connection detail',async()=>{
+  const ui=controller({respond:request=>request.path===root?new Response('<html>Unavailable</html>',{status:502}):null});
+  await ui.context.renderAntigravityOAuth();
+  assert.match(ui.element('ai-oauth-status').textContent,/Máy chủ trả về dữ liệu không đọc được/);
+  assert.doesNotMatch(ui.element('ai-oauth-status').textContent,/SyntaxError|Unexpected token|<html>/);
+  assert.equal(ui.requests.length,1);
+  const detail='Cần đăng nhập lại đúng tài khoản Antigravity này.';
+  const denied=controller({respond:request=>request.path===root?Response.json({detail},{status:409}):null});
+  await denied.context.renderAntigravityOAuth();
+  assert.equal(denied.element('ai-oauth-status').textContent,detail);
+  assert.equal(denied.requests.length,1);
 });

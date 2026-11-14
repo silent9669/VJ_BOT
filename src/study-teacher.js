@@ -89,36 +89,36 @@ export async function studyTeacher(body, request, env) {
   if (!body || Object.keys(body).some(key => !allowed.includes(key)) || body.action !== 'teach'
     || !validLessonReference(body.lesson) || (body.focus != null && !validFocusReference(body.focus))
     || (body.view !== undefined && !['checks','exam'].includes(body.view))
-    || (body.view === 'exam' && body.focus?.kind !== 'question')) return json({detail:'Invalid teaching reference.'},400);
+    || (body.view === 'exam' && body.focus?.kind !== 'question')) return json({detail:'Tham chiếu phần học không hợp lệ.'},400);
   const focus = body.focus ?? null, view = body.view ?? 'checks';
   const catalog = await teacherCatalog(env,body.lesson.level);
-  if (!catalog) return json({detail:'The lesson catalog is unavailable. No exercise result changed.'},503);
+  if (!catalog) return json({detail:'Danh mục bài học không khả dụng. Không có kết quả bài tập nào bị thay đổi.'},503);
   const lesson = catalogLesson(catalog,body.lesson);
-  if (!lesson || !processingAllowed(lesson)) return json({detail:'This source is unavailable for provider processing.'},409);
+  if (!lesson || !processingAllowed(lesson)) return json({detail:'Nguồn này không khả dụng để gửi tới nhà cung cấp xử lý.'},409);
   let task;
   if (focus?.kind === 'question') {
     const resolved=resolveTaskReference(lesson,focus,view,body.task,'hint');
     if(resolved.error)return json({detail:resolved.error},resolved.status);
     task=resolved.reference;
-  } else if(body.task !== undefined)return json({detail:'A task reference needs a canonical question focus.'},400);
+  } else if(body.task !== undefined)return json({detail:'Tham chiếu bài tập cần gắn với câu hỏi gốc đang chọn.'},400);
   const evidence = lesson && teachingEvidence(lesson,focus,view);
-  if (!evidence) return json({detail:'This item does not belong to the lesson. Reopen it.'},409);
-  if (evidence.fields.length > 12 || JSON.stringify(evidence).length > 8000) return json({detail:'Choose one word or example for a focused explanation.'},413);
+  if (!evidence) return json({detail:'Mục này không thuộc bài học. Hãy mở lại mục cần học.'},409);
+  if (evidence.fields.length > 12 || JSON.stringify(evidence).length > 8000) return json({detail:'Hãy chọn một từ hoặc ví dụ để được giải thích cụ thể.'},413);
   const schema = {type:'object',additionalProperties:false,properties:{reply:{type:'string'},fields:{type:'array',items:{type:'object',additionalProperties:false,
     properties:{key:{type:'string'},text:{type:'string'}},required:['key','text']}}},required:['reply','fields']};
   const target=focus?lesson[focus.kind==='question' && view==='exam'?'exam_questions':{word:'words',example:'examples',question:'questions'}[focus.kind]]?.[focus.index]:null;
-  if(target && !processingAllowed(target))return json({detail:'This source item is unavailable for provider processing.'},409);
+  if(target && !processingAllowed(target))return json({detail:'Mục nguồn này không khả dụng để gửi tới nhà cung cấp xử lý.'},409);
   const retrieval = await retrieveLearning(env, learningQuery(lesson,'',target), {assessment:focus?.kind==='question'});
   evidence.learning_retrieval = retrieval;
-  if(JSON.stringify(evidence).length>12000)return json({detail:'Choose one word or example for a focused explanation.'},413);
+  if(JSON.stringify(evidence).length>12000)return json({detail:'Hãy chọn một từ hoặc ví dụ để được giải thích cụ thể.'},413);
   const asked = await askAI(env,body.user_id,{system:system+'\n'+learningBoundary,schema,schemaName:'study_teaching',turns:[{role:'user',content:JSON.stringify(evidence)}]},
     body.api_connection,request.headers.get('X-VJBot-Profile') ?? undefined);
   if (asked.response) return asked.response;
   let parsed;
-  try {parsed = JSON.parse(asked.text);} catch {return json({detail:'AI returned an unusable teaching response. Original content is unchanged.'},503);}
+  try {parsed = JSON.parse(asked.text);} catch {return json({detail:'AI trả về phần giảng giải không dùng được. Nội dung gốc được giữ nguyên.'},503);}
   const result = validateTeaching(parsed,evidence);
-  if (!result) return json({detail:'AI changed source text or returned incomplete teaching. Original content is unchanged.'},503);
+  if (!result) return json({detail:'AI đã thay đổi văn bản nguồn hoặc trả về phần giảng giải chưa đầy đủ. Nội dung gốc được giữ nguyên.'},503);
   result.reply = attributedReply(result.reply, retrieval, 2000);
-  if(!result.reply)return json({detail:'AI teaching with source attribution exceeded the reply limit. Original content is unchanged.'},503);
+  if(!result.reply)return json({detail:'Phần giảng giải AI kèm dẫn nguồn vượt quá giới hạn phản hồi. Nội dung gốc được giữ nguyên.'},503);
   return json({action:'teach',lesson:{id:body.lesson.id,level:body.lesson.level},focus,view,...(task?{task}:{}),...result});
 }

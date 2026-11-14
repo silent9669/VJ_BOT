@@ -62,7 +62,9 @@ test('an unavailable device profile fails closed without sending a chat request 
   b.context.VJProfiles={prepareRequest:async()=>{throw new Error('Unavailable device profile');}};
   const response=await b.context.apiFetch('/api/chat',{method:'POST',body:JSON.stringify({message:'hello'})});
   assert.equal(response.status,409);
-  assert.equal((await response.json()).code,'api_profile_unavailable');
+  const data=await response.json();
+  assert.equal(data.code,'api_profile_unavailable');
+  assert.match(data.detail,/Mở Cài đặt để chọn lại hoặc sửa kết nối/);
   assert.equal(calls,1);
 });
 
@@ -272,4 +274,25 @@ test('a role change while private credentials load blocks the stale request befo
   release({method:'POST',body:JSON.stringify({api_connection:{api_key:'private-must-not-leave'}})});
   assert.equal((await request).status,409);
   assert.equal(calls.length,0);
+});
+
+test('network failures offer Vietnamese recovery without retrying and preserve non-network errors',async()=>{
+  const requests=[];
+  const b=browser(async(path)=>{
+    requests.push(path);
+    if(path==='/api/auth/session')return Response.json({user:{name:'Learner',user_id:'google:first'}});
+    throw new TypeError('Failed to fetch');
+  });
+  await b.context.setupAccount();
+  await assert.rejects(b.context.apiFetch('/api/ai/profiles'),error=>{
+    assert.match(error.message,/Kiểm tra mạng rồi thử lại/);
+    assert.match(error.message,/không được tự động gửi lại/);
+    assert.doesNotMatch(error.message,/Failed to fetch/);
+    return true;
+  });
+  assert.deepEqual(requests,['/api/auth/session','/api/ai/profiles']);
+  for(const failure of [Object.assign(new Error('cancelled'),{name:'AbortError'}),new Error('Thông báo cụ thể được giữ nguyên.')]){
+    b.context.fetch=async()=>{throw failure;};
+    await assert.rejects(b.context.apiFetch('/api/ai/profiles'),error=>error===failure);
+  }
 });

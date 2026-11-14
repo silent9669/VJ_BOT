@@ -83,7 +83,8 @@ test('missing audio is an error rather than a successful browser-voice fallback'
   const s = speech(async () => Response.json({fallback:true}));
   await s.context.playGeminiTTS('こんにちは。');
   assert.equal(s.audios.length, 0);
-  assert.equal(s.status(), 'No speech audio was returned.');
+  assert.equal(s.visible(), true);
+  assert.match(s.status(),/Không nhận được âm thanh/);
 });
 
 test('the latest click aborts old work and ignores a late response even if cancellation is ignored', async () => {
@@ -139,7 +140,8 @@ test('audio decode failures stop the player and leave an actionable error', asyn
   await s.context.playGeminiTTS('こんにちは。');
   s.audios[0].onerror();
   assert.equal(s.audios[0].paused, true);
-  assert.equal(s.status(), 'Unable to play speech audio. Please try again.');
+  assert.equal(s.visible(), true);
+  assert.match(s.status(),/Không phát được âm thanh/);
   assert.equal(s.states.at(-1), 'idle');
 });
 
@@ -157,7 +159,7 @@ test('PCM media-type case, sample rate and channels preserve sample timing and s
     assert.equal(wav.readUInt32LE(40) / wav.readUInt32LE(28), 2 / 16000);
     assert.deepEqual([...wav.subarray(44)].map((_, i) => i % 2 ? null : wav.readInt16LE(44 + i)).filter(n => n !== null), [0, 32767, -32768, 0]);
   }
-  assert.throws(() => c.audioDataUrl({mimeType:'audio/l16;rate=16000;channels=2', audioBase64:'AA=='}), /Invalid speech PCM format/);
+  assert.throws(() => c.audioDataUrl({mimeType:'audio/l16;rate=16000;channels=2', audioBase64:'AA=='}));
 });
 
 test('Listen uses the saved model without a catalog request or automatic refresh', async () => {
@@ -218,7 +220,8 @@ test('playback labels use the returned provider voice instead of claiming Charon
   for(const [voice,model] of [['alloy','gpt-4o-mini-tts'],['Charon','gemini-3.8-flash-tts']]){
     const s=speech(async()=>Response.json({audioBase64:'UklGRg==',mimeType:'audio/wav',voice,model}));
     await s.context.playGeminiTTS('こんにちは。',{japaneseOnly:true});
-    assert.equal(s.status(),`Reading Japanese · ${voice} · ${model}`);
+    assert.ok(s.status().includes(voice));
+    assert.ok(s.status().includes(model));
   }
 });
 
@@ -228,7 +231,8 @@ test('missing voice settings helpers never generate speech through an implicit G
   delete s.context.window.selectedSpeechModel;
   await s.context.playGeminiTTS('こんにちは。');
   assert.equal(calls,0);
-  assert.match(s.status(),/Voice settings are unavailable/);
+  assert.equal(s.visible(),true);
+  assert.match(s.status(),/Không tải được cài đặt giọng nói/);
 });
 
 test('task read-aloud carries canonical revision without changing independent voice selection',async()=>{

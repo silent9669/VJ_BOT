@@ -251,7 +251,7 @@ test('saved verified choices survive Settings navigation and a fresh page withou
   await reloaded.context.renderAiPanels('settings');
   assert.deepEqual(reloaded.element('ai-model-list').options.map(o => o.value), ['working']);
   assert.equal(reloaded.element('ai-save').disabled, false);
-  assert.match(reloaded.element('ai-model-status').textContent, /previously responding.*last checked/);
+  assert.match(reloaded.element('ai-model-status').textContent, /mô hình từng phản hồi.*kiểm tra lần cuối/);
   assert.equal(reloaded.requests.some(r => r.path !== '/api/ai/profiles'), false);
 });
 
@@ -310,7 +310,7 @@ test('blocked browser storage keeps live results usable and explains that persis
   await ui.element('ai-fetch-models').events.click();
   assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['working']);
   assert.equal(ui.element('ai-save').disabled, false);
-  assert.match(ui.element('ai-selection-hint').textContent, /will not be remembered/);
+  assert.match(ui.element('ai-selection-hint').textContent, /không được giữ lại khi tải lại trang/);
 });
 
 test('a new device profile saves before scanning and restores after reload without uploading the key', async () => {
@@ -379,7 +379,7 @@ test('returning to Settings preserves an active scan and its progress until ever
   for (const model of ['two', 'three', 'four', 'five']) replies.get(model)(Response.json({ok: true, model}));
   await pending;
   assert.deepEqual(ui.element('ai-model-list').options.map(o => o.value), ['one', 'two', 'three', 'four', 'five']);
-  assert.match(ui.element('ai-model-status').textContent, /Complete: 5\/5/);
+  assert.match(ui.element('ai-model-status').textContent, /Hoàn tất: 5\/5/);
 });
 
 test('navigation during catalog retrieval or pending consent neither cancels nor starts probes early', async () => {
@@ -456,12 +456,12 @@ test('Stop then resume tests only models never dispatched, retaining successful 
   assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 5);
   const reloaded = settings({models, savedModel: 'one', storage: ui.storage});
   await reloaded.context.renderAiPanels('settings');
-  assert.match(reloaded.element('ai-fetch-models').textContent, /Continue 3/);
+  assert.match(reloaded.element('ai-fetch-models').textContent, /Tiếp tục với 3/);
   await reloaded.element('ai-fetch-models').click();
   assert.deepEqual(reloaded.requests.filter(r => r.path === '/api/ai/models/test').map(r => r.body.model), ['six', 'seven', 'eight']);
   assert.deepEqual(reloaded.element('ai-model-list').options.map(o => o.value), ['one', 'six', 'seven', 'eight']);
   assert.equal(reloaded.element('ai-load-progress').value, 4);
-  assert.match(reloaded.element('ai-model-status').textContent, /4 interrupted/);
+  assert.match(reloaded.element('ai-model-status').textContent, /4 yêu cầu bị gián đoạn không được gửi lại/);
   const attempts = reloaded.requests.filter(r => r.path === '/api/ai/models/test').length;
   await reloaded.element('ai-fetch-models').click();
   assert.equal(reloaded.requests.filter(r => r.path === '/api/ai/models/test').length, attempts);
@@ -504,7 +504,7 @@ test('an invalid checkpoint fails closed until explicit fresh recheck', async ()
   ui.storage.set(key, '{invalid');
   await ui.element('ai-fetch-models').click();
   assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 1);
-  assert.match(ui.element('ai-model-status').textContent, /Saved scan progress is invalid/);
+  assert.match(ui.element('ai-model-status').textContent, /Tiến độ kiểm tra đã lưu không hợp lệ/);
   ui.element('ai-recheck-all').checked = true;
   await ui.element('ai-fetch-models').click();
   assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 2);
@@ -535,7 +535,7 @@ test('another active scan lock prevents duplicate probes or resetting its checkp
   await ui.element('ai-fetch-models').click();
   assert.equal(ui.requests.filter(r => r.path === '/api/ai/models/test').length, 1);
   assert.equal(JSON.stringify([...ui.storage]), before);
-  assert.match(ui.element('ai-model-status').textContent, /Another scan/);
+  assert.match(ui.element('ai-model-status').textContent, /Một lượt kiểm tra khác/);
 });
 
 test('late OAuth readiness cannot reopen chat after switching method or account', async () => {
@@ -565,7 +565,8 @@ test('unified chooser groups API and OAuth accounts without duplicating profile 
   ui.context.savedOAuthConnections = () => [{id:'oauth-first', name:'Personal Google', model:'native-chat'}];
   await ui.context.renderAiPanels('settings');
   const groups = ui.element('ai-profile-list').children.filter(child => child.label);
-  assert.deepEqual(groups.map(group => group.label), ['API key · Server', 'Antigravity OAuth']);
+  assert.equal(groups.length, 2);
+  assert.deepEqual(groups[0].children.map(option => option.value), ['server:saved-profile']);
   assert.equal(groups[1].children[0].value, 'oauth:oauth-first');
   assert.match(groups[1].children[0].textContent, /Personal Google/);
   assert.equal(ui.requests.some(request => request.path.includes('/models')), false);
@@ -748,7 +749,7 @@ test('unconfigured managed OpenAI fails readiness without using a saved personal
   await ui.context.checkAiReady();
   assert.equal(ui.element('chat-input').disabled,true);
   assert.match(ui.element('chat-gate-title').textContent,/OPENAI_API_KEY/);
-  assert.equal(ui.element('chat-gate-open').textContent,'Model quản trị');
+  assert.equal(ui.element('chat-gate-open').textContent,'Mô hình quản trị');
   assert.deepEqual(ui.requests.map(request=>request.path),['/api/ai/settings']);
 });
 
@@ -834,4 +835,38 @@ test('late managed preferences cannot populate a different owner or a demoted ac
     assert.equal(ui.element('admin-ai-save').disabled,true);
     assert.doesNotMatch(ui.element('admin-model-preview').textContent,/old-model/);
   }
+});
+
+test('unreadable settings responses give Vietnamese recovery while authored errors stay specific',async()=>{
+  const ui=settings();
+  let calls=0;
+  ui.context.apiFetch=async()=>{calls++;return new Response('<html>Unavailable</html>',{status:502});};
+  await ui.context.renderAiPanels('settings');
+  assert.match(ui.element('ai-status').textContent,/Máy chủ trả về dữ liệu không đọc được/);
+  assert.match(ui.element('ai-status').textContent,/không được tự động gửi lại/);
+  assert.doesNotMatch(ui.element('ai-status').textContent,/SyntaxError|Unexpected token|<html>/);
+  assert.equal(calls,1);
+  const detail='Kết nối này cần được cấp lại quyền truy cập.';
+  ui.context.apiFetch=async()=>Response.json({detail},{status:409});
+  await ui.context.renderAiPanels('settings');
+  assert.equal(ui.element('ai-status').textContent,detail);
+});
+
+test('connection key visibility and storage help remain Vietnamese without changing fields',async()=>{
+  const ui=settings();
+  await ui.context.renderAiPanels('settings');
+  assert.equal(ui.element('ai-key').type,'password');
+  assert.equal(ui.element('ai-key-toggle').attributes['aria-label'],'Hiện khóa API');
+  ui.element('ai-key-toggle').events.click();
+  assert.equal(ui.element('ai-key').type,'text');
+  assert.equal(ui.element('ai-key-toggle').attributes['aria-label'],'Ẩn khóa API');
+  ui.element('ai-profile-storage').value='local';
+  ui.element('ai-profile-storage').events.change();
+  assert.match(ui.element('ai-profile-storage-hint').textContent,/mã hóa.*không đồng bộ/);
+  assert.match(ui.element('ai-profile-storage-hint').textContent,/Trình duyệt bị xâm nhập vẫn có thể truy cập khóa/);
+  ui.element('ai-profile-storage').value='server';
+  ui.element('ai-profile-storage').events.change();
+  assert.match(ui.element('ai-profile-storage-hint').textContent,/lưu mã hóa trên máy chủ/);
+  assert.match(ui.element('ai-profile-storage-hint').textContent,/Thiết bị khác đăng nhập cùng tài khoản/);
+  assert.equal(ui.requests.some(request=>request.path.includes('/models')),false);
 });
