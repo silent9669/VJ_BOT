@@ -153,29 +153,24 @@
         {
           "id": "teaching:v1:N1:argument:task:3",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "grammar",
           "passage": "手続きの統一は、対応のばらつきを減らすうえで有効である。しかし、統一されているからといって、個々の利用者にとって最善であるとは限らない。オンライン申請への一本化も、利用者によって利益と負担が異なりうる。",
-          "prompt": "Viết lại ý sau bằng ～からといって、必ずしも～とはいえない, không đổi thành khẳng định rằng thống nhất luôn có hại: 「手続きは統一されている。しかし、それだけでは、すべての利用者にとって最善だとは断定できない。」 Ràng buộc: mở câu bằng 手続きが; dùng dạng trạng thái bị động của 統一する; trong kết luận giữ すべての利用者にとって và đổi 最善だ sang 最善である. Một câu thể thường, đặt 、 trước 必ずしも và 。 cuối câu; không thêm hoặc thay từ ngoài các biến đổi đã yêu cầu.",
-          "accepted_variants": [
-            "手続きが統一されているからといって、必ずしもすべての利用者にとって最善であるとはいえない。"
-          ],
-          "rationale": "からといって bác tính đủ của lý do 'đã thống nhất'; 必ずしも và phủ định ở cuối giữ mức 'không thể bảo đảm tối ưu cho tất cả'. Có thể viết tự nhiên bằng とは限らない ở ngữ cảnh mở, nhưng bài này yêu cầu khuôn とはいえない và các cụm cố định; đáp án tham chiếu không kết luận khuôn khác sai.",
+          "prompt": "Em hãy viết lại ý sau với ～からといって、必ずしも～とはいえない.\n\n「手続きは統一されている。しかし、それだけでは、すべての利用者にとって最善だとは断定できない。」",
+          "criteria": ["Giữ ý: thống nhất cách làm chưa chắc tốt nhất cho mọi người, không phải luôn có hại.", "Dùng mẫu đã học đúng quan hệ lý do và phủ định, không làm ý chắc chắn hơn câu gốc.", "Câu tự nhiên, rõ nghĩa; không bắt buộc mở đầu hay dùng đúng các từ của một câu mẫu."],
+          "rationale": "Thầy xem em giữ được mức 'chưa chắc' và dùng đúng cấu trúc không. Những cách đổi từ hoặc trật tự vẫn có thể hợp lý nếu không đổi ý.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
         {
           "id": "teaching:v1:N1:argument:task:4",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "reading",
           "passage": "共通の基準を設けることと、例外的な支援を認めることは対立しない。必要なのは、現場の裁量を無制限に広げることではなく、どのような条件で支援を加えるのかを明示し、その効果を検証することである。",
-          "prompt": "Hiệu đính câu gán sai quan điểm: 「筆者は、現場の裁量を無制限に広げるべきだと述べている。」 Giữ đầu 「筆者は、」 và cuối 「べきだと述べている。」; thay toàn bộ nội dung ở giữa bằng hai hành động theo thứ tự 「支援の条件を明示する」 rồi 「その効果を検証する」. Nối hành động đầu bằng し、; hành động sau dùng すべき hoặc するべき. Không thêm từ khác. Nộp một câu hoàn chỉnh.",
-          "accepted_variants": [
-            "筆者は、支援の条件を明示し、その効果を検証すべきだと述べている。",
-            "筆者は、支援の条件を明示し、その効果を検証するべきだと述べている。"
-          ],
-          "rationale": "～ではなく loại chính điều bản tóm tắt sai đã gán cho tác giả. Cần khôi phục cả công khai điều kiện và kiểm chứng tác dụng; すべき và するべき đều được ghi nhận trong khuôn này. Câu tóm tắt mở có thể dùng nhiều cách khác, nhưng ở đây phải giữ đầu/cuối và hai hành động đã yêu cầu; không dùng danh sách hẹp này để bác mọi biến thể diễn đạt khác.",
+          "prompt": "Câu dưới đây hiểu sai ý tác giả. Em hãy sửa lại bằng cách tóm tắt điều tác giả cho là cần làm.\n\n「筆者は、現場の裁量を無制限に広げるべきだと述べている。」",
+          "criteria": ["Không gán cho tác giả ý muốn mở rộng quyền tùy ý không giới hạn.", "Nêu được hai việc tác giả đề nghị và mối quan hệ giữa chúng.", "Có thể tường thuật theo cách tự nhiên; không bắt buộc đầu, cuối hoặc động từ của một câu mẫu."],
+          "rationale": "Thầy đối chiếu ý em tóm tắt với đoạn văn, không bắt em dùng duy nhất すべき hay するべき. Cần giữ cả việc làm rõ điều kiện hỗ trợ và kiểm tra tác dụng.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -381,28 +376,24 @@
         {
           "id": "teaching:v1:N1:synthesis:task:3",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "grammar",
           "passage": "意見B：研修の価値は短期の数値だけでは捉えられない。同僚への助言や新しい問題への対応力は時間をかけて表れる。数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したい。",
-          "prompt": "Sửa lời gán sai 「Bは数値による確認を全面的に否定している。」 thành tóm tắt đúng. Ràng buộc: giữ đầu 「Bは数値による確認を」; thay 全面的に否定している bằng dạng 否定するわけではない nối với が、; sau đó lấy đúng phần B muốn bổ sung trong lời gốc, giữ 数か月後, 事例 và も合わせて評価したい; kết câu bằng と述べている。. Một câu, giữ nguyên các chữ của lời gốc, không thêm quan điểm mới.",
-          "accepted_variants": [
-            "Bは数値による確認を否定するわけではないが、数か月後の事例も合わせて評価したいと述べている。"
-          ],
-          "rationale": "わけではない bác cách hiểu B phản đối mọi đo lường; も giữ tính bổ sung của trường hợp về sau. 述べている quy ý kiến cho B thay vì biến nó thành kết quả kiểm chứng. Trong viết mở có thể dùng 否定しているわけではない hoặc các cấu trúc khác; nhiệm vụ này chỉ chấp nhận các cụm nguyên văn đã yêu cầu, không coi các cấu trúc khác là sai nói chung.",
+          "prompt": "Em hãy sửa lời tóm tắt sau để diễn đạt đúng ý B, nêu cả điều B chấp nhận và điều B muốn bổ sung.\n\n「Bは数値による確認を全面的に否定している。」",
+          "criteria": ["Giữ đúng việc B không phủ nhận hoàn toàn đánh giá bằng số liệu.", "Nêu được phần B muốn xem thêm sau một thời gian, không biến bổ sung thành thay thế.", "Quy ý kiến cho B và giữ mức chắc chắn phù hợp; có thể dùng cách diễn đạt riêng."],
+          "rationale": "Thầy xem cả hai phần trong ý B. Cách nói khác vẫn có thể đúng nếu không đổi ý bổ sung thành bác bỏ hoặc bịa kết quả.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
         {
           "id": "teaching:v1:N1:synthesis:task:4",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "reading",
           "passage": "Aは、受講直後の業務時間の短縮など、測定できる複数の指標を重視する。Bは、数値による確認も認めながら、同僚への助言や新しい問題への対応といった、時間をかけて表れる価値も評価したいと考えている。二人が評価を共同実施したという記述や、具体的な改善数値はない。",
-          "prompt": "Viết kế hoạch hai giai đoạn dưới dạng đề xuất, không phải báo cáo thành công. Khung cố định: 「両者の意見を踏まえ、受講直後に（①）を測定し、数か月後に（②）を追加して評価してはどうか。」 Chọn mỗi ô đúng một cụm từ ngân hàng: 「一つの指標／複数の指標／具体的な事例／改善したという結論」 sao cho giữ được yêu cầu của cả A và B. Nộp cả câu, không có ký hiệu ô trống; không thêm từ, tháng cụ thể hoặc mức cải thiện.",
-          "accepted_variants": [
-            "両者の意見を踏まえ、受講直後に複数の指標を測定し、数か月後に具体的な事例を追加して評価してはどうか。"
-          ],
-          "rationale": "Hai thời điểm và hai dạng bằng chứng giữ được trọng tâm của cả A lẫn B; してはどうか đánh dấu đây là phương án mới để xem xét. 本文 không nói họ đã cùng triển khai hay đo được tăng trưởng. Cách đề xuất khác cũng có thể đúng, nhưng danh sách này chỉ dành cho khung và các cụm bị ràng buộc của nhiệm vụ, không đại diện cho toàn bộ câu tổng hợp hợp lệ.",
+          "prompt": "Em hãy đề xuất một cách đánh giá theo hai giai đoạn, kết hợp được điều A và B quan tâm. Viết một hoặc hai câu tiếng Nhật.",
+          "criteria": ["Kết hợp chỉ số có thể đo ngay sau học với việc xem trường hợp thể hiện giá trị sau một thời gian.", "Cho thấy đây là đề xuất mới dựa trên cả A và B, không kể như họ đã cùng thực hiện.", "Có thể chọn cách nói và ví dụ phù hợp, nhưng không bịa mức cải thiện đã đo được."],
+          "rationale": "Thầy xem cách kết hợp có giữ được hai thời điểm và hai loại thông tin không. Em không cần điền vào một khung cố định hay chọn đúng hai cụm được cho sẵn.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },

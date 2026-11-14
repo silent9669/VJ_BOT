@@ -866,8 +866,8 @@ async function renderFlashcards(level = "N5",lessonId=null) {
   const reviewed=new Map((progress.items||[]).map(i=>[i.item_id,i]));
   fcDeck=deck.filter(i=>!reviewed.get(i.id)?.next_review || new Date(reviewed.get(i.id).next_review)<=new Date()).sort((a,b)=>Number(!reviewed.has(a.id))-Number(!reviewed.has(b.id))).slice(0,20);
   fcIdx = 0;
-  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.querySelector('.fc-controls-bar').hidden=true;globalThis.setTeacherFocus?.(null);globalThis.invalidateTeacherQuery?.();return;}
-  document.getElementById('flashcard-card').hidden=false;document.querySelector('.fc-controls-bar').hidden=false;
+  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.getElementById('btn-fc-reveal')?.setAttribute('hidden','');document.querySelector('.fc-controls-bar').hidden=true;globalThis.setTeacherFocus?.(null);globalThis.invalidateTeacherQuery?.();return;}
+  document.getElementById('flashcard-card').hidden=false;document.getElementById('btn-fc-reveal')?.removeAttribute('hidden');document.querySelector('.fc-controls-bar').hidden=false;
   displayFlashcard();
 }
 
@@ -895,6 +895,10 @@ function displayFlashcard() {
   if (backMeaning) backMeaning.textContent = item.back;
   if (exampleJp) exampleJp.textContent = item.exampleJp;
   if (exampleVi) exampleVi.textContent = item.exampleVi;
+  const hasExample=Boolean(item.exampleJp?.trim());
+  if(exampleJp?.closest('.card-example-box'))exampleJp.closest('.card-example-box').hidden=!hasExample;
+  const exampleAudio=document.getElementById('btn-fc-audio-back');if(exampleAudio)exampleAudio.hidden=!hasExample;
+  const backLabel=document.getElementById('fc-back-label');if(backLabel)backLabel.textContent=hasExample?'Nghĩa và ví dụ':'Nghĩa';
   if (badgeLvl) badgeLvl.textContent = `${item.level} Từ vựng`;
   if (counterEl) counterEl.textContent = `Thẻ ${fcIdx + 1} / ${fcDeck.length}`;
   const context=globalThis.teacherContext?.();
@@ -906,7 +910,8 @@ function updateFlashcardFace(card,back){
   const front=card.querySelector('.card-front'),reverse=card.querySelector('.card-back');
   for(const [face,inactive] of [[front,back],[reverse,!back]])if(face){face.inert=inactive;face.setAttribute('aria-hidden',String(inactive));}
   card.setAttribute('aria-label',back?'Thẻ nhớ đang mở nghĩa, nhấn Enter để quay lại':'Thẻ nhớ đang che nghĩa, nhấn Enter để xem nghĩa');
-  document.getElementById('fc-face-status')?.replaceChildren(document.createTextNode(back?'Đang mở nghĩa và ví dụ':'Đang xem mặt chữ, nghĩa được che'));
+  const reveal=document.getElementById('btn-fc-reveal');if(reveal){reveal.textContent=back?'Xem mặt chữ':'Xem nghĩa';reveal.setAttribute('aria-expanded',String(back));}
+  document.getElementById('fc-face-status')?.replaceChildren(document.createTextNode(back?(fcDeck[fcIdx]?.exampleJp?.trim()?'Đang mở nghĩa và ví dụ':'Đang mở nghĩa'):'Đang xem mặt chữ, nghĩa được che'));
 }
 
 // ==========================================
@@ -1077,14 +1082,14 @@ function handleQuizAnswer(selectedIndex){
   const attempt=taskAttempt(buildLessonContext(descriptor,activeQuizLevel,'reading'),question,index,'exam');
   const feedback=document.getElementById('quiz-feedback-box'),status=document.getElementById('quiz-feedback-status'),text=document.getElementById('quiz-feedback-text'),next=document.getElementById('btn-quiz-next');
   const matched=selectedIndex===question.answer_index;
-  status.textContent='Đang lưu câu trả lời…';
+  status.textContent='Đang gửi…';
   text.textContent='';feedback.hidden=false;next.disabled=true;
   grid.querySelectorAll('.quiz-option-btn').forEach((button,position)=>{
     button.disabled=true;button.dataset.state=position===question.answer_index?'correct':position===selectedIndex?'incorrect':'idle';
     button.setAttribute('aria-label',`${position+1}. ${question.opts[position]}${position===selectedIndex?' · em đã chọn':''}${position===question.answer_index?' · đáp án':''}`);
   });
   document.getElementById('quiz-save-retry')?.remove();
-  const retry=document.createElement('button');retry.type='button';retry.id='quiz-save-retry';retry.className='stage-btn';retry.textContent='Lưu lại';retry.hidden=true;feedback.append(retry);
+  const retry=document.createElement('button');retry.type='button';retry.id='quiz-save-retry';retry.className='stage-btn';retry.textContent='Thử lại';retry.hidden=true;feedback.append(retry);
   const current=()=>request===quizRequest && examQuestionIdx===index && !document.getElementById('quiz-card').hidden;
   async function save(){
     retry.disabled=true;
@@ -1093,7 +1098,7 @@ function handleQuizAnswer(selectedIndex){
       if(!current())return;
       examAnswers.set(index,matched);examScore=[...examAnswers.values()].filter(Boolean).length;
       status.textContent='';text.textContent='';feedback.hidden=true;retry.remove();next.disabled=false;next.focus();
-    }catch(error){if(current()){status.textContent='Chưa lưu được câu trả lời.';text.textContent=error.message;feedback.hidden=false;retry.hidden=false;retry.disabled=false;}}
+    }catch(error){if(current()){status.textContent='Chưa gửi được câu trả lời.';text.textContent=error.message;feedback.hidden=false;retry.hidden=false;retry.disabled=false;}}
   }
   retry.onclick=save;save();
 }
@@ -1123,65 +1128,81 @@ function finishExam() {
 // ==========================================
 // 13. MASTERY & PROGRESS CONTROLLER
 // ==========================================
-async function openProgressReview(record){
+async function resolveProgressReview(record,catalogs=new Map()){
   const level=record.level || record.jlpt_level;
-  if(!/^N[1-5]$/.test(level || '') || !record.item_id)throw new Error('Bản ghi cũ chưa có tham chiếu bài học đủ rõ; không tự mở nhầm bài.');
-  await Promise.all([ensureLessons(level),loadPracticalCourse()]);createStudyPlan(level);
-  const candidates=Object.entries(window.JLPT_DATA.curriculum[level].skills).flatMap(([skill,lessons])=>lessons.map(item=>({item,skill})));
-  for(const owner of ['flashcards','kaiwa','quiz'])candidates.push(...featureLessons(owner,level).map(item=>({item,skill:owner==='flashcards'?'vocabulary':'reading',owner})));
+  if(!/^N[1-5]$/.test(level || '') || !record.item_id)throw new Error('Bản ghi cũ chưa xác định rõ bài học.');
+  if(!catalogs.has(level))catalogs.set(level,(async()=>{
+    await Promise.all([ensureLessons(level),loadPracticalCourse()]);createStudyPlan(level);
+    const candidates=Object.entries(window.JLPT_DATA.curriculum[level].skills).flatMap(([skill,lessons])=>lessons.map(item=>({item,skill})));
+    for(const owner of ['flashcards','kaiwa','quiz'])candidates.push(...featureLessons(owner,level).map(item=>({item,skill:owner==='flashcards'?'vocabulary':'reading',owner})));
+    return candidates.map(candidate=>({...candidate,questions:lessonQuestions(candidate.item,level,candidate.skill)}));
+  })());
   const matches=new Map();
-  for(const candidate of candidates){
+  for(const candidate of await catalogs.get(level)){
     if(record.lesson_id && activityId(candidate.item,level,candidate.skill)!==record.lesson_id)continue;
-    const questions=lessonQuestions(candidate.item,level,candidate.skill),index=questions.findIndex(task=>record.task_id?task.task_id===record.task_id:task.item_id===record.item_id);
-    if(index>=0)matches.set(activityId(candidate.item,level,candidate.skill),{...candidate,index});
+    const index=candidate.questions.findIndex(task=>record.task_id?task.task_id===record.task_id:task.item_id===record.item_id);
+    if(index>=0)matches.set(activityId(candidate.item,level,candidate.skill),{...candidate,index,level});
   }
-  if(matches.size!==1)throw new Error('Bản ghi này không xác định duy nhất một bài hiện tại. Hãy chọn bài từ thư viện.');
-  const match=[...matches.values()][0];
+  if(matches.size!==1)throw new Error('Chưa xác định duy nhất một bài hiện tại. Em hãy chọn bài từ thư viện.');
+  return [...matches.values()][0];
+}
+async function openProgressReview(record,catalogs){
+  const owner=typeof signedInUser==='undefined'?null:signedInUser?.user_id,route=location.hash;
+  const match=await resolveProgressReview(record,catalogs),{level}=match;
+  if(owner!==(typeof signedInUser==='undefined'?null:signedInUser?.user_id) || route!==location.hash)return;
   showLessonDetail({...match.item,reviewQuestionIndex:match.index},level,match.skill,false,match.owner || null);
   document.querySelector('[data-lesson-mode=practice]')?.click();
-  const panel=document.getElementById('lesson-exercises');
-  panel.querySelector('legend,textarea,button')?.focus();
+  document.getElementById('lesson-exercises').querySelector('legend,textarea,button')?.focus();
 }
-
+let progressRequest=0;
 async function loadProgress() {
-  showCompletedActivities(document.getElementById("completed-activities"));
-  try {
-    const resp = await apiFetch(`/api/progress?user_id=${encodeURIComponent(userId)}`);
-    if (resp.ok) {
-      const data = await resp.json();
-      document.getElementById('mastery-lessons-count').textContent=new Set([...(data.items || []).map(row=>row.item_id),...(data.evidence || []).filter(row=>row.answered_at).map(row=>row.item_id)]).size;
-      document.getElementById('mastery-accuracy-rate').textContent=`${data.legacy?.accuracy_rate ?? data.accuracy_rate ?? 0}%`;
-      const summary=document.getElementById('mastery-evidence-summary');
-      if(summary)summary.textContent=`Lịch sử trước đây: ${data.total_learned || 0} mục. Kết quả luyện tập và tự đánh giá được lưu riêng; chưa dùng để kết luận em đã thành thạo.`;
-      document.getElementById("mastery-streak-val").textContent=`${data.streak_days ?? 0} ngày`;
-      document.getElementById("streak-counter").textContent=`${data.streak_days ?? 0} ngày`;
-      document.getElementById("mastery-exams-count").textContent=(data.items || []).filter(x=>x.item_id?.startsWith("exam-")).length;
-      const list = document.getElementById("weak-spots-list");
-      const weakItems=[...(data.evidence || []).filter(row=>row.source_correct===false || row.source_correct===0),...(data.weak_items || [])];
-      if (list && !weakItems.length) list.textContent="Chưa có mục cần ôn.";
-      if (list && weakItems.length) {
-        list.innerHTML = weakItems.map((it,index) => {
-          const item = typeof it === "string" ? { display: it } : it;
-          return `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; border: 1.5px solid #fed7aa; border-radius: 10px; margin-bottom: 8px;">
-            <div><strong style="color: #9a3412;">${escapeHtml(item.display || item.topic_id || "Mục cần ôn")}</strong>
-              <p style="color:#7c2d12;margin:0;">${item.basis?'Câu cần xem lại':'Lượt học trước đây'}</p>
-            </div>
-            <button type="button" class="revise-btn" data-record="${index}" style="background:#ea580c;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">Mở đúng bài để ôn</button>
-          </div>
-        `;
-        }).join("");
-
-        list.querySelectorAll(".revise-btn").forEach(b => {
-          b.addEventListener('click',async()=>{
-            b.disabled=true;
-            try{await openProgressReview(weakItems[Number(b.dataset.record)]);}
-            catch(error){b.textContent=error.message;b.disabled=false;}
-          });
-        });
-      }
+  const request=++progressRequest,account=()=>typeof signedInUser==='undefined'?userId:signedInUser?.user_id;
+  const owner=account(),route=location.hash,list=document.getElementById('weak-spots-list');
+  const current=()=>request===progressRequest && account()===owner && location.hash===route;
+  if(list)list.textContent='Đang tải các câu cần ôn…';
+  for(const id of ['mastery-lessons-count','mastery-answers-count','mastery-streak-val','mastery-exams-count'])document.getElementById(id).textContent='—';
+  document.getElementById('mastery-legacy').hidden=true;
+  showCompletedActivities(document.getElementById('completed-activities'));
+  try{
+    const response=await apiFetch(`/api/progress?user_id=${encodeURIComponent(userId)}`);
+    if(!response.ok)throw new Error('Chưa tải được tiến độ. Em hãy mở lại trang để thử lại.');
+    const data=await response.json();if(!current())return;
+    const answers=(data.evidence || []).filter(row=>row.answered_at);
+    document.getElementById('mastery-lessons-count').textContent=new Set([...(data.items || []).map(row=>row.item_id),...answers.map(row=>row.item_id)]).size;
+    document.getElementById('mastery-answers-count').textContent=String(answers.length);
+    const accuracy=data.legacy?.accuracy_rate ?? data.accuracy_rate;
+    document.getElementById('mastery-accuracy-rate').textContent=Number.isFinite(accuracy)?`${accuracy}%`:'Chưa có dữ liệu';
+    document.getElementById('mastery-evidence-summary').textContent=`${data.total_learned || 0} mục từ lịch sử cũ. Số liệu này tách riêng với các lượt trả lời hiện tại.`;
+    document.getElementById('mastery-legacy').hidden=!(data.total_learned || data.legacy?.total_correct || data.legacy?.total_incorrect);
+    document.getElementById('mastery-streak-val').textContent=`${data.streak_days ?? 0} ngày`;
+    document.getElementById('streak-counter').textContent=`${data.streak_days ?? 0} ngày`;
+    document.getElementById('mastery-exams-count').textContent=(data.items || []).filter(row=>row.item_id?.startsWith('exam-')).length;
+    const weakItems=[...(data.evidence || []).filter(row=>row.source_correct===false || row.source_correct===0),...(data.weak_items || [])],catalogs=new Map();
+    const rows=await Promise.all(weakItems.map(async value=>{
+      const record=typeof value==='string'?{display:value}:value;
+      try{return {record,match:await resolveProgressReview(record,catalogs)};}catch(error){return {record,error:error.message};}
+    }));
+    if(!current() || !list)return;
+    list.replaceChildren();
+    if(!rows.length){list.textContent='Chưa có mục cần ôn.';return;}
+    for(const {record,match,error} of rows){
+      const card=document.createElement('article');card.className='review-task-card';
+      const title=document.createElement('h4'),question=document.createElement('p'),status=document.createElement('p');
+      const button=document.createElement('button');button.type='button';button.className='stage-btn revise-btn';
+      status.className='review-task-status';status.setAttribute('role','status');
+      title.textContent=match?match.item.title:record.display || record.topic_id || 'Bài học trước đây';
+      question.textContent=match?`Câu ${match.index+1}: ${match.questions[match.index].q}`:error;
+      button.textContent=match?'Mở bài để ôn':'Chọn bài từ thư viện';
+      button.onclick=async()=>{
+        if(!current())return;
+        if(!match){switchTab('curriculum',/^N[1-5]$/.test(record.level || record.jlpt_level || '')?{level:record.level || record.jlpt_level}:{});return;}
+        button.disabled=true;
+        try{await openProgressReview(record,catalogs);}
+        catch(failure){if(current()){status.textContent=failure.message;button.disabled=false;}}
+      };
+      card.append(title,question,button,status);list.append(card);
     }
-  } catch {}
+  }catch(error){if(current() && list)list.textContent=error.message || 'Chưa tải được tiến độ. Em hãy mở lại trang để thử lại.';}
 }
 
 // ==========================================
@@ -1547,14 +1568,16 @@ function setupEventListeners() {
 
   // Flashcard Flipper click
   const fcCard = document.getElementById("flashcard-card");
+  const flipFlashcard=()=>{
+    if(!fcCard || fcCard.hidden)return;
+    soundEngine.playFlip();const back=!fcCard.classList.contains('flipped');
+    fcCard.classList.toggle('flipped',back);updateFlashcardFace(fcCard,back);
+  };
   if (fcCard) {
-    fcCard.addEventListener("keydown",e=>{if(e.target===fcCard && (e.key==="Enter" || e.key===" ")){e.preventDefault();fcCard.click();}});
-    fcCard.addEventListener("click",event=>{
-      if(event.target.closest('details,button'))return;
-      soundEngine.playFlip();const back=!fcCard.classList.contains('flipped');
-      fcCard.classList.toggle('flipped',back);updateFlashcardFace(fcCard,back);
-    });
+    fcCard.addEventListener("keydown",e=>{if(e.target===fcCard && (e.key==="Enter" || e.key===" ")){e.preventDefault();flipFlashcard();}});
+    fcCard.addEventListener("click",event=>{if(!event.target.closest('details,button'))flipFlashcard();});
   }
+  document.getElementById('btn-fc-reveal')?.addEventListener('click',flipFlashcard);
 
   // Flashcard audio TTS
   const btnFcAudioFront = document.getElementById("btn-fc-audio-front");

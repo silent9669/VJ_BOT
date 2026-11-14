@@ -88,6 +88,10 @@ body[data-page=settings] #lam-walker{display:none}
 .danger-card .card-title{color:var(--warn)!important}
 .delete-account-btn{border:1px solid var(--warn);background:var(--surface);color:var(--warn);border-radius:var(--r-1);padding:0 16px;font:inherit;font-size:14px;cursor:pointer}
 
+/* Progress separates answer history from legacy comparisons. */
+.mastery-legacy{margin:20px 0;border-top:1px solid var(--line);padding-top:8px}.mastery-legacy>summary{min-height:44px;align-content:center;cursor:pointer}.mastery-legacy p{font-size:15px;line-height:1.7}
+.review-task-card{display:grid;gap:12px;margin:16px 0;padding:20px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface);min-width:0}.review-task-card h4{margin:0;font-size:17px;line-height:1.5}.review-task-card p{margin:0;font-size:16px;line-height:1.7;overflow-wrap:anywhere}.review-task-card button{justify-self:start}.review-task-status:empty{display:none}
+
 /* Lesson page */
 .lesson-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;max-width:1080px;margin:0 auto}
 @media(min-width:1100px){.lesson-layout{grid-template-columns:minmax(0,740px) 280px;justify-content:center}}
@@ -96,11 +100,11 @@ body[data-page=settings] #lam-walker{display:none}
 .lesson-outline header{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:14px}.lesson-outline header span{color:var(--muted);font-size:12px}
 .lesson-outline progress{width:100%;height:6px;margin-bottom:12px;accent-color:var(--study-accent,#38594c)}
 .lesson-outline ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-.lesson-outline button{display:grid;grid-template-columns:18px 1fr;column-gap:8px;align-items:center;width:100%;min-height:44px;padding:6px 8px;border:0;border-left:2px solid transparent;border-radius:var(--r-1);background:none;color:var(--ink);font:inherit;font-size:13px;text-align:left;cursor:pointer}
-.lesson-outline button::before{content:"";grid-row:1/3;width:12px;height:12px;border:1.5px solid var(--c-b9b3a3,#b9b3a3);border-radius:50%}
+.lesson-outline button{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:8px;align-items:center;width:100%;min-height:48px;padding:8px;border:0;border-left:2px solid transparent;border-radius:var(--r-1);background:none;color:var(--ink);font:inherit;font-size:14px;line-height:1.6;text-align:left;cursor:pointer}
+.lesson-outline button::before{content:"";width:12px;height:12px;border:1.5px solid var(--c-b9b3a3,#b9b3a3);border-radius:50%}
 .lesson-outline button[data-done=true]::before{background:var(--ok) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m3 6.2 2 2L9 4' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat;border-color:var(--ok)}
 .lesson-outline button[aria-current=step]{background:var(--surface-2);border-left-color:var(--accent);font-weight:600}
-.lesson-outline button small{grid-column:2;color:var(--muted);font-size:11px}
+.lesson-outline-more{margin-top:12px;border-top:1px solid var(--line)}.lesson-outline-more>summary{min-height:44px;align-content:center;font-size:14px;cursor:pointer}.lesson-outline-more ol{max-height:45vh;overflow-y:auto;overscroll-behavior:contain}.lesson-outline-more>summary:focus-visible{outline:3px solid var(--study-accent,#38594c);outline-offset:3px}
 .lesson-intro{display:grid;gap:12px;margin-bottom:24px}
 .lesson-source{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--study-accent,var(--c-38594c,#38594c))}
 .lesson-meaning{margin:0;font-size:19px;font-weight:600;line-height:1.4;letter-spacing:-.01em}

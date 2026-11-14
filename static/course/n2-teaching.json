@@ -21,7 +21,7 @@
       "support": [
         { "term": "Đọc điều kiện theo phạm vi", "explanation": "Phân biệt hoạt động bị đổi với mọi cách sử dụng; nối các điều kiện bằng quan hệ đồng thời. Mốc tương đối phải có ngày quy chiếu, kể cả khi chuyển sang năm mới. Đây là cách đọc cần có trước khi tự viết, không phải danh sách từ khóa để chấm." },
         { "term": "貸し出し・申請・延長", "explanation": "貸し出し（かしだし）cho mượn; 申請（しんせい）đăng ký/xin phép; 延長（えんちょう）gia hạn. Đăng ký là hành động của người xin, không tự đồng nghĩa với đã được duyệt. Cần giữ riêng loại tài liệu, thủ tục và thời lượng." },
-        { "term": "Thông báo và thư xác nhận", "explanation": "Thông báo có thể dùng thể trang trọng; thư hỏi người phụ trách nên lịch sự, nêu căn cứ trước rồi hỏi đúng điểm còn thiếu. Không cần lặp nguyên khuôn mẫu hoặc dùng kính ngữ cầu kỳ. Luyện sửa câu cố định bên dưới chỉ là thao tác có ràng buộc, không phải sản sinh tự do." }
+        { "term": "Thông báo và thư xác nhận", "explanation": "Thông báo có thể dùng cách nói trang trọng. Khi viết thư hỏi người phụ trách, em nên nêu điều đã biết rồi hỏi điểm còn chưa rõ. Không cần dùng kính ngữ cầu kỳ. Phần sửa câu bên dưới luyện viết theo các phần đã cho, khác với phần em tự viết thư." }
       ],
       "practice_path": [
         "teaching:v1:N2:policy:task:0",
@@ -145,28 +145,24 @@
         {
           "id": "teaching:v1:N2:policy:task:3",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "reading",
           "passage": "紙の資料の貸し出しは原則終了します。ただし、電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。",
-          "prompt": "Sửa bản tóm tắt sai: 「電子版がある資料に限り、事前に申請すれば、一週間借りることができます。」 Chỉ thay đúng một từ để khôi phục điều kiện về bản điện tử; chép lại nguyên câu, giữ chữ Hán, dấu câu và các phần còn lại. Không thêm điều kiện mới.",
-          "accepted_variants": [
-            "電子版がない資料に限り、事前に申請すれば、一週間借りることができます。"
-          ],
-          "rationale": "Thay ある bằng ない: chỉ tài liệu chưa có bản điện tử mới thuộc ngoại lệ. Những cách diễn đạt khác có thể đúng trong giao tiếp; đáp án tham chiếu ở đây hẹp vì nhiệm vụ chỉ cho thay một từ và giữ nguyên phần còn lại, không phải vì chỉ có một cách diễn đạt đúng bằng tiếng Nhật.",
+          "prompt": "Câu sau hiểu nhầm điều kiện mượn tài liệu. Em hãy sửa lại cho đúng thông báo.\n\n「電子版がある資料に限り、事前に申請すれば、一週間借りることができます。」",
+          "criteria": ["Giữ đúng loại tài liệu được mượn theo ngoại lệ trong thông báo.", "Không bỏ điều kiện đăng ký trước và thời hạn một tuần, không tự thêm quyền mới.", "Có thể viết lại theo cách khác nếu điều kiện và phạm vi phủ định vẫn rõ."],
+          "rationale": "Thầy xem em có đọc đúng ngoại lệ về bản điện tử và giữ đủ điều kiện không. Không bắt buộc chỉ thay một từ hay chép lại toàn bộ câu.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
         {
           "id": "teaching:v1:N2:policy:task:4",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "grammar",
           "passage": "電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。",
-          "prompt": "Viết lại hai ý sau thành đúng một câu để nhấn mạnh giới hạn còn hiệu lực: 「例外として資料を借りることができます。返却期限の延長はできません。」 Dùng khuôn cố định 「例外として資料を借りることが（　）、返却期限の延長はできません。」, đổi できます thành thể khả năng + ても phù hợp. Nộp cả câu; giữ nguyên chữ Hán và phần ngoài ngoặc. Đây là thao tác viết lại, không phải yêu cầu tự đặt thêm quy định.",
-          "accepted_variants": [
-            "例外として資料を借りることができても、返却期限の延長はできません。"
-          ],
-          "rationale": "できても biểu thị nhượng bộ: ngay cả khi đủ điều kiện được mượn, lệnh cấm gia hạn vẫn giữ nguyên. 借りられても cũng có thể diễn đạt ý tương tự nhưng không giữ khuôn 借りることが mà bài này yêu cầu; không xem cách đó là sai ngữ pháp nói chung.",
+          "prompt": "Em hãy nối hai ý sau bằng ～ても để nói rõ rằng mượn được tài liệu không có nghĩa là được gia hạn.\n\n「例外として資料を借りることができます。返却期限の延長はできません。」",
+          "criteria": ["Giữ đúng hai ý được mượn theo ngoại lệ và không được gia hạn.", "Dùng ても đúng để nối quan hệ nhượng bộ, không đảo phạm vi phủ định.", "Có thể chọn cách nói khả năng tự nhiên, chẳng hạn 借りられる hoặc 借りることができる."],
+          "rationale": "Thầy xét ý nhượng bộ và lệnh cấm gia hạn trong cả câu. Các cách diễn đạt khả năng khác nhau đều cần được xem theo ngữ cảnh.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -235,7 +231,7 @@
       "order": 2,
       "level": "N2",
       "title": "So sánh nhà in: điều kiện bắt buộc trước, giá sau",
-      "goal": "Chọn phương án theo ràng buộc, không chỉ nhìn giá.",
+      "goal": "Chọn phương án đáp ứng yêu cầu, không chỉ nhìn giá.",
       "prerequisites": ["teaching:v1:N2:policy"],
       "support": [
         { "term": "Điều kiện bắt buộc và ưu tiên", "explanation": "納期（のうき）hạn giao; 部（ぶ）đơn vị đếm bản in; 予算（よさん）trần ngân sách. Kiểm tra tổng tiền và thời hạn riêng, rồi mới dùng tiêu chí ưu tiên do tình huống nêu hoặc người viết công khai tự chọn." },
@@ -364,28 +360,24 @@
         {
           "id": "teaching:v1:N2:comparison:task:3",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "reading",
           "passage": "A社は一部八十円、五日で納品。B社は一部百円、三日で納品。送料無料。二百部を四日後の説明会までに用意する。予算は二万二千円である。",
-          "prompt": "Hiệu đính câu báo cáo sau chỉ bằng cách sửa hai cụm số sai, không đổi các phần khác: 「B社は五日で納品でき、二百部で二万二千円なので、条件を満たす。」 Viết lại cả câu với chữ số Hán như nguồn. Giữ dấu câu và phần kết, không đổi sang câu lịch sự. Cần tính tiền từ đơn giá, không chép trần ngân sách.",
-          "accepted_variants": [
-            "B社は三日で納品でき、二百部で二万円なので、条件を満たす。"
-          ],
-          "rationale": "B giao 3 ngày và 200 × 100 = 20.000 yên. 二万二千円 là ngân sách chứ không phải tổng tiền. Các cách viết số 3日, 200部, 20000円 có thể hợp lệ ở văn bản khác; bài hiệu đính này yêu cầu giữ cách viết chữ số Hán và chỉ sửa hai cụm sai.",
+          "prompt": "Câu báo cáo sau có thông tin sai. Em hãy đọc lại báo giá rồi viết một câu báo cáo đúng về thời gian giao và tiền mua của B.\n\n「B社は五日で納品でき、二百部で二万二千円なので、条件を満たす。」",
+          "criteria": ["Thời gian giao của B và tổng tiền cho 200 bản khớp báo giá.", "Phân biệt tổng tiền mua với mức ngân sách, xét đúng hạn của buổi giới thiệu.", "Có thể dùng số hoặc chữ Hán, đổi cách viết câu nếu dữ kiện và kết luận vẫn đúng."],
+          "rationale": "Thầy kiểm tra dữ kiện và phép tính trước, rồi mới nhận xét cách viết. Đổi cách ghi số không phải lỗi nếu giá trị và đơn vị vẫn đúng.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
         {
           "id": "teaching:v1:N2:comparison:task:4",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "grammar",
           "passage": "A社は一部八十円で、納品まで五日かかる。B社は一部百円で、三日で納品できる。二百部が必要で、説明会は四日後、予算は二万二千円。両社とも送料無料で、社内の品質基準を満たしている。",
-          "prompt": "Gộp ba câu thành một câu thể thường đối chiếu ưu và nhược điểm của A: 「A社は安い。ただし、納品まで五日かかる。そのため、四日後の説明会に間に合わない。」 Ràng buộc: thay dấu 。 và ただし sau 安い bằng 一方で、; bỏ そのため; đổi かかる thành dạng nối かかり、. Giữ nguyên mọi từ còn lại, chỉ dùng 。 ở cuối. Nộp cả câu, không đổi số liệu hay thêm kết luận về chất lượng.",
-          "accepted_variants": [
-            "A社は安い一方で、納品まで五日かかり、四日後の説明会に間に合わない。"
-          ],
-          "rationale": "一方で đối chiếu hai mặt của cùng A: rẻ nhưng không kịp. Bằng chứng 5 ngày so với 4 ngày làm rõ vì sao giá rẻ chưa đủ. 安いものの cũng có thể đúng ở bài viết tự do nhưng bài này yêu cầu cụ thể 一方で và các cụm cố định; đáp án không phải phán quyết về mọi cách viết khác.",
+          "prompt": "Em hãy gộp các ý sau thành một câu với 一方で để nói cả điểm lợi và bất lợi của A.\n\n「A社は安い。ただし、納品まで五日かかる。そのため、四日後の説明会に間に合わない。」",
+          "criteria": ["Giữ được cả giá rẻ và việc A không kịp hạn giao.", "Dùng 一方で đúng để đặt hai mặt cạnh nhau; quan hệ giữa thời gian giao và hạn vẫn rõ.", "Có thể chọn cách nối hoặc thứ tự tự nhiên; không đổi số liệu hay tự nhận xét chất lượng."],
+          "rationale": "Thầy xem câu có giữ đủ hai mặt của A và quan hệ thời gian không, thay vì yêu cầu từng chữ phải giống một câu mẫu.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
@@ -436,7 +428,7 @@
           "prompt": "Không xem bài/bản viết cũ, viết 4–6 câu tiếng Nhật cho nhóm phụ trách. Tự chọn ưu tiên thuận tiện đi lại hay dư thời gian chuẩn bị và nêu lý do gắn với cách tổ chức do bạn quyết định. Kiểm tra sức chứa và thời gian chuẩn bị của cả hai phòng rồi đề xuất một phòng, nêu đánh đổi và hỏi thông tin còn thiếu trước khi đặt. Không coi có đủ thiết bị là mọi điều kiện hai phòng hoàn toàn giống nhau hoặc tự khẳng định lối đi phù hợp mọi khách.",
           "criteria": [
             "Chuyển giao: lập kế hoạch không gian với vai điều phối và sức chứa/thời gian, không chép báo cáo mua bản in hay đổi nhãn A/B.",
-            "Ràng buộc: so 30 khách với sức chứa từng phòng; tính khoảng chuẩn bị từ giờ vào tới 15時 và đối chiếu ít nhất 90 phút, không nhầm thời gian đi bộ thành thời gian bày đồ.",
+            "Kiểm tra xem từng phòng có đủ chỗ cho 30 khách không. Từ giờ được vào phòng đến 15時 phải có ít nhất 90 phút chuẩn bị; đừng tính thời gian đi bộ thành thời gian bày đồ.",
             "Lựa chọn mở: ưu tiên và lý do tổ chức tự chọn gắn được với phòng đề xuất; nêu lợi thế của phòng không chọn mà vẫn giữ đúng điều kiện bắt buộc.",
             "Giới hạn: hỏi về lối đi chưa biết, không kể đã đặt phòng; cùng có thiết bị không chứng minh toàn bộ chất lượng hoặc khả năng tiếp cận bằng nhau.",
             "Bằng chứng: giữ nguyên văn mới và tình trạng trợ giúp để người đọc xem lập luận thực; đủ lịch ôn hoặc AI nhận xét không chứng minh giữ kiến thức tự lực."
@@ -583,29 +575,24 @@
         {
           "id": "teaching:v1:N2:proposal:task:3",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "grammar",
           "passage": "会議の負担を減らすため、毎週の定例会を月二回にする案が出された。提案者は、空いた時間を作業に使えるため効率が上がると考えている。効果の測定結果はまだ示されていない。",
-          "prompt": "Sửa câu biến kỳ vọng thành sự thật: 「会議を月二回にすると効率が上がることが証明されている。」 Dùng đúng khuôn tường thuật 「提案者は、［nội dung kỳ vọng］と考えている。」; phần nội dung phải giữ nguyên 「会議を月二回にすると効率が上がる」. Viết cả câu với các chữ và dấu câu đã chỉ định, bỏ hoàn toàn ことが証明されている.",
-          "accepted_variants": [
-            "提案者は、会議を月二回にすると効率が上がると考えている。"
-          ],
-          "rationale": "Chủ thể được xác nhận là người có kỳ vọng, không phải cơ quan đã chứng minh hiệu quả. という見込みを示している có thể hợp lệ trong một bài tường thuật mở, nhưng bài này giới hạn vào khuôn と考えている để luyện giữ nguồn phát ngôn; không phủ định các cách tường thuật khác.",
+          "prompt": "Câu sau biến kỳ vọng thành kết quả đã được chứng minh. Em hãy sửa lại để người đọc hiểu đây mới là ý kiến của người đề xuất.\n\n「会議を月二回にすると効率が上がることが証明されている。」",
+          "criteria": ["Giữ đúng đề xuất họp hai lần mỗi tháng và lợi ích người đề xuất kỳ vọng.", "Cho biết ai có ý kiến ấy, không khẳng định hiệu quả đã được kiểm chứng.", "Có thể dùng cách tường thuật tự nhiên, không bắt buộc một cụm kết câu."],
+          "rationale": "Thầy phân biệt điều một người nghĩ với điều đã có bằng chứng. Các cách tường thuật khác nhau có thể đúng nếu vẫn giữ được mức chắc chắn ấy.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },
         {
           "id": "teaching:v1:N2:proposal:task:4",
           "objective": "transformation",
-          "mode": "short_text",
+          "mode": "writing",
           "skill": "reading",
           "passage": "毎週の定例会を月二回にする案が出された。情報共有が遅れるおそれもあるため、まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。恒久的な実施はまだ決まっていない。",
-          "prompt": "Hoàn thành một câu biên bản theo đúng khung 「まず［thời hạn + tính chất thử］実施し、［hai mục kiểm tra］を確認することになった。」. Dùng cụm 「一か月試験的に」 cho ô đầu và hai cụm 「連絡の遅れ」「作業時間」 nối bằng と cho ô sau; có thể đổi thứ tự hai mục. Viết cả câu, không thêm kết quả hoặc quyết định áp dụng lâu dài. Giữ chữ Hán và dấu 、 sau 実施し.",
-          "accepted_variants": [
-            "まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。",
-            "まず一か月試験的に実施し、作業時間と連絡の遅れを確認することになった。"
-          ],
-          "rationale": "Câu cần giữ đủ một tháng, tính thử nghiệm và hai mục sẽ kiểm tra. Đổi thứ tự hai mục không đổi nội dung nên cả hai được ghi nhận. Những bản tóm tắt tự do khác có thể đúng; danh sách này chỉ dành cho khung viết bị ràng buộc của bài, không đủ để chấm mọi câu tiếng Nhật.",
+          "prompt": "Em hãy viết một câu tóm tắt quyết định thử nghiệm của cuộc họp: thử trong bao lâu và sẽ kiểm tra những gì?",
+          "criteria": ["Giữ đúng thời gian một tháng và việc đây chỉ là thử nghiệm.", "Nêu đủ hai điều sẽ kiểm tra trong đoạn văn.", "Không kể như đã có kết quả hoặc đã quyết định áp dụng lâu dài; có thể diễn đạt theo cách riêng."],
+          "rationale": "Thầy xem bản tóm tắt có đủ thời gian, tính thử nghiệm và hai điều cần kiểm tra không. Không bắt buộc một thứ tự từ hay một khung câu.",
           "assessment_basis": "ai_authored_provisional_not_verified",
           "scored": false
         },

@@ -177,10 +177,12 @@ function taskPromptHtml(task){
   const target=candidate && text.includes(candidate) && !/^[_\s★]+$/.test(candidate)?candidate:'';
   const offset=target?text.indexOf(target):-1;
   const prompt=offset<0?escapeHtml(text):`${escapeHtml(text.slice(0,offset))}<mark>${escapeHtml(target)}</mark>${escapeHtml(text.slice(offset+target.length))}`;
+  const instructional=['writing','recall'].includes(task.mode) || text.includes('\n\n');
+  const content=instructional?prompt.split(/\n{2,}/u).map(block=>`<p>${block}</p>`).join(''):prompt;
   return `${task.passage?`<section class="task-stimulus" aria-label="Ngữ cảnh để trả lời"><p lang="ja">${escapeHtml(task.passage)}</p></section>`:''}
     ${instruction?`<p class="task-instruction">${escapeHtml(instruction)}</p>`:''}
     ${target?`<span class="task-accessible-target">Từ được gạch chân: <span lang="ja">${escapeHtml(target)}</span>.</span>`:''}
-    <p class="task-stem" lang="ja">${prompt}</p>
+    ${instructional?`<div class="task-stem task-instruction-prompt${task.mode==='writing'?' task-writing-prompt':''}" lang="vi">${content}</div>`:`<p class="task-stem" lang="ja">${prompt}</p>`}
     ${task.parts?.length?`<ol class="task-parts" role="list" aria-label="Các phần cần sắp xếp">${task.parts.map(part=>`<li lang="ja">${escapeHtml(part)}</li>`).join('')}</ol>`:''}`;
 }
 function taskUnavailableMessage(task){
@@ -194,11 +196,12 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
     if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Bài này chưa có bài tập viết. Em có thể chọn bài khác.';container.append(section);return;}
     const attempt=taskAttempt(lesson,question,0,'checks',true);
     section.dataset.teacherQuestion='0';
-    section.innerHTML=`<h3>${escapeHtml(source.prompt)}</h3><details class="task-basis"><summary>Cách kiểm tra bài</summary><p>Bài viết chưa được chấm đúng/sai. Em tự kiểm tra theo tiêu chí; nhận xét AI chỉ để tham khảo.</p>${question.explanation?`<p>${escapeHtml(question.explanation)}</p>`:''}</details>
+    section.innerHTML=`${taskPromptHtml(question)}
+      ${question.explanation?`<p class="task-instruction">${escapeHtml(question.explanation)}</p>`:''}
       <label for="production-answer">Câu trả lời của em</label><textarea id="production-answer" rows="5" maxlength="4000" lang="ja" placeholder="Viết bằng tiếng Nhật…"></textarea>
       <button type="button" class="production-reveal"${question.model?'':' hidden'}>Xem bài mẫu</button><div class="production-model" hidden><p lang="ja">${escapeHtml(question.model)}</p><p>Bài mẫu để tham khảo, chưa được kiểm tra độc lập.</p></div>
-      <fieldset><legend>Tự kiểm tra câu trả lời</legend>${source.criteria.map((criterion,i)=>`<label><input type="checkbox" value="${i}"> ${escapeHtml(criterion)}</label>`).join('')}</fieldset>
-      <button type="button" class="production-save">Lưu bài và tự đánh giá</button><output aria-live="polite"></output>`;
+      <section class="task-writing-criteria"><h4>Thầy sẽ xem những điểm này</h4><ul>${source.criteria.map(criterion=>`<li>${escapeHtml(criterion)}</li>`).join('')}</ul></section>
+      <div class="practice-actions"><button type="button" class="production-save">Gửi thầy nhận xét</button></div><output aria-live="polite"></output>`;
     container.append(section);
     const input=section.querySelector('textarea'),save=section.querySelector('.production-save'),status=section.querySelector('output'),reveal=section.querySelector('.production-reveal');
     input.addEventListener('focus',()=>globalThis.setTeacherFocus?.({kind:'question',index:0}));
@@ -208,22 +211,24 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
       try{await recordTaskEvent(attempt,'assist',{help:'source_reveal',response_text:input.value});section.querySelector('.production-model').hidden=false;reveal.hidden=true;}
       catch(error){status.textContent='Chưa mở được bài mẫu. '+error.message+' Bấm "Xem bài mẫu" để thử lại.';reveal.disabled=false;}
     };
-    globalThis.mountStudyTeacher?.(section,{lesson,focus:{kind:'question',index:0},task:question,
-      isCurrent:()=>section.isConnected && !container.hidden});
+    let removeCoach=globalThis.mountPracticeCoach?.(section,container,lesson,question,0,null);
     let pending=null;
     apiFetch('/api/progress').then(response=>response.ok?response.json():null).then(data=>{
       const saved=data?.evidence?.find(row=>row.item_id===item.id && row.response_text) || data?.items?.find(row=>row.item_id===item.id);
       if(saved?.response_text && !input.value && section.isConnected && (typeof signedInUser==='undefined'?null:signedInUser?.user_id)===attempt.account){input.value=saved.response_text;status.textContent='Đã khôi phục bài viết đã lưu.';}
     }).catch(()=>{status.textContent='Chưa tải được bài viết cũ. Mở lại bài để thử tải lại.';});
     save.onclick=async()=>{
-      if(!input.value.trim()){status.textContent='Hãy viết câu trả lời trước khi tự đánh giá.';input.focus();return;}
-      if(!pending)pending={response_text:input.value,self_rating:[...section.querySelectorAll('input')].every(control=>control.checked)?4:1};
-      save.disabled=true;input.disabled=true;section.querySelectorAll('input').forEach(control=>control.disabled=true);
+      if(!input.value.trim()){status.textContent='Em hãy viết câu trả lời trước khi gửi thầy.';input.focus();return;}
+      if(!pending)pending={response_text:input.value};
+      save.disabled=true;save.textContent='Đang gửi…';input.disabled=true;
       try{
         await recordTaskEvent(attempt,'answer',pending);
-        status.textContent='Đã lưu bài viết và tự đánh giá, chưa chấm đúng/sai.';
-        save.textContent='Đã lưu';reveal.disabled=false;
-      }catch(error){status.textContent='Chưa lưu được bài viết. '+error.message+' Bấm "Lưu lại" để thử lại.';save.textContent='Lưu lại';save.disabled=false;}
+        if(!section.isConnected || container.hidden)return;
+        status.textContent='Đã gửi bài.';
+        save.textContent='Đã gửi';reveal.disabled=false;
+        removeCoach?.();
+        removeCoach=globalThis.mountPracticeCoach?.(section,container,lesson,question,0,{selected:pending.response_text,correct:null,saved:true});
+      }catch(error){status.textContent='Chưa gửi được bài. '+error.message;save.textContent='Thử lại';save.disabled=false;}
     };
     return;
   }

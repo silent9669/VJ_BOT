@@ -109,10 +109,10 @@ input::placeholder,textarea::placeholder {color:var(--muted);opacity:1}
 .plan-unit>summary::after {content:'+';font-size:16px;color:var(--muted)}.plan-unit[open]>summary::after {content:'−'}
 .plan-number {font-size:12px;color:var(--muted)}
 .plan-unit[open] {background:var(--sheet)!important;border:1px solid var(--line);border-radius:6px!important;margin:8px 0!important}
-.plan-steps {padding:0 16px 12px}.plan-step {min-height:44px;padding:10px 8px;font-size:13px;border-bottom:1px solid var(--line);border-radius:0;gap:12px}
+.plan-steps {padding:0 16px 12px}.plan-step {grid-template-columns:minmax(0,1fr) auto;min-height:48px;padding:12px 8px;font-size:15px;line-height:1.6;border-bottom:1px solid var(--line);border-radius:0;gap:12px}
 .plan-step[aria-current=step] {background:var(--surface-2)}
-.plan-step-status,.plan-skill {font-size:12px;font-weight:400}.unit-goal {padding:0 8px 12px;font-size:13px;line-height:1.5}
-.plan-steps>.unit-goal span {font-size:12px}.plan-units {gap:0}
+.plan-step-status,.plan-skill {font-size:14px;font-weight:400}.unit-goal {padding:0 8px 12px;font-size:15px;line-height:1.7}
+.unit-info {margin:0 8px 16px;font-size:14px;color:var(--muted)}.unit-info>summary {min-height:44px;align-content:center;cursor:pointer}.unit-info p {margin:8px 0;line-height:1.7}.plan-units {gap:0}
 /* Conversation keeps the composer visible; contextual material stays a quiet side column. */
 .classroom-layout {grid-template-columns:180px minmax(0,1fr);gap:24px}
 .sensei-stage-card {grid-column:1;grid-row:1}
@@ -226,7 +226,7 @@ input::placeholder,textarea::placeholder {color:var(--muted);opacity:1}
   .curriculum-lesson-card {grid-template-columns:24px minmax(0,1fr) 68px;gap:8px;min-height:72px;padding:12px 0}.lesson-row-size {display:none}.lesson-row-copy strong {font-size:14px}.open-lesson-btn {font-size:11px;white-space:normal}
   .lesson-toolbar {gap:8px}.lesson-toolbar .lesson-status {flex-basis:134px}.lesson-toolbar input,.lesson-toolbar select {height:44px;min-height:44px;font-size:13px}
   .plan-unit>summary {grid-template-columns:24px minmax(0,1fr) 56px 12px;gap:8px;padding:12px 4px;font-size:13px}
-  .plan-steps {padding:0 8px 12px}.plan-step {grid-template-columns:64px minmax(0,1fr);padding:10px 4px;gap:8px}.plan-step-status {grid-column:2}
+  .plan-steps {padding:0 8px 12px}.plan-step {grid-template-columns:minmax(0,1fr) auto;padding:12px 4px;gap:10px}.plan-step-status {grid-column:2}
   .feature-lesson-card {grid-template-columns:24px minmax(0,1fr) 72px;padding:12px 0}.feature-lesson-card p {grid-column:2;font-size:12px}
   .settings-layout {grid-template-columns:1fr;gap:16px!important}.settings-nav {flex-direction:row;flex-wrap:nowrap!important;overflow:auto;border-bottom:1px solid var(--line);border-radius:0;padding-bottom:8px;gap:4px}
   .settings-nav button {white-space:nowrap;min-height:44px;flex:none;padding:8px 12px}.settings-stack {max-width:none}
