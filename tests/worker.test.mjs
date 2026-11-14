@@ -1285,9 +1285,12 @@ test('reference teaching and read-aloud refuse restricted words and nested examp
   }finally{globalThis.fetch=original;}
 });
 
-for(const level of ['N5','N4','N3','N2','N1'])test(`AI-authored ${level} tasks bind source context, hints and submissions without creating verified assessment`,async()=>{
+for(const [level,lessonId] of [
+  ['N5'],['N4'],['N3'],['N2'],['N1'],
+  ...['introductions','ordering','time','transport','shopping','asking-help'].map(key=>['N5',`teaching:v1:N5:${key}`])
+])test(`AI-authored ${lessonId || level} tasks bind source context, hints and submissions without creating verified assessment`,async()=>{
   const {env,request}=await authenticated(),original=globalThis.fetch;await withApi(env,request);
-  const lesson=Object.values(teacherCatalogs[level].lessons).find(lesson=>lesson.authorship==='ai_authored');
+  const lesson=lessonId?teacherCatalogs[level].lessons[lessonId]:Object.values(teacherCatalogs[level].lessons).find(lesson=>lesson.authorship==='ai_authored');
   const questionIndex=lesson.questions.findIndex(question=>question.mode==='choice'),question=lesson.questions[questionIndex];
   const reference={lesson:{id:lesson.id,level},view:'checks',task:{id:question.task_id,revision:question.revision}};
   const evidence=[];

@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "status": "ai_reviewed_editorial_staging",
+  "status": "ai_draft_for_user_review",
   "authorship": "VJBot AI-authored teaching drafts; not publisher text or official JLPT exercises.",
   "rights_basis": "user_asserted_rights",
   "publisher_permission_independently_verified": false,
   "human_approved": false,
   "level_note": "N5 is a study-track estimate, not official JLPT certification.",
-  "integration_status": "editorial_staging_not_loaded_by_canonical_app",
-  "normalization_policy": "No runtime normalizer yet. Variants are provisional explicit task-bound references, not exhaustive grammatical judgments.",
+  "integration_status": "canonical_advisory_drafts_pending_user_review",
+  "normalization_policy": "The canonical consumer preserves explicit task-bound variants. They are provisional references, not exhaustive grammatical judgments.",
   "lessons": [
     {
       "id": "n5-teaching:v1:topic",
@@ -3695,6 +3695,169 @@
           "scored": false
         }
       ]
+    },
+    {
+      "id": "teaching:v1:N5:introductions", "revision": 1, "order": 21, "level": "N5",
+      "title": "Làm quen: phân biệt tên, quê quán và nghề nghiệp",
+      "goal": "Hiểu câu giới thiệu và tự ghép ba câu theo hồ sơ hư cấu, không đoán thông tin chưa nói.",
+      "prerequisites": ["n5-teaching:v1:topic"], "authorship": "ai_authored",
+      "review": {"status":"ai_draft","human_approved":false},
+      "eligibility": {"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
+      "source_refs": [{"chunk_id":"practical:v1:N5:introductions","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aintroductions%3Asituation","source_name":"VJBot · Gặp đồng nghiệp lần đầu","role":"background_reference_not_approval"}],
+      "source_header": "Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
+      "formula": "私は［tên］です。［nước］から来ました。［nghề］です。",
+      "explanation": "Tách ba loại thông tin: tên, nơi đến và nghề nghiệp. Câu hỏi 学生ですか không chứng minh người được hỏi là sinh viên; phải nghe câu trả lời. は đọc là wa khi làm trợ từ. 来ました đã có đuôi lịch sự, không thêm です. Hồ sơ trong bài là hư cấu, không yêu cầu em khai thông tin cá nhân.",
+      "examples": [
+        {"context":"An tự giới thiệu tên trong lần đầu gặp","jp":"はじめまして。私はアンです。","reading":"はじめまして。わたしはアンです。","vi":"Rất vui được gặp bạn. Tôi là An.","authorship":"ai_authored"},
+        {"context":"An nói mình đến từ đâu, không nói địa điểm đang làm việc","jp":"ベトナムから来ました。","reading":"ベトナムからきました。","vi":"Tôi đến từ Việt Nam.","authorship":"ai_authored"},
+        {"context":"Trả lời câu hỏi 学生ですか về nghề nghiệp của hồ sơ An","jp":"いいえ、会社員です。よろしくお願いします。","reading":"いいえ、かいしゃいんです。よろしくおねがいします。","vi":"Không, tôi là nhân viên công ty. Mong được giúp đỡ.","authorship":"ai_authored"}
+      ],
+      "common_errors": [
+        {"problem":"ベトナムから来ましたです。","correction":"ベトナムから来ました。","reason":"来ました là động từ lịch sự đã hoàn chỉnh; không ghép thêm です."},
+        {"problem":"Nghe アンさんは学生ですか rồi kết luận An là sinh viên.","correction":"Đọc tiếp いいえ、会社員です: An phủ định và nói mình là nhân viên công ty.","reason":"Câu hỏi của người khác không phải lời xác nhận về người được hỏi."}
+      ],
+      "tasks": [
+        {"id":"teaching:v1:N5:introductions:task:0","mode":"choice","skill":"reading","passage":"田中：アンさんは学生ですか。\nアン：いいえ、会社員です。","prompt":"Thông tin nào được An xác nhận, không phải điều Tanaka chỉ đang hỏi?","options":[{"id":"option:0","text":"An là sinh viên."},{"id":"option:1","text":"An là nhân viên công ty."},{"id":"option:2","text":"An là giáo viên."}],"answer_option_id":"option:1","rationale":"いいえ phủ định 学生; 会社員です mới là thông tin An khẳng định. Không có câu nào nói An là giáo viên.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:introductions:task:1","mode":"choice","skill":"reading","passage":"Hồ sơ hư cấu khác: マイさんはベトナム人です。学生ではありません。会社員です。","prompt":"Cách tóm tắt nào giữ đúng cả quốc tịch và nghề nghiệp của Mai?","options":[{"id":"option:0","text":"Mai là người Việt Nam và là nhân viên công ty."},{"id":"option:1","text":"Mai là sinh viên Nhật Bản."},{"id":"option:2","text":"Mai là người Việt Nam và là sinh viên."}],"answer_option_id":"option:0","rationale":"ベトナム人 nói quốc tịch; 学生ではありません phủ định việc là sinh viên; 会社員 xác định nghề. Không đổi phủ định thành khẳng định.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:introductions:task:2","mode":"choice","skill":"grammar","passage":"Người mới gặp nói: はじめまして。田中です。 Em đóng vai An và cần đáp lại bằng lời làm quen, tên và lời kết lịch sự.","prompt":"Chọn lời đáp đáp ứng đủ ba yêu cầu, không đổi sang lời chào tạm biệt.","options":[{"id":"option:0","text":"さようなら。アンです。"},{"id":"option:1","text":"アンさんは学生ですか。"},{"id":"option:2","text":"はじめまして。アンです。よろしくお願いします。"}],"answer_option_id":"option:2","rationale":"Phương án cuối vừa đáp はじめまして, vừa giới thiệu アン, vừa kết bằng よろしくお願いします. Hai phương án kia thiếu yêu cầu hoặc đổi ý định giao tiếp; không phải mọi câu trong đó đều sai ngữ pháp.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:introductions:task:3","mode":"short_text","skill":"grammar","prompt":"Hoàn thành câu tự giới thiệu lịch sự của An: 私はアン（　）。 Chỉ viết phần trong ngoặc bằng hiragana; không thêm dấu câu.","accepted_variants":["です"],"rationale":"Danh từ tên người kết bằng です trong mẫu lịch sự này. Không dùng だです hoặc thêm một động từ không có trong yêu cầu.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:introductions:task:4","mode":"short_text","skill":"grammar","passage":"Hồ sơ hư cấu: tên アン; đến từ ベトナム; nghề 会社員.","prompt":"Tự ghép ba câu lịch sự theo thứ tự tên, nơi đến, nghề. Câu đầu dùng 私はアンです; câu hai dùng ベトナムから来ました; câu ba dùng 会社員です. Giữ nguyên chữ đã cho, viết 。 sau mỗi câu, không thêm thông tin hoặc khoảng trắng.","accepted_variants":["私はアンです。ベトナムから来ました。会社員です。"],"rationale":"Ba câu giữ ba thông tin riêng và không gán hồ sơ này cho chính em. Ràng buộc cách viết giúp đối chiếu hữu hạn; các cách giới thiệu tự nhiên khác không vì thế thành sai tiếng Nhật.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+      ]
+    },
+    {
+      "id":"teaching:v1:N5:ordering","revision":1,"order":22,"level":"N5",
+      "title":"Gọi món: đọc số lượng và kiểm tra tổng tiền","goal":"Phân biệt một suất ăn với hai phần trà, hỏi tổng giá và viết yêu cầu rõ món/số lượng.",
+      "prerequisites":["teaching:v1:N5:introductions"],"authorship":"ai_authored",
+      "review":{"status":"ai_draft","human_approved":false},
+      "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
+      "source_refs":[{"chunk_id":"practical:v1:N5:ordering","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aordering%3Asituation","source_name":"VJBot · Gọi món và xác nhận số lượng","role":"background_reference_not_approval"}],
+      "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
+      "formula":"［món］を［số lượng］ください。全部でいくらですか。",
+      "explanation":"Đọc số lượng gắn với từng món, không cộng số món vào giá. 一つ là một phần; 二つ là hai phần. Tổng 千二百円 không tự cho biết giá từng món. Câu hỏi 全部でいくらですか hỏi tổng tiền; いくつ hỏi số lượng. Một yêu cầu gọi món rõ ràng cần tên món và lượng tương ứng.",
+      "examples":[
+        {"context":"Đặt một suất ăn và hai phần trà","jp":"定食を一つ、お茶を二つください。","reading":"ていしょくをひとつ、おちゃをふたつください。","vi":"Cho tôi một suất ăn và hai phần trà.","authorship":"ai_authored"},
+        {"context":"Nhân viên xác nhận tổng tiền của đơn đang nói đến","jp":"全部で千二百円です。","reading":"ぜんぶでせんにひゃくえんです。","vi":"Tổng cộng là 1.200 yên.","authorship":"ai_authored"},
+        {"context":"Muốn hỏi tổng giá, không hỏi có bao nhiêu món","jp":"全部でいくらですか。","reading":"ぜんぶでいくらですか。","vi":"Tất cả bao nhiêu tiền?","authorship":"ai_authored"}
+      ],
+      "common_errors":[
+        {"problem":"Đọc お茶を二つ thành một phần trà vì đơn có một suất ăn.","correction":"定食を一つ là một suất ăn; お茶を二つ là hai phần trà.","reason":"Số lượng của mỗi món phải gắn với đúng danh từ ngay trước nó."},
+        {"problem":"Từ tổng 1.200 yên suy ra mỗi món đều có giá 400 yên.","correction":"Chỉ biết tổng đơn; muốn biết giá từng món phải có bảng giá hoặc hỏi thêm.","reason":"Tổng tiền không cung cấp cách phân chia giá nếu chưa có dữ kiện khác."}
+      ],
+      "tasks":[
+        {"id":"teaching:v1:N5:ordering:task:0","mode":"choice","skill":"reading","passage":"客：定食を一つ、お茶を二つください。\n店員：はい。全部で千二百円です。","prompt":"Đơn được yêu cầu gồm những gì?","options":[{"id":"option:0","text":"Hai suất ăn và một phần trà."},{"id":"option:1","text":"Một suất ăn và một phần trà."},{"id":"option:2","text":"Một suất ăn và hai phần trà."}],"answer_option_id":"option:2","rationale":"一つ đi với 定食; 二つ đi với お茶. 千二百円 là tổng tiền, không phải số lượng hoặc giá riêng của từng món.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:ordering:task:1","mode":"choice","skill":"reading","passage":"Bảng giá mới chỉ dùng cho câu này, không suy từ tổng đơn trước: 定食は一つ八百円です。お茶は一つ二百円です。 Ngoài hai món này không có phụ phí.","prompt":"Một suất ăn và hai phần trà có tổng giá bao nhiêu?","options":[{"id":"option:0","text":"1.000 yên."},{"id":"option:1","text":"1.200 yên."},{"id":"option:2","text":"1.600 yên."}],"answer_option_id":"option:1","rationale":"800 + 2 × 200 = 1.200. 1.000 chỉ tính một phần trà; 1.600 tính thừa. Bảng giá là dữ kiện mới của riêng câu hỏi, không phải thông tin rút ra từ tình huống gốc.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:ordering:task:2","mode":"choice","skill":"grammar","passage":"Em đã gọi món và muốn biết tổng tiền, không hỏi số người hoặc địa điểm.","prompt":"Chọn câu hỏi đúng ý định giao tiếp này.","options":[{"id":"option:0","text":"全部でいくらですか。"},{"id":"option:1","text":"何人ですか。"},{"id":"option:2","text":"どこですか。"}],"answer_option_id":"option:0","rationale":"いくら hỏi giá; 全部で xác định tổng. 何人 hỏi số người; どこ hỏi nơi chốn. Các câu kia có thể đúng trong ngữ cảnh khác nhưng không hỏi tổng tiền.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:ordering:task:3","mode":"short_text","skill":"grammar","prompt":"Điền đúng lượng ‘hai phần trà’: お茶を（　）ください。 Dùng hệ đếm 一つ・二つ; chỉ viết phần trong ngoặc bằng kanji kèm つ hoặc toàn hiragana, không thêm dấu câu.","accepted_variants":["二つ","ふたつ"],"rationale":"Hai phần dùng 二つ, đọc ふたつ. Bài yêu cầu hệ đếm chung; không phải kết luận rằng mọi cách dùng đơn vị đếm khác đều sai trong mọi quán.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:ordering:task:4","mode":"short_text","skill":"grammar","prompt":"Viết một câu lịch sự gọi một suất ăn và hai phần trà. Dùng đúng các cụm 定食を一つ／お茶を二つ theo thứ tự này, rồi kết bằng ください. Giữ kanji; có thể dùng hoặc bỏ 、 giữa hai món và 。 cuối câu; không thêm từ.","accepted_variants":["定食を一つ、お茶を二つください。","定食を一つお茶を二つください。","定食を一つ、お茶を二つください","定食を一つお茶を二つください"],"rationale":"Tên món và lượng tương ứng đều được giữ nguyên; ください kết thúc yêu cầu. Khóa tham khảo có các biến thể dấu câu được đề cho phép, không chấm mọi lời gọi món tự do.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+      ]
+    },
+    {
+      "id":"teaching:v1:N5:time","revision":1,"order":23,"level":"N5",
+      "title":"Giờ làm và giờ hẹn: giữ đúng buổi, mốc và khoảng","goal":"Đọc khoảng làm/nghỉ rồi phân biệt giờ hẹn với giờ kết thúc công việc.",
+      "prerequisites":["teaching:v1:N5:ordering"],"authorship":"ai_authored",
+      "review":{"status":"ai_draft","human_approved":false},
+      "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
+      "source_refs":[{"chunk_id":"practical:v1:N5:time","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Atime%3Asituation","source_name":"VJBot · Đọc giờ làm và hẹn gặp","role":"background_reference_not_approval"}],
+      "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
+      "formula":"［bắt đầu］から［kết thúc］までです。［giờ hẹn］に会います。",
+      "explanation":"から và まで giới hạn một khoảng; に gắn một mốc hẹn cụ thể. 午前 là buổi sáng, 午後 là buổi chiều/tối theo đồng hồ 12 giờ. Không lấy giờ kết thúc làm việc thay cho giờ hẹn nếu đoạn hội thoại nêu hai mốc khác nhau. 半 thêm nửa giờ, không có nghĩa nửa ngày.",
+      "examples":[
+        {"context":"Nêu khoảng làm việc, không khẳng định tám giờ đều làm liên tục","jp":"仕事は午前九時から午後五時までです。","reading":"しごとはごぜんくじからごごごじまでです。","vi":"Giờ làm từ 9 giờ sáng đến 5 giờ chiều.","authorship":"ai_authored"},
+        {"context":"Nêu riêng khoảng nghỉ trưa","jp":"昼休みは十二時から一時までです。","reading":"ひるやすみはじゅうにじからいちじまでです。","vi":"Nghỉ trưa từ 12 giờ đến 1 giờ.","authorship":"ai_authored"},
+        {"context":"Hẹn tại ga sau giờ làm nửa tiếng","jp":"午後五時半に駅で会いましょう。","reading":"ごごごじはんにえきであいましょう。","vi":"Gặp nhau tại ga lúc 5 giờ rưỡi chiều nhé.","authorship":"ai_authored"}
+      ],
+      "common_errors":[
+        {"problem":"Đọc 午後五時半 thành 05:30.","correction":"午前五時半 là 05:30; 午後五時半 là 17:30.","reason":"Buổi và phần 半 đều cần được giữ khi đổi sang giờ 24 giờ."},
+        {"problem":"Thấy công việc kết thúc 17:00 rồi tự đổi giờ hẹn thành 17:00.","correction":"Giữ giờ hẹn riêng: 午後五時半, tức 17:30.","reason":"Hai mốc có vai trò khác nhau; không bỏ nửa giờ đã nêu trong lời hẹn."}
+      ],
+      "tasks":[
+        {"id":"teaching:v1:N5:time:task:0","mode":"choice","skill":"reading","passage":"仕事は午前九時から午後五時までです。では、午後五時半に駅で会いましょう。","prompt":"Chọn đúng giờ hẹn ở ga, không chọn giờ hết ca.","options":[{"id":"option:0","text":"17:30."},{"id":"option:1","text":"17:00."},{"id":"option:2","text":"05:30."}],"answer_option_id":"option:0","rationale":"午後五時半 là 17:30. 17:00 là cuối khoảng làm việc, còn 05:30 đổi nhầm 午後 thành sáng.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:time:task:1","mode":"choice","skill":"reading","passage":"昼休みは十二時から一時までです。 Bài này nói khoảng từ 12:00 trưa đến 13:00 cùng ngày.","prompt":"Khoảng nghỉ trưa dài bao lâu?","options":[{"id":"option:0","text":"30 phút."},{"id":"option:1","text":"Hai giờ."},{"id":"option:2","text":"Một giờ."}],"answer_option_id":"option:2","rationale":"13:00 trừ 12:00 là một giờ. Câu không có 半 để thành nửa giờ và không nêu mốc 14:00 để thành hai giờ.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:time:task:2","mode":"choice","skill":"grammar","passage":"Tình huống mới: đổi cuộc hẹn sang 09:30 sáng; không còn dùng giờ hẹn buổi chiều của đoạn trước.","prompt":"Cụm nào giữ đúng giờ hẹn mới?","options":[{"id":"option:0","text":"午後九時半に会います。"},{"id":"option:1","text":"午前九時半に会います。"},{"id":"option:2","text":"午前九時に会います。"}],"answer_option_id":"option:1","rationale":"09:30 sáng cần 午前, 九時 và 半. Phương án đầu là 21:30; phương án cuối bỏ mất 30 phút. Không mang dữ kiện cũ sang tình huống đã thay đổi rõ ràng.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:time:task:3","mode":"short_text","skill":"reading","prompt":"Đổi 午後五時半 sang giờ 24 giờ. Chỉ dùng chữ số 0–9 và dấu : theo mẫu HH:MM; không thêm chữ hoặc dấu câu.","accepted_variants":["17:30"],"rationale":"五時 là 5 giờ; 午後 chuyển thành 17 giờ và 半 là 30 phút. Bài kiểm tra mốc thời gian, không yêu cầu chép chữ Nhật.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:time:task:4","mode":"short_text","skill":"grammar","prompt":"Viết câu nêu khoảng từ 9 giờ sáng đến 5 giờ chiều bằng đúng 午前九時／から／午後五時／までです theo thứ tự ấy. Giữ kanji và viết 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["午前九時から午後五時までです。"],"rationale":"から đặt sau mốc bắt đầu; まで đặt sau mốc kết thúc. Hai nhãn 午前/午後 giữ đúng buổi. Cách viết bị giới hạn cho bài này, không phải tiêu chuẩn chấm mọi lời nói về giờ làm.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+      ]
+    },
+    {
+      "id":"teaching:v1:N5:transport","revision":1,"order":24,"level":"N5",
+      "title":"Đi xe: hỏi đúng hướng và đọc đúng chuyến","goal":"Phân biệt xe đang hỏi với chuyến tiếp theo, hỏi đích đến và diễn đạt nơi xuống.",
+      "prerequisites":["teaching:v1:N5:time"],"authorship":"ai_authored",
+      "review":{"status":"ai_draft","human_approved":false},
+      "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
+      "source_refs":[{"chunk_id":"practical:v1:N5:transport","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Atransport%3Asituation","source_name":"VJBot · Chọn xe đến đúng nơi","role":"background_reference_not_approval"}],
+      "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
+      "formula":"このバスは［đích］に行きますか。［nơi］で降ります。次のバスを待ちます。",
+      "explanation":"に/へ có thể nêu hướng hoặc đích của 行きます; から nêu điểm xuất phát. このバス là chiếc đang hỏi; 次のバス là chuyến tiếp theo. Trong mẫu đang học, 駅で降ります nêu nơi xuống bằng で; バスを降ります nêu phương tiện rời khỏi bằng を. Không biến mẫu này thành quy tắc cấm mọi cách dùng trợ từ khác ngoài ngữ cảnh.",
+      "examples":[
+        {"context":"Hỏi lái xe về đích đến trước khi lên","jp":"このバスは空港に行きますか。","reading":"このバスはくうこうにいきますか。","vi":"Xe buýt này có đi sân bay không?","authorship":"ai_authored"},
+        {"context":"Câu trả lời phân biệt xe hiện tại với chuyến cần đi","jp":"いいえ。このバスは駅に行きます。空港へは次のバスです。","reading":"いいえ。このバスはえきにいきます。くうこうへはつぎのバスです。","vi":"Không. Xe buýt này đi ga. Đến sân bay thì đi chuyến tiếp theo.","authorship":"ai_authored"},
+        {"context":"Nêu địa điểm xuống theo mẫu で","jp":"駅で降ります。","reading":"えきでおります。","vi":"Tôi xuống ở ga.","authorship":"ai_authored"}
+      ],
+      "common_errors":[
+        {"problem":"Nghe 空港 trong câu trả lời rồi lên chiếc xe đang hỏi ngay.","correction":"Đọc đủ: chiếc hiện tại đi ga; 空港へは次のバスです chỉ chuyến tiếp theo.","reason":"Tên một nơi xuất hiện không có nghĩa mọi chiếc xe trong hội thoại đều đến nơi đó."},
+        {"problem":"Dùng 空港から来ますか khi chỉ muốn hỏi xe đi đến sân bay.","correction":"このバスは空港に行きますか。","reason":"から hỏi phía xuất phát; に行きます hỏi đích đến. へ行きます cũng có thể hỏi hướng, nhưng không đổi thành から."}
+      ],
+      "tasks":[
+        {"id":"teaching:v1:N5:transport:task:0","mode":"choice","skill":"reading","passage":"客：このバスは空港に行きますか。\n運転手：いいえ。駅に行きます。空港へは次のバスです。","prompt":"Theo câu trả lời, người cần đi sân bay nên chọn xe nào?","options":[{"id":"option:0","text":"Chiếc xe đang hỏi vì có từ 空港 trong hội thoại."},{"id":"option:1","text":"Chuyến buýt tiếp theo được chỉ tới sân bay."},{"id":"option:2","text":"Không có xe nào đi sân bay."}],"answer_option_id":"option:1","rationale":"いいえ phủ định đích sân bay của chiếc hiện tại; 次のバス mới là chuyến được chỉ. Câu không phủ định mọi chuyến đi sân bay.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:transport:task:1","mode":"choice","skill":"reading","passage":"Thông báo mới, chỉ dùng trong câu này: 空港行きのバスは三番乗り場です。駅行きのバスは二番乗り場です。 Từ hỗ trợ: 乗り場 = điểm lên xe; 行き = đi tới.","prompt":"Muốn lên xe đi sân bay theo thông báo này, cần đến điểm nào?","options":[{"id":"option:0","text":"Điểm số 2."},{"id":"option:1","text":"Điểm số 1."},{"id":"option:2","text":"Điểm số 3."}],"answer_option_id":"option:2","rationale":"空港行き gắn với 三番. 二番 là xe đi ga; không có thông tin dùng điểm số 1. Đây là thông báo mới, không tự suy số điểm từ hội thoại gốc.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:transport:task:2","mode":"choice","skill":"grammar","prompt":"Em chỉ muốn hỏi chiếc xe này có đi đến sân bay không, chưa hỏi giá và không hỏi nó xuất phát từ đâu. Chọn câu phù hợp.","options":[{"id":"option:0","text":"このバスは空港に行きますか。"},{"id":"option:1","text":"このバスは空港から来ますか。"},{"id":"option:2","text":"空港までいくらですか。"}],"answer_option_id":"option:0","rationale":"に行きます hỏi đích đến. から来ます hỏi nơi xuất phát, còn いくら hỏi giá; hai câu ấy có thể hợp ngữ cảnh khác nhưng không hỏi đúng điều cần biết.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:transport:task:3","mode":"short_text","skill":"grammar","prompt":"Hoàn thành mẫu nêu địa điểm thực hiện việc xuống xe: 駅（　）降ります。 Bài này yêu cầu đúng trợ từ chỉ nơi xảy ra hành động trong mẫu ［nơi］で降ります; chỉ viết một chữ hiragana.","accepted_variants":["で"],"rationale":"Theo mẫu được chỉ định, 駅で nêu nơi xuống. バスを降ります dùng を với phương tiện rời khỏi; bài không kết luận các cách diễn đạt khác đều sai ở mọi ngữ cảnh.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:transport:task:4","mode":"short_text","skill":"grammar","prompt":"Xe đang hỏi không đi sân bay; em sẽ đợi chuyến tiếp theo. Ghép 次のバス／を／待ちます thành một câu lịch sự, giữ kanji, có 。 cuối câu; không thêm chủ đề hoặc khoảng trắng.","accepted_variants":["次のバスを待ちます。"],"rationale":"を gắn đối tượng được đợi với 待ちます; 次の giữ thông tin ‘tiếp theo’, không đổi thành chiếc đang hỏi.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+      ]
+    },
+    {
+      "id":"teaching:v1:N5:shopping","revision":1,"order":25,"level":"N5",
+      "title":"Mua ô: giữ đúng đơn giá, số lượng và ngân sách","goal":"Đọc giá một chiếc, tính tổng theo số lượng và viết lời mua đúng vật.",
+      "prerequisites":["teaching:v1:N5:transport"],"authorship":"ai_authored",
+      "review":{"status":"ai_draft","human_approved":false},
+      "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
+      "source_refs":[{"chunk_id":"practical:v1:N5:shopping","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Ashopping%3Asituation","source_name":"VJBot · Mua đồ trong ngân sách","role":"background_reference_not_approval"}],
+      "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
+      "formula":"この傘はいくらですか。一本五百円です。この傘を二本ください。",
+      "explanation":"一本五百円 nêu giá một chiếc, không phải giá mọi số lượng. 二本 là hai chiếc ô trong bài; 2 × 500 = 1.000. この phải đứng trước danh từ như この傘; これ tự làm cụm danh từ, như これはいくらですか. Bài chỉ dùng ngân sách hư cấu, không là lời khuyên mua hàng thật.",
+      "examples":[
+        {"context":"Chỉ chiếc ô ở gần mình rồi hỏi giá","jp":"この傘はいくらですか。","reading":"このかさはいくらですか。","vi":"Cái ô này bao nhiêu tiền?","authorship":"ai_authored"},
+        {"context":"Nhân viên nêu rõ giá cho một chiếc","jp":"一本五百円です。","reading":"いっぽんごひゃくえんです。","vi":"Một chiếc là 500 yên.","authorship":"ai_authored"},
+        {"context":"Mua hai chiếc theo đơn giá 500 yên, không có phụ phí","jp":"二本で千円です。","reading":"にほんでせんえんです。","vi":"Hai chiếc là 1.000 yên.","authorship":"ai_authored"}
+      ],
+      "common_errors":[
+        {"problem":"これ傘はいくらですか。","correction":"この傘はいくらですか。 Hoặc bỏ danh từ: これはいくらですか。","reason":"この bổ nghĩa trực tiếp cho danh từ; これ tự đứng làm cụm danh từ."},
+        {"problem":"Có 800 yên và giá một ô 500 yên nên cho rằng mua được hai ô.","correction":"Hai ô cần 1.000 yên; với 800 yên chỉ mua được một ô theo giá đang cho.","reason":"Kiểm tra tổng theo số lượng và giới hạn tiền, không chỉ xem giá một chiếc có thấp hơn ngân sách."}
+      ],
+      "tasks":[
+        {"id":"teaching:v1:N5:shopping:task:0","mode":"choice","skill":"reading","passage":"店員：傘は一本五百円です。\n客：二本ください。\n店員：全部で千円です。","prompt":"Tổng tiền hai chiếc ô trong đoạn này là bao nhiêu?","options":[{"id":"option:0","text":"1.000 yên."},{"id":"option:1","text":"500 yên."},{"id":"option:2","text":"1.500 yên."}],"answer_option_id":"option:0","rationale":"一本五百円 là 500 cho một chiếc; 二本 là hai chiếc nên tổng 1.000, được nhân viên xác nhận bằng 全部で千円です.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:shopping:task:1","mode":"choice","skill":"reading","passage":"Tình huống ngân sách mới: em có 800 yên. 傘は一本五百円です。 Không giảm giá, không phụ phí, không vay hoặc trả góp.","prompt":"Với số tiền đang có, mua tối đa được bao nhiêu chiếc ô?","options":[{"id":"option:0","text":"Hai chiếc."},{"id":"option:1","text":"Một chiếc."},{"id":"option:2","text":"Không mua được chiếc nào."}],"answer_option_id":"option:1","rationale":"Một chiếc 500 ≤ 800; hai chiếc 1.000 > 800. Việc đơn trước mua hai chiếc không làm ngân sách mới đủ mua hai.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:shopping:task:2","mode":"choice","skill":"grammar","prompt":"Muốn hỏi ‘cái ô này bao nhiêu tiền’, giữ cả từ chỉ ‘này’ và danh từ 傘. Chọn cách ghép đúng.","options":[{"id":"option:0","text":"これ傘はいくらですか。"},{"id":"option:1","text":"このはいくらですか。"},{"id":"option:2","text":"この傘はいくらですか。"}],"answer_option_id":"option:2","rationale":"この phải đi cùng danh từ 傘. Nếu muốn dùng これ, phải bỏ danh từ và nói これはいくらですか; không nối thành これ傘.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:shopping:task:3","mode":"short_text","skill":"reading","passage":"傘は一本五百円です。二本ください。 Không phụ phí hoặc giảm giá.","prompt":"Tự tính tổng. Chỉ nhập số tiền bằng chữ số 0–9, không dấu phân cách, không 円 và không dấu câu.","accepted_variants":["1000"],"rationale":"2 × 500 = 1000. Đây là đối chiếu một số tiền theo dữ kiện, không phải kiểm tra duy nhất một cách viết số trong tiếng Nhật nói chung.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:shopping:task:4","mode":"short_text","skill":"grammar","prompt":"Viết lời yêu cầu mua hai chiếc ô này bằng các cụm この傘／を／二本／ください, theo đúng thứ tự. Bài yêu cầu đơn vị 本, giữ kanji, viết 。 cuối câu, không thêm từ hoặc khoảng trắng.","accepted_variants":["この傘を二本ください。"],"rationale":"この bổ nghĩa 傘; を nêu vật cần lấy; 二本 giữ đúng hai chiếc. Ràng buộc 本 giúp đối chiếu hữu hạn, không khẳng định mọi cách đếm chung khác đều sai trong mọi tình huống.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+      ]
+    },
+    {
+      "id":"teaching:v1:N5:asking-help","revision":1,"order":26,"level":"N5",
+      "title":"Nhờ giúp: hỏi cách đọc hay xin nhắc lại?","goal":"Nói rõ phần chưa hiểu và chọn lời nhờ đúng việc, không giả vờ đã hiểu.",
+      "prerequisites":["teaching:v1:N5:shopping"],"authorship":"ai_authored",
+      "review":{"status":"ai_draft","human_approved":false},
+      "eligibility":{"reference_display":true,"provider_teaching":"advisory_only","scored_assessment":false,"mastery_credit":false},
+      "source_refs":[{"chunk_id":"practical:v1:N5:asking-help","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Aasking-help%3Asituation","source_name":"VJBot · Nhờ giúp khi chưa hiểu","role":"background_reference_not_approval"}],
+      "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
+      "formula":"［từ］は何と読みますか。もう一度、ゆっくり言ってください。",
+      "explanation":"何と読みますか hỏi cách đọc chữ, không phải nghĩa của từ. もう一度 xin lặp lại; ゆっくり xin nói chậm. てください nhờ làm một việc cụ thể. Nếu chưa nghe rõ một lời nói, 言ってください nhờ nói lại; không tự đổi thành hỏi nghĩa nếu người học chỉ đang cần nghe rõ âm.",
+      "examples":[
+        {"context":"Nhìn thấy chữ 入口 nhưng chưa biết đọc","jp":"すみません。「入口」は何と読みますか。","reading":"すみません。「いりぐち」はなんとよみますか。","vi":"Xin lỗi, chữ 入口 đọc thế nào?","authorship":"ai_authored"},
+        {"context":"Người kia cho cách đọc của chính từ vừa hỏi","jp":"「いりぐち」です。","reading":"「いりぐち」です。","vi":"Đọc là iriguchi.","authorship":"ai_authored"},
+        {"context":"Chưa nghe rõ lời vừa nói, nhờ lặp lại chậm","jp":"もう一度、ゆっくり言ってください。","reading":"もういちど、ゆっくりいってください。","vi":"Xin nói lại chậm một lần nữa.","authorship":"ai_authored"}
+      ],
+      "common_errors":[
+        {"problem":"Dịch ゆっくり thành ‘to hơn’.","correction":"ゆっくり là ‘chậm’; muốn nói về độ to phải dùng một yêu cầu khác.","reason":"Tốc độ nói và âm lượng không phải cùng một thông tin."},
+        {"problem":"Chưa nghe rõ nhưng đáp はい、わかりました rồi đoán nội dung.","correction":"もう一度、ゆっくり言ってください。","reason":"Nêu đúng nhu cầu nghe lại giúp đối phương hỗ trợ; わかりました biểu thị đã hiểu, không xin nhắc lại."}
+      ],
+      "tasks":[
+        {"id":"teaching:v1:N5:asking-help:task:0","mode":"choice","skill":"reading","passage":"学生：すみません。「入口」は何と読みますか。\n相手：「いりぐち」です。","prompt":"Người học đang hỏi điều gì về 入口?","options":[{"id":"option:0","text":"Giá của vật đó."},{"id":"option:1","text":"Nghĩa của từ, không hỏi cách đọc."},{"id":"option:2","text":"Cách đọc của chữ."}],"answer_option_id":"option:2","rationale":"何と読みますか hỏi cách đọc; câu trả lời đưa âm いりぐち. Không thay câu hỏi này bằng nghĩa hoặc giá.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:asking-help:task:1","mode":"choice","skill":"reading","passage":"もう一度、ゆっくり言ってください。","prompt":"Lời nhờ yêu cầu đủ hai việc nào?","options":[{"id":"option:0","text":"Nói lại một lần nữa và nói chậm."},{"id":"option:1","text":"Nói to hơn và không cần lặp lại."},{"id":"option:2","text":"Viết nghĩa của từ bằng tiếng Việt."}],"answer_option_id":"option:0","rationale":"もう一度 là lặp lại một lần nữa; ゆっくり là chậm. Không có từ nào yêu cầu tăng âm lượng hoặc viết bản dịch.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:asking-help:task:2","mode":"choice","skill":"grammar","passage":"Người kia vừa tự nói một câu, không đọc từ văn bản. Em biết các từ nhưng chưa nghe rõ câu, chỉ cần người đó nói lại.","prompt":"Chọn lời nhờ đúng nhu cầu này.","options":[{"id":"option:0","text":"意味を教えてください。"},{"id":"option:1","text":"もう一度言ってください。"},{"id":"option:2","text":"はい、わかりました。"}],"answer_option_id":"option:1","rationale":"言ってください nhờ nói; もう一度 nhờ lặp lại. Hỏi 意味 đổi sang hỏi nghĩa, còn わかりました tuyên bố đã hiểu. Không đánh đồng nghe chưa rõ với không biết nghĩa.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:asking-help:task:3","mode":"short_text","skill":"reading","prompt":"Nhớ lại cách đọc của 入口 đã được người kia hướng dẫn. Chỉ viết toàn hiragana, không dấu ngoặc hoặc dấu câu.","accepted_variants":["いりぐち"],"rationale":"Cách đọc được cho là いりぐち; không nhầm với 出口／でぐち. Bài đang kiểm tra đúng chữ 入口.","assessment_basis":"ai_authored_provisional_not_verified","scored":false},
+        {"id":"teaching:v1:N5:asking-help:task:4","mode":"short_text","skill":"grammar","prompt":"Ghép lời nhờ ‘nói lại chậm một lần nữa’ bằng đúng もう一度／ゆっくり／言ってください, theo thứ tự. Giữ kanji; có thể dùng hoặc bỏ 、 sau もう一度 và 。 cuối câu; không thêm từ hoặc khoảng trắng.","accepted_variants":["もう一度、ゆっくり言ってください。","もう一度ゆっくり言ってください。","もう一度、ゆっくり言ってください","もう一度ゆっくり言ってください"],"rationale":"Lời nhờ giữ cả việc lặp lại và tốc độ nói. Các biến thể dấu câu được liệt kê theo giới hạn của đề; không coi một lời nhờ tương đương ngoài giới hạn là sai tiếng Nhật nói chung.","assessment_basis":"ai_authored_provisional_not_verified","scored":false}
+      ]
     }
   ],
   "editorial_reviews": [
@@ -3725,6 +3888,16 @@
         "Reason example context explicitly states lack of available book money."
       ],
       "decision": "All twenty packages are AI-reviewed editorial content only. No human approval, exhaustive variant certification, canonical integration or scored/mastery eligibility.",
+      "human_approved": false
+    },
+    {
+      "checkpoint": "six_original_practical_objectives",
+      "reviewed_on": "2026-11-14",
+      "review_kind": "independent_ai_not_human",
+      "reviewers": ["N5PracticalFoundationReview", "N5TransferReviewSerial"],
+      "scope": "All six additive practical explanations, eighteen Japanese/readings/Vietnamese examples, twelve common errors and thirty complete tasks, compared with the original VJBot practical-unit contexts. Scoped canonical mapping and Worker consumer-test changes were also reviewed.",
+      "findings_resolved": [],
+      "decision": "No concrete consumer-visible issue found in this finite AI review. Guided supplementary rehearsal only; constrained reconstruction is not evidence of learner-chosen communication, primary beginner self-study suitability, human approval or mastery.",
       "human_approved": false
     }
   ]

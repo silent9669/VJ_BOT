@@ -151,7 +151,7 @@ test('catalog uses the same complete canonical inventory and SHA256 revisions in
 });
 
 test('all-level draft packages preserve canonical context, authored IDs, explicit variants and non-scored boundaries',async()=>{
-  const c=context(),catalogs=await buildTeacherCatalog(),practical=JSON.parse(readFileSync('static/course/practical.json','utf8')),taskIds=new Set();
+  const c=context(),catalogs=await buildTeacherCatalog(),practical=JSON.parse(readFileSync('static/course/practical.json','utf8')),taskIds=new Set(),practicalCoverage=new Map();
   await c.loadPracticalCourse();
   for(const level of ['N5','N4','N3','N2','N1']){
     const source=JSON.parse(readFileSync(`static/course/${level.toLowerCase()}-teaching.json`,'utf8'));
@@ -168,7 +168,10 @@ test('all-level draft packages preserve canonical context, authored IDs, explici
       assert.deepEqual(canonical.examples.map(example=>example.context),authored.examples.map(example=>example.context));
       for(const reference of authored.source_refs){
         assert.ok(canonical.sources.some(source=>source.id===reference.chunk_id && source.role==='background_reference_not_approval'));
-        if(level!=='N5')assert.ok(practical.units.some(unit=>unit.id===reference.chunk_id && unit.level===level));
+        if(reference.chunk_id.startsWith('practical:')){
+          assert.ok(practical.units.some(unit=>unit.id===reference.chunk_id && unit.level===level));
+          practicalCoverage.set(reference.chunk_id,(practicalCoverage.get(reference.chunk_id)||0)+1);
+        }
       }
       for(const [index,task] of tasks.entries()){
         const original=authored.tasks[index];
@@ -187,8 +190,10 @@ test('all-level draft packages preserve canonical context, authored IDs, explici
         }
       }
     }
-    assert.equal(seen.size,level==='N5'?20:practical.units.filter(unit=>unit.level===level).length);
+    assert.equal(seen.size,level==='N5'?20+practical.units.filter(unit=>unit.level===level).length:practical.units.filter(unit=>unit.level===level).length);
   }
+  assert.deepEqual([...practicalCoverage.keys()].sort(),practical.units.map(unit=>unit.id).sort(),'every original practical objective has a canonical contextual package');
+  for(const [id,count] of practicalCoverage)assert.equal(count,1,`one canonical contextual package owns ${id}`);
 });
 
 test('curriculum attempted coverage requires a current revision and never becomes manual completion or verified mastery',()=>{
