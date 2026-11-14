@@ -470,7 +470,7 @@ async function sendMessage(text,retry=false,options={}) {
   const focus=retry?failedChatMessage.focus:lesson && sameLesson?(Object.hasOwn(options,'focus')?options.focus:context?.focus || null):null;
   const intent=retry?failedChatMessage.intent:options.intent || 'message';
   const question=retry?failedChatMessage.question:focus?.kind==='question' && sameLesson?context?.task:null;
-  const view=retry?failedChatMessage.view:context?.view || 'checks';
+  const view=retry?failedChatMessage.view:lesson?context?.view || 'checks':undefined;
   let body=retry?failedChatMessage.body:null;
   const send=document.getElementById('btn-send-message'),clear=document.getElementById('btn-clear-chat-history'),input=document.getElementById('chat-input');
   send.disabled=true;clear.disabled=true;sendingMessage=true;chatError('',null);
@@ -1238,7 +1238,7 @@ function setupFloatingSensei() {
     if(query.length>6000){speechEl.textContent='Tin nhắn tối đa 6.000 ký tự.';return;}
     if(!signedInUser){openAccount();return;}
     const context=globalThis.teacherContext?.();
-    const request=retry?failed:{body:{message:query,channel:'quick',screen:context?.screen || null,lesson:context?.lesson || null,focus:context?.focus || null,view:context?.view || 'checks',intent:'message',request_id:crypto.randomUUID()},question:context?.task || null,scope:scope()};
+    const request=retry?failed:{body:{message:query,channel:'quick',screen:context?.screen || null,lesson:context?.lesson || null,focus:context?.focus || null,view:context?.lesson?context.view || 'checks':undefined,intent:'message',request_id:crypto.randomUUID()},question:context?.task || null,scope:scope()};
     if(request.scope!==scope()){invalidate();speechEl.textContent='Nội dung đã đổi. Hãy đặt câu hỏi mới.';return;}
     const owner={generation,controller:new AbortController()};inFlight=owner;controls(true);retryBtn.hidden=true;
     const current=()=>inFlight===owner && owner.generation===generation && !popover.hidden && scope()===request.scope;

@@ -220,3 +220,23 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
 #live-stage[data-turn=muted] { box-shadow: inset 0 0 0 2px rgba(120, 120, 128, .4); }
 #live-stage { transition: box-shadow .25s var(--ios-ease); border-radius: 12px; }
 #live-status { font-weight: 500; color: var(--ink); }
+
+/* Chat quick actions: one scrolling row of pills instead of bare text in a 3x2 grid. */
+@media (max-width: 768px) {
+  #panel-classroom .chat-chips-bar { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto !important; gap: 8px; padding: 8px 16px 6px !important; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: 16px; -webkit-overflow-scrolling: touch; }
+  #panel-classroom .chat-chips-bar::-webkit-scrollbar { display: none; }
+  #panel-classroom .chat-chips-bar .prompt-chip { flex: none; min-height: 38px; padding: 0 14px; border: .5px solid var(--glass-hair) !important; border-radius: 19px; background: var(--surface-2, #f1f2ef) !important; color: var(--ink); font-size: 14px; font-weight: 500; scroll-snap-align: start; transition: transform .18s var(--ios-ease), background-color .18s var(--ios-ease); }
+  #panel-classroom .chat-chips-bar .prompt-chip:active { transform: scale(.94); }
+  #panel-classroom .classroom-chat-window { margin-top: -12px; }
+}
+
+/* Motion: spring-like easing, press feedback, no layout-shifting animation. */
+@media (prefers-reduced-motion: no-preference) {
+  :root { --ios-spring: cubic-bezier(.32, .72, 0, 1); }
+  .tab-panel.active { animation: panel-in .28s var(--ios-spring); }
+  .chat-bubble-row { animation: bubble-in .32s var(--ios-spring); }
+  button, .mobile-bottom-item, .admin-user-row { transition: transform .16s var(--ios-spring), background-color .2s var(--ios-ease), opacity .2s; }
+  button:not(:disabled):active, .mobile-bottom-item:active { transform: scale(.96); }
+  dialog[open] { animation: sheet-up .38s var(--ios-spring); }
+  @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+}

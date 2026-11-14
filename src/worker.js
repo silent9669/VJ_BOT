@@ -500,13 +500,13 @@ export default {
           const indexRes = await env.ASSETS.fetch(new Request(indexUrl, request));
           if (indexRes.ok) {
             const h = new Headers(indexRes.headers);
-            h.set("Cache-Control", "no-cache, no-store, must-revalidate");
+            h.set("Cache-Control", "no-cache");
             return new Response(indexRes.body, { status: 200, headers: h });
           }
         }
         if (res.status < 400 && (url.pathname === "/" || url.pathname.endsWith(".html"))) {
           const newHeaders = new Headers(res.headers);
-          newHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+          newHeaders.set("Cache-Control", "no-cache");
           return new Response(res.body, {
             status: res.status,
             statusText: res.statusText,
