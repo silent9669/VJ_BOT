@@ -116,7 +116,7 @@ async function renderExamCatalog(route){
       host.hidden=true;simulation.hidden=false;return renderSimulation(route.level,route.id);
     }
     const timed=route.view==='catalog' && route.id==='simulation';
-    host.innerHTML=`<header class="workspace-heading"><h1>Bài luyện JLPT ${route.level}</h1></header><nav class="exam-catalog-nav" aria-label="Loại bài luyện"><a href="#quiz/${route.level}" ${timed?'':'aria-current="page"'}>Luyện theo bài</a><a href="#quiz/${route.level}/catalog/simulation" ${timed?'aria-current="page"':''}>Thi thử có giờ</a></nav>`;
+    host.innerHTML=`<header class="workspace-heading"><h1>Luyện thi JLPT ${route.level}</h1></header><nav class="exam-catalog-nav" aria-label="Loại bài luyện"><a href="#quiz/${route.level}" ${timed?'':'aria-current="page"'}>Luyện theo bài</a><a href="#quiz/${route.level}/catalog/simulation" ${timed?'aria-current="page"':''}>Thi thử có giờ</a></nav>`;
     if(timed){
       host.innerHTML+=`<p class="exam-source-note">Luyện có giờ với đề chính thức của Japan Foundation · JEES. Em tự kiểm tra đáp án sau mỗi phần; kết quả không phải điểm JLPT chính thức.</p><div class="exam-grid">${examConfig.papers.filter(p=>p.level===route.level).map((p,i)=>`<a class="exam-set official" href="#quiz/${route.level}/simulation/${p.year}"><span class="exam-set-index">${String(i+1).padStart(2,'0')}</span><div class="exam-set-copy"><h2>Đề chính thức ${p.year}</h2><p>${p.sections.reduce((n,s)=>n+s.minutes,0)} phút · ${p.sections.length} phần</p></div><span class="exam-set-action">Chuẩn bị ↗</span></a>`).join('')}</div>`;
     }else{

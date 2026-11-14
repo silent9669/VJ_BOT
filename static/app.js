@@ -36,7 +36,7 @@ const TAB_TITLES = {
   lesson: "Bài học",
   flashcards: "Thẻ nhớ",
   kaiwa: "Luyện nói",
-  quiz: "Bài luyện JLPT",
+  quiz: "Luyện thi JLPT",
   mastery: "Tiến độ",
   settings: "Cài đặt",
   admin: "Quản trị"
@@ -116,7 +116,7 @@ function renderBookmarks() {
     btn.addEventListener("click", () => {
       const topic = decodeURIComponent(btn.dataset.topic);
       switchTab("classroom");
-      sendMessage(`Sensei ơi, em muốn luyện sâu lại phần điểm yếu:「${topic}」nhé!`);
+      sendMessage(`Thầy Lâm ơi, em muốn luyện sâu lại phần điểm yếu:「${topic}」nhé!`);
     });
   });
 }
@@ -396,7 +396,7 @@ function renderBubble(role, content) {
     <div class="bubble-speech-card ${role}">
       <div class="bubble-header-meta">
         <span class="bubble-name">${role === "user" ? "Em" : currentMascot.name}</span>
-        ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe Sensei đọc tiếng Nhật">Nghe</button>` : ""}
+        ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe thầy đọc tiếng Nhật">Nghe</button>` : ""}
       </div>
       <div class="bubble-body-text">${formattedContent}</div>
     </div>
@@ -424,7 +424,7 @@ function chatError(message,retry) {
   document.getElementById('chat-error-text').textContent=message;
   const button=document.getElementById('chat-retry');button.hidden=!retry;button.onclick=retry;
   const open=document.getElementById('chat-open-settings');open.hidden=!/Cài đặt/.test(message||'');open.onclick=()=>switchTab('settings',{view:'api'});
-  open.textContent=signedInUser?.is_admin?'Model quản trị':'Cài đặt API';
+  open.textContent=signedInUser?.is_admin?'Chọn model':'Cài đặt API';
   const discard=document.getElementById('chat-discard');discard.hidden=!failedChatMessage;discard.onclick=()=>{failedChatMessage=null;loadChatHistory();};
 }
 async function loadChatHistory() {
@@ -607,7 +607,7 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
       <div class="empty-state-card" style="grid-column: 1 / -1; padding: 40px; text-align: center; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 16px;">
         <span style="font-size: 32px;">📚</span>
         <h3 style="margin-top: 12px; font-weight: 700;">Đang cập nhật bài học cho cấp độ ${level}</h3>
-        <p style="color: #64748b; font-size: 14px;">Sensei đang biên soạn thêm nội dung cho phần này. Bạn hãy thử chọn N5 hoặc N4 nhé!</p>
+        <p style="color: #64748b; font-size: 14px;">Thầy Lâm đang biên soạn thêm nội dung cho phần này. Em hãy thử chọn N5 hoặc N4 nhé!</p>
       </div>
     `;
     return;
@@ -1002,7 +1002,7 @@ async function renderQuiz(level = "N5", testIdx = 0) {
     document.getElementById('quiz-instruction').textContent='Chưa có câu hỏi cho bộ này.';
     document.getElementById('quiz-options-grid').replaceChildren();return;
   }
-  document.getElementById('quiz-source-note').textContent=selectedExam.source || 'Bài luyện JLPT';
+  document.getElementById('quiz-source-note').textContent=selectedExam.source || 'Luyện thi JLPT';
 
   const completion=document.getElementById('quiz-completion');completion.replaceChildren();
   currentExamQuestions = questions;
@@ -1441,7 +1441,7 @@ function setupEventListeners() {
   const btnRec = document.getElementById("btn-rec-action");
   if (btnRec) {
     btnRec.addEventListener("click", () => {
-      sendMessage("Sensei ơi, em muốn luyện phản xạ chủ đề gợi ý hôm nay ngay bây giờ!");
+      sendMessage("Thầy Lâm ơi, em muốn luyện phản xạ chủ đề gợi ý hôm nay ngay bây giờ!");
     });
   }
 

@@ -240,3 +240,19 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
   dialog[open] { animation: sheet-up .38s var(--ios-spring); }
   @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 }
+
+/* One button language on phones: same height, radius and type for every action. */
+@media (max-width: 768px) {
+  .stage-btn, .public-cta, .ai-quiet-button, .study-teacher-button, .sketch-btn-cta { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; padding: 0 18px !important; border-radius: 12px !important; font-size: 15px !important; font-weight: 600 !important; line-height: 1.2; text-align: center; }
+  .stage-btn, .ai-quiet-button, .study-teacher-button { background: #fff; border: .5px solid var(--glass-hair, rgba(60, 60, 67, .29)) !important; color: var(--ink); }
+  .public-cta { background: var(--ink); color: #fff; border: 0; }
+  .public-cta:disabled, .stage-btn:disabled { opacity: .45; }
+  /* Action rows: buttons share the row evenly and wrap together. */
+  .card-actions, .settings-actions, .form-actions, .stage-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+  .card-actions > :is(button, a), .settings-actions > :is(button, a), .form-actions > :is(button, a) { flex: 1 1 140px; }
+  /* Fields and labels share one rhythm and left edge. */
+  .tab-panel label, .tab-panel .field-label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--muted); text-align: left; }
+  .tab-panel select, .tab-panel input[type=text], .tab-panel input[type=password], .tab-panel input[type=email], .tab-panel input[type=search], .tab-panel input[type=url] { min-height: 46px; border-radius: 12px; font-size: 16px; }
+  /* Loose retry/error buttons get the same shape instead of the system default. */
+  #panel-dashboard button:not([class]) { min-height: 36px; padding: 0 14px; border: .5px solid var(--glass-hair, rgba(60, 60, 67, .29)); border-radius: 18px; background: #fff; color: var(--ink); font: inherit; font-weight: 600; }
+}

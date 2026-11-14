@@ -71,7 +71,7 @@ function mountPracticeCoach(section, container, lesson, question, index, result)
           ...(attempt.sessionId?{session_id:attempt.sessionId}:{}),
           ...(result?question.mode==='choice'?{answer_index:result.selected}:{response_text:result.selected}:{})})});
       const data=await response.json();if(!current())return;
-      if(!response.ok)throw new Error(data.detail||'AI chưa giải thích được. Bạn vẫn có thể tiếp tục làm bài.');
+      if(!response.ok)throw new Error(data.detail||'AI chưa giải thích được. Em vẫn có thể tiếp tục làm bài.');
       const resultMatches=!result || (question.mode==='writing'
         ?data.source_correct===null && data.assessment?.comparison==='unassessed'
         :data.answer_index===question.answer_index && data.correct===result.correct);
