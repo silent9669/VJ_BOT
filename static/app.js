@@ -396,18 +396,10 @@ function renderBubble(role, content) {
     <div class="bubble-speech-card ${role}">
       <div class="bubble-header-meta">
         <span class="bubble-name">${role === "user" ? "Em" : currentMascot.name}</span>
-        ${role === "bot" ? `<button type="button" class="bubble-tts-btn" title="Nghe thầy đọc tiếng Nhật">Nghe</button>` : ""}
       </div>
       <div class="bubble-body-text">${formattedContent}</div>
     </div>
   `;
-
-  if (role === "bot") {
-    const ttsBtn = row.querySelector(".bubble-tts-btn");
-    if (ttsBtn) {
-      ttsBtn.addEventListener("click", () => playGeminiTTS(content));
-    }
-  }
 
   container.appendChild(row);
   container.scrollTop = container.scrollHeight;
