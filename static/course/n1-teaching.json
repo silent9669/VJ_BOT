@@ -21,7 +21,7 @@
       "support": [
         { "term": "Bản đồ lập luận và phạm vi", "explanation": "Trước khi phản biện, tách tiền đề được thừa nhận, bước suy diễn bị bác, ví dụ và kết luận. 'Không đủ để bảo đảm mọi trường hợp' không có nghĩa 'không có lợi trong trường hợp nào'. Ví dụ về khả năng không phải thống kê hiệu quả đã đo." },
         { "term": "共通基準・支援・検証", "explanation": "共通基準（きょうつうきじゅん）tiêu chuẩn chung; 支援（しえん）hỗ trợ; 検証（けんしょう）kiểm chứng. Hỗ trợ cách thực hiện có thể khác thay đổi tiêu chí đủ điều kiện. Người viết phải nói rõ mình đề nghị thay phần nào và giữ phần nào." },
-        { "term": "Phản biện có điều kiện", "explanation": "Đối thoại trang trọng với nhóm: thừa nhận lợi ích có căn cứ, giới hạn điều chưa biết, đề nghị điều kiện và cách kiểm tra. Không cần dùng mọi cấu trúc nâng cao hoặc bác bỏ đối phương toàn bộ. Khuôn sửa câu cũ là luyện biến đổi, không phải lập luận mở." }
+        { "term": "Phản biện có điều kiện", "explanation": "Đối thoại trang trọng với nhóm: thừa nhận lợi ích có căn cứ, nêu điều chưa biết, đề nghị điều kiện và cách kiểm tra. 必要なのは、Aことではなく、Bことである nói việc cần làm là B thay vì A. Không cần dùng mọi mẫu nâng cao hay bác bỏ đối phương toàn bộ; sửa câu theo khuôn chỉ là luyện biến đổi, không phải lập luận mở." }
       ],
       "practice_path": [
         "teaching:v1:N1:argument:task:0",
@@ -46,7 +46,7 @@
       ],
       "source_header": "Nguồn nội bộ: VJBot · Phân tích luận điểm và phản biện [practical:v1:N1:argument]. Bài giảng AI chưa có phê duyệt của con người; ví dụ trong lập luận không phải dữ liệu khảo sát đã đo.",
       "formula": "Pからといって、必ずしもQとはいえない。必要なのは、Aことではなく、Bことである。",
-      "explanation": "Dùng ～からといって、必ずしも～とはいえない để bác một kết luận suy ra quá mạnh từ điều đã biết. 手続きが統一されているからといって… nói rằng thống nhất thủ tục chưa đủ để kết luận đó là cách tốt nhất cho mọi người dùng. Mẫu này không nhất thiết phủ nhận việc thống nhất, cũng không nói cách ấy chẳng có lợi cho ai.\n\nNgười viết thừa nhận thủ tục thống nhất có thể giảm chênh lệch xử lý, rồi chỉ ra lợi ích và gánh nặng không phân bố giống nhau. Ví dụ chỉ nhận hồ sơ trực tuyến minh họa sự khác biệt đó. ～となりうる giữ nghĩa có thể trở thành gánh nặng, không khẳng định mọi dịch vụ trực tuyến đều có hại. Ví dụ cũng chưa cung cấp số liệu hay chứng minh hỗ trợ đã thành công.\n\n必要なのは、Aことではなく、Bことである xác định việc cần làm là B thay vì A. Ở đây, kết luận vẫn giữ tiêu chuẩn chung: cần nêu điều kiện bổ sung hỗ trợ và kiểm chứng tác dụng, thay vì trao quyền tự quyết không giới hạn. Khi phản biện thêm, hãy phân biệt khả năng em nêu với dữ kiện đã có trong bài.",
+      "explanation": "～からといって、必ずしも～とはいえない bác suy luận quá mạnh, không bác mọi lợi ích của tiền đề. Thống nhất thủ tục có thể giảm chênh lệch xử lý nhưng chưa chắc tối ưu cho mọi người. Chỉ nhận hồ sơ trực tuyến minh họa lợi ích và gánh nặng khác nhau; ～となりうる là khả năng, không chứng minh mọi dịch vụ đều có hại hay hỗ trợ đã thành công. Kết luận giữ tiêu chuẩn chung, nêu điều kiện thêm hỗ trợ và kiểm chứng, không trao quyền tự quyết vô hạn. Phản biện mới phải tách khả năng em nêu khỏi dữ kiện trong bài.",
       "examples": [
         {
           "id": "teaching:v1:N1:argument:example:0",
@@ -244,7 +244,7 @@
       "support": [
         { "term": "Tổng hợp không xóa khác biệt", "explanation": "Trước khi viết, xác định mỗi người khẳng định gì, hạn định điều gì, có điểm giao nào và còn khác trọng tâm/thời gian ra sao. Điểm giao suy được từ hai ý kiến không tự là một thỏa thuận họ đã thông qua." },
         { "term": "指標・事例・資源配分", "explanation": "指標（しひょう）chỉ số; 事例（じれい）trường hợp cụ thể; 資源配分（しげんはいぶん）phân bổ nguồn lực. Khi tự đề nghị đo, cần định nghĩa đại lượng và thời điểm; một câu chuyện hoặc số thay đổi riêng lẻ chưa chứng minh nguyên nhân." },
-        { "term": "Nguồn phát ngôn và đề xuất mới", "explanation": "Dùng thể tường thuật nhất quán để giữ ý của A/B; dùng dấu hiệu đề nghị cho thiết kế của mình. Mốc cụ thể thêm từ 数か月後 phải được ghi là lựa chọn mới, không sửa ngược nguồn. Không cần viết dài hoặc dùng liên tiếp mọi mẫu nâng cao." }
+        { "term": "Nguồn phát ngôn và đề xuất mới", "explanation": "Giữ đúng ý A/B và nói rõ phần em đề nghị. 数か月後 là vài tháng sau; nếu thêm mốc cụ thể, hãy nói đó là đề nghị của em, không phải thời điểm bài đã nêu. 両者は～点で一致する一方、… nêu điểm chung rồi khác biệt; ～を踏まえ là tính đến điều đã bàn; ～のみならず、…も… là không chỉ… mà còn…. Không cần viết dài hay dùng liên tiếp mọi mẫu nâng cao." }
       ],
       "practice_path": [
         "teaching:v1:N1:synthesis:task:0",
@@ -269,7 +269,7 @@
       ],
       "source_header": "Nguồn nội bộ: VJBot · Tổng hợp hai quan điểm [practical:v1:N1:synthesis]. Bản tổng hợp và kế hoạch ứng dụng là nội dung AI soạn; không phải kết quả đào tạo đã được xác minh.",
       "formula": "～を否定するわけではないが、…。両者は～点で一致する一方、～を重視する点で異なる。～を踏まえ、～のみならず、…も…。",
-      "explanation": "Tổng hợp hai lập trường là nêu được điểm chung mà vẫn giữ khác biệt. Ở đây, A muốn có căn cứ đo được để phân bổ nguồn lực và không chấp nhận chỉ dùng một chỉ số. B cho rằng số liệu ngắn hạn chưa phản ánh hết giá trị, nên muốn xem thêm việc hỗ trợ đồng nghiệp và khả năng xử lý vấn đề mới bộc lộ về sau.\n\nB dùng 数値による確認を否定するわけではありません để nói không phủ nhận việc kiểm tra bằng số liệu. ～を否定するわけではない giới hạn cách hiểu rằng người nói bác bỏ điều đó; không thể đọc thành phủ nhận hoàn toàn. Hai bên cùng chấp nhận số liệu và không coi đánh giá hẹp là đủ, nhưng chú trọng loại bằng chứng và thời gian khác nhau. A không chỉ quan tâm một con số ngay sau học; B cũng không bác mọi số liệu.\n\n両者は～点で一致する一方、… giúp nêu điểm chung rồi chuyển sang khác biệt. ～を踏まえ là tính đến điều đã bàn; ～のみならず、…も… là không chỉ… mà còn…. Có thể đề nghị kết hợp nhiều chỉ số ngay sau học với trường hợp cụ thể vài tháng sau. Đây vẫn là đề xuất, chưa phải kết quả cải thiện đã đo hay bằng chứng đào tạo là nguyên nhân duy nhất. Nếu chọn một số tháng cụ thể, hãy nói rõ đó là mốc em đề nghị.",
+      "explanation": "A cần căn cứ đo được để phân bổ nguồn lực, không chỉ một con số ngay sau học; B cũng chấp nhận số liệu nhưng muốn xem thêm việc hỗ trợ đồng nghiệp và xử lý vấn đề mới bộc lộ về sau. Hai bên cùng thấy đánh giá hẹp chưa đủ, khác trọng tâm bằng chứng và thời gian. Có thể đề nghị kết hợp nhiều chỉ số ngay sau học với trường hợp cụ thể vài tháng sau. Đây chưa phải kết quả đo hay bằng chứng đào tạo là nguyên nhân duy nhất. Số tháng cụ thể phải ghi là mốc em đề nghị, không phải dữ kiện trong bài.",
       "examples": [
         {
           "id": "teaching:v1:N1:synthesis:example:0",

@@ -4,8 +4,12 @@ const VI_FORMULA_COMPOUNDS = {'potential of the same verb': 'thể khả năng c
 const VI_FORMULA = {'Verb-volitional': 'Động từ thể ý chí', 'Verb-plain': 'Động từ thể thường', 'Verb-dict': 'Động từ thể từ điển', 'Verb-stem': 'Động từ thân ます', 'Verb-nai': 'Động từ thể ない', 'Verb-te': 'Động từ thể て', 'Verb-ta': 'Động từ thể た', 'Verb-ba': 'Động từ thể ば', 'i-Adj-ku': 'Tính từ い (bỏ い + く)', 'i-Adj': 'Tính từ い', 'na-Adj': 'Tính từ な', 'potential form': 'thể khả năng', 'short form': 'thể ngắn', Noun: 'Danh từ', Sentence: 'Câu', Question: 'Từ để hỏi', Group: 'Nhóm', counter: 'lượng từ', number: 'số', quantity: 'số lượng', particle: 'trợ từ', verbs: 'động từ', verb: 'động từ', stem: 'thân từ', word: 'từ', giver: 'người cho', receiver: 'người nhận', plain: 'thể thường', ichidan: 'nhóm II', potential: 'khả năng', final: 'cuối', same: 'cùng'};
 const VI_FORMULA_RE = new RegExp('(?<![A-Za-z-])(' + Object.keys(VI_FORMULA).sort((a, b) => b.length - a.length).map(k => k.replace(/[-/]/g, '\\$&')).join('|') + ')(?![A-Za-z-])', 'g');
 const viPatternLabel = pattern => String(pattern).replace(/([（(])([A-Za-z][^）)]*)([）)])/g, (all, open, text, close) => VI_PARENS[text] ? open + VI_PARENS[text] + close : all);
+const viFormulaLabel = value => String(value ?? '')
+  .replaceAll('Động từ thân ます','Động từ thể ます (bỏ ます)')
+  .replaceAll('Động từ thể ない thân từ','Động từ thể ない (bỏ ない)')
+  .replaceAll('Tính từ い thân từ','Tính từ い (bỏ い)');
 // Long compounds are translated before individual tokens; displayed and accepted formulas agree.
-const viFormula = formula => Object.entries(VI_FORMULA_COMPOUNDS).reduce((text,[from,to])=>text.replaceAll(from,to),String(formula ?? '')).replace(VI_FORMULA_RE,word=>VI_FORMULA[word]);
+const viFormula = formula => viFormulaLabel(Object.entries(VI_FORMULA_COMPOUNDS).reduce((text,[from,to])=>text.replaceAll(from,to),String(formula ?? '')).replace(VI_FORMULA_RE,word=>VI_FORMULA[word]));
 let viDictLoad,viContextLoad;
 async function viJson(name){
   const response=await fetch(`course/${name}.json`);

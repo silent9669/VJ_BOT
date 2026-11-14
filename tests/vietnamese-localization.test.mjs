@@ -179,3 +179,16 @@ test('compact catalogs fit asset and reference limits without dropping any addre
     }
   }
 });
+
+test('natural formation labels keep frontend recall grading and canonical teacher answers aligned',async()=>{
+  const {c,catalogs}=await inventory();
+  const lesson=c.window.JLPT_DATA.curriculum.N4.skills.grammar.find(item=>item.id==='openjlpt:N4:grammar:sou-da-appearance');
+  const expected='Động từ thể ます (bỏ ます) / Tính từ い (bỏ い) / Tính từ な + そうだ';
+  assert.equal(lesson.formula,expected);
+  const task=c.lessonQuestions(lesson,'N4','grammar').find(task=>task.task_id.endsWith(':recall:formation'));
+  const canonical=catalogs.N4.lessons[lesson.id].questions.find(candidate=>candidate.task_id===task.task_id);
+  assert.deepEqual(plain(task.accepted_answers),[expected]);
+  assert.deepEqual(canonical.accepted_answers,[expected]);
+  vm.runInContext(readFileSync('static/practice.js','utf8'),c);
+  assert.equal(c.createPracticeRound([canonical]).answer(expected).correct,true);
+});

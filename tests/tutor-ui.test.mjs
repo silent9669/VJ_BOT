@@ -11,6 +11,7 @@ const learning=readFileSync('static/learning.js','utf8');
 const plan=readFileSync('static/study-plan.js','utf8');
 const completion=readFileSync('static/completion.js','utf8');
 function loadLearning(context){
+  vm.runInContext(readFileSync('static/vi-labels.js','utf8'),context);
   vm.runInContext(completion.slice(completion.indexOf('function activityId('),completion.indexOf('function mountCompletion(')),context);
   vm.runInContext(checks,context);
   vm.runInContext(plan.slice(plan.indexOf('function lessonQuestions('),plan.indexOf('function lessonProgressIds(')),context);
@@ -890,10 +891,16 @@ test('writing self-check criteria stay concealed until the actual answer is save
 });
 
 test('grammar formulas show complete compact alternatives without changing optional groups or inventing ambiguous suffixes',()=>{
-  const b=lesson(),rows=()=>b.document.querySelectorAll('.grammar-row').map(row=>row.querySelectorAll('.grammar-part').map(part=>part.textContent).join(' + '));
+  const b=lesson(),rows=()=>b.document.querySelectorAll('.grammar-row').map(row=>{
+    const parts=row.querySelectorAll('.grammar-part').map(part=>part.textContent);
+    const shared=row.closest('.grammar-group')?.querySelector('.grammar-shared .grammar-part');
+    if(shared)parts.push(shared.textContent);
+    return parts.join(' + ');
+  });
   for(const [formula,expected]of [
-    ['Động từ thân ます / Tính từ い thân từ / Tính từ な + そうだ',['Động từ thân ます + そうだ','Tính từ い thân từ + そうだ','Tính từ な + そうだ']],
-    ['Động từ thể た + ら / Tính từ い thân từ + かったら / Tính từ な + だったら / Danh từ + だったら',['Động từ thể た + ら','Tính từ い thân từ + かったら','Tính từ な + だったら','Danh từ + だったら']],
+    ['Động từ thân ます / Tính từ い thân từ / Tính từ な + そうだ',['Động từ thể ます (bỏ ます) + そうだ','Tính từ い (bỏ い) + そうだ','Tính từ な + そうだ']],
+    ['Động từ / Tính từ い + そうだ / Tính từ な + だ + そうだ / Danh từ + だ + そうだ',['Động từ + そうだ','Tính từ い + そうだ','Tính từ な + だ + そうだ','Danh từ + だ + そうだ']],
+    ['Động từ thể た + ら / Tính từ い thân từ + かったら / Tính từ な + だったら / Danh từ + だったら',['Động từ thể た + ら','Tính từ い (bỏ い) + かったら','Tính từ な + だったら','Danh từ + だったら']],
     ['Danh từ + に + 行く / 来る / 帰る',['Danh từ + に + 行く','Danh từ + に + 来る','Danh từ + に + 帰る']],
     ['Danh từ + です / Tính từ な + です',['Danh từ + です','Tính từ な + です']],
     ['Danh từ (+ の) + いかんで',['Danh từ (+ の) + いかんで']],
@@ -908,6 +915,14 @@ test('grammar formulas show complete compact alternatives without changing optio
     assert.deepEqual(rows(),expected);
     assert.equal(b.document.querySelector('.grammar-or'),null);
   }
+  b.c.showLessonDetail({id:'shared',title:'そうだ',formula:'Động từ thân ます / Tính từ い thân từ / Tính từ な + そうだ'},'N4','grammar');
+  assert.equal(b.document.querySelectorAll('.grammar-alternatives .grammar-row').length,3);
+  assert.equal(b.document.querySelectorAll('.grammar-plus').length,1);
+  assert.equal(b.document.querySelector('.grammar-shared .grammar-part').textContent,'そうだ');
+  assert.doesNotMatch(b.document.querySelector('.grammar-layout').textContent,/thân/);
+  assert.ok(b.document.querySelector('.lesson-formula').children.every(child=>child.tagName!=='SPAN'));
+  b.c.showLessonDetail({id:'policy',title:'Thông báo',formula:'Nに伴い、…。ただし、Nに限り、Vば、…。Vことはできない。'},'N2','grammar');
+  assert.deepEqual(b.document.querySelectorAll('.grammar-symbol').map(node=>node.textContent),['N','N','V','V']);
   b.c.showLessonDetail({id:'escaped',title:'Literal notation',formula:'<img src=x onerror=attack()> + です'},'N4','grammar');
   assert.equal(b.document.querySelector('.grammar-layout img'),null);
   assert.match(b.document.querySelector('.grammar-layout').textContent,/<img src=x onerror=attack\(\)>/);
@@ -1226,4 +1241,35 @@ test('all N5–N1 curriculum and plan formulas use compact rows without modifyin
     }
     assert.ok(rendered,`No actual formula coverage for ${level}`);
   }
+});
+
+test('source readings become inline hiragana without changing Japanese, audio input or Kanji-lesson concealment',()=>{
+  const b=lesson(),item={id:'reading-aid',title:'学校',items:[{jp:'学校',reading:'ガッコウ',vi:'trường học'}],
+    examples:[{jp:'私は学生です。',reading:'わたしはがくせいです。'},{jp:'学校に行きます。',furigana:'{学校|がっこう}に{行|い}きます。'}]};
+  b.c.showLessonDetail(item,'N5','vocabulary');
+  assert.equal(b.document.querySelector('.word-detail strong rt').textContent,'がっこう');
+  assert.deepEqual(b.document.querySelectorAll('.example-jp rt').map(node=>node.textContent),['わたし','がくせい','がっこう','い']);
+  const audio=b.document.querySelectorAll('.example-card .modal-tts-btn');
+  assert.equal(decodeURIComponent(audio[0].getAttribute('data-text')),item.examples[0].jp);
+  assert.equal(decodeURIComponent(audio[1].getAttribute('data-text')),item.examples[1].furigana);
+  b.c.showLessonDetail(item,'N5','kanji');
+  assert.equal(b.document.querySelector('.word-detail strong ruby'),null);
+  assert.equal(b.document.querySelector('.example-jp ruby'),null);
+  assert.equal(b.document.querySelector('.example-jp').textContent,'私は学生です。');
+  assert.ok(b.document.querySelector('.lesson-aid-content ruby'));
+});
+
+test('reading aids reject mismatched source text, ambiguous kana alignment and unsafe annotations',()=>{
+  const b=lesson();
+  b.c.showLessonDetail({id:'mismatch',title:'学校',examples:[{jp:'学校です。',furigana:'{別|べつ}の文。',reading:'がっこうです。'}]},'N5','grammar');
+  assert.equal(b.document.querySelector('.example-jp rt').textContent,'がっこう');
+  assert.doesNotMatch(b.document.querySelector('.example-jp').textContent,/別|べつ/);
+  assert.equal(b.c.furiganaHtml('甲あ乙','かあきあく'),'甲あ乙');
+  assert.equal(b.c.furiganaHtml('学校','gakkou'),'学校');
+  assert.equal(b.c.furiganaHtml('{学校|<img src=x onerror=attack()>}'),'学校');
+  assert.match(b.c.furiganaHtml('<学校>','がっこう'),/^&lt;学校&gt;$/);
+  b.c.showLessonDetail({id:'listening-aid',title:'聞く',dictation:true,examples:[{jp:'学校です。',reading:'がっこうです。'}]},'N5','listening');
+  const transcript=b.document.querySelector('.example-transcript');
+  assert.equal(transcript.getAttribute('open'),null);
+  assert.equal(transcript.querySelector('rt').textContent,'がっこう');
 });

@@ -469,7 +469,7 @@
       "support": [
         {
           "term": "Nền 1: vị ngữ tính từ い và な",
-          "explanation": "Trước so sánh, đọc câu nhận xét đơn: この本は安いです。（このほんはやすいです。）Cuốn sách này rẻ. 高い（たかい）cao/đắt, 安い（やすい）rẻ, 軽い（かるい）nhẹ là tính từ い: giữ い＋です, không thêm だ. この問題は簡単です。（このもんだいはかんたんです。）Câu này dễ. 簡単（かんたん）dễ, 好き（すき）thích là tính từ な: dùng thân＋です, không thêm な trước です. Làm hai câu nền trước khi thêm mốc より."
+          "explanation": "Tập hai câu trước khi thêm より: この本は安いです。（このほんはやすいです。）Cuốn sách này rẻ. この問題は簡単です。（このもんだいはかんたんです。）Câu này dễ.\n\n高い（たかい）cao/đắt, 安い（やすい）rẻ, 軽い（かるい）nhẹ là tính từ い: giữ い＋です, không thêm だ. 簡単（かんたん）dễ, 好き（すき）thích là tính từ な: thêm です ngay sau từ, không thêm な."
         },
         {
           "term": "Nền 2: tính từ trước danh từ và từ chỉ vật",
@@ -1420,7 +1420,7 @@
         },
         {
           "term": "Phi quá khứ không phải đang làm",
-          "explanation": "ます dùng cho thói quen hoặc dự định tùy ngữ cảnh. ています chỉ được nhắc như mẫu sẽ học khác; không yêu cầu tạo hoặc hiểu hết mẫu đó ở bài này. 靴（くつ）giày; 本（ほん）sách; のみます uống."
+          "explanation": "ます nói thói quen hoặc dự định tùy ngữ cảnh, không tự có nghĩa đang làm. ています học sau; bài này chưa yêu cầu dùng hay hiểu hết mẫu ấy. 靴（くつ）giày; 本（ほん）sách; のみます uống."
         }
       ],
       "authorship": "ai_authored",
@@ -1462,7 +1462,7 @@
       ],
       "source_header": "Nguồn tham khảo: Naoki [NK-78585f6975c8-1; NK-78585f6975c8-2; NK-78585f6975c8-3; NK-78585f6975c8-4]",
       "formula": "Thân dạng ます + ます／ません／ました／ませんでした。",
-      "explanation": "Bốn đuôi này giúp nói có làm hay không làm, ở quá khứ hay chưa phải quá khứ. Giữ phần trước ます rồi đổi đuôi: 読みます→読みません→読みました→読みませんでした.\n\nます thường nói thói quen hoặc việc sẽ làm; ません nói không làm hoặc sẽ không làm. ました nói đã làm, còn ませんでした nói đã không làm. ます không tự mang nghĩa 'đang làm'; ý đó thường cần mẫu khác như ています.\n\n毎日, 昨日, 明日 giúp hiểu thời gian, nhưng 今日 có thể nói cả việc đã làm lẫn việc sắp làm hôm nay. Hãy dùng dạng ます đã cho, đừng gắn ます trực tiếp vào mọi dạng từ điển. Sau động từ lịch sự không thêm です.",
+      "explanation": "Giữ phần trước ます rồi đổi đuôi: 読みます→読みません→読みました→読みませんでした. ます nói thói quen hoặc việc sẽ làm; ません là không/sẽ không làm; ました là đã làm; ませんでした là đã không làm. ます không tự có nghĩa 'đang làm', thường cần mẫu khác như ています.\n\n毎日, 昨日, 明日 giúp xác định thời gian; 今日 có thể nói việc đã làm hoặc sắp làm hôm nay. Dùng dạng ます đã cho, không gắn ます vào mọi dạng từ điển hay thêm です sau động từ lịch sự.",
       "examples": [
         {
           "id": "n5-teaching:v1:polite-verbs:example:0",
@@ -1663,7 +1663,7 @@
         },
         {
           "term": "Mức độ lịch sự",
-          "explanation": "ません của bài trước đã biết; ない là phủ định thường vừa được cung cấp ở trên. Nhật ký/bạn thân cho phép dạng thường; nói với giáo viên theo đề dùng ませんでした, không coi khác lịch sự là tự động khác thời gian."
+          "explanation": "Em đã học ません; ない là thể phủ định thường vừa học ở trên. Dùng dạng thường trong nhật ký/với bạn thân, hoặc ませんでした khi đề yêu cầu kể với giáo viên. Khác mức lịch sự không có nghĩa khác thời gian."
         }
       ],
       "practice_path": [
@@ -1698,7 +1698,7 @@
       ],
       "source_header": "Nguồn tham khảo: Saromalang [SR-f4b26d1d125d-1]",
       "formula": "Vません → Vませんでした ／ Vない → Vなかった。",
-      "explanation": "Dùng phủ định quá khứ để kể một việc đã không xảy ra trong thời gian đang nói đến. Dạng lịch sự thêm でした sau ません: 飲みません→飲みませんでした. Dạng thường thay ない bằng なかった: 飲まない→飲まなかった.\n\nSo sánh 飲みました 'đã uống', 飲みません 'không/sẽ không uống' và 飲みませんでした 'đã không uống'. Dạng thường hợp với nhật ký hoặc người thân quen; dạng lịch sự phù hợp khi cần giữ phép lịch sự. 飲まなかったです cũng là một cách nói, nhưng bài yêu cầu ませんでした thì cần dùng đúng đuôi đó.\n\n'Đã không làm' chưa nhất thiết là 'chưa từng làm' hay 'chưa làm xong'. Những ý này cần thêm ngữ cảnh hoặc mẫu khác.",
+      "explanation": "Phủ định quá khứ kể việc đã không xảy ra trong thời gian đang nói đến: 飲みません→飲みませんでした (lịch sự), 飲まない→飲まなかった (thường). Phân biệt 飲みました 'đã uống', 飲みません 'không/sẽ không uống' và 飲みませんでした 'đã không uống'.\n\nDạng thường hợp với nhật ký hoặc người thân quen; cần lịch sự thì dùng dạng lịch sự. 飲まなかったです cũng là một cách nói, nhưng nếu đề yêu cầu ませんでした thì dùng đúng đuôi ấy. 'Đã không làm' chưa có nghĩa 'chưa từng làm' hay 'chưa làm xong'; cần ngữ cảnh hoặc mẫu khác.",
       "examples": [
         {
           "id": "n5-teaching:v1:past-negative:example:0",
@@ -1923,7 +1923,7 @@
       "support": [
         {
           "term": "Nhóm là thông tin từ điển",
-          "explanation": "Nhóm 1 (五段), nhóm 2 (一段), nhóm 3 bất quy tắc (する・来る). Tra/cấp nhóm trước khi chọn quy tắc; đuôi る không đủ. Các bước nhỏ bên dưới là lộ trình học; bảng đầy đủ, năm ví dụ chuỗi hành động và ghi chú thời vẫn là tài liệu tra cứu, không phải phần phải nhớ hết ngay."
+          "explanation": "Nhóm 1 (五段), nhóm 2 (一段), nhóm 3 bất quy tắc (する・来る): hãy xem nhóm đã cho hoặc tra từ điển, đừng đoán từ る. Học từng bước nhỏ bên dưới; bảng chia đầy đủ, năm ví dụ nối hành động và ghi chú thời gian để tra khi cần, chưa phải nhớ hết ngay."
         },
         {
           "term": "Từ vựng và cụm trong ví dụ tham khảo",
@@ -2076,7 +2076,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-81a6ccb7a4cc-1]",
       "formula": "Nhóm 1: う・つ・る→って／む・ぶ・ぬ→んで／く→いて／ぐ→いで／す→して。Nhóm 2: bỏ る + て。する→して／来る→来て（きて）／行く→行って。",
-      "explanation": "Thể て dùng để nối hành động và ghép với các mẫu như ください, います. Cách chia tùy nhóm: 食べる→食べて nhưng 帰る→帰って. Hãy tra nhóm trong tài liệu hoặc từ điển, đừng đoán chỉ vì thấy đuôi る.\n\nNhóm 1 đổi âm cuối của dạng từ điển: 買う・待つ・帰る→買って・待って・帰って; 読む・遊ぶ・死ぬ→読んで・遊んで・死んで; 書く→書いて; 泳ぐ→泳いで; 話す→話して. Nhóm 2 bỏ る rồi thêm て: 食べる→食べて, 起きる→起きて.\n\nNhớ các dạng đặc biệt: する→して, 来る（くる）→来て（きて）. 行く thuộc nhóm 1 nhưng chia thành 行って（いって）, không phải 行いて. Không có cách chung là bỏ ます rồi thêm て cho mọi động từ.\n\nChỉ nhìn thể て chưa biết việc xảy ra ở quá khứ hay không. Trong các ví dụ nối hành động theo thứ tự, động từ cuối giúp xác định thời gian. Tuy vậy, không phải mọi thể て đều mang nghĩa 'rồi'.",
+      "explanation": "Thể て nối hành động hoặc ghép với ください, います. Hãy tra nhóm trước: 食べる→食べて nhưng 帰る→帰って, không thể đoán chỉ từ る.\n\nNhóm 1 đổi âm cuối theo bảng trên; nhóm 2 bỏ る thêm て: 食べる→食べて, 起きる→起きて. Nhớ する→して, 来る（くる）→来て（きて）; riêng 行く thuộc nhóm 1 nhưng là 行って（いって）, không phải 行いて. Không có quy tắc chung bỏ ます rồi thêm て.\n\nThể て tự nó không xác định thời gian; ở chuỗi hành động theo thứ tự, động từ cuối giúp xác định thời gian. Không phải mọi thể て đều nghĩa là 'rồi'.",
       "examples": [
         {
           "id": "n5-teaching:v1:te-form:example:0",
@@ -2345,7 +2345,7 @@
       "support": [
         {
           "term": "Ôn ない đã được cấp trước quá khứ phủ định",
-          "explanation": "Bài past-negative đã cấp nhóm 1/2, う→わない, する→しない, 来る→こない, ある→ない. Nay thêm でください để nhờ người nghe không làm, không kể việc mình đã không làm."
+          "explanation": "Ôn thể ない đã học: nhóm 1/2, う→わない, する→しない, 来る→こない, ある→ない. Thêm でください là nhờ người nghe đừng làm, không kể việc mình đã không làm."
         },
         {
           "term": "Cụm hành động địa điểm và phương thức",
@@ -2377,7 +2377,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-c2bb02acc5d3-1]",
       "formula": "Động từ thể ない + でください。例: 開けない + でください → 開けないでください。",
-      "explanation": "ないでください nhờ hoặc hướng dẫn người nghe đừng làm một việc. 開けてください là nhờ mở; 開けないでください là nhờ đừng mở, không phải kể 'tôi không mở'.\n\nTrước hết chia thể ない. Nhóm 1 đổi âm cuối từ hàng u sang hàng a rồi thêm ない: 書く→書かない, 話す→話さない, 待つ→待たない. Riêng đuôi う đổi thành わない: 買う→買わない. Nhóm 2 bỏ る rồi thêm ない: 開ける→開けない. Đừng đoán nhóm chỉ từ đuôi る.\n\nCác dạng cần nhớ là する→しない, 来る（くる）→来ない（こない）; riêng ある có phủ định ない. Sau thể ない, thêm でください, không ghép ません với でください.\n\nVới cấp trên hoặc khách hàng, có ください vẫn có thể chưa đủ mềm. Cách nhờ còn tùy quan hệ và tình huống.",
+      "explanation": "ないでください nhờ hoặc hướng dẫn người nghe đừng làm: 開けてください là nhờ mở, 開けないでください là nhờ đừng mở, không kể 'tôi không mở'.\n\nChia thể ない theo nhóm đã tra, không đoán từ る: nhóm 1 đổi hàng u sang a rồi thêm ない (書く→書かない), riêng う→わない (買う→買わない); nhóm 2 bỏ る thêm ない (開ける→開けない). Nhớ する→しない, 来る（くる）→来ない（こない）, ある→ない.\n\nThêm でください sau thể ない, không sau ません. Với cấp trên hoặc khách hàng, ください có thể chưa đủ mềm; cách nhờ còn tùy quan hệ và tình huống.",
       "examples": [
         {
           "id": "n5-teaching:v1:negative-request:example:0",
@@ -2607,7 +2607,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-692d6cf7e490-1] · Irodori [IR-85e99cb5c4a8-1]",
       "formula": "Địa điểm に N が あります／います。／N は địa điểm に あります／います。／Phủ định: ありません／いません。",
-      "explanation": "あります・います nói có ai hoặc vật gì ở một nơi. Dùng います cho người và động vật; dùng あります cho đồ vật, công trình và thông thường cả cây cối như 木, 花. Vì vậy, không thể chỉ chia thành 'còn sống' và 'không sống'. Xe đỗ trong bãi cũng dùng あります, dù xe có thể di chuyển.\n\nに chỉ nơi có mặt: 図書館にいます là 'ở thư viện'. Còn 図書館で勉強します là 'học tại thư viện', với で chỉ nơi diễn ra hành động.\n\nKhi giới thiệu người hoặc vật có mặt, thường dùng が. Khi đã lấy đối tượng làm chủ đề và muốn nói vị trí, dùng Nは…にあります／います. Câu phủ định cũng có thể dùng は, như テレビはありません. Phủ định lịch sự là ありません và いません. Nơi tổ chức sự kiện có cách diễn đạt khác với nơi có người hoặc đồ vật.",
+      "explanation": "います dùng cho người, động vật; あります dùng cho đồ vật, công trình, thường cả cây cối như 木, 花 và xe đỗ, dù cây sống và xe có thể chạy. Vì vậy không thể chia đơn giản theo 'sống/không sống'.\n\nに chỉ nơi có mặt, còn で chỉ nơi hành động diễn ra: so sánh hai câu thư viện ở phần hỗ trợ. Nơi tổ chức sự kiện có cách nói khác nơi có người/vật.\n\nGiới thiệu đối tượng có mặt thường dùng が; nói vị trí của chủ đề dùng Nは…にあります／います. Phủ định lịch sự là ありません／いません, cũng có thể dùng は như テレビはありません.",
       "examples": [
         {
           "id": "n5-teaching:v1:existence:example:0",
@@ -2836,7 +2836,7 @@
       ],
       "source_header": "Nguồn tham khảo: Naoki [NK-a202b54c59cc-1; NK-a202b54c59cc-2] — phần giải thích nền; ví dụ và bài tập do AI biên soạn, không phải văn bản của nguồn.",
       "formula": "Mốc bắt đầu + から + mốc kết thúc + まで + Vます。 / Nは mốc bắt đầuから mốc kết thúcまでです。",
-      "explanation": "から chỉ điểm bắt đầu, まで chỉ điểm kết thúc: 7時から8時まで là từ 7 giờ đến 8 giờ. Có thể dùng với giờ, ngày hoặc địa điểm. Với địa điểm, mẫu nói nơi xuất phát và nơi đến, chưa cho biết quãng đường dài bao nhiêu.\n\nChỉ cần nêu lúc bắt đầu thì dùng riêng から; chỉ cần nêu lúc kết thúc thì dùng riêng まで. Trong các mẫu giờ này, không thêm に ngay trước から・まで. Muốn biết giờ sáng hay chiều vẫn cần xem ngữ cảnh.\n\nPhân biệt 10時から 'từ 10 giờ' với 忙しいですから 'vì bận'. から sau một mệnh đề có thể nêu lý do, không phải mốc thời gian.",
+      "explanation": "から chỉ điểm bắt đầu, まで chỉ điểm kết thúc: 7時から8時まで là từ 7 đến 8 giờ. Dùng với giờ, ngày hoặc địa điểm; với địa điểm, mẫu nêu nơi xuất phát và nơi đến, chưa cho biết độ dài quãng đường.\n\nCó thể dùng riêng から hoặc まで nếu chỉ cần một mốc; trong các mẫu giờ này không thêm に ngay trước chúng. Giờ sáng hay chiều cần xem ngữ cảnh.\n\n10時から là 'từ 10 giờ', còn 忙しいですから là 'vì bận': から sau mệnh đề có thể nêu lý do, không phải mốc thời gian.",
       "examples": [
         {
           "id": "n5-teaching:v1:time-range:example:0",
@@ -3822,7 +3822,7 @@
       "support": [
         {
           "term": "Nền tính từ い được học trước",
-          "explanation": "Bài so sánh đã dạy vị ngữ/tính từ; ở đây cấp cách biến đổi cần thiết trước bài làm: たい→たくないです (không muốn), たい→たかったです (đã muốn). Không cần bài quá khứ phủ định động từ để tự suy đuôi tính từ."
+          "explanation": "Sau phần tính từ ở bài so sánh, em học thêm: たい→たくないです (không muốn), たい→たかったです (đã muốn). Đây là cách đổi đuôi tính từ, không cần suy từ bài phủ định quá khứ của động từ."
         },
         {
           "term": "Từ và cụm địa điểm",
@@ -3830,7 +3830,7 @@
         },
         {
           "term": "Giữ đúng mong muốn và hành động",
-          "explanation": "水を飲みたいです và 水が飲みたいです đều có thể nói muốn uống nước trong cảnh khát này. たくない phủ định mong muốn, không chứng minh đã không làm; たかった kể mong muốn trước đây, không chứng minh đã làm xong. Không mở rộng を／が sang mọi trợ từ hay cấu trúc khác."
+          "explanation": "Trong cảnh khát, 水を飲みたいです và 水が飲みたいです đều là muốn uống nước. たくない là không muốn, chưa chứng tỏ đã không làm; たかった là đã muốn, chưa chứng tỏ đã làm xong. Không áp dụng を／が cho mọi trợ từ hay cấu trúc khác."
         }
       ],
       "authorship": "ai_authored",
@@ -3854,7 +3854,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-faf17fe4f639-1] — phần giải thích nền về たい・ほしい; các ví dụ, lưu ý và bài tập do AI biên soạn.",
       "formula": "Vます → bỏ ます + たいです。 / V-たくないです。 / V-たかったです。",
-      "explanation": "たい nói muốn làm một việc. Bỏ ます rồi thêm たいです: 行きます→行きたいです, します→したいです. たい đổi đuôi như tính từ い: たくないです là không muốn, たかったです là đã muốn. Đã muốn làm không có nghĩa là đã làm.\n\nCâu khẳng định trực tiếp thường nói mong muốn của mình; câu hỏi có thể hỏi mong muốn người nghe. Với người thứ ba, cần có căn cứ như lời họ đã nói hoặc ngữ cảnh phù hợp, thay vì tự đoán. Không phải mọi cách dùng たい cho người thứ ba đều bị cấm.\n\nVới thứ muốn uống như 水, cả 水を飲みたいです và 水が飲みたいです đều có thể tự nhiên. Điều này không có nghĩa mọi trợ từ đều đổi sang が: nơi đến trong 京都へ行きたいです vẫn có thể dùng へ hoặc に. Nếu bài yêu cầu một cách diễn đạt cụ thể, hãy làm theo yêu cầu đó.",
+      "explanation": "たい nói muốn làm: bỏ ます thêm たいです, như 行きます→行きたいです, します→したいです. Đuôi đổi như tính từ い: たくないです là không muốn, たかったです là đã muốn, chưa có nghĩa đã làm.\n\nThường dùng để khẳng định mong muốn của mình hoặc hỏi người nghe. Với người thứ ba, cần căn cứ như lời họ nói hoặc ngữ cảnh phù hợp, không tự đoán; không phải cứ dùng たい là sai.\n\n水を飲みたいです và 水が飲みたいです đều có thể tự nhiên, nhưng không đổi mọi trợ từ sang が. Trong 京都へ行きたいです, nơi đến vẫn dùng へ hoặc に. Nếu đề yêu cầu cách nói cụ thể, dùng đúng yêu cầu.",
       "examples": [
         {
           "id": "n5-teaching:v1:want-action:example:0",
@@ -4055,7 +4055,7 @@
         },
         {
           "term": "Không đổi cấu trúc tùy ý",
-          "explanation": "Muốn có N: Nがほしいです; muốn mua N: Nを買いたいです. Biến thể を／が trong 飲みたい của bài trước không cấp phép Nをほしい. ほしかった cũng không chứng minh đã có món đồ."
+          "explanation": "Nがほしいです là muốn có N; Nを買いたいです là muốn mua N. Cách dùng を／が với 飲みたい không áp dụng thành Nをほしい. ほしかった chưa chứng tỏ đã có món đồ."
         }
       ],
       "authorship": "ai_authored",
@@ -4079,7 +4079,7 @@
       ],
       "source_header": "Nguồn tham khảo: FreeTag [FT-faf17fe4f639-1] — phần giải thích nền về たい・ほしい; ví dụ và bài tập do AI biên soạn, không phải câu hỏi của nguồn.",
       "formula": "Nがほしいです。 / Nはほしくないです。 / Nがほしかったです。",
-      "explanation": "Nがほしいです nói muốn có một thứ; Vたいです nói muốn làm một việc. パソコンがほしいです chỉ nói muốn có máy tính, chưa nói sẽ mua. パソコンを買いたいです mới nêu rõ hành động mua.\n\nThứ muốn có thường đi với が. Không chuyển cách dùng を／が của 飲みたい thành Nをほしいです. Có thể dùng は khi nêu chủ đề hoặc so với thứ khác, như 新しい時計はほしくないです.\n\nほしい đổi đuôi như tính từ い: ほしくないです là không muốn có, ほしかったです là đã muốn có. Câu trực tiếp thường nói mong muốn của mình hoặc hỏi người nghe; đừng đoán chắc nhu cầu của người thứ ba. Bài này học 'muốn có N', khác với Vてほしい nhờ hoặc mong người khác làm gì.",
+      "explanation": "Nがほしいです là muốn có, Vたいです là muốn làm: パソコンがほしいです chưa nói sẽ mua; パソコンを買いたいです mới nêu hành động mua.\n\nThứ muốn có thường đi với が, không áp dụng を／が của 飲みたい thành Nをほしいです. は có thể nêu chủ đề hoặc đối chiếu, như 新しい時計はほしくないです.\n\nほしい đổi như tính từ い: ほしくないです là không muốn có, ほしかったです là đã muốn có. Câu trực tiếp thường nói ý mình hoặc hỏi người nghe, không đoán chắc nhu cầu người thứ ba. Bài này học muốn có N, khác Vてほしい nhờ/mong người khác làm gì.",
       "examples": [
         {
           "id": "n5-teaching:v1:want-object:example:0",
