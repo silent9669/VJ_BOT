@@ -148,10 +148,10 @@
           },1000);
         } else if(event.type==='session.closed')cleanup('Đã kết thúc cuộc trò chuyện.');
         else if(['session.input_transcript.delta','session.output_transcript.delta'].includes(event.type)){if(event.type==='session.output_transcript.delta')teacherHeardAt=Date.now();timeline.add(event);}
-        else if(event.type==='error')cleanup('GPT-Live báo lỗi. Kết thúc phiên; hãy thử lại.');
+        else if(event.type==='error')cleanup('Cuộc gọi gặp lỗi và đã kết thúc. Hãy thử lại.');
       });
       events.addEventListener('close',()=>{if(run===version)cleanup('Kết nối đã đóng.');});
-      status('Đang mở GPT-Live…');
+      status('Đang kết nối với thầy…');
       connectTimer=setTimeout(()=>{if(run===version)cleanup('Kết nối hết thời gian. Hãy thử lại.');},35000);
       await connection.setLocalDescription(await connection.createOffer());
       if(connection.iceGatheringState!=='complete')await new Promise(resolve=>{
@@ -169,9 +169,8 @@
       const result=await response.json();
       if(run!==version)return;
       if(owner!==signedInUser?.user_id){cleanup('Tài khoản đã thay đổi.');return;}
-      if(!response.ok)throw new Error(result.detail || 'Không mở được GPT-Live.');
+      if(!response.ok)throw new Error(result.detail || 'Không mở được cuộc gọi.');
       greeting=result.greeting;commands=result.commands && typeof result.commands==='object'?result.commands:{};
-      el('live-model-name').textContent=result.model+' · '+result.voice;
       await connection.setRemoteDescription({type:'answer',sdp:result.sdp});
     } catch(error) {
       if(run!==version)return;

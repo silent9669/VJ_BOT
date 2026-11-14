@@ -81,9 +81,9 @@ export async function liveRoute(request, env) {
         transport:{type:'webrtc',sdp:data.sdp}})
     });
     if (!response.ok) return json({detail:response.status === 429 ? 'OpenAI đang giới hạn lượt dùng. Thử lại sau.'
-      : 'Không mở được GPT-Live. Kiểm tra quyền truy cập và hạn mức OpenAI trong Cài đặt.',code:'live_unavailable'},response.status === 429 ? 429 : 503);
+      : 'Không mở được cuộc gọi. Kiểm tra quyền truy cập và hạn mức trong Cài đặt.',code:'live_unavailable'},response.status === 429 ? 429 : 503);
     const result = await response.json();
     if (typeof result.transport?.sdp !== 'string' || typeof result.session?.id !== 'string') return json({detail:'OpenAI trả về kết nối không hợp lệ.'},502);
     return json({sdp:result.transport.sdp,id:result.session.id,model:'gpt-live-1',voice:settings.live_voice,greeting:GREETING,commands:COMMANDS},201);
-  } catch { return json({detail:'Kết nối GPT-Live hết thời gian. Hãy thử lại.'},504); }
+  } catch { return json({detail:'Kết nối cuộc gọi hết thời gian. Hãy thử lại.'},504); }
 }
