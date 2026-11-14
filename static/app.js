@@ -1081,14 +1081,14 @@ function handleQuizAnswer(selectedIndex){
   const attempt=taskAttempt(buildLessonContext(descriptor,activeQuizLevel,'reading'),question,index,'exam');
   const feedback=document.getElementById('quiz-feedback-box'),status=document.getElementById('quiz-feedback-status'),text=document.getElementById('quiz-feedback-text'),next=document.getElementById('btn-quiz-next');
   const matched=selectedIndex===question.answer_index;
-  status.textContent='Đang lưu câu trả lời…';
+  status.textContent='Đang gửi…';
   text.textContent='';feedback.hidden=false;next.disabled=true;
   grid.querySelectorAll('.quiz-option-btn').forEach((button,position)=>{
     button.disabled=true;button.dataset.state=position===question.answer_index?'correct':position===selectedIndex?'incorrect':'idle';
     button.setAttribute('aria-label',`${position+1}. ${question.opts[position]}${position===selectedIndex?' · em đã chọn':''}${position===question.answer_index?' · đáp án':''}`);
   });
   document.getElementById('quiz-save-retry')?.remove();
-  const retry=document.createElement('button');retry.type='button';retry.id='quiz-save-retry';retry.className='stage-btn';retry.textContent='Lưu lại';retry.hidden=true;feedback.append(retry);
+  const retry=document.createElement('button');retry.type='button';retry.id='quiz-save-retry';retry.className='stage-btn';retry.textContent='Thử lại';retry.hidden=true;feedback.append(retry);
   const current=()=>request===quizRequest && examQuestionIdx===index && !document.getElementById('quiz-card').hidden;
   async function save(){
     retry.disabled=true;
@@ -1097,7 +1097,7 @@ function handleQuizAnswer(selectedIndex){
       if(!current())return;
       examAnswers.set(index,matched);examScore=[...examAnswers.values()].filter(Boolean).length;
       status.textContent='';text.textContent='';feedback.hidden=true;retry.remove();next.disabled=false;next.focus();
-    }catch(error){if(current()){status.textContent='Chưa lưu được câu trả lời.';text.textContent=error.message;feedback.hidden=false;retry.hidden=false;retry.disabled=false;}}
+    }catch(error){if(current()){status.textContent='Chưa gửi được câu trả lời.';text.textContent=error.message;feedback.hidden=false;retry.hidden=false;retry.disabled=false;}}
   }
   retry.onclick=save;save();
 }

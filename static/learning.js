@@ -194,11 +194,12 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
     if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Bài này chưa có bài tập viết. Em có thể chọn bài khác.';container.append(section);return;}
     const attempt=taskAttempt(lesson,question,0,'checks',true);
     section.dataset.teacherQuestion='0';
-    section.innerHTML=`<h3>${escapeHtml(source.prompt)}</h3><details class="task-basis"><summary>Cách kiểm tra bài</summary><p>Bài viết chưa được chấm đúng/sai. Em tự kiểm tra theo tiêu chí; nhận xét AI chỉ để tham khảo.</p>${question.explanation?`<p>${escapeHtml(question.explanation)}</p>`:''}</details>
+    section.innerHTML=`<h3>${escapeHtml(source.prompt)}</h3>
+      ${question.explanation?`<p class="task-instruction">${escapeHtml(question.explanation)}</p>`:''}
       <label for="production-answer">Câu trả lời của em</label><textarea id="production-answer" rows="5" maxlength="4000" lang="ja" placeholder="Viết bằng tiếng Nhật…"></textarea>
       <button type="button" class="production-reveal"${question.model?'':' hidden'}>Xem bài mẫu</button><div class="production-model" hidden><p lang="ja">${escapeHtml(question.model)}</p><p>Bài mẫu để tham khảo, chưa được kiểm tra độc lập.</p></div>
       <fieldset><legend>Tự kiểm tra câu trả lời</legend>${source.criteria.map((criterion,i)=>`<label><input type="checkbox" value="${i}"> ${escapeHtml(criterion)}</label>`).join('')}</fieldset>
-      <button type="button" class="production-save">Lưu bài và tự đánh giá</button><output aria-live="polite"></output>`;
+      <button type="button" class="production-save">Gửi bài</button><output aria-live="polite"></output>`;
     container.append(section);
     const input=section.querySelector('textarea'),save=section.querySelector('.production-save'),status=section.querySelector('output'),reveal=section.querySelector('.production-reveal');
     input.addEventListener('focus',()=>globalThis.setTeacherFocus?.({kind:'question',index:0}));
@@ -218,12 +219,12 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
     save.onclick=async()=>{
       if(!input.value.trim()){status.textContent='Hãy viết câu trả lời trước khi tự đánh giá.';input.focus();return;}
       if(!pending)pending={response_text:input.value,self_rating:[...section.querySelectorAll('input')].every(control=>control.checked)?4:1};
-      save.disabled=true;input.disabled=true;section.querySelectorAll('input').forEach(control=>control.disabled=true);
+      save.disabled=true;save.textContent='Đang gửi…';input.disabled=true;section.querySelectorAll('input').forEach(control=>control.disabled=true);
       try{
         await recordTaskEvent(attempt,'answer',pending);
-        status.textContent='Đã lưu bài viết và tự đánh giá, chưa chấm đúng/sai.';
-        save.textContent='Đã lưu';reveal.disabled=false;
-      }catch(error){status.textContent='Chưa lưu được bài viết. '+error.message+' Bấm "Lưu lại" để thử lại.';save.textContent='Lưu lại';save.disabled=false;}
+        status.textContent='Đã gửi bài.';
+        save.textContent='Đã gửi';reveal.disabled=false;
+      }catch(error){status.textContent='Chưa gửi được bài. '+error.message;save.textContent='Thử lại';save.disabled=false;}
     };
     return;
   }

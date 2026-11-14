@@ -802,7 +802,7 @@ test('generic production continuation reuses actual raw learner text without pre
   input.value=raw;await input.dispatch('input');await b.document.querySelector('.practice-session .practice-primary').click();
   await b.document.querySelector('.practice-session .practice-primary').click();
   const section=b.document.querySelector('.practice-session');
-  assert.match(section.textContent,/Câu em đã lưu ở bước trước/);assert.doesNotMatch(section.textContent,/Lời mời|Đáp án nguồn/);
+  assert.doesNotMatch(section.textContent,/Lời mời|Đáp án nguồn/);
   assert.ok(section.textContent.includes(raw));assert.equal(section.querySelector('textarea').value,'');
   assert.equal(sent[0].response_text,raw);
 });
