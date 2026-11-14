@@ -647,12 +647,34 @@ function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
           ${hasFurigana?`<p lang="ja">${furiganaHtml(annotated)}</p>`:''}
           ${ex.ro?`<p class="example-ro">${escapeHtml(ex.ro)}</p>`:''}
         </div></details>`:''}
-        ${ex.vi?`<details class="lesson-disclosure"><summary>Diễn giải từ nguồn</summary><p class="example-vi lesson-aid-content">${escapeHtml(ex.vi)}</p></details>`:''}
+        ${ex.vi?`<details class="lesson-disclosure"><summary>Nghĩa của câu</summary><p class="example-vi lesson-aid-content">${escapeHtml(ex.vi)}</p></details>`:''}
       </div>
       ${ex.source?`<a class="example-source" href="${escapeHtml(ex.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`:''}
     </div>
     <button type="button" class="card-audio-btn modal-tts-btn" aria-label="Nghe câu ${index+1}" data-text="${encodeURIComponent(annotated)}">Nghe</button>
   </${tag}>`;
+}
+
+function grammarFormulaHtml(formula) {
+  // Keep the source operator order; slash notation does not establish new bracket groups.
+  const rows=[];
+  let text='',depth=0;
+  const flush=()=>{if(text.trim())rows.push(`<span class="grammar-part">${escapeHtml(text.trim())}</span>`);text='';};
+  for(const char of String(formula)){
+    if('([（［{｛「『'.includes(char))depth++;
+    if(')]）］}｝」』'.includes(char))depth=Math.max(0,depth-1);
+    if(depth===0 && '+＋/／'.includes(char)){
+      flush();
+      rows.push(char==='+' || char==='＋'?'<span class="grammar-plus" aria-label="cộng">+</span>':'<span class="grammar-or">hoặc</span>');
+    }else if(depth===0 && (char==='|' || char==='\n')){
+      flush();rows.push('<span class="grammar-break" aria-hidden="true"></span>');
+    }else{
+      text+=char;
+      if(depth===0 && char==='。'){flush();rows.push('<span class="grammar-break" aria-hidden="true"></span>');}
+    }
+  }
+  flush();
+  return rows.join('');
 }
 
 function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
@@ -679,7 +701,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     examplesHtml = `
       <section class="lesson-section">
         <h3 class="lesson-section-title">Ví dụ</h3>
-        <p class="lesson-study-hint">${item.dictation?'Nghe và thử chép lại trước khi mở lời thoại.':'Tự đọc hoặc nghe trước. Chỉ mở cách đọc và nghĩa khi cần.'}</p>
+        ${item.dictation?'<p>Nghe rồi thử chép lại trước khi xem lời thoại.</p>':''}
         <ol class="example-list">${item.examples.map((ex,index)=>lessonExampleHtml(ex,index,{listenFirst:Boolean(item.dictation || (skill==='listening' && !owner))})).join("")}</ol>
       </section>
     `;
@@ -698,7 +720,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   const delayedReview=item.delayedReview===true && tasks[item.reviewQuestionIndex]?.exchange?.stage==='delayed';
   const guided=item.guided_steps?.length && !delayedReview;
   const firstStage=guided?item.guided_steps[0]:null;
-  const supportHtml=item.support?.length?`<section class="lesson-section"><h3>Hỗ trợ ngay trong bài</h3><p>Đây là từ hoặc cách diễn đạt được giải thích tại chỗ, không phải tất cả đều là kiến thức bắt buộc phải biết trước.</p>${item.support.map(entry=>`<details class="lesson-disclosure"><summary>${escapeHtml(entry.term)}</summary><p>${escapeHtml(entry.explanation)}</p></details>`).join('')}</section>`:'';
+  const supportHtml=item.support?.length?`<details class="lesson-disclosure lesson-support"><summary>Từ cần biết trong bài</summary>${item.support.map(entry=>`<details class="lesson-disclosure"><summary>${escapeHtml(entry.term)}</summary><p>${escapeHtml(entry.explanation)}</p></details>`).join('')}</details>`:'';
   const taskReferenceHtml=Number.isInteger(item.examIndex)?`<section class="lesson-section"><h3>Bộ câu hỏi · ${tasks.length} câu</h3>
     <p>Đọc đầy đủ đề và ngữ cảnh. Đáp án/lời giải chỉ xuất hiện sau khi em thử trả lời.</p>
     <ol class="task-reference-list">${tasks.map(task=>`<li>${taskPromptHtml(task)}${task.unavailable_reason?`<p role="note">Tạm ngừng: ${escapeHtml(taskUnavailableMessage(task))}</p>`:
@@ -708,18 +730,16 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     <div class="lesson-mode-switch" aria-label="Hoạt động bài học"><button type="button" data-lesson-mode="read" aria-pressed="true">Học bài</button><button type="button" data-lesson-mode="practice" aria-pressed="false">Luyện tập</button></div>
     <div id="lesson-reference">
     <section class="lesson-intro">
-      <span class="lesson-source">${escapeHtml(item.sourceLabel || (item.source ? "OpenJLPT" : "Bài học"))}</span>
-      ${item.editorial?`<p class="lesson-study-hint">AI biên soạn, chỉ dùng tham khảo; chưa được giáo viên duyệt và không xác nhận thành thạo.</p><p>${escapeHtml(item.source_header)}</p>${item.prerequisite_titles.length?`<p>Học trước: ${escapeHtml(item.prerequisite_titles.join(' · '))}</p>`:''}`:''}
+      ${item.editorial && item.prerequisite_titles?.length?`<p class="lesson-prerequisites">Nên học trước: ${escapeHtml(item.prerequisite_titles.join(', '))}</p>`:''}
       <p class="lesson-meaning">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
-      ${guided?`<aside class="task-stage"><h3>${escapeHtml(firstStage.title)}</h3><p>${escapeHtml(firstStage.note)}</p><p lang="ja">${escapeHtml(firstStage.example.jp)}</p><details><summary>Cách đọc và nghĩa</summary><p lang="ja">${escapeHtml(firstStage.example.reading)}</p><p>${escapeHtml(firstStage.example.vi)}</p></details><p>Làm một lượt nhỏ, xem phản hồi rồi mới mở bước tiếp. Bảng đầy đủ ở phần tham khảo bên dưới.</p></aside>`:''}
-      ${guided?'<details class="lesson-disclosure lesson-full-reference"><summary>Bảng và ghi chú đầy đủ · tài liệu tham khảo</summary>':''}
-      ${item.formula ? `<div class="lesson-formula"><span>Cấu trúc</span><code>${escapeHtml(item.formula)}</code></div>` : ""}
+      ${guided?`<aside class="task-stage"><h3>${escapeHtml(firstStage.title)}</h3><p>${escapeHtml(firstStage.note)}</p><p lang="ja">${escapeHtml(firstStage.example.jp)}</p><details><summary>Cách đọc và nghĩa</summary><p lang="ja">${escapeHtml(firstStage.example.reading)}</p><p>${escapeHtml(firstStage.example.vi)}</p></details></aside>`:''}
+      ${guided?'<details class="lesson-disclosure lesson-full-reference"><summary>Xem bảng chia đầy đủ</summary>':''}
+      ${item.formula ? `<div class="lesson-formula"><span>Cách ghép câu</span><code hidden>${escapeHtml(item.formula)}</code><div class="grammar-layout">${grammarFormulaHtml(item.formula)}</div></div>` : ""}
       ${item.explanation || item.summary ? `<p class="lesson-explain">${escapeHtml(item.explanation || item.summary || "")}</p>` : ""}
       ${guided?'</details>':''}
     </section>
     ${supportHtml}
-    ${item.resources?.length ? `<aside class="lesson-resources"><h4>Học tiếp từ nguồn gốc</h4>${item.resources.map(r=>`<p>${escapeHtml(r.publisher)} · ${escapeHtml(r.title)}</p><a href="${escapeHtml(r.pdf_url)}" target="_blank" rel="noopener">Mở bài PDF</a> ${r.audio_page_url?`<a href="${escapeHtml(r.audio_page_url)}" target="_blank" rel="noopener">Nghe bản gốc</a>`:''}`).join('')}<p>Bài trong app được biên soạn riêng; nguồn gốc dùng hệ A1/A2/A2–B1.</p></aside>` : ''}
-    ${guided?'<details class="lesson-disclosure"><summary>Các ví dụ và đối chiếu lỗi đầy đủ · tham khảo</summary>':''}
+    ${guided?'<details class="lesson-disclosure"><summary>Xem thêm ví dụ và lỗi thường gặp</summary>':''}
     ${examplesHtml}
     ${item.common_errors?.length?`<section class="lesson-section"><h3>Lỗi dễ gặp và cách sửa</h3>${item.common_errors.map(error=>`<details class="lesson-disclosure"><summary>${escapeHtml(error.problem)}</summary><p>${escapeHtml(error.correction)}</p><p>${escapeHtml(error.reason)}</p></details>`).join('')}</section>`:''}
     ${guided?'</details>':''}
@@ -728,6 +748,12 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     ${listeningHtml}
     ${taskReferenceHtml}
     ${item.externalResources?.length?`<div class="external-resources">${item.externalResources.map(r=>`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)} ↗</a>`).join('')}</div>`:''}
+    ${item.sourceLabel || item.source || item.source_header || item.resources?.length?`<details class="lesson-disclosure lesson-info"><summary>Về bài học này${item.editorial?' · AI biên soạn':''}</summary>
+      <p>${escapeHtml(item.sourceLabel || item.source || 'VJBot')}</p>
+      ${item.editorial?'<p>Bài chưa được giáo viên duyệt.</p>':''}
+      ${item.source_header?`<p>${escapeHtml(item.source_header)}</p>`:''}
+      ${item.resources?.length?`<div class="lesson-resources">${item.resources.map(r=>`<p>${escapeHtml(r.publisher)} · ${escapeHtml(r.title)}</p><a href="${escapeHtml(r.pdf_url)}" target="_blank" rel="noopener">Đọc tài liệu</a> ${r.audio_page_url?`<a href="${escapeHtml(r.audio_page_url)}" target="_blank" rel="noopener">Nghe bài gốc</a>`:''}`).join('')}</div>`:''}
+    </details>`:''}
     </div><div id="lesson-exercises" hidden></div><div id="lesson-completion"></div>
     <div class="lesson-footer">
       <button type="button" class="sketch-btn-cta modal-practice-btn">Luyện với thầy Lâm</button>
@@ -736,7 +762,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   `;
   if(delayedReview){
     body.querySelector('#lesson-reference').replaceChildren();
-    const note=document.createElement('p');note.textContent='Gợi nhớ ở tình huống mới: không mở bài mẫu hoặc lời giải trước khi thử. Lượt này chưa chứng minh khả năng nhớ lâu.';
+    const note=document.createElement('p');note.textContent='Thử viết trong tình huống mới trước khi xem lại bài.';
     body.querySelector('#lesson-reference').append(note);
   }
 
@@ -770,7 +796,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     if(word.open && word.isConnected)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
   }));
   const completionHost=document.getElementById('lesson-completion');
-  if(tasks.length && tasks.every(task=>task.unavailable_reason))completionHost.textContent='Bài tập đang tạm ngừng; không tự tính hoàn thành khi chưa có câu khả dụng.';
+  if(tasks.length && tasks.every(task=>task.unavailable_reason))completionHost.textContent='Bài tập đang được kiểm tra lại nên chưa thể đánh dấu đã làm.';
   else mountCompletion(completionHost,{activity_id:activityId(item,level,skill),kind:owner==='quiz'?'test':owner==='kaiwa'?'kaiwa':'lesson',level,title:item.title || item.jp || 'Bài học'});
   body.querySelectorAll(".modal-tts-btn").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -884,7 +910,7 @@ function displayFlashcard() {
 function updateFlashcardFace(card,back){
   const front=card.querySelector('.card-front'),reverse=card.querySelector('.card-back');
   for(const [face,inactive] of [[front,back],[reverse,!back]])if(face){face.inert=inactive;face.setAttribute('aria-hidden',String(inactive));}
-  card.setAttribute('aria-label',back?'Thẻ nhớ đang mở nghĩa, nhấn Enter để quay lại':'Thẻ nhớ đang che nghĩa, nhấn Enter để đối chiếu');
+  card.setAttribute('aria-label',back?'Thẻ nhớ đang mở nghĩa, nhấn Enter để quay lại':'Thẻ nhớ đang che nghĩa, nhấn Enter để xem nghĩa');
   document.getElementById('fc-face-status')?.replaceChildren(document.createTextNode(back?'Đang mở nghĩa và ví dụ':'Đang xem mặt chữ, nghĩa được che'));
 }
 
@@ -930,7 +956,7 @@ function loadKaiwaPrompt() {
   const context=document.getElementById('kaiwa-context');context.textContent=s.context || '';context.hidden=!s.context;
   if (tag) tag.textContent = s.title;
   if (jp) jp.textContent = prompt.jp || "こんにちは。よろしくお願いします。";
-  if (vi) vi.textContent = prompt.vi || "Chưa có diễn giải tiếng Việt từ nguồn. Nhờ thầy giảng từ câu tiếng Nhật khi cần.";
+  if (vi) vi.textContent = prompt.vi || "Chưa có bản dịch tiếng Việt. Em có thể nhờ thầy giải thích.";
   if (manualInput) manualInput.value = "";
   document.getElementById("kaiwa-next-prompt").hidden=prompts.length<2;
   const hint = document.getElementById("kaiwa-prompt-hint");
@@ -1023,13 +1049,13 @@ function displayQuizQuestion(){
   const number=document.getElementById('quiz-q-num'),instruction=document.getElementById('quiz-instruction'),sentence=document.getElementById('quiz-question-sentence'),grid=document.getElementById('quiz-options-grid');
   number.textContent=`Câu ${examQuestionIdx+1} / ${currentExamQuestions.length}`;
   document.getElementById('quiz-q-type').textContent=question.type || question.mode;
-  instruction.textContent=question.instruction || 'Chọn một đáp án để đối chiếu với nguồn.';
+  instruction.textContent=question.instruction || 'Chọn một đáp án.';
   sentence.innerHTML=taskPromptHtml({...question,instruction:''});
   grid.replaceChildren();delete grid.dataset.answered;
   instruction.tabIndex=-1;
   if(question.unavailable_reason){
     sentence.append(document.createTextNode(`Tạm ngừng sử dụng: ${taskUnavailableMessage(question)}`));
-    document.getElementById('quiz-feedback-status').textContent='Câu chưa khả dụng — không chấm điểm';
+    document.getElementById('quiz-feedback-status').textContent='Câu này đang tạm ngừng, chưa tính điểm.';
     document.getElementById('quiz-feedback-text').textContent=taskUnavailableMessage(question);
     feedback.hidden=false;next.disabled=false;instruction.focus();return;
   }
@@ -1056,12 +1082,12 @@ function handleQuizAnswer(selectedIndex){
   const attempt=taskAttempt(buildLessonContext(descriptor,activeQuizLevel,'reading'),question,index,'exam');
   const feedback=document.getElementById('quiz-feedback-box'),status=document.getElementById('quiz-feedback-status'),text=document.getElementById('quiz-feedback-text'),next=document.getElementById('btn-quiz-next');
   const matched=selectedIndex===question.answer_index;
-  status.textContent=matched?'Khớp đáp án nguồn — chưa phải điểm được xác minh':'Chưa khớp đáp án nguồn — chưa phải điểm được xác minh';
-  const explanation=`Em chọn (${selectedIndex+1}) ${question.opts[selectedIndex]}. Đáp án nguồn (${question.answer_index+1}): ${question.opts[question.answer_index]}. ${question.explanation || 'Nguồn chưa có lời giải đầy đủ. Nhờ thầy đối chiếu ngữ cảnh thay vì suy ra rằng mọi cách trả lời khác đều sai.'}`;
+  status.textContent=matched?'Em chọn đúng đáp án.':'Em chọn chưa đúng.';
+  const explanation=`Em chọn (${selectedIndex+1}) ${question.opts[selectedIndex]}. Đáp án: (${question.answer_index+1}) ${question.opts[question.answer_index]}. ${question.explanation || 'Câu này chưa có lời giải. Em có thể nhờ thầy giải thích.'}`;
   text.textContent=explanation;feedback.hidden=false;next.disabled=true;
   grid.querySelectorAll('.quiz-option-btn').forEach((button,position)=>{
     button.disabled=true;button.dataset.state=position===question.answer_index?'correct':position===selectedIndex?'incorrect':'idle';
-    button.setAttribute('aria-label',`${position+1}. ${question.opts[position]}${position===selectedIndex?' — em đã chọn':''}${position===question.answer_index?' — đáp án nguồn':''}`);
+    button.setAttribute('aria-label',`${position+1}. ${question.opts[position]}${position===selectedIndex?' · em đã chọn':''}${position===question.answer_index?' · đáp án':''}`);
   });
   document.getElementById('quiz-save-retry')?.remove();
   const retry=document.createElement('button');retry.type='button';retry.id='quiz-save-retry';retry.className='stage-btn';retry.textContent='Lưu lại';retry.hidden=true;feedback.append(retry);
@@ -1091,12 +1117,12 @@ function finishExam() {
   globalThis.invalidateTeacherQuery?.();
 
   const total=currentExamQuestions.length,answered=examAnswers.size,unavailable=currentExamQuestions.filter(task=>task.unavailable_reason).length;
-  if(scoreVal)scoreVal.textContent=`${examScore} / ${answered} câu đã đối chiếu với nguồn`;
-  if(praise)praise.textContent=`Đã lưu ${answered}/${total} câu. ${unavailable?`${unavailable} câu tạm ngừng vẫn thuộc bộ đề. `:''}Đây là luyện tham khảo, không phải điểm đánh giá năng lực được xác minh.`;
+  if(scoreVal)scoreVal.textContent=`${examScore} / ${answered} câu đúng`;
+  if(praise)praise.textContent=`Đã làm ${answered}/${total} câu. ${unavailable?`${unavailable} câu đang được kiểm tra lại. `:''}Kết quả theo đáp án của bài, không quy đổi thành điểm JLPT.`;
   const exam=window.JLPT_DATA.exams[activeQuizLevel][activeQuizTestIdx],completion=document.getElementById('quiz-completion');
   completion.replaceChildren();
   if(answered===total && unavailable===0)mountCompletion(completion,{activity_id:`test:${examIdentity(activeQuizLevel,activeQuizTestIdx)}`,kind:'test',level:activeQuizLevel,title:exam.title});
-  else completion.textContent='Chưa xác nhận làm trọn bộ: vẫn còn câu chưa trả lời hoặc chưa khả dụng.';
+  else completion.textContent='Chưa xác nhận làm trọn bộ: còn câu chưa trả lời hoặc đang tạm ngừng.';
   loadProgress();
 }
 
@@ -1132,7 +1158,7 @@ async function loadProgress() {
       document.getElementById('mastery-lessons-count').textContent=new Set([...(data.items || []).map(row=>row.item_id),...(data.evidence || []).filter(row=>row.answered_at).map(row=>row.item_id)]).size;
       document.getElementById('mastery-accuracy-rate').textContent=`${data.legacy?.accuracy_rate ?? data.accuracy_rate ?? 0}%`;
       const summary=document.getElementById('mastery-evidence-summary');
-      if(summary)summary.textContent=`Lịch sử cũ chưa xác minh: ${data.total_learned || 0} mục. Lượt mới chỉ được gọi là xác minh khi máy chủ có căn cứ chấm đã thẩm định; đối chiếu nguồn, tự đánh giá và AI luôn tách riêng.`;
+      if(summary)summary.textContent=`Lịch sử trước đây: ${data.total_learned || 0} mục. Kết quả luyện tập và tự đánh giá được lưu riêng; chưa dùng để kết luận em đã thành thạo.`;
       document.getElementById("mastery-streak-val").textContent=`${data.streak_days ?? 0} ngày`;
       document.getElementById("streak-counter").textContent=`${data.streak_days ?? 0} ngày`;
       document.getElementById("mastery-exams-count").textContent=(data.items || []).filter(x=>x.item_id?.startsWith("exam-")).length;
@@ -1145,7 +1171,7 @@ async function loadProgress() {
           return `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; border: 1.5px solid #fed7aa; border-radius: 10px; margin-bottom: 8px;">
             <div><strong style="color: #9a3412;">${escapeHtml(item.display || item.topic_id || "Mục cần ôn")}</strong>
-              <p style="font-size:12px;color:#7c2d12;margin:0;">${item.basis?`Căn cứ: ${escapeHtml(item.basis)}; chưa khớp nguồn`:'Lịch sử cũ chưa được xác minh'}</p>
+              <p style="color:#7c2d12;margin:0;">${item.basis?'Câu cần xem lại':'Lượt học trước đây'}</p>
             </div>
             <button type="button" class="revise-btn" data-record="${index}" style="background:#ea580c;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">Mở đúng bài để ôn</button>
           </div>

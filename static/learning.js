@@ -11,7 +11,7 @@ async function loadTeachingDrafts(level){
     || source.lessons.some(lesson=>lesson.level!==level || lesson.review?.human_approved!==false
       || lesson.eligibility?.reference_display!==true || lesson.eligibility?.provider_teaching!=='advisory_only'
       || lesson.eligibility?.scored_assessment!==false || lesson.eligibility?.mastery_credit!==false
-      || !Array.isArray(lesson.tasks)))throw new Error(`Bộ bài ${level} chưa có cấu trúc và giới hạn sử dụng phù hợp.`);
+      || !Array.isArray(lesson.tasks)))throw new Error(`Bộ bài ${level} chưa sẵn sàng để học. Em hãy thử lại sau.`);
   for(const lesson of source.lessons){
     const taskPositions=new Map(lesson.tasks.map((task,index)=>[task.id,index]));
     const paths=[lesson.practice_path,lesson.reference_task_ids,...(lesson.guided_steps || []).map(step=>step.task_ids)].filter(path=>path!==undefined);
@@ -19,7 +19,7 @@ async function loadTeachingDrafts(level){
       || lesson.delayed_review_task_id && !taskPositions.has(lesson.delayed_review_task_id)
       || lesson.guided_steps?.some(step=>typeof step.title!=='string' || typeof step.note!=='string'
         || !step.example || ['jp','reading','vi'].some(key=>typeof step.example[key]!=='string' || !step.example[key].trim())))
-      throw new Error(`Bộ bài ${level} có bước luyện chưa gắn đúng câu hỏi. Hãy mở lại sau khi nội dung được sửa.`);
+      throw new Error(`Một số bước luyện trong bộ bài ${level} đang có lỗi. Em hãy thử lại sau.`);
     const defaultPath=lesson.practice_path || lesson.guided_steps?.flatMap(step=>step.task_ids) || lesson.tasks.filter(task=>task.exchange?.stage!=='delayed').map(task=>task.id);
     for(const [index,task] of lesson.tasks.entries()){
       const exchange=task.exchange;if(!exchange)continue;
@@ -38,7 +38,7 @@ async function loadTeachingDrafts(level){
         || !delayed && (!defaultPath.includes(task.id) || priorIds.some(id=>!defaultPath.includes(id) || defaultPath.indexOf(id)>=defaultPath.indexOf(task.id)))
         || lesson.reference_task_ids?.includes(task.id)
         || lesson.guided_steps?.some(step=>step.task_ids.includes(task.id)))
-        throw new Error(`Bộ bài ${level} có chuỗi tự viết hoặc gợi nhớ chưa gắn đúng phiên và câu trả lời trước. Hãy mở lại sau khi nội dung được sửa.`);
+        throw new Error(`Chuỗi tự viết trong bộ bài ${level} đang có lỗi. Em hãy thử lại sau.`);
     }
   }
   const titles=new Map(source.lessons.map(lesson=>[lesson.id,lesson.title]));
@@ -152,7 +152,7 @@ async function recordTaskEvent(attempt,event,extra={}){
     body:JSON.stringify({lesson:attempt.lesson,view:attempt.view,question_index:attempt.index,task,
       attempt_id:attempt.id,...(attempt.sessionId?{session_id:attempt.sessionId}:{}),event,...extra})});
   const result=await response.json();
-  if((typeof signedInUser==='undefined'?null:signedInUser?.user_id)!==attempt.account)throw new Error('Đã bỏ phản hồi lưu của tài khoản cũ.');
+  if((typeof signedInUser==='undefined'?null:signedInUser?.user_id)!==attempt.account)throw new Error('Tài khoản đã thay đổi. Mở lại bài để xem câu trả lời của tài khoản hiện tại.');
   if(!response.ok)throw new Error(result.detail || 'Chưa lưu được lượt học. Hãy thử lại.');
   if(event==='assist')attempt.assisted=true;
   return result;
@@ -178,22 +178,21 @@ function taskPromptHtml(task){
     ${task.parts?.length?`<ol class="task-parts" aria-label="Các phần cần sắp xếp">${task.parts.map(part=>`<li lang="ja">${escapeHtml(part)}</li>`).join('')}</ol>`:''}`;
 }
 function taskUnavailableMessage(task){
-  return task.review_status==='quarantined'?'Câu nguồn đang chờ rà soát dữ kiện, cách diễn đạt hoặc khả năng có nhiều đáp án; chưa dùng để đối chiếu.':task.unavailable_reason;
+  return task.review_status==='quarantined'?'Câu hỏi đang được rà soát nên chưa thể kiểm tra đáp án.':task.unavailable_reason;
 }
 function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
   const container=document.getElementById('lesson-exercises'),questions=lessonQuestions(item,level,skill);
   const lesson=buildLessonContext(item,level,skill);
   if(item.production){
     const source=item.production,question=questions[0],section=document.createElement('section');section.className='production-task';
-    if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Chưa có bài viết được hỗ trợ.';container.append(section);return;}
+    if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Bài này chưa có bài tập viết. Em có thể chọn bài khác.';container.append(section);return;}
     const attempt=taskAttempt(lesson,question,0,'checks',true);
     section.dataset.teacherQuestion='0';
-    section.innerHTML=`<h3>${escapeHtml(source.prompt)}</h3><p class="task-basis">Bài viết tự đánh giá, không phải điểm được xác minh.</p>
+    section.innerHTML=`<h3>${escapeHtml(source.prompt)}</h3><details class="task-basis"><summary>Cách kiểm tra bài</summary><p>Bài viết chưa được chấm đúng/sai. Em tự kiểm tra theo tiêu chí; nhận xét AI chỉ để tham khảo.</p>${question.explanation?`<p>${escapeHtml(question.explanation)}</p>`:''}</details>
       <label for="production-answer">Câu trả lời của em</label><textarea id="production-answer" rows="5" maxlength="4000" lang="ja" placeholder="Viết bằng tiếng Nhật…"></textarea>
-      <button type="button" class="production-reveal"${question.model?'':' hidden'}>Đối chiếu bài mẫu</button><div class="production-model" hidden><p lang="ja">${escapeHtml(question.model)}</p><p>Ví dụ từ nguồn, chưa được thẩm định độc lập.</p></div>
-      ${question.explanation?`<p class="task-basis">${escapeHtml(question.explanation)}</p>`:''}
+      <button type="button" class="production-reveal"${question.model?'':' hidden'}>Xem bài mẫu</button><div class="production-model" hidden><p lang="ja">${escapeHtml(question.model)}</p><p>Bài mẫu để tham khảo, chưa được kiểm tra độc lập.</p></div>
       <fieldset><legend>Tự kiểm tra câu trả lời</legend>${source.criteria.map((criterion,i)=>`<label><input type="checkbox" value="${i}"> ${escapeHtml(criterion)}</label>`).join('')}</fieldset>
-      <button type="button" class="production-save">Lưu tự đánh giá</button><output aria-live="polite"></output>`;
+      <button type="button" class="production-save">Lưu bài và tự đánh giá</button><output aria-live="polite"></output>`;
     container.append(section);
     const input=section.querySelector('textarea'),save=section.querySelector('.production-save'),status=section.querySelector('output'),reveal=section.querySelector('.production-reveal');
     input.addEventListener('focus',()=>globalThis.setTeacherFocus?.({kind:'question',index:0}));
@@ -201,7 +200,7 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
       if(!question.model)return;
       reveal.disabled=true;
       try{await recordTaskEvent(attempt,'assist',{help:'source_reveal',response_text:input.value});section.querySelector('.production-model').hidden=false;reveal.hidden=true;}
-      catch(error){status.textContent=error.message;reveal.disabled=false;}
+      catch(error){status.textContent='Chưa mở được bài mẫu. '+error.message+' Bấm "Xem bài mẫu" để thử lại.';reveal.disabled=false;}
     };
     globalThis.mountStudyTeacher?.(section,{lesson,focus:{kind:'question',index:0},task:question,
       isCurrent:()=>section.isConnected && !container.hidden});
@@ -209,40 +208,40 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
     apiFetch('/api/progress').then(response=>response.ok?response.json():null).then(data=>{
       const saved=data?.evidence?.find(row=>row.item_id===item.id && row.response_text) || data?.items?.find(row=>row.item_id===item.id);
       if(saved?.response_text && !input.value && section.isConnected && (typeof signedInUser==='undefined'?null:signedInUser?.user_id)===attempt.account){input.value=saved.response_text;status.textContent='Đã khôi phục bài viết đã lưu.';}
-    }).catch(()=>{status.textContent='Chưa tải được bài viết cũ.';});
+    }).catch(()=>{status.textContent='Chưa tải được bài viết cũ. Mở lại bài để thử tải lại.';});
     save.onclick=async()=>{
       if(!input.value.trim()){status.textContent='Hãy viết câu trả lời trước khi tự đánh giá.';input.focus();return;}
       if(!pending)pending={response_text:input.value,self_rating:[...section.querySelectorAll('input')].every(control=>control.checked)?4:1};
       save.disabled=true;input.disabled=true;section.querySelectorAll('input').forEach(control=>control.disabled=true);
       try{
         await recordTaskEvent(attempt,'answer',pending);
-        status.textContent='Đã lưu bài viết và tự đánh giá; chưa có kết luận đúng/sai được xác minh.';
+        status.textContent='Đã lưu bài viết và tự đánh giá, chưa chấm đúng/sai.';
         save.textContent='Đã lưu';reveal.disabled=false;
-      }catch(error){status.textContent=error.message;save.textContent='Lưu lại';save.disabled=false;}
+      }catch(error){status.textContent='Chưa lưu được bài viết. '+error.message+' Bấm "Lưu lại" để thử lại.';save.textContent='Lưu lại';save.disabled=false;}
     };
     return;
   }
   if(item.dictation){
     for(const [index,example] of (item.examples || []).entries()){
       const question=questions[index],section=document.createElement('section');section.className='lesson-exercise';
-      if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Câu nghe chưa khả dụng.';container.append(section);continue;}
+      if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Câu nghe này chưa mở được. Em có thể chọn câu khác.';container.append(section);continue;}
       const attempt=taskAttempt(lesson,question,index,'checks',true);
       const select=()=>globalThis.setTeacherFocus?.({kind:'question',index});
       const play=document.createElement('button');play.type='button';play.textContent=`Nghe câu ${index+1}`;
       play.onclick=()=>{select();playGeminiTTS(example.furigana || example.jp,{language:'ja-JP',lesson,focus:{kind:'question',index},task:question});};
       const input=document.createElement('textarea');input.setAttribute('aria-label',`Chép câu ${index+1} bằng tiếng Nhật`);input.lang='ja';input.rows=2;input.maxLength=4000;input.addEventListener('focus',select);
-      const reveal=document.createElement('button');reveal.type='button';reveal.textContent='Đối chiếu bản chép';
+      const reveal=document.createElement('button');reveal.type='button';reveal.textContent='Xem lời thoại';
       const answer=document.createElement('div');answer.hidden=true;
-      answer.innerHTML=`<p lang="ja">${furiganaHtml(example.furigana || example.jp)}</p><p>${escapeHtml(example.vi)}</p><p>Tự đối chiếu với nguồn; không phải kết quả nghe được xác minh.</p>`;
+      answer.innerHTML=`<p lang="ja">${furiganaHtml(example.furigana || example.jp)}</p><p>${escapeHtml(example.vi)}</p><p>Em so bản chép với lời thoại rồi tự đánh giá nhé. Ứng dụng chưa chấm bài nghe.</p>`;
       const status=document.createElement('output');status.setAttribute('aria-live','polite');
       reveal.onclick=async()=>{
         select();
-        if(!input.value.trim()){status.textContent='Hãy chép thử trước khi xem bản chép.';input.focus();return;}
+        if(!input.value.trim()){status.textContent='Em chép thử trước khi xem lời thoại nhé.';input.focus();return;}
         const submitted=input.value;reveal.disabled=true;input.readOnly=true;
         try{
           await recordTaskEvent(attempt,'assist',{help:'source_reveal',response_text:submitted});
           input.value=submitted;answer.hidden=false;
-        }catch(error){status.textContent=error.message;reveal.disabled=false;input.readOnly=false;}
+        }catch(error){status.textContent='Chưa mở được lời thoại. '+error.message+' Bấm "Xem lời thoại" để thử lại.';reveal.disabled=false;input.readOnly=false;}
       };
       let pending=null;
       for(const [label,rating] of [['Em tự thấy đã hiểu',4],['Em cần ôn lại',1]]){
@@ -250,8 +249,8 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
         save.onclick=async()=>{
           if(!pending)pending={response_text:input.value,self_rating:rating};
           answer.querySelectorAll('button').forEach(button=>button.disabled=true);
-          try{await recordTaskEvent(attempt,'answer',pending);status.textContent='Đã lưu bản chép thử và tự đánh giá, không cộng điểm đúng/sai.';}
-          catch(error){status.textContent=error.message;answer.querySelectorAll('button').forEach(button=>button.disabled=false);}
+          try{await recordTaskEvent(attempt,'answer',pending);status.textContent='Đã lưu bản chép và tự đánh giá.';}
+          catch(error){status.textContent='Chưa lưu được bản chép. '+error.message+' Bấm lại lựa chọn tự đánh giá để thử lại.';answer.querySelectorAll('button').forEach(button=>button.disabled=false);}
         };answer.append(save);
       }
       section.append(play,input,reveal,answer,status);container.append(section);
@@ -260,7 +259,7 @@ function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
     }
     return;
   }
-  if(!questions.length){const empty=document.createElement('p');empty.textContent='Chưa có bài tập phù hợp. Em vẫn có thể học phần tham khảo; bài này không tự tính là đã làm.';container.append(empty);return;}
+  if(!questions.length){const empty=document.createElement('p');empty.textContent='Bài này chưa có bài tập. Em vẫn có thể đọc phần tham khảo.';container.append(empty);return;}
   renderPracticeSession(container,item,level,skill);
 }
 

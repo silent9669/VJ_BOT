@@ -59,3 +59,29 @@
 .practice-options label:has(input[type=text]),.practice-options label:has(textarea){display:grid;gap:10px}.practice-options input[type=text],.practice-options textarea{width:100%;min-height:48px;padding:12px;border:1px solid #8c9787;border-radius:8px;background:#fffefa;color:inherit;font:inherit;box-sizing:border-box}.practice-options input[type=text]:focus-visible,.practice-options textarea:focus-visible{outline:3px solid #557a60;outline-offset:3px}
 .quiz-option-btn{display:flex;gap:14px;align-items:center;padding:14px 18px;min-height:60px;border:1px solid var(--practice-line);border-radius:10px;background:#fffefa;text-align:left;font:inherit;cursor:pointer}.quiz-option-btn:focus-visible{outline:3px solid #557a60;outline-offset:3px}.quiz-option-btn[data-state=correct]{background:#edf4e8;border-color:#537653}.quiz-option-btn[data-state=incorrect]{background:#fff0e9;border-color:#aa5445}
 .production-model{border-left:3px solid var(--practice-green);padding:12px 16px;line-height:1.8}.production-task [hidden],.lesson-exercise [hidden]{display:none}
+
+/* Keep instruction primary; source notes stay available without interrupting each task. */
+#lesson-page .lesson-formula{display:grid;gap:14px;padding:20px;min-width:0}
+#lesson-page .lesson-formula>span{font-size:15px;letter-spacing:0;text-transform:none}
+.lesson-formula code[hidden]{display:none}
+.grammar-layout{display:grid;justify-items:start;gap:8px;min-width:0;max-width:100%}
+.lesson-formula .grammar-part{font:500 17px/1.7 var(--font-sans);letter-spacing:0;text-transform:none;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
+.lesson-formula .grammar-plus{font:600 22px/1.2 var(--font-sans);color:var(--practice-green);margin-left:16px;letter-spacing:0}
+.lesson-formula .grammar-or{font:500 15px/1.5 var(--font-sans);color:var(--ink);padding:4px 0;letter-spacing:0;text-transform:none}
+.grammar-break{height:8px}
+.lesson-explain{font-size:16px;line-height:1.85;white-space:pre-line;max-inline-size:68ch}
+.lesson-prerequisites{font-size:15px;line-height:1.7;margin:0}
+.lesson-support,.lesson-info{margin:24px 0}
+.lesson-info{border-top:1px solid var(--practice-line);padding-top:12px}
+.lesson-info p,.lesson-support p,.task-basis p{font-size:16px;line-height:1.75;overflow-wrap:anywhere}
+.task-basis{font-size:16px;line-height:1.7}
+.task-basis summary,.lesson-info>summary,.lesson-support>summary{cursor:pointer;min-height:44px;align-content:center}
+.task-basis summary:focus-visible,.lesson-info summary:focus-visible,.lesson-support summary:focus-visible{outline:3px solid var(--practice-green);outline-offset:3px}
+.practice-feedback{font-size:16px}
+.practice-feedback>p{margin:0 0 12px;white-space:pre-line}
+.practice-feedback>p:last-child{margin-bottom:0}
+.practice-reason summary{min-height:44px;align-content:center;cursor:pointer;font-weight:600}
+.practice-reason summary:focus-visible{outline:3px solid var(--practice-green);outline-offset:3px}
+.practice-reason p{white-space:pre-line;margin:8px 0 0}
+.study-teacher .study-teacher-status:empty{display:none}
+@media(max-width:600px){#lesson-page .lesson-formula{padding:16px}.lesson-formula .grammar-part{font-size:16px}.lesson-explain{line-height:1.8}}

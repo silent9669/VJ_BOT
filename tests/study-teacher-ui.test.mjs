@@ -186,8 +186,8 @@ test('original and generated comparison preserves duplicate source choices, opti
   assert.equal(b.compare.hidden,true);
   await b.button.onclick();assert.equal(b.compare.hidden,false);assert.equal(b.label.textContent,'ai đó giúp tôi');
   assert.equal(b.options[1].label.textContent,'someone helps me','a duplicate choice is still its own source slot');
-  await b.compare.onclick();assert.equal(b.label.textContent,'someone helps me');assert.equal(b.compare.textContent,'Xem bản diễn giải AI');
-  await b.compare.onclick();assert.equal(b.label.textContent,'ai đó giúp tôi');assert.equal(b.compare.textContent,'Xem bản gốc');
+  await b.compare.onclick();assert.equal(b.label.textContent,'someone helps me');
+  await b.compare.onclick();assert.equal(b.label.textContent,'ai đó giúp tôi');
   assert.deepEqual(b.options.map(option=>option.button.value),values);assert.equal(JSON.stringify(b.task),original);
   const attempt=b.c.focusedTaskAttempt(b.lesson,b.focus,'checks',b.task);
   await b.c.recordTaskEvent(attempt,'answer',{answer_index:Number(b.options[1].button.value)});

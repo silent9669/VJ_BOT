@@ -24,7 +24,7 @@ function createStudyPlan(level){
   const step=(lesson,skill)=>({lesson,skill,ids:lessonProgressIds(lesson,level,skill)});
   if(level==='N5')units.push({id:'practical:kana',title:'Làm quen bảng chữ cái',goal:'Nhận diện cách đọc các chữ cơ bản trước khi bắt đầu hội thoại.',minutes:60,optional:true,steps:skills.kana.map(l=>step(l,'kana'))});
   const editorial=skills.grammar.filter(lesson=>lesson.editorial);
-  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chờ bạn duyệt',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Bài AI biên soạn có ngữ cảnh và đối chiếu lỗi; chỉ dùng tham khảo, chờ bạn đánh giá trước khi merge.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
+  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chờ bạn duyệt',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Đọc ví dụ theo tình huống rồi tự viết câu. Bài do AI biên soạn, chưa được duyệt; chỉ dùng để tham khảo.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
   for(const chapter of courseChapters.chapters.filter(c=>c.level===level)){
     const lessons=chapter.grammar_ids.map(id=>skills.grammar.find(l=>l.id===`openjlpt:${level}:grammar:${id}`));
     if(lessons.some(l=>!l))throw new Error('Thiếu nguồn của chương');
@@ -93,7 +93,7 @@ async function renderLessonOutline(item,level,skill,owner){
   if(!currentLesson || activityId(currentLesson.item,level,currentLesson.skill)!==id)return;
   const done=unit.steps.filter(s=>completed.has(activityId(s.lesson,level,s.skill))).length;
   const head=document.createElement('header'),title=document.createElement('strong'),count=document.createElement('span'),bar=document.createElement('progress');
-  title.textContent=unit.title;count.textContent=`${done}/${unit.steps.length}`;bar.max=unit.steps.length;bar.value=done;bar.setAttribute('aria-label','Tiến độ chương');
+  title.textContent=unit.title;count.textContent=`${done}/${unit.steps.length}`;bar.max=unit.steps.length;bar.value=done;bar.setAttribute('aria-label','Số bài đã đánh dấu trong chương');
   head.append(title,count);host.append(head,bar);
   const list=document.createElement('ol');
   for(const step of unit.steps){
@@ -125,22 +125,22 @@ async function renderStudyPlan(level){
     const done=required.filter(unitDone).length;
     const upcomingUnit=required.find(u=>!unitDone(u));
     const upcoming=upcomingUnit?.steps.find(s=>!marked(s));
-    host.innerHTML=`<div class="plan-overview"><div><h3>Bài học ${level}</h3><p>${done} / ${required.length} chương hoàn thành</p>${upcomingUnit?`<p class="plan-current-title">${escapeHtml(upcomingUnit.title)}</p>`:''}</div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${required.length}" aria-label="Chương hoàn thành"></progress></div><div class="lesson-toolbar plan-toolbar"><label class="lesson-search">Tìm chương<input type="search" id="plan-search" placeholder="Tên chương hoặc chủ đề"></label><label class="lesson-status">Nhóm bài<select id="plan-category"><option value="all">Tất cả</option><option value="grammar">Ngữ pháp</option><option value="practical">Tình huống</option><option value="optional">Bổ trợ</option></select></label></div><p id="plan-count" class="lesson-count" role="status"></p><div class="plan-units"></div>`;
+    host.innerHTML=`<div class="plan-overview"><div><h3>Bài học ${level}</h3><p>${done} / ${required.length} chương đã đánh dấu</p>${upcomingUnit?`<p class="plan-current-title">${escapeHtml(upcomingUnit.title)}</p>`:''}</div><button type="button" class="plan-continue">${upcoming?'Học tiếp':'Ôn lại'}</button><progress value="${done}" max="${required.length}" aria-label="Chương đã đánh dấu"></progress></div><div class="lesson-toolbar plan-toolbar"><label class="lesson-search">Tìm chương<input type="search" id="plan-search" placeholder="Tên chương hoặc chủ đề"></label><label class="lesson-status">Nhóm bài<select id="plan-category"><option value="all">Tất cả</option><option value="grammar">Ngữ pháp</option><option value="practical">Tình huống</option><option value="optional">Bổ trợ</option></select></label></div><p id="plan-count" class="lesson-count" role="status"></p><div class="plan-units"></div>`;
     host.querySelector('.plan-continue').onclick=()=>openStudyStep(upcoming || required[0].steps[0],level);
     for(const [index,unit] of units.entries()){
       const detail=document.createElement('details');detail.className='plan-unit';detail.dataset.unit=unit.id;detail.open=units.some(u=>expanded.includes(u.id))?expanded.includes(unit.id):unit===upcomingUnit;detail.dataset.current=String(unit===upcomingUnit);detail.dataset.done=String(unitDone(unit));detail.dataset.category=unit.optional?'optional':unit.type==='grammar'?'grammar':'practical';detail.dataset.search=[unit.title,unit.goal,...unit.steps.map(step=>step.lesson.title)].join(' ').normalize('NFKC').toLocaleLowerCase();
       const count=unit.steps.filter(marked).length;
-      detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?' · tùy chọn':''}</strong><span>${unitDone(unit)?'Hoàn thành':`${count}/${unit.steps.length}`}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal)} <span>${escapeHtml(unit.sourceLabel || (unit.type==='grammar'?'Ngữ pháp · OpenJLPT':unit.optional?'Kana':'Tình huống · tiếng Việt'))} · khoảng ${unit.minutes} phút</span></p></div>`;
+      detail.innerHTML=`<summary><span class="plan-number">${String(index+1).padStart(2,'0')}</span><strong>${escapeHtml(unit.title)}${unit.optional?' · tùy chọn':''}</strong><span>${unitDone(unit)?'Đã đánh dấu':`${count}/${unit.steps.length}`}</span></summary><div class="plan-steps"><p class="unit-goal">${escapeHtml(unit.goal)} <span>${escapeHtml(unit.sourceLabel || (unit.type==='grammar'?'Ngữ pháp · OpenJLPT':unit.optional?'Kana':'Tình huống · tiếng Việt'))} · khoảng ${unit.minutes} phút</span></p></div>`;
       const list=detail.querySelector('.plan-steps');
       for(const step of unit.steps){
         const state=studyStepState(step,records,progress.evidence,revisions),button=document.createElement('button');button.type='button';button.className='plan-step';button.dataset.done=String(marked(step));if(step===upcoming)button.setAttribute('aria-current','step');
-        button.innerHTML=`<span class="plan-skill">${studySkillNames[step.skill] || (step.kind==='kaiwa'?'Kaiwa':'Bài kiểm tra')}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${marked(step)?'Em đã đánh dấu':state.submitted?`Đã thử ${state.submitted}/${state.total} · tham khảo`:state.needsReview?'Cần ôn':'Bắt đầu →'}</span>`;
+        button.innerHTML=`<span class="plan-skill">${studySkillNames[step.skill] || (step.kind==='kaiwa'?'Kaiwa':'Bài kiểm tra')}</span><span>${escapeHtml(step.lesson.title)}</span><span class="plan-step-status">${marked(step)?'Em đã đánh dấu':state.submitted?`Đã làm ${state.submitted}/${state.total} câu`:state.needsReview?'Cần ôn':'Bắt đầu →'}</span>`;
         button.onclick=()=>openStudyStep(step,level);list.append(button);
         if(step.lesson.delayed_review_task_id){
           const tasks=lessonQuestions(step.lesson,level,step.skill),later=delayedReviewState(step.lesson,tasks,progress.evidence,revisions);
           if(later){
             const followup=document.createElement('button');followup.type='button';followup.className='plan-step delayed-review';
-            followup.textContent=later.due?'Gợi nhớ tình huống mới · phiên riêng':`Gợi nhớ tình huống mới mở sau ${new Date(later.dueAt).toLocaleString('vi-VN')}`;
+            followup.textContent=later.due?'Thử tình huống mới trong phiên riêng':`Tình huống mới mở sau ${new Date(later.dueAt).toLocaleString('vi-VN')}`;
             followup.disabled=!later.due;
             followup.onclick=()=>showLessonDetail({...step.lesson,reviewQuestionIndex:later.index,delayedReview:true},level,step.skill);
             list.append(followup);

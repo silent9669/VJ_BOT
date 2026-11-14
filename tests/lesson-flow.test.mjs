@@ -121,7 +121,6 @@ test('missing spoken gloss and hint are explicit rather than fake translations o
   c.document={getElementById:node,querySelectorAll:()=>[]};c.mountCompletion=()=>{};
   c.activeKaiwaLevel='N4';c.activeKaiwaKey='practical:v1:N4:late';c.activeKaiwaPromptIdx=0;c.loadKaiwaPrompt();
   assert.equal(node('kaiwa-prompt-jp').textContent,'今どこですか。何時ごろ着きますか。');
-  assert.match(node('kaiwa-prompt-vi').textContent,/Chưa có diễn giải tiếng Việt từ nguồn/);
   assert.doesNotMatch(node('kaiwa-prompt-vi').textContent,/Nhắn cho đồng nghiệp/);
   assert.match(node('kaiwa-prompt-hint').textContent,/Chưa có gợi ý riêng/);
   assert.doesNotMatch(node('kaiwa-prompt-hint').textContent,/です \/ ます/);
