@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {webcrypto} from 'node:crypto';
 
 const source = readFileSync('static/speech.js', 'utf8');
 const deferred = () => {
@@ -13,7 +14,7 @@ function speech(apiFetch = async () => Response.json({audioBase64:'UklGRg==', mi
   const elements = new Map(['speech-notice', 'speech-status', 'speech-stop'].map(id => [id, {hidden:true, textContent:'', addEventListener(){}}]));
   const audios = [], states = [], events = new Map();
   const context = vm.createContext({
-    AbortController, Response, atob, btoa, Uint8Array, DataView,
+    AbortController,Response,atob,btoa,Uint8Array,DataView,crypto:webcrypto,TextEncoder,
     document:{getElementById:id => elements.get(id)},
     window:{addEventListener(name, handler){events.set(name, handler);}, voiceIdentity:()=>'owner:voice',
       selectedSpeechModel:()=>'gemini-3.8-flash-tts', speechSynthesis:{cancel(){}, speak(){throw new Error('Native voice fallback is forbidden');}}},
@@ -28,6 +29,7 @@ function speech(apiFetch = async () => Response.json({audioBase64:'UklGRg==', mi
   });
   vm.runInContext(source, context);
   vm.runInContext(readFileSync('static/learning.js', 'utf8'), context);
+  vm.runInContext(readFileSync('static/lesson-checks.js','utf8'),context);
   return {context, audios, states, events, status:() => elements.get('speech-status').textContent, visible:() => !elements.get('speech-notice').hidden};
 }
 
@@ -227,4 +229,18 @@ test('missing voice settings helpers never generate speech through an implicit G
   await s.context.playGeminiTTS('こんにちは。');
   assert.equal(calls,0);
   assert.match(s.status(),/Cài đặt giọng nói không dùng được/);
+});
+
+test('task read-aloud carries canonical revision without changing independent voice selection',async()=>{
+  const sent=[],s=speech(async(_path,options)=>{sent.push(JSON.parse(options.body));return Response.json({audioBase64:'UklGRg==',mimeType:'audio/wav'});});
+  const task=s.context.normalizedLessonTasks({id:'reading',drills:[{q:'Read',opts:['a','b'],answer_index:0}]},'N3','reading')[0];
+  const lesson={id:'reading',level:'N3'},focus={kind:'question',index:0};
+  s.context.teacherContext=()=>({lesson,focus,task,view:'checks'});
+  await s.context.playGeminiTTS('日本語。');
+  assert.deepEqual(sent[0].lesson,lesson);assert.deepEqual(sent[0].focus,focus);
+  assert.equal(sent[0].task.id,task.task_id);assert.match(sent[0].task.revision,/^[a-f0-9]{64}$/);
+  assert.equal(sent[0].speech_model,'gemini-3.8-flash-tts');
+  s.context.taskReference=async()=>{throw new Error('Stale task reference.');};
+  await s.context.playGeminiTTS('次の文。');
+  assert.equal(sent.length,1);assert.match(s.status(),/Stale task reference/);
 });

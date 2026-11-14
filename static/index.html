@@ -389,12 +389,12 @@
                       <span class="card-badge" id="fc-badge-lvl">N5 Từ vựng</span>
                       <button type="button" class="card-audio-btn" id="btn-fc-audio-front" title="Nghe phát âm">Nghe</button>
                     </div>
-                    <div class="card-japanese-text" id="fc-front-text">私</div>
+                    <div class="card-japanese-text" id="fc-front-text" lang="ja">私</div>
                     <details class="lesson-disclosure flashcard-reading"><summary>Cách đọc</summary><div class="card-reading-text lesson-aid-content" id="fc-reading-text">わたし (watashi)</div></details>
                   </div>
 
                   <!-- Back Side -->
-                  <div class="card-face card-back">
+                  <div class="card-face card-back" aria-hidden="true" inert>
                     <span class="card-hint">NGHĨA &amp; VÍ DỤ</span>
                     <div class="card-badge-row">
                       <span class="card-badge" id="fc-badge-back">Ý nghĩa</span>
@@ -402,12 +402,13 @@
                     </div>
                     <div class="card-meaning-text" id="fc-back-meaning">Tôi (đại từ nhân xưng ngôi thứ nhất)</div>
                     <div class="card-example-box">
-                      <p class="example-jp" id="fc-example-jp">私はベトナム人です。</p>
+                      <p class="example-jp" id="fc-example-jp" lang="ja">私はベトナム人です。</p>
                       <p class="example-vi" id="fc-example-vi">Tôi là người Việt Nam.</p>
                     </div>
                   </div>
                 </div>
               </div>
+              <p id="fc-face-status" role="status">Đang xem mặt chữ, nghĩa được che</p>
 
               <!-- SRS Controls -->
               <div class="fc-controls-bar">
@@ -545,7 +546,7 @@
               <div class="quiz-instruction" id="quiz-instruction">
                 Chọn cách đọc Hiragana đúng của chữ Hán được gạch chân:
               </div>
-              <div class="quiz-question-box" id="quiz-question-sentence">
+              <div class="quiz-question-box" id="quiz-question-sentence" lang="ja">
                 あした、<u>学校</u>へ行きます。
               </div>
 
@@ -555,7 +556,7 @@
               </div>
 
               <!-- Feedback / Explanation Box -->
-              <div class="quiz-feedback-box" id="quiz-feedback-box" hidden>
+              <div class="quiz-feedback-box" id="quiz-feedback-box" role="status" aria-live="polite" hidden>
                 <div class="feedback-status" id="quiz-feedback-status">Chính xác! </div>
                 <p class="feedback-explanation" id="quiz-feedback-text">
                   「学校」đọc chuẩn là「がっこう」(âm ngắt nhỏ っ) nghĩa là trường học.
@@ -602,7 +603,7 @@
               <div class="mastery-kpi-card">
 
                 <div class="kpi-info">
-                  <span class="kpi-label">Tỷ lệ chính xác</span>
+                  <span class="kpi-label">Độ khớp nguồn đã lưu trước đây · chưa xác minh</span>
                   <strong class="kpi-val" id="mastery-accuracy-rate">0%</strong>
                 </div>
               </div>

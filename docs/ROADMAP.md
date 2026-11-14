@@ -2,10 +2,16 @@
 
 Danh sách này dựa trên trạng thái thật của mã nguồn và production. Mỗi mục ghi lý do và cách biết là xong. Thứ tự là ưu tiên đề xuất.
 
+## Current whole-application teaching-quality priority (2026-11-13)
+
+The current implementation-ready plan is [TEACHING_QUALITY_PLAN.md](TEACHING_QUALITY_PLAN.md), with the complete addressable structural inventory in [TEACHING_QUALITY_AUDIT.json](TEACHING_QUALITY_AUDIT.json). Baseline: `204b55b`. It covers every current N5-N1 lesson surface, task/context/translation roles, original option identities, feedback, skill diversity, runtime teaching and progress semantics. Structural traversal and AI editorial findings are not human pedagogical approval.
+
+Fix shared task adapters and canonical evidence before expanding question counts or changing models. Keep all five levels in scope; preserve original sources, grading identities, learner history, the selected chat API and independent voice. This is a planning checkpoint, not an application fix, new inference authorization or deployment. Earlier items below are historical proposals, not a verified statement of today's model-testing or publication state.
+
 ## Cần làm ngay (rủi ro sản phẩm)
 
 1. **Chạy thử chat với model thật.** Prompt trong `src/prompt.js` và toàn bộ lớp AI mới chỉ được kiểm tra bằng test giả lập, chưa có cuộc hội thoại thật. Xong khi: gắn API, chạy 5 lượt (trả lời sai, xin gợi ý, trả lời đúng, tự giải thích, "kết thúc") ở cấp N5 và N3 với ít nhất hai loại API, ghi lại kết quả và chỉnh prompt. Thêm một bộ hội thoại mẫu vào `tests/` hoặc `docs/` để so sánh khi đổi prompt.
-2. **Dịch phần còn lại của dữ liệu.** Chỉ ngữ pháp trong lộ trình (807 chuỗi) đã là tiếng Việt. Khoảng 28.000 chuỗi (nghĩa từ vựng, Hán tự, ghi chú, câu ví dụ) vẫn tiếng Anh. Chạy `scripts/translate_corpus.py --skip-examples` bằng API của bạn (khoảng 15.000 chuỗi), rà soát mẫu, commit `static/course/vi-dict.json`. Các bài tập trắc nghiệm dùng chính chuỗi này làm đáp án, nên cần kiểm tra lại sau khi dịch.
+2. **Teach and translate through the selected chat connection.** Follow the current teaching-quality plan instead of making bulk static translation the default. Distinguish source glosses, sentence translations and answer explanations; preserve Japanese originals and canonical grading. Missing translations require explicit Japanese-source runtime teaching with appropriate uncertainty, not an explanation copied into a meaning field. A complete structural scan found 41,001 unmapped Latin-bearing occurrences among 41,834 inspected English-source fields; these are heuristic candidates, not that many proven mistranslations. No bulk inference or provider change is authorized by this roadmap.
 3. **Giấy phép bản dịch.** Bản dịch là tác phẩm phái sinh của OpenJLPT (CC BY-SA 4.0). Cập nhật `static/openjlpt/NOTICE.md` và trang `sources.html` để nêu rõ bản dịch cùng giấy phép.
 4. **Đăng nhập Google và quyền admin.** Chưa ai xác nhận luồng đồng ý Google thật ở production, và quyền admin chỉ có sau lần đăng nhập Google kế tiếp. Xong khi: đăng nhập thật, thấy mục "Quản trị", `/api/admin/overview` trả 200, tài khoản khác nhận 403.
 

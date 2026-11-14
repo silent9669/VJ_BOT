@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
+import {buildTeacherCatalog} from './build_teacher_catalog.mjs';
 
 const fixture = new URL('../tests/fixtures/tutor-evaluation-cases.json', import.meta.url);
 const REVIEW = 'HUMAN_REVIEW_REQUIRED';
@@ -51,6 +52,7 @@ export function evaluateReport(cases, report = null) {
         || !isDeepStrictEqual(saved.lesson, item.lesson) || !isDeepStrictEqual(saved.focus, item.focus)
         || !isDeepStrictEqual(saved.expected_behavior, item.expected_behavior) || !isDeepStrictEqual(saved.rubric, item.rubric)
         || !Array.isArray(saved.steps) || saved.steps.length !== item.steps.length) issues.push('Case binding or expectations do not match the fixture.');
+      if(item.focus?.kind==='question' && (!text(saved?.task?.id) || !/^[a-f0-9]{64}$/.test(saved?.task?.revision)))issues.push('Question task identity/revision is unavailable.');
       const statuses = [];
       for (const [stepIndex, step] of item.steps.entries()) {
         const record = saved?.steps?.[stepIndex];
@@ -161,6 +163,7 @@ async function capture(fetchImpl, url, cookie, body) {
   if ([cookie, cookie.slice('vj_session='.length)].some(secret => data.reply.includes(secret))) {
     return {transport_status: 'FAILED', status, reply: null, error: 'SECRET_IN_RESPONSE'};
   }
+  if(body.task && !isDeepStrictEqual(data.task,body.task))return {transport_status:'FAILED',status,reply:null,error:'INVALID_RESPONSE'};
   return {transport_status: 'RECORDED', status, reply: data.reply, error: null};
 }
 
@@ -179,9 +182,16 @@ export async function runEvaluation(args, {fetchImpl = globalThis.fetch, env = p
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(cookieName)) throw new Error('Invalid cookie environment variable name.');
   const cookie = env[cookieName];
   if (typeof cookie !== 'string' || !/^vj_session=[a-f0-9]{64}$/.test(cookie)) throw new Error('A valid session cookie is required in the named environment variable.');
+  const catalogs=await buildTeacherCatalog();
+  const taskReferences=cases.map(item=>{
+    if(item.focus?.kind!=='question')return null;
+    const task=catalogs[item.lesson.level]?.lessons[item.lesson.id]?.questions[item.focus.index];
+    if(!task?.revision || task.unavailable_reason)throw new Error('An evaluation case has an unavailable canonical task. Reopen the current activity.');
+    return {id:task.task_id,revision:task.revision};
+  });
   const run = randomUUID();
   const report = {version: 1, mode: 'live', run_id: run, started_at: new Date().toISOString(), result: REVIEW,
-    cases: cases.map(item => ({case_id: item.id, lesson: item.lesson, focus: item.focus,
+    cases: cases.map((item,index) => ({case_id: item.id, lesson: item.lesson, focus: item.focus,task:taskReferences[index],
       screen_route: routeFor(run, item.id), expected_behavior: item.expected_behavior, rubric: item.rubric, result: REVIEW,
       steps: item.steps.map(step => ({step_id: step.id, intent: step.intent, message: step.message, expected_behavior: step.expected_behavior,
         request_id: null, transport_status: 'NOT_RUN', status: null, reply: null, error: null, result: REVIEW}))}))};
@@ -208,7 +218,7 @@ export async function runEvaluation(args, {fetchImpl = globalThis.fetch, env = p
         const record = retained.steps[stepIndex];
         record.request_id = randomUUID();
         const body = {channel: 'quick', request_id: record.request_id, lesson: item.lesson, focus: item.focus,
-          intent: step.intent, message: step.message,
+          ...(retained.task?{task:retained.task}:{}),intent: step.intent, message: step.message,
           screen: {route: retained.screen_route, level: item.level}};
         while (previousStart !== null && now() - previousStart < START_SPACING_MS) {
           await wait(START_SPACING_MS - (now() - previousStart));

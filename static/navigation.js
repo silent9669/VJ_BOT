@@ -14,7 +14,8 @@ function parseAppRoute(hash){
   if(tab!=='curriculum')return {tab:Object.hasOwn(TAB_TITLES,tab) && tab!=='lesson'?tab:'landing'};
   if(!level)return {tab:'curriculum'};
   if(!learningLevels.includes(level))return {tab:'curriculum'};
-  if(view==='lesson' && learningSkills.includes(skill) && id)return {tab:'lesson',level,skill,id};
+  if(view==='lesson' && learningSkills.includes(skill) && id)return {tab:'lesson',level,skill,id,
+    ...(parts[5]==='review' && parts[6]?{reviewTaskId:parts[6]}:{})};
   if(view==='library')return {tab:'curriculum',level,view:'library',skill:learningSkills.includes(skill)?skill:'grammar'};
   return {tab:'curriculum',level,view:'plan'};
 }
@@ -22,7 +23,7 @@ function appRouteHash(tab,route={}){
   if(tab==='settings' && route.view && route.view!=='account')return `#settings/${route.view}`;
   if(['kaiwa','kanji','flashcards','quiz'].includes(tab) && route.level)return `#${tab}/${route.level}${route.view?`/${route.view}/${encodeURIComponent(route.id || '0')}`:''}`;
   if(tab==='lesson' && route.owner)return `#${route.owner}/${route.level}/lesson/${encodeURIComponent(route.id)}`;
-  if(tab==='lesson')return `#curriculum/${route.level}/lesson/${route.skill}/${encodeURIComponent(route.id)}`;
+  if(tab==='lesson')return `#curriculum/${route.level}/lesson/${route.skill}/${encodeURIComponent(route.id)}${route.reviewTaskId?`/review/${encodeURIComponent(route.reviewTaskId)}`:''}`;
   if(tab==='curriculum' && route.level)return `#curriculum/${route.level}${route.view==='library'?`/library/${route.skill || 'grammar'}`:''}`;
   return `#${tab}`;
 }
@@ -56,6 +57,16 @@ async function restoreAppRoute(){
     if(!item && route.id.startsWith('jlpt:'))item=officialResourceLesson(route.level,route.id.split(':').at(-1),route.id.split(':')[1]);
     if(!item && route.id.startsWith('erin:')){const source=erinResources.lessons.find(l=>l.id===route.id);if(source)item=erinResourceLesson(source);}
     if(!item)throw new Error('missing');
+    if(route.reviewTaskId){
+      const tasks=lessonQuestions(item,route.level,route.skill),index=tasks.findIndex(task=>task.task_id===route.reviewTaskId && task.exchange?.stage==='delayed');
+      if(index<0 || item.delayed_review_task_id!==route.reviewTaskId)throw new Error('missing');
+      const response=await apiFetch('/api/progress');if(!response.ok)throw new Error('progress');
+      const progress=await response.json(),revisions=new Map(await Promise.all(tasks.map(async task=>[task.task_id,(await taskReference(task)).revision])));
+      if(version!==navigationVersion)return;
+      const later=delayedReviewState(item,tasks,progress.evidence,revisions);
+      if(!later?.due)throw new Error('not due');
+      item={...item,reviewQuestionIndex:index,delayedReview:true};
+    }
     showLessonDetail(item,route.level,route.skill,true);
   }catch{
     if(version!==navigationVersion)return;

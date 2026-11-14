@@ -5,12 +5,17 @@ import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
 
 const connection={protocol:'openai',base_url:'https://synthetic.example.com/v1',model:'selected-chat',api_key:'synthetic-not-a-real-key'};
 const lesson={id:'lesson-test',level:'N4'};
-const question={q:'Mẫu 〜てくれる có nghĩa gì?',opts:['someone helps me','someone helps others','nobody helps'],ans:'someone helps me',explanation:'SECRET_AUTHORED_EXPLANATION'};
+const question={task_id:'lesson-test:question:0',revision:'a'.repeat(64),item_id:'question-item',mode:'choice',review_status:'unreviewed',
+  q:'Mẫu 〜てくれる có nghĩa gì?',opts:['someone helps me','someone helps others','nobody helps'],answer_index:0,explanation:'SECRET_AUTHORED_EXPLANATION'};
 const canonical={id:lesson.id,level:'N4',title:'〜てくれる',goal:'SECRET_ANSWER_GOAL',overview:{meaning_vi:'SECRET_ANSWER_MEANING',formula:'Verb-て + くれる'},
   words:[{jp:'学生',reading:'がくせい',vi:'student',examples:[{jp:'学生です。',vi:'I am a student.'}]}],examples:[{jp:'手伝ってくれます。',vi:'Someone helps me.'}],questions:[question],
-  exam_questions:[{q:'Sắp xếp: 何で あれ どうで あれ',opts:['何で','あれ','どうで','あれ'],ans:'どうで'}]};
+  exam_questions:[{...question,task_id:'lesson-test:question:1',revision:'b'.repeat(64),q:'Sắp xếp: 何で あれ どうで あれ',opts:['何で','あれ','どうで','あれ'],answer_index:2}]};
 const env={ASSETS:{fetch:async()=>Response.json({lessons:{[lesson.id]:canonical},items:{},scenarios:{}})},DB:{prepare(){throw new Error('Teaching must not write history or progress or read another saved profile.');}}};
-const request=body=>new Request('https://app.test/api/practice/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:'learner',api_connection:connection,lesson,action:'teach',...body})});
+const request=body=>{
+  const task=body.focus?.kind==='question'?(body.view==='exam'?canonical.exam_questions:canonical.questions)[body.focus.index]:null;
+  return new Request('https://app.test/api/practice/coach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    user_id:'learner',api_connection:connection,lesson,action:'teach',...(task?{task:{id:task.task_id,revision:task.revision}}:{}),...body})});
+};
 const translations={'someone helps me':'ai đó giúp tôi','someone helps others':'ai đó giúp người khác','nobody helps':'không ai giúp','student':'học sinh','I am a student.':'Tôi là học sinh.','Someone helps me.':'Ai đó giúp tôi.','Verb-て + くれる':'Động từ thể て + くれる','SECRET_ANSWER_MEANING':'nghĩa được học','SECRET_ANSWER_GOAL':'mục tiêu đang học'};
 async function provider(t,transform=value=>value) {
   const calls=[],original=globalThis.fetch;
@@ -87,9 +92,61 @@ test('every full-exam catalog retains original question ordering, duplicate segm
   const catalogs=await buildTeacherCatalog();let exams=0;
   for(const catalog of Object.values(catalogs))for(const entry of Object.values(catalog.lessons))if(entry.exam_questions){
     exams++;assert.ok(entry.exam_questions.length>=3);
-    for(const q of entry.exam_questions){assert.ok(q.opts.includes(q.ans));assert.equal(typeof q.item_id,'string');}
+    for(const q of entry.exam_questions){assert.ok(Number.isInteger(q.answer_index));assert.ok(q.answer_index>=0&&q.answer_index<q.opts.length);assert.equal(q.ans,undefined);assert.equal(typeof q.item_id,'string');}
   }
   assert.equal(exams,80);
   const repeated=Object.values(catalogs.N1.lessons).flatMap(entry=>entry.exam_questions || []).find(q=>q.opts.join('|')==='何で|あれ|どうで|あれ');
-  assert.ok(repeated);assert.equal(repeated.ans,'どうで');
+  assert.ok(repeated);assert.equal(repeated.answer_index,2);
+});
+
+test('stale, missing and quarantined task references never reach inference',async t=>{
+  const calls=await provider(t);
+  for(const task of [null,{id:question.task_id,revision:'c'.repeat(64)},{id:'different',revision:question.revision}]) {
+    assert.equal((await practiceCoach(request({focus:{kind:'question',index:0},task}),env)).status,409);
+  }
+  const restricted=structuredClone(canonical);restricted.questions[0].capabilities={processing:false};
+  const restrictedEnv={...env,ASSETS:{fetch:async()=>Response.json({lessons:{[lesson.id]:restricted},items:{},scenarios:{}})}};
+  assert.equal((await practiceCoach(request({focus:{kind:'question',index:0}}),restrictedEnv)).status,409);
+  assert.equal(calls.length,0);
+});
+
+test('oversized reference teaching fails visibly without chunking or retries',async t=>{
+  const calls=await provider(t),large={...canonical,examples:Array.from({length:20},()=>({jp:'例文',vi:'example'}))};
+  const largeEnv={...env,ASSETS:{fetch:async()=>Response.json({lessons:{[lesson.id]:large},items:{},scenarios:{}})}};
+  assert.equal((await practiceCoach(request({focus:null}),largeEnv)).status,413);assert.equal(calls.length,0);
+});
+
+test('known invalid star slots are quarantined in every view and cannot request teaching',async t=>{
+  const catalogs=await buildTeacherCatalog(),calls=await provider(t);
+  let blocked=0;
+  for(const catalog of Object.values(catalogs))for(const entry of Object.values(catalog.lessons)) {
+    for(let index=0;index<entry.questions.length;index++) {
+      const task=entry.questions[index];
+      if(task.review_status!=='quarantined')continue;
+      blocked++;assert.ok(task.unavailable_reason);assert.equal(task.capabilities.processing,false);
+      const blockedEnv={ASSETS:{fetch:async()=>Response.json(catalog)}};
+      const response=await practiceCoach(new Request('https://app.test/api/practice/coach',{method:'POST',body:JSON.stringify({
+        user_id:'learner',api_connection:connection,lesson:{id:entry.id,level:entry.level},action:'teach',
+        focus:{kind:'question',index},task:{id:task.task_id,revision:task.revision}
+      })}),blockedEnv);
+      assert.equal(response.status,409);
+    }
+  }
+  assert.ok(blocked>=5);assert.equal(calls.length,0);
+});
+
+test('missing glosses request explicit Japanese-source translation fields without inventing canonical Vietnamese',async t=>{
+  const calls=await provider(t),source={...canonical,words:[{jp:'学生',examples:[{jp:'学生です。'}]}],examples:[{jp:'手伝ってくれます。'}],
+    overview:{passage:'私は学生です。',script_jp:'こんにちは。'}};
+  const sourceEnv={ASSETS:{fetch:async()=>Response.json({lessons:{[lesson.id]:source},items:{},scenarios:{}})}};
+  for(const focus of [{kind:'word',index:0},{kind:'example',index:0},null]) {
+    const response=await practiceCoach(request({focus}),sourceEnv);
+    assert.equal(response.status,200);
+  }
+  assert.ok(calls[0].evidence.fields.some(field=>field.key==='word:translation'&&field.source==='学生'));
+  assert.ok(calls[0].evidence.fields.some(field=>field.key==='word:example:0:translation'&&field.source==='学生です。'));
+  assert.ok(calls[1].evidence.fields.some(field=>field.key==='example:translation'&&field.source==='手伝ってくれます。'));
+  assert.ok(calls[2].evidence.fields.some(field=>field.key==='translation'&&field.source==='私は学生です。'));
+  assert.ok(calls[2].evidence.fields.some(field=>field.key==='script_translation'&&field.source==='こんにちは。'));
+  assert.equal(source.words[0].vi,undefined);assert.equal(source.examples[0].vi,undefined);
 });

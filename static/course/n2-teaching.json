@@ -1,0 +1,672 @@
+{
+  "version": 1,
+  "status": "ai_draft",
+  "authorship": "VJBot AI-authored teaching drafts; not publisher text or official JLPT exercises.",
+  "rights_basis": "original_ai_authored",
+  "publisher_permission_independently_verified": false,
+  "human_approved": false,
+  "level_note": "N2 is a study-track estimate, not official JLPT certification. These are focused advanced reading and writing drafts, not a complete examination syllabus.",
+  "integration_status": "draft_for_user_review",
+  "normalization_policy": "Explicit task-bound variants; not exhaustive grammar judgments.",
+  "editorial_reviews": [{"review_kind":"independent_ai_not_human","reviewer":"ReviewN2N1Teaching","scope":"All three N2 lessons, fifteen tasks, nine examples and nine common errors against the original VJBot practical units.","findings_resolved":[],"decision":"No substantive N2 issue found in this finite AI review. Draft remains advisory and requires user quality review before merge.","human_approved":false}],
+  "lessons": [
+    {
+      "id": "teaching:v1:N2:policy",
+      "revision": 2,
+      "order": 1,
+      "level": "N2",
+      "title": "Đọc thông báo: ngày hiệu lực, điều kiện đồng thời và phạm vi ngoại lệ",
+      "goal": "Xác định ngày hiệu lực, đối tượng và ngoại lệ trong thông báo.",
+      "prerequisites": [],
+      "support": [
+        { "term": "Đọc điều kiện theo phạm vi", "explanation": "Phân biệt hoạt động bị đổi với mọi cách sử dụng; nối các điều kiện bằng quan hệ đồng thời. Mốc tương đối phải có ngày quy chiếu, kể cả khi chuyển sang năm mới. Đây là cách đọc cần có trước khi tự viết, không phải danh sách từ khóa để chấm." },
+        { "term": "貸し出し・申請・延長", "explanation": "貸し出し（かしだし）cho mượn; 申請（しんせい）đăng ký/xin phép; 延長（えんちょう）gia hạn. Đăng ký là hành động của người xin, không tự đồng nghĩa với đã được duyệt. Cần giữ riêng loại tài liệu, thủ tục và thời lượng." },
+        { "term": "Thông báo và thư xác nhận", "explanation": "Thông báo có thể dùng thể trang trọng; thư hỏi người phụ trách nên lịch sự, nêu căn cứ trước rồi hỏi đúng điểm còn thiếu. Không cần lặp nguyên khuôn mẫu hoặc dùng kính ngữ cầu kỳ. Luyện sửa câu cố định bên dưới chỉ là thao tác có ràng buộc, không phải sản sinh tự do." }
+      ],
+      "practice_path": [
+        "teaching:v1:N2:policy:task:0",
+        "teaching:v1:N2:policy:task:1",
+        "teaching:v1:N2:policy:task:2",
+        "teaching:v1:N2:policy:task:3",
+        "teaching:v1:N2:policy:task:4",
+        "teaching:v1:N2:policy:task:5",
+        "teaching:v1:N2:policy:task:6"
+      ],
+      "delayed_review_task_id": "teaching:v1:N2:policy:task:7",
+      "authorship": "ai_authored",
+      "review": { "status": "ai_draft", "human_approved": false },
+      "eligibility": { "reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false },
+      "source_refs": [
+        {
+          "chunk_id": "practical:v1:N2:policy",
+          "url": "#curriculum/N2/lesson/reading/practical%3Av1%3AN2%3Apolicy%3Asituation",
+          "source_name": "VJBot · Đọc thông báo thay đổi quy định",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn nội bộ: VJBot · Đọc thông báo thay đổi quy định [practical:v1:N2:policy]. Bài giảng và bài tập mới do AI soạn; chưa có phê duyệt của con người.",
+      "formula": "Nに伴い、…。ただし、Nに限り、Vば、…。Vことはできない。",
+      "explanation": "Đọc thông báo theo bốn tầng: mốc bắt đầu, nguyên tắc, điều kiện hưởng ngoại lệ và điều cấm vẫn còn hiệu lực. 電子化に伴い đặt thay đổi trong bối cảnh số hóa; không tự cho biết mọi hình thức sử dụng tài liệu giấy đều bị cấm. 原則終了 giới hạn hoạt động cho mượn, còn ただし mở một ngoại lệ cụ thể. 電子版がない資料に限り thu hẹp loại tài liệu; 事前に申請すれば thêm điều kiện đăng ký trước: phải thỏa cả hai, không phải chọn một. 一週間 là thời gian mượn, không phải thời gian được gia hạn. 来月一日 là ngày 1 tháng kế tiếp so với ngày thông báo; nếu chưa biết ngày thông báo thì không được tự gán tháng hoặc năm. Các ngày cụ thể trong một bài tập dưới đây là bối cảnh bổ sung được ghi rõ, không phải ngày có sẵn trong nguồn.",
+      "examples": [
+        {
+          "id": "teaching:v1:N2:policy:example:0",
+          "context": "Nêu nguyên tắc cùng mốc hiệu lực, không xóa mất ngày 1",
+          "jp": "電子化に伴い、来月一日から紙の資料の貸し出しは原則終了します。",
+          "reading": "でんしかにともない、らいげつついたちからかみのしりょうのかしだしはげんそくしゅうりょうします。",
+          "vi": "Cùng với việc số hóa, từ ngày 1 tháng tới, về nguyên tắc việc cho mượn tài liệu giấy sẽ chấm dứt.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N2:policy:example:1",
+          "context": "Nêu hai điều kiện phải đồng thời có để được mượn",
+          "jp": "ただし、電子版がない資料に限り、事前に申請すれば、一週間借りることができます。",
+          "reading": "ただし、でんしばんがないしりょうにかぎり、じぜんにしんせいすれば、いっしゅうかんかりることができます。",
+          "vi": "Tuy nhiên, chỉ với tài liệu không có bản điện tử, nếu đăng ký trước thì có thể mượn một tuần.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N2:policy:example:2",
+          "context": "Giới hạn của ngoại lệ: được mượn không đồng nghĩa được gia hạn",
+          "jp": "例外として貸し出しが認められても、返却期限を延長することはできません。",
+          "reading": "れいがいとしてかしだしがみとめられても、へんきゃくきげんをえんちょうすることはできません。",
+          "vi": "Dù được chấp nhận cho mượn theo ngoại lệ, vẫn không thể gia hạn trả.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "事前に申請すれば、電子版のある資料も借りられます。",
+          "correction": "電子版がない資料に限り、事前に申請すれば借りられます。",
+          "reason": "Đăng ký trước không xóa điều kiện về loại tài liệu. に限り đặt phạm vi ngoại lệ trước khi xét điều kiện ば."
+        },
+        {
+          "problem": "一週間借りた後、申請すれば返却期限を延長できます。",
+          "correction": "借りられる期間は一週間で、返却期限の延長はできません。",
+          "reason": "Văn bản cấm gia hạn; không có ngoại lệ thứ hai cho việc đăng ký thêm."
+        },
+        {
+          "problem": "Thông báo chỉ ghi 来月一日 nên tự kết luận quy định bắt đầu vào ngày 1/1.",
+          "correction": "Cần biết ngày phát hành hoặc ngày quy chiếu trước khi đổi 来月一日 sang lịch cụ thể.",
+          "reason": "Mốc tương đối không xác định được tháng và năm nếu thiếu điểm quy chiếu."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "teaching:v1:N2:policy:task:0",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "来月一日から、電子化に伴い、紙の資料の貸し出しは原則終了します。ただし、電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。",
+          "prompt": "Quy định mới đã có hiệu lực. Ba người đều xin mượn một tuần: Mori muốn tài liệu đã có bản điện tử và đã đăng ký trước; An muốn tài liệu chưa có bản điện tử nhưng chưa đăng ký trước; Linh muốn tài liệu chưa có bản điện tử và đã đăng ký trước. Ai đáp ứng đủ điều kiện ngoại lệ theo thông báo?",
+          "options": [
+            { "id": "option:0", "text": "Mori và Linh, vì đăng ký trước là điều kiện duy nhất." },
+            { "id": "option:1", "text": "Chỉ Linh, vì phải thỏa cả loại tài liệu lẫn đăng ký trước." },
+            { "id": "option:2", "text": "An và Linh, vì không có bản điện tử là đã đủ." }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "電子版がない資料に限り loại Mori; 事前に申請すれば loại An. Linh thỏa cả hai điều kiện, nhưng vẫn không được gia hạn. Đây là đối chiếu điều kiện của thông báo, không phải phán xét quyền sử dụng mọi tài liệu giấy.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:policy:task:1",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "【この設問だけの補足】通知の発行日は2026年11月14日である。通知には「来月一日から、資料室の利用方法を変更します。紙の資料の貸し出しは原則終了します」とある。旧規定の具体的な内容は、この資料には示されていない。",
+          "prompt": "Chỉ trong bài này, ngày phát hành được bổ sung là 14/11/2026; nội dung quy định cũ không được cung cấp. Chọn cách xử lý đúng mốc thời gian và không suy diễn quy định cũ.",
+          "options": [
+            { "id": "option:0", "text": "Quy định mới bắt đầu 14/11/2026 vì đó là ngày phát hành." },
+            { "id": "option:1", "text": "Ngày 30/11/2026 chắc chắn được mượn mọi tài liệu không cần đăng ký." },
+            { "id": "option:2", "text": "Quy định mới bắt đầu 1/12/2026; riêng thông báo này chưa đủ để kết luận điều kiện mượn ngày 30/11." }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "来月一日 tính từ 14/11/2026 là 1/12/2026, không phải ngày phát hành. Biết quy định mới chưa hiệu lực vào 30/11 không có nghĩa biết mọi điều kiện của quy định cũ. Ngày cụ thể chỉ thuộc bối cảnh bổ sung của bài này.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:policy:task:2",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "電子化に伴い、紙の資料の貸し出しは原則終了します。ただし、電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。",
+          "prompt": "Một đồng nghiệp tóm tắt: 「紙の資料は一切使えなくなるが、借りられた場合は延長もできる。」 Chọn phản hồi sửa đúng cả phạm vi lẫn giới hạn của ngoại lệ.",
+          "options": [
+            { "id": "option:0", "text": "本文は貸し出しの変更を述べており、紙の資料の利用をすべて禁じてはいない。例外で借りても期限は延長できない。" },
+            { "id": "option:1", "text": "「原則終了」は例外がないという意味なので、申請の有無にかかわらず借りられない。" },
+            { "id": "option:2", "text": "電子版がない資料なら、申請しなくても借りられ、期限も延長できる。" }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Đối tượng của 終了 là 貸し出し, không phải mọi cách 使用. ただし giữ một ngoại lệ có điều kiện; câu cuối vẫn cấm gia hạn đối với người được mượn theo ngoại lệ. Không vì thế suy ra thông báo đã bảo đảm mọi hình thức sử dụng tại chỗ đều được phép.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:policy:task:3",
+          "objective": "transformation",
+          "mode": "short_text",
+          "skill": "reading",
+          "passage": "紙の資料の貸し出しは原則終了します。ただし、電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。",
+          "prompt": "Sửa bản tóm tắt sai: 「電子版がある資料に限り、事前に申請すれば、一週間借りることができます。」 Chỉ thay đúng một từ để khôi phục điều kiện về bản điện tử; chép lại nguyên câu, giữ chữ Hán, dấu câu và các phần còn lại. Không thêm điều kiện mới.",
+          "accepted_variants": [
+            "電子版がない資料に限り、事前に申請すれば、一週間借りることができます。"
+          ],
+          "rationale": "Thay ある bằng ない: chỉ tài liệu chưa có bản điện tử mới thuộc ngoại lệ. Những cách diễn đạt khác có thể đúng trong giao tiếp; đáp án tham chiếu ở đây hẹp vì nhiệm vụ chỉ cho thay một từ và giữ nguyên phần còn lại, không phải vì chỉ có một cách diễn đạt đúng bằng tiếng Nhật.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:policy:task:4",
+          "objective": "transformation",
+          "mode": "short_text",
+          "skill": "grammar",
+          "passage": "電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。",
+          "prompt": "Viết lại hai ý sau thành đúng một câu để nhấn mạnh giới hạn còn hiệu lực: 「例外として資料を借りることができます。返却期限の延長はできません。」 Dùng khuôn cố định 「例外として資料を借りることが（　）、返却期限の延長はできません。」, đổi できます thành thể khả năng + ても phù hợp. Nộp cả câu; giữ nguyên chữ Hán và phần ngoài ngoặc. Đây là thao tác viết lại, không phải yêu cầu tự đặt thêm quy định.",
+          "accepted_variants": [
+            "例外として資料を借りることができても、返却期限の延長はできません。"
+          ],
+          "rationale": "できても biểu thị nhượng bộ: ngay cả khi đủ điều kiện được mượn, lệnh cấm gia hạn vẫn giữ nguyên. 借りられても cũng có thể diễn đạt ý tương tự nhưng không giữ khuôn 借りることが mà bài này yêu cầu; không xem cách đó là sai ngữ pháp nói chung.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:policy:task:5",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Bối cảnh thư viện giả định riêng cho lượt viết, không bổ sung dữ kiện cho nguồn cũ.\n通知発行日：2026年12月15日。来月一日から、紙の資料の貸し出しは原則終了します。ただし、電子版がない資料に限り、事前に申請すれば、一週間借りることができます。返却期限の延長はできません。館内での利用方法は別途案内します。\nBạn dự định cần tài liệu ngày 2027年1月8日. Tài liệu tên 森の記録 không có bản điện tử; tài liệu 街の地図 có bản điện tử. Bạn chưa gửi đăng ký. Quy định chưa nói hạn chót nộp đơn, cách tính ngày trả hoặc cách dùng tại chỗ.",
+          "prompt": "Đóng vai người đọc, tự chọn một trong hai tài liệu cho một mục đích do bạn nghĩ ra rồi viết thư ngắn 4–6 câu tiếng Nhật lịch sự cho thư viện. Nêu đúng ngày hiệu lực theo lịch, giải thích yêu cầu mượn của mình phù hợp hoặc chưa phù hợp điều kiện nào, và hỏi một điểm chưa được thông báo giải quyết để chuẩn bị cho ngày cần dùng. Nếu chọn tài liệu không thuộc ngoại lệ, hãy hỏi cách tiếp cận thay thế thay vì tự cho mình quyền mượn. Không tự viết rằng đã đăng ký/được duyệt, không tính ngày trả từ quy tắc chưa có. Không có câu mẫu; bạn tự quyết định nội dung thư.",
+          "criteria": [
+            "Căn cứ: tự xác định ngày hiệu lực theo lịch từ ngày phát hành và mốc tương đối; kiểm tra cả lần chuyển tháng/năm, không lấy ngày phát hành làm ngày hiệu lực hoặc suy quy định cũ.",
+            "Nghĩa: tên tài liệu và tình trạng bản điện tử nhất quán; phân biệt đủ điều kiện loại tài liệu với việc chưa đăng ký; thời lượng một tuần không biến thành quyền gia hạn.",
+            "Giao tiếp: có mục đích tự chọn, yêu cầu/hỏi cụ thể mà người phụ trách trả lời được; không suy từ ngừng cho mượn ra cấm mọi sử dụng hoặc tự bảo đảm được dùng tại chỗ.",
+            "Cấu trúc: quan hệ điều kiện, phủ định và đối tượng xin/hỏi rõ trong thư lịch sự; nhiều cách diễn đạt có thể đạt mục đích, không đòi một chuỗi hoặc từ khóa.",
+            "Tự kiểm: chỉ ra dữ kiện cho từng khẳng định, tách chỗ còn hỏi khỏi điều đã biết. Góp ý chính tả riêng; tự kiểm không phải chứng nhận nghĩa/ngữ pháp đúng."
+          ],
+          "exchange": { "group": "n2-policy-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
+          "rationale": "Giữ nguyên văn thư người học làm bằng chứng tự báo cáo chưa được chấm; không có khóa câu mẫu. Nhận xét AI chỉ mang tính tư vấn và phải đọc quan hệ thực tế trong câu, không suy đúng nghĩa từ có mặt ngày tháng hay từ phủ định.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:policy:task:6",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Yêu cầu biên tập cố định do AI soạn, không phải thư viện đã đọc hoặc phản hồi riêng cho bạn: trước khi gửi, cần tách điều có thể khẳng định từ thông báo với điều thư viện còn phải xác nhận. Chưa có thông tin mới về hạn đăng ký, cách tính ngày trả hay sử dụng tại chỗ.",
+          "prompt": "Mở đúng thư bạn thực sự vừa viết. Chọn và trích một đoạn có điều kiện hoặc giới hạn về quyền sử dụng; viết lại toàn bộ thư ngắn cho cùng tài liệu/mục đích, làm rõ căn cứ và một câu hỏi còn chờ thư viện. Cuối bài thêm 1–2 câu tiếng Nhật giải thích đoạn đã sửa và vì sao. Nếu đoạn gốc đã đủ chính xác, giữ nó và giải thích điều bạn vừa đối chiếu, không cố tạo lỗi. Không thay bằng thư giả do đề cung cấp, không tự thêm kết quả xử lý đơn.",
+          "criteria": [
+            "Nối tiếp: đoạn được trích thực sự có trong thư đã lưu; tên tài liệu, mục đích và ngày cần dùng giữ nhất quán với thư ấy.",
+            "Giới hạn: đối chiếu đúng điều kiện có/không có bản điện tử và trạng thái chưa đăng ký; ngày hiệu lực không bị đổi khi chỉnh văn phong.",
+            "Hiệu đính: người đọc phân biệt được điều chắc từ thông báo và điểm còn hỏi; giải thích gắn với một đoạn thật, cho phép giữ nguyên câu vốn hợp lý.",
+            "Cấu trúc/giao tiếp: thư sửa vẫn có yêu cầu rõ, lịch sự, không vô tình đảo phủ định hoặc xóa một điều kiện để viết ngắn hơn; chính tả được góp ý tách biệt.",
+            "Bằng chứng: nếu thiếu thư trước thì chưa thể nhận xét tính nối tiếp; không bịa đoạn trích hay coi nhận xét tư vấn là phê duyệt của thư viện."
+          ],
+          "exchange": { "group": "n2-policy-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N2:policy:task:5"] },
+          "rationale": "Lưu bản sửa và lý do mới riêng với thư ban đầu qua nhiệm vụ hiện có; không ghi đè nguyên văn trước đó hoặc suy rằng đơn đã được nộp. Cần đọc hai văn bản thật để nhận xét, không chấm bằng khớp từ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:policy:task:7",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Tình huống mới, giả định: bạn là người phụ trách câu lạc bộ phim, cần thông báo cho thành viên; không liên quan đến thư viện.\n通知発行日：2027年2月20日。来月一日から、上映会の録画は会員専用ページで公開します。外部への転載はできません。ただし、登壇者全員の同意があり、公開前に担当者の確認を受けた短い紹介動画に限り、外部公開できます。過去の録画の扱いは別途案内します。\nNgày dự định đăng một video giới thiệu: 2027年3月5日. Trong câu lạc bộ có một đề nghị mới muốn đăng video ngắn, nhưng chưa có xác nhận về đồng ý của người xuất hiện hoặc kiểm tra của người phụ trách.",
+          "prompt": "Ở phiên ôn sau, không mở bài cũ hay bản đã viết: soạn 4–6 câu tiếng Nhật cho thành viên. Tự chọn cách tổ chức việc chuẩn bị video, nêu mốc hiệu lực cụ thể, phân biệt nơi xem dành cho thành viên với quyền đăng ra ngoài, và cho biết hai việc phải xác nhận trước khi quyết định đăng video ngày dự định. Thêm một câu hỏi về cách xử lý bản ghi cũ. Không tuyên bố đã có đồng ý/kiểm tra hoặc quy định đã áp dụng cho toàn bộ bản cũ. Bạn tự viết, không có thư mẫu.",
+          "criteria": [
+            "Chuyển vai/mục đích: đây là hướng dẫn thành viên chuẩn bị công bố video, không phải lặp thư xin mượn hay đổi tên tài liệu trong thư cũ.",
+            "Thời gian/phạm vi: ngày hiệu lực được neo đúng từ 20/2/2027; tách quyền xem nội bộ, cấm đăng lại ra ngoài và ngoại lệ video giới thiệu ngắn.",
+            "Điều kiện: giữ đồng thời sự đồng ý của tất cả người tham gia trình bày và kiểm tra trước công bố; chưa có xác nhận không được kể như đã hoàn tất.",
+            "Tự chọn và giao tiếp: có cách chuẩn bị do người học quyết định, hai việc cần xác nhận và câu hỏi về bản ghi cũ mà người phụ trách có thể trả lời; không tự mở rộng hoặc thu hẹp quy định.",
+            "Bằng chứng: đánh giá cần đọc nguyên văn mới và trợ giúp đã dùng; tự kiểm/AI tư vấn không xác nhận tự lực hay ghi nhớ. Thiếu dấu hoặc biến thể chữ hợp lệ không tự là sai điều kiện."
+          ],
+          "exchange": { "group": "n2-policy-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N2:policy:task:5", "teaching:v1:N2:policy:task:6"], "delay_hours": 24 },
+          "rationale": "Ngữ cảnh, vai, hoạt động và đối tượng ngoại lệ mới được cung cấp đầy đủ, không kèm thư/mẫu/lời giải cũ. Lưu nguyên văn đáp án mới; đủ khoảng cách phiên chỉ chứng minh lịch ôn, không chứng minh chuyển giao thực tế.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "teaching:v1:N2:comparison",
+      "revision": 2,
+      "order": 2,
+      "level": "N2",
+      "title": "So sánh nhà in: điều kiện bắt buộc trước, giá sau",
+      "goal": "Chọn phương án theo ràng buộc, không chỉ nhìn giá.",
+      "prerequisites": ["teaching:v1:N2:policy"],
+      "support": [
+        { "term": "Điều kiện bắt buộc và ưu tiên", "explanation": "納期（のうき）hạn giao; 部（ぶ）đơn vị đếm bản in; 予算（よさん）trần ngân sách. Kiểm tra tổng tiền và thời hạn riêng, rồi mới dùng tiêu chí ưu tiên do tình huống nêu hoặc người viết công khai tự chọn." },
+        { "term": "Căn cứ so sánh", "explanation": "Cùng đạt 社内基準（しゃないきじゅん, chuẩn nội bộ）không chứng minh hoàn toàn bằng nhau hoặc bên nào hơn. Cần phân biệt báo giá/thời gian được nêu với giao hàng đã xảy ra và với dự đoán của mình." },
+        { "term": "Báo cáo lựa chọn", "explanation": "Cho đồng đội đọc: kết luận, căn cứ định lượng và giới hạn kết luận cần nối được với nhau. Dùng thể lịch sự nhất quán hoặc báo cáo thể thường nhất quán; không bắt buộc từ nối cụ thể. Các bài sửa nguyên câu vẫn chỉ luyện thao tác hạn chế." }
+      ],
+      "practice_path": [
+        "teaching:v1:N2:comparison:task:0",
+        "teaching:v1:N2:comparison:task:1",
+        "teaching:v1:N2:comparison:task:2",
+        "teaching:v1:N2:comparison:task:3",
+        "teaching:v1:N2:comparison:task:4",
+        "teaching:v1:N2:comparison:task:5",
+        "teaching:v1:N2:comparison:task:6"
+      ],
+      "delayed_review_task_id": "teaching:v1:N2:comparison:task:7",
+      "authorship": "ai_authored",
+      "review": { "status": "ai_draft", "human_approved": false },
+      "eligibility": { "reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false },
+      "source_refs": [
+        {
+          "chunk_id": "practical:v1:N2:comparison",
+          "url": "#curriculum/N2/lesson/reading/practical%3Av1%3AN2%3Acomparison%3Asituation",
+          "source_name": "VJBot · So sánh hai phương án bằng chứng",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn nội bộ: VJBot · So sánh hai phương án bằng chứng [practical:v1:N2:comparison]. Số liệu gốc được giữ nguyên; tình huống đổi hạn chỉ áp dụng ở bài ghi rõ.",
+      "formula": "Aは～一方で、…。～を優先すると、…。～ので、条件を満たす。",
+      "explanation": "Lập luận lựa chọn cần tách điều kiện bắt buộc khỏi tiêu chí tối ưu. Dữ kiện gốc: A 80 yên/bản, 5 ngày; B 100 yên/bản, 3 ngày; cần 200 bản trước buổi giới thiệu sau 4 ngày, ngân sách 22.000 yên; cả hai miễn phí vận chuyển và đạt chuẩn chất lượng nội bộ. A tốn 16.000 yên nhưng không kịp hạn; B tốn 20.000 yên, kịp hạn và còn 2.000 yên so với ngân sách. Giá thấp không bù được việc vi phạm thời hạn bắt buộc. 一方で có thể đặt ưu điểm và nhược điểm của cùng một phương án cạnh nhau, không nhất thiết đối chiếu hai chủ thể. 'Cả hai đạt chuẩn' không đồng nghĩa 'chất lượng hoàn toàn giống nhau', càng không chứng minh bên đắt hơn tốt hơn. Kết luận chỉ có giá trị theo ràng buộc đã nêu; nếu bài riêng thay thời hạn thì phải tính lại, không học thuộc tên công ty B.",
+      "examples": [
+        {
+          "id": "teaching:v1:N2:comparison:example:0",
+          "context": "Thừa nhận lợi thế giá nhưng chỉ ra điều kiện bị vi phạm",
+          "jp": "A社は二百部で一万六千円と安い一方で、納品まで五日かかるため、四日後の説明会に間に合いません。",
+          "reading": "えーしゃはにひゃくぶでいちまんろくせんえんとやすいいっぽうで、のうひんまでいつかかかるため、よっかごのせつめいかいにまにあいません。",
+          "vi": "A rẻ, 200 bản là 16.000 yên; mặt khác, do cần 5 ngày để giao nên không kịp buổi giới thiệu sau 4 ngày.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N2:comparison:example:1",
+          "context": "Kết luận dựa trên cả thời gian và tổng chi phí",
+          "jp": "B社なら三日で納品でき、二百部で二万円なので、納期と予算の両方の条件を満たします。",
+          "reading": "びーしゃならみっかでのうひんでき、にひゃくぶでにまんえんなので、のうきとよさんのりょうほうのじょうけんをみたします。",
+          "vi": "Nếu chọn B thì có thể giao trong 3 ngày, 200 bản là 20.000 yên, nên thỏa cả điều kiện thời hạn lẫn ngân sách.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N2:comparison:example:2",
+          "context": "Không biến chuẩn tối thiểu thành kết luận hai bên hoàn toàn ngang nhau",
+          "jp": "両社とも社内基準を満たしていますが、この情報だけでは、品質が全く同じだとはいえません。",
+          "reading": "りょうしゃともしゃないきじゅんをみたしていますが、このじょうほうだけでは、ひんしつがまったくおなじだとはいえません。",
+          "vi": "Cả hai công ty đều đạt chuẩn nội bộ, nhưng chỉ từ thông tin này thì không thể nói chất lượng hoàn toàn giống nhau.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "A社は一部八十円で最も安いので、今回の条件をすべて満たします。",
+          "correction": "A社は安いものの、納品まで五日かかるため、四日後の説明会に間に合いません。",
+          "reason": "Giá và thời hạn là hai phép kiểm tra riêng. Đạt ngân sách không suy ra đạt mọi điều kiện."
+        },
+        {
+          "problem": "B社は二百部で二万二千円です。",
+          "correction": "B社は二百部で二万円です。予算の二万二千円を二千円下回ります。",
+          "reason": "22.000 yên là trần ngân sách, không phải báo giá B. Tổng tiền là 200 × 100 = 20.000 yên; vận chuyển miễn phí."
+        },
+        {
+          "problem": "B社のほうが高いので、品質もA社より優れています。",
+          "correction": "品質について分かるのは、両社とも社内基準を満たしていることです。",
+          "reason": "Văn bản không đưa xếp hạng chất lượng. Quan hệ đắt hơn → tốt hơn là suy diễn ngoài bằng chứng."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "teaching:v1:N2:comparison:task:0",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "印刷会社Aは一部八十円で、納品まで五日かかる。会社Bは一部百円だが、三日で納品できる。どちらも送料は無料で、品質は社内基準を満たしている。担当者は四日後の説明会までに二百部必要としており、予算は二万二千円である。",
+          "prompt": "Hạn và ngân sách đều là điều kiện bắt buộc; đặt hàng hôm nay theo đúng thời gian giao đã ghi. Báo cáo nào cho phép người phụ trách kiểm tra được cả lựa chọn lẫn lý do loại phương án còn lại?",
+          "options": [
+            { "id": "option:0", "text": "A社にする。二百部で一万六千円なので、納品まで五日でも四日後の説明会には間に合う。" },
+            { "id": "option:1", "text": "B社にする。二百部で二万円、納品まで三日なので両条件を満たす。A社は安いが納期に間に合わない。" },
+            { "id": "option:2", "text": "どちらも選べない。B社は二百部で二万四千円となり、予算を超える。" }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "B: 200 × 100 = 20.000 ≤ 22.000 yên và 3 ngày ≤ hạn 4 ngày. A: 200 × 80 = 16.000 yên nhưng 5 ngày > 4 ngày. Không có phí vận chuyển để cộng thêm. Kết luận là đáp ứng điều kiện của trường hợp này, không phải B luôn tốt nhất.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:comparison:task:1",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "元の条件では、説明会は四日後で、二百部が必要、予算は二万二千円である。A社は一部八十円・五日、B社は一部百円・三日で、両社とも送料無料、品質は社内基準を満たしている。【この設問だけの変更】説明会を六日後に延期する。他の条件は変えず、納期と予算を満たす会社のうち、総費用が低い会社を選ぶ。",
+          "prompt": "Chỉ bài này đổi buổi giới thiệu từ sau 4 ngày sang sau 6 ngày và nêu tiêu chí chọn tổng chi phí thấp nhất trong các bên đủ điều kiện. Lựa chọn nào đúng sau khi tính lại, không bê nguyên kết luận cũ?",
+          "options": [
+            { "id": "option:0", "text": "A社。五日で間に合い、二百部で一万六千円となり、条件を満たす二社のうち安い。" },
+            { "id": "option:1", "text": "B社。三日で届くため、総費用が四千円高くても、新しい選定条件では必ず優先される。" },
+            { "id": "option:2", "text": "両社に差はない。どちらも納期と社内の品質基準を満たすため、価格を含めても同じ評価になる。" }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Với hạn mới 6 ngày, cả 5 ngày lẫn 3 ngày đều kịp. Tổng A 16.000, B 20.000, cả hai dưới 22.000; tiêu chí bổ sung chọn A. B giao nhanh hơn nhưng bài mới không ưu tiên tốc độ thêm sau khi đã kịp hạn. Cùng đạt chuẩn cũng không xóa chênh lệch giá 4.000 yên. Chỉ thời hạn và quy tắc tối ưu được thay ở bài này; dữ kiện nguồn của tình huống gốc vẫn là hạn 4 ngày.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:comparison:task:2",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "A社は一部八十円、納品まで五日。B社は一部百円、納品まで三日。両社とも送料は無料で、品質については両社とも社内基準を満たしている。必要部数は二百部、説明会は四日後、予算は二万二千円である。担当者は「B社は高いから、A社より品質が優れている」と説明した。",
+          "prompt": "Chọn phản hồi phân biệt đúng dữ kiện chất lượng với suy luận của người phụ trách, đồng thời không đánh mất lý do chọn B trong điều kiện gốc.",
+          "options": [
+            { "id": "option:0", "text": "品質は完全に同一だと明記されているので、B社を選ぶ理由は一つもない。" },
+            { "id": "option:1", "text": "価格が高ければ品質も必ず上なので、品質の追加資料は不要である。" },
+            { "id": "option:2", "text": "両社が基準を満たすことは分かるが、品質の優劣は分からない。B社は納期と予算を根拠に選べる。" }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "Đạt chuẩn là thông tin chung, không phải phép so sánh hơn kém hay bằng nhau tuyệt đối. B vẫn có căn cứ lựa chọn: giao 3 ngày trong hạn 4 ngày và tổng 20.000 yên trong ngân sách. Không cần bịa ưu thế chất lượng để bảo vệ một quyết định vốn đã đủ căn cứ.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:comparison:task:3",
+          "objective": "transformation",
+          "mode": "short_text",
+          "skill": "reading",
+          "passage": "A社は一部八十円、五日で納品。B社は一部百円、三日で納品。送料無料。二百部を四日後の説明会までに用意する。予算は二万二千円である。",
+          "prompt": "Hiệu đính câu báo cáo sau chỉ bằng cách sửa hai cụm số sai, không đổi các phần khác: 「B社は五日で納品でき、二百部で二万二千円なので、条件を満たす。」 Viết lại cả câu với chữ số Hán như nguồn. Giữ dấu câu và phần kết, không đổi sang câu lịch sự. Cần tính tiền từ đơn giá, không chép trần ngân sách.",
+          "accepted_variants": [
+            "B社は三日で納品でき、二百部で二万円なので、条件を満たす。"
+          ],
+          "rationale": "B giao 3 ngày và 200 × 100 = 20.000 yên. 二万二千円 là ngân sách chứ không phải tổng tiền. Các cách viết số 3日, 200部, 20000円 có thể hợp lệ ở văn bản khác; bài hiệu đính này yêu cầu giữ cách viết chữ số Hán và chỉ sửa hai cụm sai.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:comparison:task:4",
+          "objective": "transformation",
+          "mode": "short_text",
+          "skill": "grammar",
+          "passage": "A社は一部八十円で、納品まで五日かかる。B社は一部百円で、三日で納品できる。二百部が必要で、説明会は四日後、予算は二万二千円。両社とも送料無料で、社内の品質基準を満たしている。",
+          "prompt": "Gộp ba câu thành một câu thể thường đối chiếu ưu và nhược điểm của A: 「A社は安い。ただし、納品まで五日かかる。そのため、四日後の説明会に間に合わない。」 Ràng buộc: thay dấu 。 và ただし sau 安い bằng 一方で、; bỏ そのため; đổi かかる thành dạng nối かかり、. Giữ nguyên mọi từ còn lại, chỉ dùng 。 ở cuối. Nộp cả câu, không đổi số liệu hay thêm kết luận về chất lượng.",
+          "accepted_variants": [
+            "A社は安い一方で、納品まで五日かかり、四日後の説明会に間に合わない。"
+          ],
+          "rationale": "一方で đối chiếu hai mặt của cùng A: rẻ nhưng không kịp. Bằng chứng 5 ngày so với 4 ngày làm rõ vì sao giá rẻ chưa đủ. 安いものの cũng có thể đúng ở bài viết tự do nhưng bài này yêu cầu cụ thể 一方で và các cụm cố định; đáp án không phải phán quyết về mọi cách viết khác.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:comparison:task:5",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Tình huống lựa chọn giả định riêng, chưa đặt hàng: câu lạc bộ cần 200 bản cho buổi giới thiệu sau 6 ngày, ngân sách 22.000 yên. Báo giá A: 80 yên/bản, giao sau 5 ngày; B: 100 yên/bản, giao sau 3 ngày. Cả hai miễn phí vận chuyển và đạt chuẩn nội bộ. Không có thông tin so sánh chất lượng hoặc thống kê giao hàng đúng hẹn. Trong các bên đủ hạn/ngân sách, câu lạc bộ chưa quyết định ưu tiên tiền dư hay thời gian dự phòng.",
+          "prompt": "Viết đề xuất 4–6 câu tiếng Nhật cho đồng đội. Chính bạn chọn ưu tiên tiền dư hay thời gian dự phòng và giải thích nhu cầu của câu lạc bộ do bạn tự đặt trong phạm vi buổi giới thiệu. Tính tổng tiền và thời gian dự phòng của cả hai bên, chọn một bên nhất quán với ưu tiên, nêu đánh đổi và một thông tin còn cần xác nhận. Không bắt buộc chọn bên rẻ hoặc nhanh; không tự biến đạt chuẩn thành hơn về chất lượng, báo giá thành kết quả giao hàng hoặc đề xuất thành đơn đã đặt.",
+          "criteria": [
+            "Đối chiếu: tổng tiền của A và B lần lượt từ 200 × 80 và 200 × 100; thời gian dự phòng tính từ hạn 6 ngày trừ thời gian giao từng bên. Không dùng trần 22.000 làm báo giá.",
+            "Quyết định mở: công khai một ưu tiên tự chọn cùng nhu cầu cụ thể, kiểm tra cả hai điều kiện bắt buộc rồi nối lựa chọn với ưu tiên ấy; có thể có hơn một đề xuất hợp lý.",
+            "Đánh đổi: cho thấy lợi thế phải bỏ khi chọn bên này; không kết luận hai bên ngang nhau về mọi mặt chỉ vì cùng đủ điều kiện.",
+            "Giới hạn bằng chứng: thông tin muốn hỏi là chưa biết; không khẳng định đã giao đúng hẹn, chất lượng vượt trội hoặc đã đặt hàng. Quan hệ nguyên nhân/lý do phải đọc được trong câu, không chỉ có tên hãng và con số.",
+            "Giao tiếp: báo cáo dễ kiểm tra, mức lịch sự nhất quán; lỗi chữ/số được góp ý theo ảnh hưởng cụ thể, không suy thành không hiểu mọi phép so sánh."
+          ],
+          "exchange": { "group": "n2-comparison-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
+          "rationale": "Lựa chọn ưu tiên và nhu cầu do người học quyết định, không có câu đáp án hay máy chấm ngữ nghĩa. Lưu nguyên văn đề xuất chưa được đánh giá; các phép tính là căn cứ tự đối chiếu, không đủ xác nhận toàn bộ lập luận đúng.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:comparison:task:6",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Yêu cầu xem lại chung do AI soạn, không phải đồng đội đã xác nhận đề xuất: hạn thực tế của tình huống này vẫn là 6 ngày, chưa có thay đổi báo giá hay đơn đặt. Người đọc muốn hiểu lựa chọn phụ thuộc ưu tiên ra sao, chứ không chỉ được nghe tên nhà in.",
+          "prompt": "Dựa vào đúng đề xuất bạn vừa lưu, trích câu nêu ưu tiên/lựa chọn và viết phần bổ sung 3–5 câu tiếng Nhật. Làm rõ đánh đổi trong câu của chính bạn; sau đó xét riêng giả sử hạn chỉ còn 4 ngày, các điều kiện khác giữ nguyên, để nói cần giữ hay đổi đề xuất và vì sao. Ghi rõ đây là giả sử, không sửa lịch thật thành 4 ngày. Nếu câu cũ vốn đủ căn cứ, giữ kết luận và giải thích phép kiểm tra; không tự gán cho đồng đội một ý kiến họ chưa nói.",
+          "criteria": [
+            "Nối tiếp: câu trích có thật, lời bổ sung dùng đúng ưu tiên và lựa chọn ban đầu; không dựng một đáp án cũ khác để phản biện.",
+            "Lập luận: nói rõ đánh đổi thật của đề xuất; dưới giả sử 4 ngày kiểm tra lại tính khả thi trước ưu tiên chứ không mặc định phải đổi tên hãng.",
+            "Phạm vi: phân biệt tình huống chính 6 ngày với giả sử 4 ngày và báo giá với kết quả; không gán thêm ưu thế chất lượng.",
+            "Tự sửa: chỉ ra chỗ làm rõ/sửa hoặc lý do giữ câu hợp lý; nhận xét phải đọc quan hệ lý do trong hai văn bản, không dựa vào từ khóa.",
+            "Bằng chứng: thiếu nguyên văn trước thì chưa nhận xét được tính nhất quán; bản bổ sung mới không được thay thế lịch sử đề xuất ban đầu."
+          ],
+          "exchange": { "group": "n2-comparison-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N2:comparison:task:5"] },
+          "rationale": "Giữ riêng hai lượt để kiểm tra điều kiện thay đổi tác động lên lựa chọn thật ra sao. AI tư vấn không phải xác nhận đơn đã được đặt hoặc người học đã thành thạo ra quyết định.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:comparison:task:7",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Bối cảnh mới giả định: bạn điều phối không gian trưng bày cho câu lạc bộ, phải đón 30 khách cùng lúc vào chiều 2027年4月10日. Phòng C chứa tối đa 40 người, cách ga 15 phút đi bộ, có thể vào bày đồ từ 10時; phòng D chứa tối đa 32 người, cách ga 5 phút, chỉ vào bày từ 13時. Cả hai đã được xác nhận còn trống chiều hôm đó và có cùng thiết bị trình chiếu cần thiết. Chương trình bắt đầu 15時, cần ít nhất 90 phút bày đồ. Chưa có thông tin về lối đi không bậc. Chưa đặt phòng nào.",
+          "prompt": "Không xem bài/bản viết cũ, viết 4–6 câu tiếng Nhật cho nhóm phụ trách. Tự chọn ưu tiên thuận tiện đi lại hay dư thời gian chuẩn bị và nêu lý do gắn với cách tổ chức do bạn quyết định. Kiểm tra sức chứa và thời gian chuẩn bị của cả hai phòng rồi đề xuất một phòng, nêu đánh đổi và hỏi thông tin còn thiếu trước khi đặt. Không coi có đủ thiết bị là mọi điều kiện hai phòng hoàn toàn giống nhau hoặc tự khẳng định lối đi phù hợp mọi khách.",
+          "criteria": [
+            "Chuyển giao: lập kế hoạch không gian với vai điều phối và sức chứa/thời gian, không chép báo cáo mua bản in hay đổi nhãn A/B.",
+            "Ràng buộc: so 30 khách với sức chứa từng phòng; tính khoảng chuẩn bị từ giờ vào tới 15時 và đối chiếu ít nhất 90 phút, không nhầm thời gian đi bộ thành thời gian bày đồ.",
+            "Lựa chọn mở: ưu tiên và lý do tổ chức tự chọn gắn được với phòng đề xuất; nêu lợi thế của phòng không chọn mà vẫn giữ đúng điều kiện bắt buộc.",
+            "Giới hạn: hỏi về lối đi chưa biết, không kể đã đặt phòng; cùng có thiết bị không chứng minh toàn bộ chất lượng hoặc khả năng tiếp cận bằng nhau.",
+            "Bằng chứng: giữ nguyên văn mới và tình trạng trợ giúp để người đọc xem lập luận thực; đủ lịch ôn hoặc AI nhận xét không chứng minh giữ kiến thức tự lực."
+          ],
+          "exchange": { "group": "n2-comparison-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N2:comparison:task:5", "teaching:v1:N2:comparison:task:6"], "delay_hours": 24 },
+          "rationale": "Dữ kiện mới đủ để lập luận, không cần văn bản nguồn cũ hoặc câu mẫu. Lưu đáp án mới như bằng chứng tự báo cáo chưa chấm; không dùng lượng từ/con số có mặt làm bộ chấm đúng nghĩa.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    },
+    {
+      "id": "teaching:v1:N2:proposal",
+      "revision": 2,
+      "order": 3,
+      "level": "N2",
+      "title": "Phản hồi đề xuất: kỳ vọng, rủi ro và quyết định thử nghiệm",
+      "goal": "Phân biệt mục tiêu, giải pháp và việc cần xác minh trước khi đồng ý.",
+      "prerequisites": ["teaching:v1:N2:comparison"],
+      "support": [
+        { "term": "Mục tiêu, dự báo, quyết định, kết quả", "explanation": "Trước khi viết cần phân vai thông tin: muốn cải thiện gì; ai dự đoán điều gì; việc nào đã được quyết định; việc nào đã quan sát. Có quyết định thử không có nghĩa đã bắt đầu hoặc đã có kết quả." },
+        { "term": "試行・連絡の遅れ・作業時間", "explanation": "試行（しこう）thử nghiệm; 連絡の遅れ（れんらくのおくれ）chậm liên lạc; 作業時間（さぎょうじかん）thời gian làm việc. Khi thiết kế ghi nhận, phải nói rõ bắt đầu/kết thúc thời gian nào và đơn vị gì để không so hai đại lượng khác nhau." },
+        { "term": "Đề nghị kiểm chứng", "explanation": "Thư trao đổi nội bộ giả định dùng lời đề nghị và nêu giới hạn kết luận. Có thể đề nghị đo trước–trong cùng tiêu chí, nhưng quan sát đổi khác chưa tự chứng minh nguyên nhân duy nhất. Không bắt buộc một khuôn nghi vấn hay từ phủ định cố định." }
+      ],
+      "practice_path": [
+        "teaching:v1:N2:proposal:task:0",
+        "teaching:v1:N2:proposal:task:1",
+        "teaching:v1:N2:proposal:task:2",
+        "teaching:v1:N2:proposal:task:3",
+        "teaching:v1:N2:proposal:task:4",
+        "teaching:v1:N2:proposal:task:5",
+        "teaching:v1:N2:proposal:task:6"
+      ],
+      "delayed_review_task_id": "teaching:v1:N2:proposal:task:7",
+      "authorship": "ai_authored",
+      "review": { "status": "ai_draft", "human_approved": false },
+      "eligibility": { "reference_display": true, "provider_teaching": "advisory_only", "scored_assessment": false, "mastery_credit": false },
+      "source_refs": [
+        {
+          "chunk_id": "practical:v1:N2:proposal",
+          "url": "#curriculum/N2/lesson/reading/practical%3Av1%3AN2%3Aproposal%3Asituation",
+          "source_name": "VJBot · Đọc và phản hồi một đề xuất",
+          "role": "background_reference_not_approval"
+        }
+      ],
+      "source_header": "Nguồn nội bộ: VJBot · Đọc và phản hồi một đề xuất [practical:v1:N2:proposal]. Chưa có dữ liệu kết quả thử nghiệm; bài này không xác nhận hiệu quả đã được chứng minh.",
+      "formula": "～と考えている。これに対して、～おそれがある。必ず～とは限らない。まず～試験的に実施する。",
+      "explanation": "Lập bảng vai trò thông tin: giảm gánh nặng họp là mục tiêu; đổi từ họp hằng tuần sang hai lần mỗi tháng là giải pháp; tăng hiệu quả là kỳ vọng của người đề xuất; chia sẻ thông tin chậm là rủi ro được nêu; thử một tháng và kiểm tra độ trễ liên lạc cùng thời gian làm việc là quyết định đã có. Phải giữ chủ thể của 考えている: văn bản xác nhận có người tin vào hiệu quả, không xác nhận hiệu quả thực tế. おそれがある nêu khả năng bất lợi, chưa phải sự cố đã xảy ra. 必ず効率が上がるとは限らない bác bỏ tính tất yếu: có thể tăng nhưng không bảo đảm luôn tăng; không có nghĩa chắc chắn không tăng. 'Hằng tuần' và 'hai lần mỗi tháng' là hai cách đặt lịch khác nhau; không tự đổi thành 'giảm đúng 50%' cho mọi tháng. Một kế hoạch kiểm chứng có thể đề xuất so sánh trước–sau, nhưng phải ghi đó là đề xuất mới, không giả làm số liệu hoặc phương pháp đã được nguồn xác nhận.",
+      "examples": [
+        {
+          "id": "teaching:v1:N2:proposal:example:0",
+          "context": "Tường thuật niềm tin của người đề xuất, chưa biến thành kết quả",
+          "jp": "提案者は、会議を月二回にすれば作業時間を確保でき、効率が上がると考えています。",
+          "reading": "ていあんしゃは、かいぎをつきにかいにすればさぎょうじかんをかくほでき、こうりつがあがるとかんがえています。",
+          "vi": "Người đề xuất cho rằng nếu họp hai lần mỗi tháng thì có thể dành được thời gian làm việc và hiệu quả sẽ tăng.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N2:proposal:example:1",
+          "context": "Đối chiếu rủi ro với lợi ích kỳ vọng mà không khẳng định sự cố đã xảy ra",
+          "jp": "これに対して、会議を減らすと情報共有が遅れるおそれもあるという意見が出ました。",
+          "reading": "これにたいして、かいぎをへらすとじょうほうきょうゆうがおくれるおそれもあるといういけんがでました。",
+          "vi": "Trái với ý kiến đó, đã có ý kiến lo rằng giảm họp cũng có thể làm chậm việc chia sẻ thông tin.",
+          "authorship": "ai_authored"
+        },
+        {
+          "id": "teaching:v1:N2:proposal:example:2",
+          "context": "Giới hạn suy luận và giữ đúng tính tạm thời của quyết định",
+          "jp": "回数を減らせば必ず効率が上がるとは限らないため、まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになりました。",
+          "reading": "かいすうをへらせばかならずこうりつがあがるとはかぎらないため、まずいっかげつしけんてきにじっしし、れんらくのおくれとさぎょうじかんをかくにんすることになりました。",
+          "vi": "Vì giảm số lần họp không bảo đảm hiệu quả luôn tăng, nhóm quyết định trước hết thử một tháng rồi kiểm tra độ trễ liên lạc và thời gian làm việc.",
+          "authorship": "ai_authored"
+        }
+      ],
+      "common_errors": [
+        {
+          "problem": "会議を月二回にした結果、効率が上がったことが証明されました。",
+          "correction": "提案者は効率が上がると考えていますが、実際の効果は試験的な実施を通じて確認する必要があります。",
+          "reason": "Nguồn có kỳ vọng và kế hoạch kiểm tra, chưa có kết quả thực nghiệm. と考えている không thể đổi thành 証明された."
+        },
+        {
+          "problem": "「必ず効率が上がるとは限らない」は「効率は絶対に上がらない」という意味です。",
+          "correction": "効率が上がる可能性はありますが、必ず上がるとは断定できないという意味です。",
+          "reason": "Phủ định bảo đảm không phải bảo đảm điều ngược lại. Giữ phạm vi của 必ず và とは限らない."
+        },
+        {
+          "problem": "月二回の会議を恒久的に実施することが決まりました。",
+          "correction": "まず一か月試験的に実施し、連絡の遅れと作業時間を確認することが決まりました。",
+          "reason": "まず và 試験的 đặt giới hạn thời gian và tính chất; chưa có quyết định áp dụng vĩnh viễn."
+        }
+      ],
+      "tasks": [
+        {
+          "id": "teaching:v1:N2:proposal:task:0",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "会議の負担を減らすため、毎週の定例会を月二回にする案が出された。提案者は、空いた時間を作業に使えるため効率が上がると考えている。これに対して、情報共有が遅れるおそれもあるという意見が出た。まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。",
+          "prompt": "Một bản ghi biên bản cần tách 'điều đã quyết định' khỏi 'điều mới được dự đoán'. Phương án nào giữ đúng địa vị bằng chứng của cả lợi ích lẫn rủi ro?",
+          "options": [
+            { "id": "option:0", "text": "効率の向上も情報共有の遅れも、試験で既に確認された結果である。" },
+            { "id": "option:1", "text": "効率向上は提案者の見込み、情報共有の遅れは懸念である。一か月の試行と二項目の確認が決定事項である。" },
+            { "id": "option:2", "text": "情報共有の遅れが心配されるため、会議を減らす案は取り下げられた。" }
+          ],
+          "answer_option_id": "option:1",
+          "rationale": "と考えている và おそれもあるという意見 đánh dấu dự báo/lo ngại, không phải kết quả đã đo. ことになった xác định quyết định thử và kiểm tra hai mục; không có việc rút đề xuất hay thông qua vĩnh viễn.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:proposal:task:1",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "会議の回数を減らせば必ず効率が上がるとは限らない。会議の負担は減っても、情報共有が遅れるおそれがあるためである。そこで、まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。",
+          "prompt": "Trong lập luận này, とは限らない cho phép kết luận nào, và vì sao nhóm vẫn thử thay vì phủ quyết ngay?",
+          "options": [
+            { "id": "option:0", "text": "効率が上がる可能性は残るが、回数の削減だけで向上を保証できないため、効果とリスクを確認する。" },
+            { "id": "option:1", "text": "効率が上がる可能性は全くないが、それを隠すために試行する。" },
+            { "id": "option:2", "text": "効率は必ず上がるので、連絡の遅れを確認する必要はない。" }
+          ],
+          "answer_option_id": "option:0",
+          "rationale": "Bài bác bỏ suy luận 'giảm họp thì nhất định tăng hiệu quả', không bác bỏ mọi khả năng có ích. Vì lợi ích chưa được bảo đảm và có rủi ro, thử rồi đo phù hợp hơn khẳng định thành công hoặc thất bại sẵn.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:proposal:task:2",
+          "objective": "meaning",
+          "mode": "choice",
+          "skill": "reading",
+          "passage": "毎週の定例会を月二回にする案について、提案者は作業時間を確保できると考えている。一方、情報共有が遅れるおそれも指摘された。まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。具体的な測定方法や結果の数値は、まだ示されていない。",
+          "prompt": "Chọn đề nghị MỚI giúp kiểm chứng cả lợi ích lẫn rủi ro. Không được gán phương pháp hoặc số liệu chưa có cho văn bản nguồn.",
+          "options": [
+            { "id": "option:0", "text": "本文で作業時間が二割増えたと証明されているので、測定せず恒久化する。" },
+            { "id": "option:1", "text": "会議の回数だけを数え、情報共有の遅れは対象から外す。" },
+            { "id": "option:2", "text": "新たな測定案として、試行前と試行中の作業時間と連絡の遅れを、同じ基準で記録して比較してはどうか。" }
+          ],
+          "answer_option_id": "option:2",
+          "rationale": "Đề nghị so sánh cùng tiêu chí trước–trong thử nghiệm giữ cả hai khía cạnh và ghi rõ là phương pháp mới đề xuất. Không có số 20% hay kết quả đo nào trong nguồn. So sánh trước–sau hỗ trợ xem xét thay đổi nhưng tự nó chưa loại hết các nguyên nhân khác; bài không hứa chứng minh quan hệ nhân quả tuyệt đối.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:proposal:task:3",
+          "objective": "transformation",
+          "mode": "short_text",
+          "skill": "grammar",
+          "passage": "会議の負担を減らすため、毎週の定例会を月二回にする案が出された。提案者は、空いた時間を作業に使えるため効率が上がると考えている。効果の測定結果はまだ示されていない。",
+          "prompt": "Sửa câu biến kỳ vọng thành sự thật: 「会議を月二回にすると効率が上がることが証明されている。」 Dùng đúng khuôn tường thuật 「提案者は、［nội dung kỳ vọng］と考えている。」; phần nội dung phải giữ nguyên 「会議を月二回にすると効率が上がる」. Viết cả câu với các chữ và dấu câu đã chỉ định, bỏ hoàn toàn ことが証明されている.",
+          "accepted_variants": [
+            "提案者は、会議を月二回にすると効率が上がると考えている。"
+          ],
+          "rationale": "Chủ thể được xác nhận là người có kỳ vọng, không phải cơ quan đã chứng minh hiệu quả. という見込みを示している có thể hợp lệ trong một bài tường thuật mở, nhưng bài này giới hạn vào khuôn と考えている để luyện giữ nguồn phát ngôn; không phủ định các cách tường thuật khác.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:proposal:task:4",
+          "objective": "transformation",
+          "mode": "short_text",
+          "skill": "reading",
+          "passage": "毎週の定例会を月二回にする案が出された。情報共有が遅れるおそれもあるため、まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。恒久的な実施はまだ決まっていない。",
+          "prompt": "Hoàn thành một câu biên bản theo đúng khung 「まず［thời hạn + tính chất thử］実施し、［hai mục kiểm tra］を確認することになった。」. Dùng cụm 「一か月試験的に」 cho ô đầu và hai cụm 「連絡の遅れ」「作業時間」 nối bằng と cho ô sau; có thể đổi thứ tự hai mục. Viết cả câu, không thêm kết quả hoặc quyết định áp dụng lâu dài. Giữ chữ Hán và dấu 、 sau 実施し.",
+          "accepted_variants": [
+            "まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。",
+            "まず一か月試験的に実施し、作業時間と連絡の遅れを確認することになった。"
+          ],
+          "rationale": "Câu cần giữ đủ một tháng, tính thử nghiệm và hai mục sẽ kiểm tra. Đổi thứ tự hai mục không đổi nội dung nên cả hai được ghi nhận. Những bản tóm tắt tự do khác có thể đúng; danh sách này chỉ dành cho khung viết bị ràng buộc của bài, không đủ để chấm mọi câu tiếng Nhật.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:proposal:task:5",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Tình huống nhóm biên tập giả định, không phải yêu cầu thay đổi công việc thật.\n毎週の定例会を月二回にする案が出された。提案者は、空いた時間を作業に使え、効率が上がると考えている。一方、情報共有が遅れるおそれもあるという意見が出た。まず一か月試験的に実施し、連絡の遅れと作業時間を確認することになった。試行の開始日、測定方法、結果はまだ示されていない。",
+          "prompt": "Đóng vai người hỗ trợ ghi nhận, viết đề nghị 5–7 câu tiếng Nhật cho nhóm. Tách ngắn gọn kỳ vọng của người đề xuất, lo ngại và điều đã quyết định. Bạn tự thiết kế cách ghi nhận cả thời gian làm việc lẫn chậm liên lạc: định nghĩa sẽ đo gì, bằng đơn vị nào, trước/trong thử ra sao và một điều kiện để nhóm cân nhắc điều chỉnh. Mọi tiêu chí, mốc hoặc công cụ bạn thêm phải là đề nghị mới, không phải nội dung đã được thông qua. Không bịa kết quả hoặc đổi 'họp hằng tuần sang hai lần/tháng' thành giảm đúng một tỷ lệ cho mọi tháng.",
+          "criteria": [
+            "Địa vị thông tin: kỳ vọng thuộc người đề xuất, rủi ro chưa phải sự cố quan sát, quyết định chỉ là thử một tháng và kiểm tra hai mục; chưa biết thử đã bắt đầu.",
+            "Thiết kế tự chọn: hai mục đều có định nghĩa thao tác và đơn vị đủ để người khác ghi nhận; so trước/trong phải dùng cùng định nghĩa, không lấy số buổi họp thay cả hiệu quả.",
+            "Quyết định có điều kiện: tiêu chí cân nhắc điều chỉnh do người học tự nêu và đánh dấu là đề nghị; không biến tiêu chí thành kết quả đã đạt.",
+            "Lập luận/ngữ pháp: nguồn phát ngôn, thời và phạm vi phủ định thể hiện đúng quan hệ; không suy 'không bảo đảm tăng' ra 'chắc chắn không tăng' hoặc trước–sau thành chứng minh nhân quả tuyệt đối.",
+            "Giao tiếp: người nhận biết cần ghi gì và điều gì còn chờ nhóm quyết định. Tự kiểm có thể nêu chỗ chưa chắc; không có câu mẫu hay bộ từ khóa bảo đảm đúng."
+          ],
+          "exchange": { "group": "n2-proposal-learning-cycle-v2", "stage": "produce", "prior_task_ids": [] },
+          "rationale": "Nhiều cách đo và tiêu chí có thể hợp lý; lưu nguyên văn đề nghị chưa chấm, tách góp ý nghĩa/cấu trúc/chính tả. AI chỉ tư vấn trên lời thật, không phê duyệt kế hoạch hoặc xác nhận hiệu quả.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:proposal:task:6",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Ghi chú phản biện chung do AI soạn, không giả làm phản hồi riêng của thành viên: cùng một thay đổi thời gian có thể liên quan lượng việc khác nhau giữa các tuần. Chưa có số liệu mới; nhóm chưa đồng ý phương pháp đo hoặc tiêu chí bạn đề nghị.",
+          "prompt": "Xem đúng đề nghị bạn đã viết. Trích một đoạn định nghĩa phép đo hoặc nêu điều kiện điều chỉnh, rồi sửa/bổ sung đề nghị bằng 3–5 câu tiếng Nhật để xử lý khả năng lượng việc khác nhau. Chính bạn chọn cách ghi thêm bối cảnh hoặc giới hạn so sánh, giải thích nó làm thay đổi mức kết luận của đoạn thật ra sao. Nếu bản trước đã tính việc này, giữ cách làm và giải thích phép kiểm tra. Không tự nói dữ liệu đã được thu, không chuyển sang một đề án không liên quan.",
+          "criteria": [
+            "Nối tiếp: trích đúng đoạn đã lưu, giữ được hai mục định đo và phân biệt điểm nào được bổ sung thay vì tự tạo bản trước mới.",
+            "Kiểm chứng: lựa chọn ghi nhận/giới hạn mới gắn với lượng việc và phép đo thực tế của người học, đủ cụ thể để người khác biết áp dụng ra sao.",
+            "Giới hạn kết luận: nêu quan sát trước–sau có thể còn nguyên nhân khác; không khẳng định đã loại mọi yếu tố gây nhiễu hoặc hiệu quả đã có.",
+            "Sửa có lý do: thay đoạn gây suy diễn hoặc giữ đoạn hợp lý kèm giải thích đối chiếu; không buộc tìm lỗi nếu câu gốc hợp lý.",
+            "Bằng chứng/giao tiếp: thiếu đề nghị trước thì chưa đánh giá nối tiếp; nguyên văn mới vẫn là tư vấn chưa thông qua, diễn đạt lịch sự và tách góp ý chính tả khỏi ý nghĩa."
+          ],
+          "exchange": { "group": "n2-proposal-learning-cycle-v2", "stage": "revise", "prior_task_ids": ["teaching:v1:N2:proposal:task:5"] },
+          "rationale": "Lưu riêng bản mới/lý do, không thay lịch sử hoặc tự thêm kết quả. Cần đọc hai lượt để xem giới hạn suy luận thực sự được làm rõ; không dùng có từ 'khả năng' làm chứng nhận đúng nghĩa.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        },
+        {
+          "id": "teaching:v1:N2:proposal:task:7",
+          "objective": "communication",
+          "mode": "writing",
+          "skill": "writing",
+          "passage": "Bối cảnh mới giả định: bạn ghi biên bản cho câu lạc bộ triển lãm.\n案内担当者は、入口に新しい案内図を置けば、来場者が展示を探す時間を減らせると考えている。一方、通路が狭くなるおそれがあるという意見も出た。2027年5月8日から一週間試し、探す時間と通路の混雑を記録することが決まった。今日は2027年5月1日で、試行は始まっていない。図の大きさ、記録方法、結果はまだ決まっていない。\nTừ hỗ trợ riêng của cảnh: 案内図（あんないず）sơ đồ chỉ dẫn; 通路（つうろ）lối đi; 混雑（こんざつ）đông/chật.",
+          "prompt": "Không mở đề nghị cũ, viết 5–7 câu tiếng Nhật để nhóm chuẩn bị ghi nhận tuần thử. Tự chọn cách bố trí/quan sát có thể xem xét, nhưng ghi rõ là đề xuất. Phân biệt kỳ vọng, lo ngại, quyết định và trạng thái chưa bắt đầu; thiết kế cách ghi cả thời gian tìm lẫn tình trạng lối đi, có định nghĩa/đơn vị và điều kiện cân nhắc điều chỉnh. Nêu thêm một yếu tố khác cần ghi để tránh kết luận quá mạnh. Không báo cáo rằng sơ đồ đã thành công hoặc đã gây tắc.",
+          "criteria": [
+            "Chuyển giao: biên bản chuẩn bị quan sát khách triển lãm, không chép kế hoạch giảm họp hay chỉ thay đơn vị thời gian.",
+            "Mốc và nguồn: giữ ngày hiện tại 1/5 trước ngày thử 8/5/2027, thời lượng một tuần, và tách dự đoán/lo ngại khỏi việc đã quyết định.",
+            "Thiết kế: người học tự chọn phép ghi đủ hai mặt; có định nghĩa, đơn vị, điều kiện cân nhắc và yếu tố bối cảnh bổ sung, đều là đề xuất chưa thông qua.",
+            "Suy luận: không kể dự kiến thành kết quả, không suy ít thời gian tìm hơn là chắc chắn mọi khách được lợi hoặc đủ để bỏ kiểm tra lối đi.",
+            "Bằng chứng: giữ nguyên văn mới và trợ giúp đã dùng; tiêu chí tự kiểm không tự chấm đúng nghĩa, đủ lịch ôn không chứng minh nhớ lâu hoặc tự lực."
+          ],
+          "exchange": { "group": "n2-proposal-learning-cycle-v2", "stage": "delayed", "prior_task_ids": ["teaching:v1:N2:proposal:task:5", "teaching:v1:N2:proposal:task:6"], "delay_hours": 24 },
+          "rationale": "Toàn bộ bối cảnh mới có trong lượt này, không cung cấp lời cũ/mô hình trả lời. Nguyên văn được giữ như bằng chứng chưa đánh giá; nhận xét AI không phải dữ liệu triển lãm đã được quan sát.",
+          "assessment_basis": "ai_authored_provisional_not_verified",
+          "scored": false
+        }
+      ]
+    }
+  ]
+}

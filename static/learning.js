@@ -3,8 +3,67 @@ const lessonLoads = new Map();
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+async function loadTeachingDrafts(level){
+  const response=await fetch(`course/${level.toLowerCase()}-teaching.json`);
+  if(!response.ok)throw new Error(`Không tải được bộ bài ${level} Việt–Nhật. Hãy thử lại.`);
+  const source=await response.json();
+  if(source.version!==1 || source.human_approved!==false || !Array.isArray(source.lessons)
+    || source.lessons.some(lesson=>lesson.level!==level || lesson.review?.human_approved!==false
+      || lesson.eligibility?.reference_display!==true || lesson.eligibility?.provider_teaching!=='advisory_only'
+      || lesson.eligibility?.scored_assessment!==false || lesson.eligibility?.mastery_credit!==false
+      || !Array.isArray(lesson.tasks)))throw new Error(`Bộ bài ${level} chưa có cấu trúc và giới hạn sử dụng phù hợp.`);
+  for(const lesson of source.lessons){
+    const taskPositions=new Map(lesson.tasks.map((task,index)=>[task.id,index]));
+    const paths=[lesson.practice_path,lesson.reference_task_ids,...(lesson.guided_steps || []).map(step=>step.task_ids)].filter(path=>path!==undefined);
+    if(taskPositions.size!==lesson.tasks.length || paths.some(path=>!Array.isArray(path) || !path.length || new Set(path).size!==path.length || path.some(id=>!taskPositions.has(id)))
+      || lesson.delayed_review_task_id && !taskPositions.has(lesson.delayed_review_task_id)
+      || lesson.guided_steps?.some(step=>typeof step.title!=='string' || typeof step.note!=='string'
+        || !step.example || ['jp','reading','vi'].some(key=>typeof step.example[key]!=='string' || !step.example[key].trim())))
+      throw new Error(`Bộ bài ${level} có bước luyện chưa gắn đúng câu hỏi. Hãy mở lại sau khi nội dung được sửa.`);
+    const defaultPath=lesson.practice_path || lesson.guided_steps?.flatMap(step=>step.task_ids) || lesson.tasks.filter(task=>task.exchange?.stage!=='delayed').map(task=>task.id);
+    for(const [index,task] of lesson.tasks.entries()){
+      const exchange=task.exchange;if(!exchange)continue;
+      const priorIds=exchange.prior_task_ids;
+      const priors=Array.isArray(priorIds)?priorIds.map(id=>lesson.tasks[taskPositions.get(id)]):null;
+      const starts=['invite','produce'].includes(exchange.stage),delayed=exchange.stage==='delayed';
+      const requiredStart=['accept','refuse'].includes(exchange.stage)?'invite':'produce';
+      const hasRequiredStart=priors?.some(prior=>prior?.exchange?.stage===requiredStart)
+        || delayed && priors?.some(prior=>prior?.exchange?.stage==='invite');
+      if(!priors || new Set(priorIds).size!==priorIds.length || starts!==(priorIds.length===0)
+        || priors.some(prior=>!prior || prior.mode!=='writing' || prior.exchange?.group!==exchange.group
+          || prior.exchange.stage==='delayed' || taskPositions.get(prior.id)>=index)
+        || !starts && !hasRequiredStart
+        || delayed && (lesson.delayed_review_task_id!==task.id || defaultPath.includes(task.id)
+          || !priors.some(prior=>['accept','refuse','respond','revise'].includes(prior.exchange.stage)))
+        || !delayed && (!defaultPath.includes(task.id) || priorIds.some(id=>!defaultPath.includes(id) || defaultPath.indexOf(id)>=defaultPath.indexOf(task.id)))
+        || lesson.reference_task_ids?.includes(task.id)
+        || lesson.guided_steps?.some(step=>step.task_ids.includes(task.id)))
+        throw new Error(`Bộ bài ${level} có chuỗi tự viết hoặc gợi nhớ chưa gắn đúng phiên và câu trả lời trước. Hãy mở lại sau khi nội dung được sửa.`);
+    }
+  }
+  const titles=new Map(source.lessons.map(lesson=>[lesson.id,lesson.title]));
+  return [...source.lessons].sort((a,b)=>a.order-b.order).map(lesson=>({
+    ...lesson,lesson:lesson.order,editorial:true,source:`AI-authored ${level} study drafts`,sourceLabel:'VJBot · AI biên soạn · chờ bạn duyệt',language:'vi',
+    meaning_vi:lesson.goal,summary:lesson.goal,prerequisite_titles:lesson.prerequisites.map(id=>titles.get(id)),
+    examples:lesson.examples.map(example=>({...example,ro:example.reading})),
+    drills:lesson.tasks.map(task=>({
+      task_key:task.id,item_id:task.id,source_identity:task.id,q:task.prompt,
+      instruction:task.instruction || '',passage:task.passage || '',
+      requires_passage:Boolean(task.passage),skill:task.skill || 'grammar',
+      mode:task.mode==='short_text'?'recall':task.mode,
+      opts:task.mode==='choice'?task.options.map(option=>option.text):[],
+      answer_index:task.mode==='choice'?task.options.findIndex(option=>option.id===task.answer_option_id):null,
+      accepted_answers:task.mode==='short_text'?task.accepted_variants:[],
+      explanation:task.rationale,source_language:'vi',
+      ...(task.objective!==undefined?{objective:task.objective}:{}),
+      ...(task.criteria?{criteria:task.criteria}:{}),...(task.model?{model:task.model}:{}),
+      ...(task.exchange?{exchange:task.exchange}:{})
+    }))
+  }));
+}
 async function ensureLessons(level) {
   if (!lessonLoads.has(level)) lessonLoads.set(level, (async () => {
+    const editorial=await loadTeachingDrafts(level);
     const [vocab,grammar,kanji] = await Promise.all(['vocab','grammar','kanji'].map(async kind => {
       const response = await fetch(`openjlpt/${kind}-${level.toLowerCase()}.json`);
       if(!response.ok) throw new Error('Không tải được bài học. Hãy thử lại.');
@@ -22,7 +81,7 @@ async function ensureLessons(level) {
         for(const meaning of vocabularyMeanings){if(meaning!==word.vi)candidates.push(meaning);if(candidates.length>=index+3)break;}
         const alternatives=candidates.slice(index,index+3);
         const opts=[...alternatives];opts.splice(index%4,0,word.vi);
-        return {q:`${word.jp} (${word.reading}) — nghĩa nào đúng?`,opts,ans:word.vi,item_id:word.id};
+        return {q:`${word.jp} (${word.reading}) — nghĩa nào đúng?`,opts,answer_index:opts.indexOf(word.vi),item_id:word.id};
       });
     }
     // Sentence practice is grouped by the target word's level; sentences are not graded JLPT passages.
@@ -42,12 +101,12 @@ async function ensureLessons(level) {
     const makeDrill=(q,answer,choices,id,index)=>{
       const wrong=[...new Set(choices)].filter(x=>x&&x!==answer);
       const offset=index%Math.max(1,wrong.length-2),opts=wrong.slice(offset,offset+3);
-      opts.splice(index%(opts.length+1),0,answer);return {q,ans:answer,opts,item_id:id};
+      opts.splice(index%(opts.length+1),0,answer);return {q,answer_index:opts.indexOf(answer),opts,item_id:id};
     };
     const grammarMeanings=grammar.map(g=>T(g.meaning)),kanjiMeanings=kanji.map(k=>k.meanings.map(T).join('; '));
     for(const lesson of skills.grammar.filter(l=>l.source))lesson.drills=[makeDrill(`Mẫu ${lesson.title} có nghĩa gì?`,lesson.meaning_vi,grammarMeanings,lesson.id,lesson.lesson)];
     for(const lesson of skills.kanji)lesson.drills=lesson.items.map((k,i)=>makeDrill(`${k.jp} — nghĩa nào đúng?`,k.vi,kanjiMeanings,k.id,i));
-    for(const lesson of skills.reading.filter(l=>l.source))lesson.drills=lesson.examples.slice(0,5).map((e,i)=>makeDrill(`Chọn bản dịch: ${e.jp}`,e.vi,lesson.examples.map(e=>e.vi),`${lesson.id}:${i}`,i));
+    for(const lesson of skills.reading.filter(l=>l.source))lesson.drills=lesson.examples.map((example,index)=>({...makeDrill('Chọn bản dịch phù hợp với câu nguồn.',example.vi,lesson.examples.map(source=>source.vi),`${lesson.id}:${index}`,index),passage:example.jp,requires_passage:true,example_indexes:[index]}));
     if(level==='N5') {
       const rows=[['あいうえお','アイウエオ',['a','i','u','e','o']],['かきくけこ','カキクケコ',['ka','ki','ku','ke','ko']],['さしすせそ','サシスセソ',['sa','shi','su','se','so']],['たちつてと','タチツテト',['ta','chi','tsu','te','to']],['なにぬねの','ナニヌネノ',['na','ni','nu','ne','no']],['はひふへほ','ハヒフヘホ',['ha','hi','fu','he','ho']],['まみむめも','マミムメモ',['ma','mi','mu','me','mo']],['やゆよ','ヤユヨ',['ya','yu','yo']],['らりるれろ','ラリルレロ',['ra','ri','ru','re','ro']],['わをん','ワヲン',['wa','wo','n']]];
       skills.kana=rows.flatMap((row,index)=>[0,1].map(kind=>{
@@ -55,6 +114,7 @@ async function ensureLessons(level) {
         return {id:`kana:${name}:${index}`,lesson:index+1,title:`${name} · ${row[kind]}`,summary:'Bảng chữ cái cơ bản',explanation:index===9?'を thường được đọc là o khi làm trợ từ. ん là âm mũi, không thêm nguyên âm.':'Đọc từng chữ, nghe mẫu rồi chọn cách đọc trong phần luyện tập.',items,drills:items.map((w,i)=>makeDrill(`Cách đọc của ${w.jp}?`,w.reading,rows.flatMap(r=>r[2]),w.id,i))};
       }));
     }
+    skills.grammar.unshift(...editorial);
   })().catch(error => {lessonLoads.delete(level);throw error;}));
   return lessonLoads.get(level);
 }
@@ -64,56 +124,144 @@ function furiganaHtml(value) {
 window.furiganaHtml=furiganaHtml;
 window.escapeHtml=escapeHtml;
 window.ensureLessons=ensureLessons;
+const taskReferences=new WeakMap(),taskAttempts=new Map();
+let taskAttemptAccount=null;
+async function taskReference(task){
+  const source=taskRevisionSource(task),cached=taskReferences.get(task);
+  if(cached?.source===source)return cached.reference;
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
+  const reference={id:task.task_id,revision:Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('')};
+  taskReferences.set(task,{source,reference});return reference;
+}
+function taskAttempt(lesson,task,index,view='checks',fresh=false){
+  const account=typeof signedInUser==='undefined'?null:signedInUser?.user_id;
+  if(account!==taskAttemptAccount){taskAttempts.clear();taskAttemptAccount=account;}
+  const key=JSON.stringify([lesson.level,lesson.id,view,task.task_id]),source=taskRevisionSource(task);
+  let attempt=taskAttempts.get(key);
+  if(fresh || !attempt || attempt.source!==source){
+    attempt={id:crypto.randomUUID(),lesson,task,index,view,source,account,assisted:false};
+    taskAttempts.set(key,attempt);
+  }
+  return attempt;
+}
+async function recordTaskEvent(attempt,event,extra={}){
+  const task=await taskReference(attempt.task);
+  const account=typeof signedInUser==='undefined'?null:signedInUser?.user_id;
+  if(account!==attempt.account)throw new Error('Tài khoản đã thay đổi. Mở lại bài trước khi lưu.');
+  const response=await apiFetch('/api/progress/record',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({lesson:attempt.lesson,view:attempt.view,question_index:attempt.index,task,
+      attempt_id:attempt.id,...(attempt.sessionId?{session_id:attempt.sessionId}:{}),event,...extra})});
+  const result=await response.json();
+  if((typeof signedInUser==='undefined'?null:signedInUser?.user_id)!==attempt.account)throw new Error('Đã bỏ phản hồi lưu của tài khoản cũ.');
+  if(!response.ok)throw new Error(result.detail || 'Chưa lưu được lượt học. Hãy thử lại.');
+  if(event==='assist')attempt.assisted=true;
+  return result;
+}
+function focusedTaskAttempt(lesson,focus,view='checks',question=null){
+  if(focus?.kind!=='question')return null;
+  if(!question){
+    const live=globalThis.teacherContext?.();
+    if(live?.lesson?.id===lesson.id && live.lesson.level===lesson.level && live.focus?.index===focus.index)question=live.task;
+  }
+  if(!question)return null;
+  return taskAttempt(lesson,question,focus.index,view);
+}
+function taskPromptHtml(task){
+  const text=String(task.q || ''),candidate=String(task.target || '');
+  const target=candidate && text.includes(candidate) && !/^[_\s★]+$/.test(candidate)?candidate:'';
+  const offset=target?text.indexOf(target):-1;
+  const prompt=offset<0?escapeHtml(text):`${escapeHtml(text.slice(0,offset))}<mark>${escapeHtml(target)}</mark>${escapeHtml(text.slice(offset+target.length))}`;
+  return `${task.passage?`<section class="task-stimulus" aria-label="Ngữ cảnh để trả lời"><p lang="ja">${escapeHtml(task.passage)}</p></section>`:''}
+    ${task.instruction?`<p class="task-instruction">${escapeHtml(task.instruction)}</p>`:''}
+    ${target?`<p class="task-target">Từ cần xét: <strong lang="ja">${escapeHtml(target)}</strong></p>`:''}
+    <p class="task-stem" lang="ja">${prompt}</p>
+    ${task.parts?.length?`<ol class="task-parts" aria-label="Các phần cần sắp xếp">${task.parts.map(part=>`<li lang="ja">${escapeHtml(part)}</li>`).join('')}</ol>`:''}`;
+}
+function taskUnavailableMessage(task){
+  return task.review_status==='quarantined'?'Câu nguồn đang chờ rà soát dữ kiện, cách diễn đạt hoặc khả năng có nhiều đáp án; chưa dùng để đối chiếu.':task.unavailable_reason;
+}
 function renderLessonExercises(item,level,skill=activeCurriculumSkill) {
-  const container=document.getElementById('lesson-exercises');
-  const questions=lessonQuestions(item,level,skill);
-  async function record(id,correct,display,attempt_id,response_text){
-    const response=await apiFetch('/api/progress/record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:id,display,level,item_type:skill,correct,quality:correct?4:1,attempt_id,response_text})});
-    if(!response.ok)throw new Error('save');
-  }
+  const container=document.getElementById('lesson-exercises'),questions=lessonQuestions(item,level,skill);
+  const lesson=buildLessonContext(item,level,skill);
   if(item.production){
-    const task=item.production,section=document.createElement('section');section.className='production-task';
-    section.innerHTML=`<h3>${escapeHtml(task.prompt)}</h3><label for="production-answer">Câu trả lời của em</label><textarea id="production-answer" rows="5" maxlength="4000" placeholder="Viết bằng tiếng Nhật…"></textarea><details><summary>Đối chiếu câu mẫu</summary><p lang="ja">${escapeHtml(task.model)}</p></details><fieldset><legend>Tự kiểm tra câu trả lời</legend>${task.criteria.map((c,i)=>`<label><input type="checkbox" value="${i}"> ${escapeHtml(c)}</label>`).join('')}</fieldset><button type="button">Lưu tự đánh giá</button><output aria-live="polite"></output>`;
+    const source=item.production,question=questions[0],section=document.createElement('section');section.className='production-task';
+    if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Chưa có bài viết được hỗ trợ.';container.append(section);return;}
+    const attempt=taskAttempt(lesson,question,0,'checks',true);
+    section.dataset.teacherQuestion='0';
+    section.innerHTML=`<h3>${escapeHtml(source.prompt)}</h3><p class="task-basis">Bài viết tự đánh giá, không phải điểm được xác minh.</p>
+      <label for="production-answer">Câu trả lời của em</label><textarea id="production-answer" rows="5" maxlength="4000" lang="ja" placeholder="Viết bằng tiếng Nhật…"></textarea>
+      <button type="button" class="production-reveal"${question.model?'':' hidden'}>Đối chiếu bài mẫu</button><div class="production-model" hidden><p lang="ja">${escapeHtml(question.model)}</p><p>Ví dụ từ nguồn, chưa được thẩm định độc lập.</p></div>
+      ${question.explanation?`<p class="task-basis">${escapeHtml(question.explanation)}</p>`:''}
+      <fieldset><legend>Tự kiểm tra câu trả lời</legend>${source.criteria.map((criterion,i)=>`<label><input type="checkbox" value="${i}"> ${escapeHtml(criterion)}</label>`).join('')}</fieldset>
+      <button type="button" class="production-save">Lưu tự đánh giá</button><output aria-live="polite"></output>`;
     container.append(section);
-    globalThis.mountStudyTeacher?.(section,{lesson:buildLessonContext(item,level,skill),
-      isCurrent:()=>section.isConnected && !container.hidden});
-    const input=section.querySelector('textarea'),save=section.querySelector('button'),status=section.querySelector('output');
-    let pending=null;
-    apiFetch('/api/progress').then(r=>r.ok?r.json():null).then(data=>{const saved=data?.items?.find(r=>r.item_id===item.id);if(saved?.response_text && !input.value){input.value=saved.response_text;status.textContent='Đã khôi phục bài viết đã lưu.';}}).catch(()=>{status.textContent='Chưa tải được bài viết cũ.';});
-    save.onclick=async()=>{
-      if(input.value.trim().length<8){status.textContent='Hãy viết câu trả lời trước khi tự đánh giá.';input.focus();return;}
-      if(!pending)pending={id:crypto.randomUUID(),text:input.value.trim(),correct:[...section.querySelectorAll('input')].every(c=>c.checked)};
-      save.disabled=true;input.disabled=true;section.querySelectorAll('input').forEach(c=>c.disabled=true);
-      try{await record(item.id,pending.correct,task.prompt,pending.id,pending.text);status.textContent=pending.correct?'Đã lưu: em tự đánh giá đạt tiêu chí.':'Đã lưu: cần ôn lại các tiêu chí chưa đạt.';pending=null;save.textContent='Lưu tự đánh giá';input.disabled=false;section.querySelectorAll('input').forEach(c=>c.disabled=false);}
-      catch{status.textContent='Chưa lưu được. Bấm Lưu lại để gửi đúng bài vừa viết.';save.textContent='Lưu lại';}
-      finally{save.disabled=false;}
+    const input=section.querySelector('textarea'),save=section.querySelector('.production-save'),status=section.querySelector('output'),reveal=section.querySelector('.production-reveal');
+    input.addEventListener('focus',()=>globalThis.setTeacherFocus?.({kind:'question',index:0}));
+    reveal.onclick=async()=>{
+      if(!question.model)return;
+      reveal.disabled=true;
+      try{await recordTaskEvent(attempt,'assist',{help:'source_reveal',response_text:input.value});section.querySelector('.production-model').hidden=false;reveal.hidden=true;}
+      catch(error){status.textContent=error.message;reveal.disabled=false;}
     };
+    globalThis.mountStudyTeacher?.(section,{lesson,focus:{kind:'question',index:0},task:question,
+      isCurrent:()=>section.isConnected && !container.hidden});
+    let pending=null;
+    apiFetch('/api/progress').then(response=>response.ok?response.json():null).then(data=>{
+      const saved=data?.evidence?.find(row=>row.item_id===item.id && row.response_text) || data?.items?.find(row=>row.item_id===item.id);
+      if(saved?.response_text && !input.value && section.isConnected && (typeof signedInUser==='undefined'?null:signedInUser?.user_id)===attempt.account){input.value=saved.response_text;status.textContent='Đã khôi phục bài viết đã lưu.';}
+    }).catch(()=>{status.textContent='Chưa tải được bài viết cũ.';});
+    save.onclick=async()=>{
+      if(!input.value.trim()){status.textContent='Hãy viết câu trả lời trước khi tự đánh giá.';input.focus();return;}
+      if(!pending)pending={response_text:input.value,self_rating:[...section.querySelectorAll('input')].every(control=>control.checked)?4:1};
+      save.disabled=true;input.disabled=true;section.querySelectorAll('input').forEach(control=>control.disabled=true);
+      try{
+        await recordTaskEvent(attempt,'answer',pending);
+        status.textContent='Đã lưu bài viết và tự đánh giá; chưa có kết luận đúng/sai được xác minh.';
+        save.textContent='Đã lưu';reveal.disabled=false;
+      }catch(error){status.textContent=error.message;save.textContent='Lưu lại';save.disabled=false;}
+    };
+    return;
   }
-  if(item.dictation) {
-    for(const [index,example] of (item.examples||[]).entries()) {
-      const section=document.createElement('section');section.className='lesson-exercise';
-      const select=()=>globalThis.setTeacherFocus?.({kind:'example',index});
-      const play=document.createElement('button');play.textContent=`Nghe câu ${index+1}`;play.onclick=()=>{select();playGeminiTTS(example.furigana || example.jp,{language:'ja-JP'});};
-      const input=document.createElement('textarea');input.setAttribute('aria-label',`Chép câu ${index+1} bằng tiếng Nhật`);input.rows=2;
-      input.addEventListener('focus',select);
-      const reveal=document.createElement('button');reveal.textContent='Đối chiếu bản chép';
+  if(item.dictation){
+    for(const [index,example] of (item.examples || []).entries()){
+      const question=questions[index],section=document.createElement('section');section.className='lesson-exercise';
+      if(!question || question.unavailable_reason){section.textContent=question?taskUnavailableMessage(question):'Câu nghe chưa khả dụng.';container.append(section);continue;}
+      const attempt=taskAttempt(lesson,question,index,'checks',true);
+      const select=()=>globalThis.setTeacherFocus?.({kind:'question',index});
+      const play=document.createElement('button');play.type='button';play.textContent=`Nghe câu ${index+1}`;
+      play.onclick=()=>{select();playGeminiTTS(example.furigana || example.jp,{language:'ja-JP',lesson,focus:{kind:'question',index},task:question});};
+      const input=document.createElement('textarea');input.setAttribute('aria-label',`Chép câu ${index+1} bằng tiếng Nhật`);input.lang='ja';input.rows=2;input.maxLength=4000;input.addEventListener('focus',select);
+      const reveal=document.createElement('button');reveal.type='button';reveal.textContent='Đối chiếu bản chép';
       const answer=document.createElement('div');answer.hidden=true;
-      answer.innerHTML=`<p lang="ja">${furiganaHtml(example.furigana || example.jp)}</p><p>${escapeHtml(example.vi)}</p><a href="${escapeHtml(example.source)}" target="_blank" rel="noopener">Tatoeba ↗</a>`;
+      answer.innerHTML=`<p lang="ja">${furiganaHtml(example.furigana || example.jp)}</p><p>${escapeHtml(example.vi)}</p><p>Tự đối chiếu với nguồn; không phải kết quả nghe được xác minh.</p>`;
       const status=document.createElement('output');status.setAttribute('aria-live','polite');
-      const attemptId=crypto.randomUUID();
-      for(const [label,correct] of [['Đã hiểu',true],['Cần ôn lại',false]]){
-        const grade=document.createElement('button');grade.textContent=label;
-        grade.onclick=async()=>{answer.querySelectorAll('button').forEach(b=>b.disabled=true);try{await record(`${item.id}:${index}`,correct,example.jp,attemptId);status.textContent='Đã lưu.';}catch{status.textContent='Chưa lưu được. Thử lại.';answer.querySelectorAll('button').forEach(b=>b.disabled=false);}};answer.append(grade);
+      reveal.onclick=async()=>{
+        select();
+        if(!input.value.trim()){status.textContent='Hãy chép thử trước khi xem bản chép.';input.focus();return;}
+        const submitted=input.value;reveal.disabled=true;input.readOnly=true;
+        try{
+          await recordTaskEvent(attempt,'assist',{help:'source_reveal',response_text:submitted});
+          input.value=submitted;answer.hidden=false;
+        }catch(error){status.textContent=error.message;reveal.disabled=false;input.readOnly=false;}
+      };
+      let pending=null;
+      for(const [label,rating] of [['Em tự thấy đã hiểu',4],['Em cần ôn lại',1]]){
+        const save=document.createElement('button');save.type='button';save.textContent=label;
+        save.onclick=async()=>{
+          if(!pending)pending={response_text:input.value,self_rating:rating};
+          answer.querySelectorAll('button').forEach(button=>button.disabled=true);
+          try{await recordTaskEvent(attempt,'answer',pending);status.textContent='Đã lưu bản chép thử và tự đánh giá, không cộng điểm đúng/sai.';}
+          catch(error){status.textContent=error.message;answer.querySelectorAll('button').forEach(button=>button.disabled=false);}
+        };answer.append(save);
       }
-      reveal.onclick=()=>{select();answer.hidden=false;};section.append(play,input,reveal,answer,status);container.append(section);
-      globalThis.mountStudyTeacher?.(answer,{lesson:buildLessonContext(item,level,skill),focus:{kind:'example',index},
-        targets:[globalThis.studyTarget('example:vi',answer.querySelectorAll('p')[1],example.vi)],
+      section.append(play,input,reveal,answer,status);container.append(section);
+      globalThis.mountStudyTeacher?.(answer,{lesson,focus:{kind:'question',index},task:question,
         isCurrent:()=>!container.hidden && !answer.hidden});
     }
+    return;
   }
-  if(item.script_jp){const listen=document.createElement('button');listen.className='stage-btn';listen.textContent='Nghe bài đọc';listen.onclick=()=>playGeminiTTS(item.script_jp,{language:'ja-JP'});container.append(listen);}
-  if(!questions.length)return;
-  renderPracticeSession(container,item,level,skill,record);
+  if(!questions.length){const empty=document.createElement('p');empty.textContent='Chưa có bài tập phù hợp. Em vẫn có thể học phần tham khảo; bài này không tự tính là đã làm.';container.append(empty);return;}
+  renderPracticeSession(container,item,level,skill);
 }
 
 
