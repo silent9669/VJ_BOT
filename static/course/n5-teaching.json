@@ -5108,7 +5108,7 @@
       "source_refs":[{"chunk_id":"practical:v1:N5:transport","url":"#curriculum/N5/lesson/reading/practical%3Av1%3AN5%3Atransport%3Asituation","source_name":"VJBot · Chọn xe đến đúng nơi","role":"background_reference_not_approval"}],
       "source_header":"Bài bổ trợ có hướng dẫn do VJBot AI biên soạn từ tình huống gốc; chờ bạn duyệt. Không phải khóa tự học chính, đánh giá giao tiếp tự do hoặc đề JLPT chính thức.",
       "formula":"このバスは［đích］に行きますか。［nơi］で降ります。次のバスを待ちます。",
-      "explanation":"に hoặc へ có thể chỉ hướng hay đích đến với 行きます; から chỉ nơi xuất phát. Ví dụ hỏi chiếc xe này có đi sân bay không:\nこのバスは空港に行きますか。\nこのバス là xe đang hỏi, còn 次のバス là chuyến tiếp theo.\n\nHai mẫu cần phân biệt:\n駅で降ります\nで chỉ nơi xuống xe.\n\nバスを降ります\nを chỉ phương tiện rời khỏi.\n\nĐây không phải quy tắc cấm mọi cách dùng trợ từ khác trong ngữ cảnh khác.",
+      "explanation":"に hoặc へ có thể chỉ hướng hay đích đến với 行きます; から chỉ nơi xuất phát. Ví dụ hỏi chiếc xe này có đi sân bay không:\nこのバスは空港に行きますか。\nこのバス là xe đang hỏi, còn 次のバス là chuyến tiếp theo.\n\nHai mẫu cần phân biệt:\n駅で降ります\nで chỉ nơi xuống xe.\n\nバスを降ります\nを chỉ phương tiện rời khỏi.\n\nTrợ từ còn tùy vào ý em muốn nói, không chỉ dựa vào nơi chốn hay phương tiện.",
       "examples":[
         {"context":"Hỏi lái xe về đích đến trước khi lên","jp":"このバスは空港に行きますか。","reading":"このバスはくうこうにいきますか。","vi":"Xe buýt này có đi sân bay không?","authorship":"ai_authored"},
         {"context":"Câu trả lời phân biệt xe hiện tại với chuyến cần đi","jp":"いいえ。このバスは駅に行きます。空港へは次のバスです。","reading":"いいえ。このバスはえきにいきます。くうこうへはつぎのバスです。","vi":"Không. Xe buýt này đi ga. Đến sân bay thì đi chuyến tiếp theo.","authorship":"ai_authored"},
