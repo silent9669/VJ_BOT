@@ -166,8 +166,7 @@ function renderPracticeSession(container,item,level,skill){
     if(!container.hidden)globalThis.setTeacherFocus?.({kind:'question',index:originalIndex});
     const stage=item.guided_steps?.find(step=>step.task_ids.includes(question.task_id));
     const readingRecall=question.mode==='recall' && question.task_id?.includes(':question:recall:reading:');
-    const formationRecall=question.mode==='recall' && question.task_id?.endsWith(':question:recall:formation');
-    const recallHeading=readingRecall?'Cách đọc':formationRecall?'Cách ghép câu':null;
+    const recallHeading=readingRecall?'Cách đọc':null;
     const previous=(question.exchange?.prior_task_ids || []).map(id=>savedResponses.get(id)).filter(value=>typeof value==='string');
     section.innerHTML=`<div class="practice-meter"><span>${review?'Luyện lại':'Luyện tập'}</span><span>${round.index+1} / ${round.indices.length}</span>
       <progress value="${round.index}" max="${round.indices.length}" aria-label="Câu đã xem"></progress></div>

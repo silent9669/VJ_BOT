@@ -116,7 +116,7 @@ function normalizedLessonTasks(item,level,skill){
     }
     if(!item.editorial && skill==='grammar' && item.formula && !tasks.some(task=>task.mode==='recall')){
       const key='recall:formation';
-      add({mode:'recall',q:`Em ghi lại công thức của mẫu ${item.title} trong bảng “Cách ghép câu” nhé.`,instruction:'Giữ nguyên các dấu +, /, | và dấu ngoặc trong công thức.',
+      add({mode:'recall',q:`Em ghi lại công thức của mẫu ${item.title} nhé.`,instruction:'Giữ nguyên các dấu +, /, | và dấu ngoặc trong công thức.',
         accepted_answers:[item.formula],item_id:`${id}:${key}`,skill,passage:'',script_jp:''},tasks.length,key);
     }
   }

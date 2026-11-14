@@ -62,13 +62,21 @@
 
 /* Keep instruction primary; source notes stay available without interrupting each task. */
 #lesson-page .lesson-formula{display:grid;gap:14px;padding:20px;min-width:0}
-#lesson-page .lesson-formula>span{font-size:15px;letter-spacing:0;text-transform:none}
 .lesson-formula code[hidden]{display:none}
 .grammar-layout{display:grid;gap:8px;min-width:0;max-width:100%}
 .grammar-row{display:flex;flex-wrap:wrap;gap:4px 8px;min-width:0;max-width:100%;font:500 16px/1.65 var(--font-sans);overflow-wrap:anywhere}
 .grammar-chunk{display:inline-flex;align-items:baseline;gap:6px;min-width:0;max-width:100%}
 .lesson-formula .grammar-part{min-width:0;font:inherit;letter-spacing:0;text-transform:none;color:var(--ink);white-space:normal}
 .lesson-formula .grammar-plus{flex:none;font:600 16px/1.65 var(--font-sans);color:var(--practice-green);margin:0;letter-spacing:0}
+.grammar-group{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,max-content);justify-content:center;align-items:center;gap:clamp(20px,4vw,40px);min-width:0;max-width:100%;font:500 16px/1.65 var(--font-sans)}
+.grammar-alternatives{display:grid;gap:12px;min-width:0}
+.lesson-formula .grammar-shared{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%;font:500 18px/1.65 var(--font-sans)}
+.grammar-shared>.grammar-part{max-inline-size:18ch}
+.grammar-symbol{display:inline-block;margin-inline-end:.45em}
+.grammar-instruction{white-space:nowrap}
+#lesson-reference ruby{ruby-position:over;ruby-align:center}
+#lesson-reference rt{font-size:.55em;font-weight:400;color:var(--muted);line-height:1.2}
+#lesson-reference .example-jp:has(ruby){line-height:2}
 .lesson-explain{font-size:16px;line-height:1.85;white-space:pre-line;max-inline-size:68ch}
 .lesson-prerequisites{font-size:15px;line-height:1.7;margin:0}
 .lesson-support,.lesson-info{margin:24px 0}

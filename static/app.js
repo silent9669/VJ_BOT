@@ -625,11 +625,12 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
   setCurriculumView(curriculumView,false);
 }
 
-function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
-  const annotated=ex.furigana || ex.jp || '';
-  const japanese=annotated.replace(/\{([^{}|]+)\|([^{}|]+)\}/g,'$1');
-  const hasFurigana=/\{[^{}|]+\|[^{}|]+\}/.test(annotated);
-  const sentence=`<p class="example-jp" lang="ja">${escapeHtml(japanese)}</p>`;
+function lessonExampleHtml(ex,index,{listenFirst=false,nested=false,showReadings=true}={}) {
+  const candidate=ex.furigana || ex.jp || '';
+  const japanese=ex.jp || candidate.replace(/\{([^{}|]+)\|([^{}|]+)\}/g,'$1');
+  const annotated=candidate.replace(/\{([^{}|]+)\|([^{}|]+)\}/g,'$1')===japanese?candidate:japanese;
+  const readingAid=!showReadings && (ex.reading || /\{[^{}|]+\|[^{}|]+\}/.test(annotated));
+  const sentence=`<p class="example-jp" lang="ja">${showReadings?furiganaHtml(annotated,ex.reading):escapeHtml(japanese)}</p>`;
   const tag=nested?'div':'li';
   return `<${tag} class="example-card"${nested?'':` data-teacher-example="${index}"`}>
     <span class="example-index" aria-hidden="true">${index+1}</span>
@@ -637,8 +638,8 @@ function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
       ${ex.context?`<p class="example-context">${escapeHtml(ex.context)}</p>`:''}
       ${listenFirst?`<details class="lesson-disclosure example-transcript"><summary>Lời thoại</summary>${sentence}</details>`:sentence}
       <div class="lesson-aids">
-        ${ex.ro || hasFurigana?`<details class="lesson-disclosure"><summary>Cách đọc</summary><div class="lesson-aid-content">
-          ${hasFurigana?`<p lang="ja">${furiganaHtml(annotated)}</p>`:''}
+        ${ex.ro || readingAid?`<details class="lesson-disclosure"><summary>Cách đọc</summary><div class="lesson-aid-content">
+          ${readingAid?`<p lang="ja">${furiganaHtml(annotated,ex.reading)}</p>`:''}
           ${ex.ro?`<p class="example-ro">${escapeHtml(ex.ro)}</p>`:''}
         </div></details>`:''}
         ${ex.vi?`<details class="lesson-disclosure"><summary>Nghĩa của câu</summary><p class="example-vi lesson-aid-content">${escapeHtml(ex.vi)}</p></details>`:''}
@@ -669,12 +670,14 @@ function grammarFormulaHtml(formula) {
   for(const block of split(String(formula),'|\n')){
     for(const clause of split(block,'。',true)){
       const choices=split(clause,'/／'),terms=choices.map(choice=>split(choice,'+＋'));
+      const firstJoined=terms.findIndex(parts=>parts.length>1);
       if(choices.length===1 || terms.every(parts=>parts.length>1) || terms.every(parts=>parts.length===1)){
         rows.push(...choices);
-      }else if(terms.slice(0,-1).every(parts=>parts.length===1) && terms.at(-1).length===2
-        && terms.every(parts=>isForm(parts[0]))){
-        const suffix=terms.at(-1).slice(1).join(' + ');
-        rows.push(...terms.map(parts=>`${parts[0]} + ${suffix}`));
+      }else if(firstJoined>0 && terms[firstJoined].length===2
+        && terms.every(parts=>isForm(parts[0]))
+        && terms.slice(firstJoined).every(parts=>parts.length>1 && parts.at(-1)===terms[firstJoined].at(-1))){
+        const suffix=terms[firstJoined].at(-1);
+        rows.push(...terms.slice(0,firstJoined).map(parts=>`${parts[0]} + ${suffix}`),...choices.slice(firstJoined));
       }else if(terms[0].length>1 && isForm(terms[0][0])
         && terms.slice(1).every(parts=>parts.length===1 && /^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー・…]+$/u.test(parts[0]))){
         const prefix=terms[0].slice(0,-1).join(' + ');
@@ -685,8 +688,16 @@ function grammarFormulaHtml(formula) {
       }
     }
   }
-  return rows.map(row=>`<div class="grammar-row">${split(row,'+＋').map((part,index)=>
-    `<span class="grammar-chunk">${index?'<span class="grammar-plus" aria-label="cộng">+</span>':''}<span class="grammar-part">${escapeHtml(part)}</span></span>`).join(' ')}</div>`).join('');
+  const partHtml=part=>escapeHtml(viFormulaLabel(part)).replace(/(?<![A-Za-z])([NV])(?=[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}])/gu,
+    '<span class="grammar-symbol">$1</span>').replace(/\(bỏ (ます|ない|い)\)/g,'<span class="grammar-instruction">(bỏ $1)</span>');
+  const rowHtml=parts=>`<div class="grammar-row">${parts.map((part,index)=>
+    `<span class="grammar-chunk">${index?'<span class="grammar-plus" aria-label="cộng">+</span>':''}<span class="grammar-part">${partHtml(part)}</span></span>`).join(' ')}</div>`;
+  const parts=rows.map(row=>split(row,'+＋')),suffix=parts[0]?.at(-1);
+  if(parts.length>1 && suffix && /^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー・〜～（）、。]+$/u.test(suffix)
+    && parts.every(row=>row.length>1 && row.at(-1)===suffix)){
+    return `<div class="grammar-group"><div class="grammar-alternatives">${parts.map(row=>rowHtml(row.slice(0,-1))).join('')}</div><div class="grammar-shared"><span class="grammar-plus" aria-label="cộng">+</span><span class="grammar-part">${partHtml(suffix)}</span></div></div>`;
+  }
+  return parts.map(rowHtml).join('');
 }
 
 function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
@@ -716,20 +727,20 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
       <section class="lesson-section">
         <h3 class="lesson-section-title">Ví dụ</h3>
         ${item.dictation?'<p>Nghe rồi thử chép lại trước khi xem lời thoại.</p>':''}
-        <ol class="example-list">${item.examples.map((ex,index)=>lessonExampleHtml(ex,index,{listenFirst:Boolean(item.dictation || (skill==='listening' && !owner))})).join("")}</ol>
+        <ol class="example-list">${item.examples.map((ex,index)=>lessonExampleHtml(ex,index,{listenFirst:Boolean(item.dictation || (skill==='listening' && !owner)),showReadings:skill!=='kanji'})).join("")}</ol>
       </section>
     `;
   }
 
   const vocabularyHtml = item.items?.length ? `
     <div class="lesson-vocabulary-list">${item.items.map((word,index)=>`
-      <details class="word-detail" data-teacher-word="${index}"><summary><strong lang="ja">${escapeHtml(word.jp)}</strong><span class="word-reveal-label">Cách đọc &amp; nghĩa</span></summary>
+      <details class="word-detail" data-teacher-word="${index}"><summary><strong lang="ja">${skill==='kanji'?escapeHtml(word.jp):furiganaHtml(word.jp,word.reading)}</strong><span class="word-reveal-label">Cách đọc &amp; nghĩa</span></summary>
         <div class="word-detail-body"><div class="word-answer"><p lang="ja">${escapeHtml(word.reading || word.ro || "")}</p><p>${escapeHtml(word.vi)}</p></div><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(word.jp)}" data-reading="${encodeURIComponent(word.reading || '')}">Nghe cách đọc</button>
         ${word.strokes ? `<dl class="kanji-facts"><div><dt>Số nét</dt><dd>${word.strokes}</dd></div><div><dt>Bộ thủ</dt><dd>${escapeHtml(word.radical)}</dd></div><div><dt>Âm On</dt><dd>${escapeHtml(word.onyomi.join(' · '))}</dd></div><div><dt>Âm Kun</dt><dd>${escapeHtml(word.kunyomi.join(' · '))}</dd></div></dl><p>${escapeHtml((word.words||[]).join(' · '))}</p>` : ''}
-        ${(word.examples||[]).map((ex,index)=>lessonExampleHtml(ex,index,{nested:true})).join('')}
+        ${(word.examples||[]).map((ex,index)=>lessonExampleHtml(ex,index,{nested:true,showReadings:skill!=='kanji'})).join('')}
         </div></details>`).join('')}</div>` : "";
-  const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage" lang="ja">${escapeHtml(item.passage)}</p>${item.translation?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content reading-translation">${escapeHtml(item.translation)}</p></details>`:''}</div>` : "";
-  const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-study-hint">Nghe và tự nắm ý chính trước khi xem lời thoại.</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(item.script_jp)}">Nghe bài</button><details class="lesson-disclosure"><summary>Lời thoại</summary><p class="lesson-japanese-passage lesson-aid-content" lang="ja">${escapeHtml(item.script_jp)}</p></details>${item.script_vi?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content listening-translation">${escapeHtml(item.script_vi)}</p></details>`:''}</div>` : "";
+  const readingHtml = item.passage ? `<div class="lesson-reading"><p class="lesson-japanese-passage" lang="ja">${skill==='kanji'?escapeHtml(item.passage):furiganaHtml(item.passage,item.reading)}</p>${item.translation?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content reading-translation">${escapeHtml(item.translation)}</p></details>`:''}</div>` : "";
+  const listeningHtml = item.script_jp ? `<div class="lesson-reading"><p class="lesson-study-hint">Nghe và tự nắm ý chính trước khi xem lời thoại.</p><button type="button" class="card-audio-btn modal-tts-btn" data-text="${encodeURIComponent(item.script_jp)}">Nghe bài</button><details class="lesson-disclosure"><summary>Lời thoại</summary><p class="lesson-japanese-passage lesson-aid-content" lang="ja">${skill==='kanji'?escapeHtml(item.script_jp):furiganaHtml(item.script_jp,item.reading)}</p></details>${item.script_vi?`<details class="lesson-disclosure"><summary>Bản dịch</summary><p class="lesson-aid-content listening-translation">${escapeHtml(item.script_vi)}</p></details>`:''}</div>` : "";
   const tasks=lessonQuestions(item,level,skill);
   const delayedReview=item.delayedReview===true && tasks[item.reviewQuestionIndex]?.exchange?.stage==='delayed';
   const guided=item.guided_steps?.length && !delayedReview;
@@ -745,9 +756,9 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     <section class="lesson-intro">
       ${item.editorial && item.prerequisite_titles?.length?`<p class="lesson-prerequisites">Nên học trước: ${escapeHtml(item.prerequisite_titles.join(', '))}</p>`:''}
       <p class="lesson-meaning">${escapeHtml(item.meaning_vi || item.vi || "")}</p>
-      ${guided?`<aside class="task-stage"><h3>${escapeHtml(firstStage.title)}</h3><p>${escapeHtml(firstStage.note)}</p><p lang="ja">${escapeHtml(firstStage.example.jp)}</p><details><summary>Cách đọc và nghĩa</summary><p lang="ja">${escapeHtml(firstStage.example.reading)}</p><p>${escapeHtml(firstStage.example.vi)}</p></details></aside>`:''}
+      ${guided?`<aside class="task-stage"><h3>${escapeHtml(firstStage.title)}</h3><p>${escapeHtml(firstStage.note)}</p><p lang="ja">${furiganaHtml(firstStage.example.jp,firstStage.example.reading)}</p><details><summary>Nghĩa của câu</summary><p>${escapeHtml(firstStage.example.vi)}</p></details></aside>`:''}
       ${guided?'<details class="lesson-disclosure lesson-full-reference"><summary>Xem bảng chia đầy đủ</summary>':''}
-      ${item.formula ? `<div class="lesson-formula"><span>Cách ghép câu</span><code hidden>${escapeHtml(item.formula)}</code><div class="grammar-layout">${grammarFormulaHtml(item.formula)}</div></div>` : ""}
+      ${item.formula ? `<div class="lesson-formula"><code hidden>${escapeHtml(item.formula)}</code><div class="grammar-layout">${grammarFormulaHtml(item.formula)}</div></div>` : ""}
       ${item.explanation || item.summary ? `<p class="lesson-explain">${escapeHtml(item.explanation || item.summary || "")}</p>` : ""}
       ${guided?'</details>':''}
     </section>

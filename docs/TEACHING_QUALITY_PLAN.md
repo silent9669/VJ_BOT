@@ -782,3 +782,46 @@ Actual 1280×900 desktop and 390×844 mobile pages covered six original lessons 
 
 The local preview serves real source assets and static lessons with synthetic process-local account/API responses. No AI teaching request was made for this visual check; no live-model, independent Japanese approval, production learner writes or deployment is implied. The previous user-requested local preview address now points at this isolated formula branch.
 
+
+## 23. Shared suffixes, natural form labels and reading aids
+
+This refinement starts from deployed main `81c93ec` (PR44), in the isolated `fix/grammar-shared-suffix` worktree. It supersedes section 22's repeated-suffix presentation where the source explicitly supplies a common Japanese suffix.
+
+- Formula alternatives stay on the left; one common suffix is vertically centered on the right. The complete group is horizontally centered, with a responsive 20–40px gap, 16px form labels and an 18px suffix. Parenthetical instructions stay together rather than splitting Japanese kana across lines. Appearance そうだ has three alternatives; hearsay そうだ has four, retaining the necessary だ on the noun/な-adjective branches.
+- The formula heading is removed. “Động từ thân ます” becomes “Động từ thể ます (bỏ ます)”; corresponding ない and い labels also describe the actual operation. The shared language projection updates the 85 affected distinct OpenJLPT formulas and their canonical formation-recall answers together. Formation prompts no longer refer to the removed heading. Their technical task revisions intentionally change; old evidence is not silently presented as current.
+- N/V placeholders receive visual spacing before adjacent Japanese components. Literal Japanese example sentences and source formulas are not rewritten to insert spaces. Ambiguous compound notation is not given invented grammatical scope.
+- The prose audit covered 212 lesson/support explanations. All 21 top-level explanations over 500 characters were shortened; 11 existing support explanations were adjusted, for 32 changed prose cells across N5–N1. Necessary exceptions, simultaneous conditions, date references, evidence limits and fictional/privacy safeguards remain. Original Japanese examples, authored tasks, options, criteria and IDs were not edited. The N2 policy explanation is now 469 characters rather than 700.
+
+### Source-backed furigana, not invented readings
+
+Non-Kanji lesson examples and vocabulary headings render small hiragana above Kanji using existing explicit annotations or source kana readings. A full-sentence reading is aligned only when exactly one division matches the original kana. Latin, mismatched or ambiguous readings are not guessed; literal markup is escaped. A mismatched annotated sentence cannot replace the canonical Japanese sentence.
+
+Kanji lesson headings/examples remain unannotated by default. Listening transcripts remain inside their closed disclosure; reading-question prompts/options are not newly annotated. Audio retains its original source input, rather than reading duplicate ruby text.
+
+Actual non-Kanji curriculum inventory, including repeated reference occurrences:
+
+| Level | Kanji examples with ruby / total | Fully annotated examples | Kanji words with ruby / total |
+| --- | ---: | ---: | ---: |
+| N5 | 3433 / 3850 | 3414 | 499 / 523 |
+| N4 | 3514 / 3910 | 3451 | 490 / 496 |
+| N3 | 8280 / 9646 | 8223 | 1441 / 1445 |
+| N2 | 7027 / 9317 | 6955 | 1467 / 1471 |
+| N1 | 10139 / 14409 | 10069 | 2757 / 2761 |
+
+This is not complete reading coverage. Source records without usable readings, ambiguous alignment, and ordinary mixed-language explanations remain unchanged rather than receiving model-invented annotations. Existing source readings are not independently approved Japanese.
+
+### Verification
+
+The initial focused command ran `tests/tutor-ui.test.mjs`, `tests/vietnamese-localization.test.mjs`, `tests/task-contract.test.mjs` and `tests/study-teacher-ui.test.mjs`: 120 of 122 passed. Two newly added assertions were wrong: the lightweight DOM omits an absent `open` property, and a test guessed an incidental localized title. The concealment assertion now checks the actual absent attribute; the incidental wording assertion was deleted. Running only those two cases passed 2/2. No product behavior or grading contract was weakened.
+
+After the final layout/prose edits, this targeted command passed 6/6:
+
+```sh
+node --test --test-name-pattern="grammar formulas show|all N5|natural formation labels|compact catalogs fit|all authored cycles keep|lesson teaching reformats" tests/tutor-ui.test.mjs tests/vietnamese-localization.test.mjs tests/task-contract.test.mjs
+```
+
+It covers all 804 actual curriculum/plan formula occurrences, source/accepted-answer preservation during rendering, AI/original restoration, actual canonical recall grading, authored-cycle constraints and catalog size limits. `npm run build` passed on the final code, regenerated all five catalogs and exited at `--dry-run`.
+
+Freshly reloaded actual pages exercised ten lessons at both 1280×900 and 390×844: all five levels, both そうだ variants, たら, compound/optional notation, the N2 policy, vocabulary and Kanji. All 20 scenarios had no horizontal overflow; shared groups were centered within 0.008px, with 18px suffixes and intact parenthetical instructions. Visible ruby contained hiragana; the actual Kanji lesson had no automatic inline readings. Screenshots were inspected. One initial font assertion read the preceding SPA document's cached stylesheet; a full reload loaded the final assets before the successful run.
+
+The local preview serves real application/source assets with synthetic, process-local account/API responses. Model calls and persistence are disabled; it does not establish live-model compliance, production acceptance or pedagogical approval. Existing installed dependencies were reused through an ignored junction; none were installed. This checkpoint does not merge, deploy, run a migration or modify production learner data.

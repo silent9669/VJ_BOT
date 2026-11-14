@@ -46,7 +46,7 @@
       ],
       "source_header": "Nguồn nội bộ: VJBot · Đọc thông báo thay đổi quy định [practical:v1:N2:policy]. Bài giảng và bài tập mới do AI soạn; chưa có phê duyệt của con người.",
       "formula": "Nに伴い、…。ただし、Nに限り、Vば、…。Vことはできない。",
-      "explanation": "Khi đọc thông báo, hãy xác định ngày bắt đầu, quy định chung và điều kiện ngoại lệ. 電子化に伴い nghĩa là cùng với việc số hóa. Trong thông báo này, 原則終了 nói việc cho mượn tài liệu giấy nhìn chung sẽ chấm dứt, không nói cấm mọi cách sử dụng tài liệu giấy.\n\nただし mở ngoại lệ. 電子版がない資料に限り giới hạn ở tài liệu không có bản điện tử; 事前に申請すれば thêm điều kiện đăng ký trước. Muốn được mượn phải thỏa cả hai điều kiện, không phải chọn một. 一週間 là thời gian mượn; ngoại lệ cho mượn vẫn không cho phép gia hạn.\n\n来月一日 là ngày 1 của tháng kế tiếp, tính từ ngày thông báo. Cần biết ngày quy chiếu mới xác định được tháng và năm, kể cả khi sang năm mới. Ngày hiệu lực cũng không cho biết đầy đủ quy định cũ trước ngày đó.",
+      "explanation": "電子化に伴い là cùng với việc số hóa. Đọc ngày hiệu lực, quy định chung rồi xét ngoại lệ: 原則終了 nói việc cho mượn nhìn chung chấm dứt, không cấm mọi cách dùng tài liệu giấy. ただし mở ngoại lệ: phải vừa không có bản điện tử (に限り), vừa đăng ký trước (ば), không được chọn một. Chỉ mượn một tuần và không gia hạn.\n\n来月一日 là ngày 1 tháng kế tiếp tính từ ngày thông báo; cần ngày quy chiếu để biết đúng tháng và năm, kể cả sang năm mới. Ngày hiệu lực không cho biết đầy đủ quy định cũ.",
       "examples": [
         {
           "id": "teaching:v1:N2:policy:example:0",
@@ -235,7 +235,7 @@
       "prerequisites": ["teaching:v1:N2:policy"],
       "support": [
         { "term": "Điều kiện bắt buộc và ưu tiên", "explanation": "納期（のうき）hạn giao; 部（ぶ）đơn vị đếm bản in; 予算（よさん）trần ngân sách. Kiểm tra tổng tiền và thời hạn riêng, rồi mới dùng tiêu chí ưu tiên do tình huống nêu hoặc người viết công khai tự chọn." },
-        { "term": "Căn cứ so sánh", "explanation": "Cùng đạt 社内基準（しゃないきじゅん, chuẩn nội bộ）không chứng minh hoàn toàn bằng nhau hoặc bên nào hơn. Cần phân biệt báo giá/thời gian được nêu với giao hàng đã xảy ra và với dự đoán của mình." },
+        { "term": "Căn cứ so sánh", "explanation": "Cùng đạt 社内基準（しゃないきじゅん, chuẩn nội bộ）không chứng minh chất lượng như nhau hay bên nào hơn. Tách báo giá/thời gian được nêu khỏi giao hàng đã xảy ra và dự đoán của mình. 一方で đặt hai mặt cạnh nhau, có thể là ưu/nhược của cùng một phương án, không nhất thiết hai chủ thể. ～を優先すると nêu điều ưu tiên; 条件を満たす là đáp ứng điều kiện." },
         { "term": "Báo cáo lựa chọn", "explanation": "Cho đồng đội đọc: kết luận, căn cứ định lượng và giới hạn kết luận cần nối được với nhau. Dùng thể lịch sự nhất quán hoặc báo cáo thể thường nhất quán; không bắt buộc từ nối cụ thể. Các bài sửa nguyên câu vẫn chỉ luyện thao tác hạn chế." }
       ],
       "practice_path": [
@@ -261,7 +261,7 @@
       ],
       "source_header": "Nguồn nội bộ: VJBot · So sánh hai phương án bằng chứng [practical:v1:N2:comparison]. Số liệu gốc được giữ nguyên; tình huống đổi hạn chỉ áp dụng ở bài ghi rõ.",
       "formula": "Aは～一方で、…。～を優先すると、…。～ので、条件を満たす。",
-      "explanation": "Khi chọn nhà in, hãy xét điều kiện bắt buộc trước rồi mới so giá. Bài cần 200 bản cho buổi giới thiệu sau 4 ngày, ngân sách 22.000 yên. A lấy 80 yên mỗi bản và giao sau 5 ngày: tổng 16.000 yên nhưng không kịp. B lấy 100 yên mỗi bản và giao sau 3 ngày: tổng 20.000 yên, kịp hạn và còn 2.000 yên trong ngân sách.\n\n一方で đặt hai mặt cạnh nhau, chẳng hạn A rẻ nhưng giao chậm. Mẫu này có thể nêu ưu và nhược điểm của cùng một phương án, không nhất thiết so hai chủ thể. ～を優先すると nêu điều được ưu tiên; 条件を満たす nói một phương án đáp ứng điều kiện.\n\nCả hai nhà in đều miễn phí vận chuyển và đạt chuẩn chất lượng nội bộ. Đạt chuẩn không có nghĩa chất lượng hoàn toàn giống nhau, cũng không chứng minh bên đắt hơn tốt hơn. Với dữ kiện hư cấu này, B phù hợp; nếu hạn giao đổi thì phải xét lại, không mặc định luôn chọn B.",
+      "explanation": "Xét hạn và ngân sách trước, giá sau: cần 200 bản cho buổi giới thiệu sau 4 ngày, trần 22.000 yên. A: 200 × 80 = 16.000 yên, giao sau 5 ngày nên trễ; B: 200 × 100 = 20.000 yên, giao sau 3 ngày nên kịp, còn 2.000 yên. Cả hai miễn phí vận chuyển và đạt chuẩn nội bộ, chưa đủ nói chất lượng như nhau hay bên đắt tốt hơn. Với dữ kiện hư cấu này, B đáp ứng cả hạn lẫn ngân sách; đổi hạn phải xét lại, không luôn chọn B.",
       "examples": [
         {
           "id": "teaching:v1:N2:comparison:example:0",
@@ -476,7 +476,7 @@
       ],
       "source_header": "Nguồn nội bộ: VJBot · Đọc và phản hồi một đề xuất [practical:v1:N2:proposal]. Chưa có dữ liệu kết quả thử nghiệm; bài này không xác nhận hiệu quả đã được chứng minh.",
       "formula": "～と考えている。これに対して、～おそれがある。必ず～とは限らない。まず～試験的に実施する。",
-      "explanation": "Khi đọc một đề xuất, hãy tách mục tiêu, giải pháp, kỳ vọng và quyết định. Ở đây, mục tiêu là giảm gánh nặng họp; giải pháp là đổi từ họp hằng tuần sang hai lần mỗi tháng. 効率が上がると考えています cho biết người đề xuất tin hiệu quả sẽ tăng, chưa phải kết quả đã đo được.\n\nおそれがある nêu một khả năng bất lợi, như chia sẻ thông tin có thể chậm đi, không khẳng định sự cố đã xảy ra. 必ず効率が上がるとは限らない nghĩa là không bảo đảm hiệu quả luôn tăng; hiệu quả vẫn có thể tăng, chứ không phải chắc chắn không tăng.\n\nQuyết định hiện có là thử một tháng rồi kiểm tra độ trễ liên lạc và thời gian làm việc. Hai lần mỗi tháng không đồng nghĩa giảm đúng 50% so với họp hằng tuần trong mọi tháng. Nếu đề xuất thêm cách so sánh trước và sau thử nghiệm, hãy gọi đó là cách kiểm tra em đề nghị, không trình bày như phương pháp đã được chọn hay số liệu đã có.",
+      "explanation": "Đề xuất đổi họp hằng tuần thành hai lần/tháng để giảm gánh nặng họp; と考えている nêu kỳ vọng hiệu quả tăng, chưa phải kết quả đo. おそれがある nêu rủi ro chậm chia sẻ, chưa nói đã xảy ra; 必ず～とは限らない là không bảo đảm tăng, không phải chắc chắn không tăng. Nhóm mới quyết định thử một tháng rồi kiểm tra độ trễ liên lạc và thời gian làm việc. Hai lần/tháng không luôn giảm đúng 50%. Cách so trước/sau em thêm phải ghi là đề nghị, chưa phải cách đã chọn hay số liệu đã có.",
       "examples": [
         {
           "id": "teaching:v1:N2:proposal:example:0",

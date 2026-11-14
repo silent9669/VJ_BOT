@@ -161,8 +161,46 @@ async function ensureLessons(level) {
   })().catch(error => {lessonLoads.delete(level);throw error;}));
   return lessonLoads.get(level);
 }
-function furiganaHtml(value) {
-  return escapeHtml(value).replace(/\{([^{}|]+)\|([^{}|]+)\}/g,'<ruby>$1<rt>$2</rt></ruby>');
+function furiganaHtml(value,reading='') {
+  const source=String(value ?? '');
+  const kana=text=>String(text ?? '').normalize('NFKC').replace(/[ァ-ヶ]/g,char=>String.fromCharCode(char.charCodeAt(0)-0x60))
+    .replace(/[\s、。！？「」『』（）.,!?：:・]/g,'');
+  const ruby=(base,sound)=>`<ruby>${escapeHtml(base)}<rp>(</rp><rt>${escapeHtml(sound)}</rt><rp>)</rp></ruby>`;
+  if(/\{[^{}|]+\|[^{}|]+\}/.test(source)){
+    return escapeHtml(source).replace(/\{([^{}|]+)\|([^{}|]+)\}/g,(_match,base,sound)=>{
+      const normalized=kana(sound);
+      return /^[ぁ-ゖー]+$/u.test(normalized)?`<ruby>${base}<rp>(</rp><rt>${escapeHtml(normalized)}</rt><rp>)</rp></ruby>`:base;
+    });
+  }
+  const sound=kana(reading);
+  if(!/[\p{Script=Han}々]/u.test(source) || !/^[ぁ-ゖー]+$/u.test(sound)
+    || source.length>2000 || sound.length>2000)return escapeHtml(source);
+  const tokens=[...source.matchAll(/([\p{Script=Han}々]+)|([^\p{Script=Han}々]+)/gu)]
+    .map(match=>({base:match[0],kanji:Boolean(match[1]),literal:kana(match[0])}));
+  const memo=new Map();
+  const align=(index,offset)=>{
+    if(index===tokens.length)return offset===sound.length?[[]]:[];
+    const key=`${index}:${offset}`;if(memo.has(key))return memo.get(key);
+    const token=tokens[index],paths=[];
+    if(!token.kanji){
+      if(sound.startsWith(token.literal,offset))for(const tail of align(index+1,offset+token.literal.length))
+        paths.push([{base:token.base,reading:''},...tail]);
+    }else{
+      const anchor=tokens[index+1]?.literal || '';
+      for(let end=offset+1;end<=sound.length;end++){
+        if(index===tokens.length-1 && end!==sound.length || anchor && !sound.startsWith(anchor,end))continue;
+        for(const tail of align(index+1,end)){
+          paths.push([{base:token.base,reading:sound.slice(offset,end)},...tail]);
+          if(paths.length===2)break;
+        }
+        if(paths.length===2)break;
+      }
+    }
+    memo.set(key,paths);return paths;
+  };
+  const aligned=align(0,0);
+  // More than one alignment is not permission to guess where a reading belongs.
+  return aligned.length===1?aligned[0].map(part=>part.reading?ruby(part.base,part.reading):escapeHtml(part.base)).join(''):escapeHtml(source);
 }
 window.furiganaHtml=furiganaHtml;
 window.escapeHtml=escapeHtml;
