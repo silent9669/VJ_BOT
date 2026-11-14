@@ -9,11 +9,11 @@ function activityId(item,level,skill){return item.completionId || item.id || `le
 function mountCompletion(host,activity,loaded=false){
   host.replaceChildren();host.classList.add('completion-control');
   const button=document.createElement('button'),status=document.createElement('output');button.type='button';status.setAttribute('aria-live','polite');
-  const draw=()=>{const done=completionRecords.has(activity.activity_id);button.textContent=done?'Em đã tự đánh dấu · Bỏ đánh dấu':'Em tự đánh dấu đã xem bài';button.setAttribute('aria-pressed',String(done));button.title='Dấu ghi nhớ cá nhân, không xác nhận điểm hoặc mức thành thạo.';};
+  const draw=()=>{const done=completionRecords.has(activity.activity_id);button.textContent=done?'Bỏ dấu đã xem':'Tự đánh dấu đã xem';button.setAttribute('aria-pressed',String(done));button.title='Dấu ghi nhớ cá nhân, không xác nhận em đã thành thạo bài học.';};
   draw();button.disabled=true;host.append(button,status);
   async function refresh(){
     try{await loadCompletions();draw();button.disabled=false;status.textContent='';}
-    catch{status.textContent='Chưa tải được trạng thái. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=refresh;status.append(retry);}
+    catch{status.textContent='Chưa tải được dấu đã xem. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=refresh;status.append(retry);}
   }
   if(loaded)button.disabled=false;else refresh();
   let pending=null;
@@ -34,11 +34,11 @@ function showCompletedActivities(host){
   host.textContent='Đang tải…';
   loadCompletions().then(records=>{
     host.replaceChildren();
-    if(!records.size){host.textContent='Chưa có bài được đánh dấu hoàn thành.';return;}
+    if(!records.size){host.textContent='Em chưa đánh dấu bài nào.';return;}
     for(const item of records.values()){
       const row=document.createElement('div');row.className='completed-row';
       const title=document.createElement('span');title.textContent=`${item.level} · ${item.title}`;
       const control=document.createElement('div');row.append(title,control);host.append(row);mountCompletion(control,item,true);
     }
-  }).catch(()=>{host.textContent='Chưa tải được danh sách hoàn thành.';});
+  }).catch(()=>{host.textContent='Chưa tải được danh sách bài đã đánh dấu. Em hãy mở lại trang để thử lại.';});
 }

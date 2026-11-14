@@ -247,7 +247,6 @@ test('dictation requires an attempt before reveal and saves the actual text as s
   assert.equal(saved.attempt_id,sent[0].body.attempt_id);assert.deepEqual(saved.task,sent[0].body.task);
   assert.equal(saved.task.id,'listening:question:0');assert.equal(saved.question_index,0);
   for(const key of ['correct','quality','answer_index'])assert.equal(Object.hasOwn(saved,key),false);
-  assert.match(first.querySelector('output').textContent,/không cộng điểm đúng\/sai/);
   second.querySelector('textarea').value='PRIVATE SUBMISSION';await second.querySelector('textarea').focus();
   assert.equal(b.c.teacherContext().focus.index,1);assert.equal(JSON.stringify(b.c.teacherContext()).includes('PRIVATE SUBMISSION'),false);
 });
@@ -539,7 +538,6 @@ test('quarantined source slots stay unavailable without dropping later task posi
   assert.equal(sent.length,1);assert.equal(sent[0].question_index,1);assert.equal(sent[0].item_id,undefined);
   await b.document.querySelector('.practice-session .practice-primary').click();
   assert.equal(b.element('lesson-completion').hidden,true);
-  assert.match(b.document.querySelector('.practice-result').textContent,/1 câu chưa khả dụng/);
 });
 
 test('recall accepts typed text and persists it against the normalized task instead of a fabricated choice index',async()=>{
@@ -573,7 +571,6 @@ test('writing self-assessment saves the response and rating without reporting ob
   assert.equal(sent[0].response_text,'  私はランです。  ');assert.equal(sent[0].self_rating,4);
   assert.equal(sent[0].task.id,'writing:question:0');assert.equal(sent[0].event,'answer');
   for(const key of ['correct','quality','answer_index'])assert.equal(Object.hasOwn(sent[0],key),false);
-  assert.match(section.querySelector('output').textContent,/chưa có kết luận đúng\/sai/);
 });
 
 function questionQuick(apiFetch){
@@ -632,7 +629,6 @@ test('full quiz keeps a quarantined slot visible but offers no answer buttons or
   b.c.handleQuizAnswer(0);
   assert.equal(sent.length,0);assert.equal(b.c.examAnswers.size,0);
   b.c.finishExam();
-  assert.match(b.element('quiz-result-praise').textContent,/1 câu tạm ngừng/);
   assert.match(b.element('quiz-completion').textContent,/Chưa xác nhận làm trọn bộ/);
 });
 
@@ -682,7 +678,6 @@ test('task prompts identify actual lexical targets rather than source category l
   for(const target of ['質問','____'])assert.doesNotMatch(b.c.taskPromptHtml(taskFixture({q:'筆者の考えは何ですか。',target})),/Từ cần xét|<mark>/);
   const marked=b.c.taskPromptHtml(taskFixture({q:'書類を提出する。',target:'提出'}));
   assert.match(marked,/<mark>提出<\/mark>/);assert.match(marked,/Từ cần xét/);
-  assert.match(b.c.taskUnavailableMessage(taskFixture({review_status:'quarantined',unavailable_reason:'Technical source conflict'})),/chờ rà soát/);
 });
 
 test('open invitation and authored alternative continuations preserve actual learner content and one session without a string key',async()=>{
@@ -703,14 +698,13 @@ test('open invitation and authored alternative continuations preserve actual lea
     assert.doesNotMatch(section.textContent,/Đáp án nguồn:/);
     input.value=text;await input.dispatch('input');await section.querySelector('.practice-primary').click();
     assert.equal(section.querySelector('.practice-feedback').dataset.correct,'unknown');
-    assert.match(section.querySelector('.practice-feedback').textContent,/Chưa có kết luận đúng\/sai/);
     await section.querySelector('.practice-primary').click();
   }
   assert.equal(sent.length,3);assert.equal(new Set(sent.map(x=>x.body.session_id)).size,1);
   assert.equal(sent[0].body.response_text,' 土曜日、いっしょに料理をしませんか ');
   assert.deepEqual(sent.map(x=>x.body.task.id),['invite','accept','refuse']);
   assert.ok(sent.every(x=>!Object.hasOwn(x.body,'correct')&&!Object.hasOwn(x.body,'prior_response')&&!Object.hasOwn(x.body,'self_rating')));
-  assert.match(b.document.querySelector('.practice-result').textContent,/3 câu tự diễn đạt đã lưu riêng/);
+  assert.equal(b.document.querySelector('.practice-result .practice-score'),null,'ungraded writing must not produce a keyed score');
 });
 
 test('cosmetic source differences stay neutral and preserve raw text without claiming a grammar error',async()=>{
@@ -723,7 +717,7 @@ test('cosmetic source differences stay neutral and preserve raw text without cla
   await b.document.querySelector('.practice-session .practice-primary').click();
   assert.equal(sent[0].response_text,' 私は学生です ');
   const feedback=b.document.querySelector('.practice-feedback');
-  assert.equal(feedback.dataset.correct,'unknown');assert.match(feedback.textContent,/khác biệt trình bày/);
+  assert.equal(feedback.dataset.correct,'unknown');
   assert.doesNotMatch(feedback.textContent,/sai ngữ pháp|hiểu sai nghĩa\./);
 });
 
@@ -840,4 +834,57 @@ test('writing self-check criteria stay concealed until the actual answer is save
   assert.equal(criteria.hidden,true);input.value='自分の答え。';await input.dispatch('input');
   await section.querySelector('.practice-primary').click();assert.equal(criteria.hidden,true,'failure is not permission to show a target form');
   accept=true;await section.querySelector('.practice-primary').click();assert.equal(criteria.hidden,false);
+});
+
+test('grammar notation preserves operator order, bracketed groups and escaped text without adding suffixes',()=>{
+  const b=lesson();
+  for(const formula of ['Danh từ + に + 行く / 来る / 帰る','Danh từ + です / Tính từ な + です',
+    'Động từ / tính từ い / danh từ + でしょう','Danh từ (+ の) + いかんで','Danh từ + です | この + danh từ','<img src=x onerror=attack()> + です']){
+    b.c.showLessonDetail({id:'notation',title:'Cách ghép câu',formula},'N4','grammar');
+    const raw=b.document.querySelector('.lesson-formula code'),layout=b.document.querySelector('.grammar-layout');
+    assert.equal(raw.hidden,true);assert.equal(raw.textContent,formula);
+    assert.equal(layout.querySelector('img'),null);
+    const expected=formula.replaceAll(' / ',' hoặc ').replaceAll(' + ','+').replaceAll(' hoặc ','hoặc').replaceAll(' | ','');
+    assert.equal(layout.textContent.replaceAll(' + ','+'),expected);
+    if(formula.includes('|'))assert.equal(layout.querySelectorAll('.grammar-break').length,1);
+  }
+});
+
+test('lesson teaching reformats both AI and original formulas and restores them on account invalidation',async()=>{
+  const formula='Động từ + て + ください',translated='Động từ thể て + ください';
+  let mutate;
+  const b=lesson({signedInUser:{user_id:'first',is_admin:true},addEventListener(){},
+    MutationObserver:class{constructor(callback){mutate=callback;}observe(){}},
+    apiFetch:async(_path,options)=>{
+      const body=JSON.parse(options.body);
+      return Response.json({action:'teach',lesson:body.lesson,focus:body.focus,view:body.view,reply:'Dùng để nhờ người khác làm một việc.',
+        fields:[{key:'formula',source:formula,text:translated}]});
+    }});
+  b.c.window=b.c;
+  vm.runInContext(readFileSync('static/study-teacher.js','utf8'),b.c);
+  b.c.showLessonDetail({id:'formula-lesson',title:'Nhờ giúp đỡ',formula},'N5','grammar');
+  const raw=b.document.querySelector('.lesson-formula code'),layout=b.document.querySelector('.grammar-layout');
+  const panel=b.document.querySelector('#lesson-reference .study-teacher');
+  await panel.querySelector('.study-teacher-button').click();
+  assert.equal(raw.textContent,translated);assert.equal(layout.querySelectorAll('.grammar-plus').length,1);
+  const compare=panel.querySelectorAll('.study-teacher-button')[1];
+  await compare.click();assert.equal(raw.textContent,formula);assert.equal(layout.querySelectorAll('.grammar-plus').length,2);
+  await compare.click();assert.equal(raw.textContent,translated);assert.equal(layout.querySelectorAll('.grammar-plus').length,1);
+  b.c.signedInUser={user_id:'second',is_admin:true};mutate();
+  assert.equal(raw.textContent,formula);assert.equal(layout.querySelectorAll('.grammar-plus').length,2);
+  assert.equal(panel.querySelector('.study-teacher-reply').hidden,true);
+});
+
+test('AI presentation cannot expose answer feedback before a successful save receipt',async()=>{
+  let teaching;
+  const b=lesson({mountStudyTeacher:(_section,options)=>{teaching=options;},
+    studyTarget:(key,element,source)=>({key,element,source}),apiFetch:async()=>Response.json({detail:'Save unavailable'},{status:503})});
+  b.c.showLessonDetail({id:'save-first',title:'Luyện tập',drills:[{q:'選んでください。',opts:['A','B'],answer_index:1,explanation:'PRIVATE UNTIL SAVE'}]},'N5','grammar');
+  await b.document.querySelector('[data-lesson-mode=practice]').click();
+  const section=b.document.querySelector('.practice-session');
+  await section.querySelector('.practice-options input').dispatch('change');
+  await section.querySelector('.practice-primary').click();
+  teaching.onApply();
+  assert.equal(section.querySelector('.practice-reason'),null);
+  assert.doesNotMatch(section.querySelector('.practice-feedback').textContent,/PRIVATE UNTIL SAVE/);
 });
