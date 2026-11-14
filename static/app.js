@@ -30,7 +30,7 @@ let examSecondsRemaining = 1500; // 25 mins
 const TAB_TITLES = {
   landing: "VJBot",
   dashboard: "Học tập",
-  kanji: "Kanji",
+  kanji: "Hán tự",
   classroom: "Thầy Lâm",
   curriculum: "Khóa học",
   lesson: "Bài học",
@@ -97,7 +97,7 @@ function renderBookmarks() {
   if (!container) return;
   const list = getBookmarks();
   if (!list || list.length === 0) {
-    container.innerHTML = `<p class="empty-bookmark-msg">Chưa có mục nào được lưu. Hãy bấm nút <strong>Lưu chủ đề</strong> trong lớp của thầy Lâm!</p>`;
+    container.innerHTML = `<p class="empty-bookmark-msg">Chưa lưu chủ đề nào. Em bấm <strong>Lưu chủ đề</strong> khi muốn ôn lại phần đang học nhé.</p>`;
     return;
   }
   container.innerHTML = list.map((item) => `
@@ -230,7 +230,7 @@ class MascotManager {
     const stateTag = document.getElementById("sensei-state-tag");
     const label = st === "thinking" ? "Đang suy nghĩ 🤔" : (st === "speaking" ? "Đang giảng bài 🗣️" : "Tươi vui 😊");
     if (moodBadge) moodBadge.textContent = label;
-    if (stateTag) stateTag.textContent = `Thầy Lâm: ${label}`;
+    if (stateTag) stateTag.textContent = st === "idle" ? "Thầy Lâm" : `Thầy Lâm: ${label}`;
   }
 
   celebrate() {
@@ -676,12 +676,14 @@ function grammarFormulaHtml(formula) {
 function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
   item={...item,items:item.items || item.roleplay?.words || item.targetWords,examples:item.examples || item.roleplay?.dialogue};
   const returnView=curriculumView;
+  const returnToKanji=!owner && (document.body.dataset.page==='kanji' || location.hash.startsWith('#kanji/'));
   if(switchTab('lesson',{level,skill,id:owner?item.id:activityId(item,level,skill),fromHistory,owner,
     ...(item.delayedReview && Number.isInteger(item.reviewQuestionIndex)?{reviewTaskId:lessonQuestions(item,level,skill)[item.reviewQuestionIndex]?.task_id}:{})})===false)return;
   activeCurriculumLevel=level;
   activeCurriculumSkill=skill;
-  currentLesson={item,level,skill,returnView,owner};
-  document.getElementById('btn-close-lesson-modal').textContent='Về khóa học';
+  currentLesson={item,level,skill,returnView,owner,...(returnToKanji?{returnTab:'kanji'}:{})};
+  const returnLabel={flashcards:'Về thẻ nhớ',kaiwa:'Về luyện nói',quiz:'Về luyện thi'}[owner] || (returnToKanji?'Về Hán tự':'Về khóa học');
+  document.getElementById('btn-close-lesson-modal').textContent=returnLabel;
   const modal = document.getElementById("lesson-page");
   const badge = document.getElementById("modal-lesson-badge");
   const title = document.getElementById("modal-lesson-title");
@@ -818,7 +820,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
     next.onclick=()=>openStudyStep(steps[current+1],level);body.querySelector('.modal-practice-btn').parentElement.append(next);
   }
   const btnClose = body.querySelector(".modal-close-action");
-  if (btnClose){btnClose.textContent="Về khóa học";btnClose.addEventListener("click",returnToCourse);}
+  if (btnClose){btnClose.textContent=returnLabel;btnClose.addEventListener("click",returnToCourse);}
 
   addFeatureLessonAction(item,level,owner);
   renderLessonOutline(item,level,skill,owner);
@@ -866,7 +868,10 @@ async function renderFlashcards(level = "N5",lessonId=null) {
   const reviewed=new Map((progress.items||[]).map(i=>[i.item_id,i]));
   fcDeck=deck.filter(i=>!reviewed.get(i.id)?.next_review || new Date(reviewed.get(i.id).next_review)<=new Date()).sort((a,b)=>Number(!reviewed.has(a.id))-Number(!reviewed.has(b.id))).slice(0,20);
   fcIdx = 0;
-  if(!fcDeck.length){document.getElementById('fc-counter').textContent='Đã ôn xong. Quay lại khi thẻ đến hạn.';document.getElementById('flashcard-card').hidden=true;document.getElementById('btn-fc-reveal')?.setAttribute('hidden','');document.querySelector('.fc-controls-bar').hidden=true;globalThis.setTeacherFocus?.(null);globalThis.invalidateTeacherQuery?.();return;}
+  const empty=document.getElementById('fc-empty');
+  const ratingHelp=document.getElementById('fc-rating-help');if(ratingHelp)ratingHelp.hidden=!fcDeck.length;
+  if(empty){empty.hidden=fcDeck.length>0;empty.textContent=lessonId?'Hiện chưa có thẻ đến hạn trong bài này. Em có thể quay lại sau hoặc chọn bài khác.':'Hiện chưa có thẻ đến hạn. Em có thể quay lại sau hoặc chọn bài khác.';}
+  if(!fcDeck.length){document.getElementById('flashcard-card').hidden=true;document.getElementById('btn-fc-reveal')?.setAttribute('hidden','');document.querySelector('.fc-controls-bar').hidden=true;globalThis.setTeacherFocus?.(null);globalThis.invalidateTeacherQuery?.();return;}
   document.getElementById('flashcard-card').hidden=false;document.getElementById('btn-fc-reveal')?.removeAttribute('hidden');document.querySelector('.fc-controls-bar').hidden=false;
   displayFlashcard();
 }
@@ -1130,7 +1135,7 @@ function finishExam() {
 // ==========================================
 async function resolveProgressReview(record,catalogs=new Map()){
   const level=record.level || record.jlpt_level;
-  if(!/^N[1-5]$/.test(level || '') || !record.item_id)throw new Error('Bản ghi cũ chưa xác định rõ bài học.');
+  if(!/^N[1-5]$/.test(level || '') || !record.item_id)throw new Error('Chưa tìm được bài học tương ứng trong thư viện hiện tại. Em chọn bài để ôn lại nhé.');
   if(!catalogs.has(level))catalogs.set(level,(async()=>{
     await Promise.all([ensureLessons(level),loadPracticalCourse()]);createStudyPlan(level);
     const candidates=Object.entries(window.JLPT_DATA.curriculum[level].skills).flatMap(([skill,lessons])=>lessons.map(item=>({item,skill})));
@@ -1143,7 +1148,7 @@ async function resolveProgressReview(record,catalogs=new Map()){
     const index=candidate.questions.findIndex(task=>record.task_id?task.task_id===record.task_id:task.item_id===record.item_id);
     if(index>=0)matches.set(activityId(candidate.item,level,candidate.skill),{...candidate,index,level});
   }
-  if(matches.size!==1)throw new Error('Chưa xác định duy nhất một bài hiện tại. Em hãy chọn bài từ thư viện.');
+  if(matches.size!==1)throw new Error('Chưa tìm được bài học tương ứng trong thư viện hiện tại. Em chọn bài để ôn lại nhé.');
   return [...matches.values()][0];
 }
 async function openProgressReview(record,catalogs){
@@ -1165,7 +1170,7 @@ async function loadProgress() {
   showCompletedActivities(document.getElementById('completed-activities'));
   try{
     const response=await apiFetch(`/api/progress?user_id=${encodeURIComponent(userId)}`);
-    if(!response.ok)throw new Error('Chưa tải được tiến độ. Em hãy mở lại trang để thử lại.');
+    if(!response.ok)throw new Error('Chưa tải được tiến độ. Em tải lại trang để thử lại nhé.');
     const data=await response.json();if(!current())return;
     const answers=(data.evidence || []).filter(row=>row.answered_at);
     document.getElementById('mastery-lessons-count').textContent=new Set([...(data.items || []).map(row=>row.item_id),...answers.map(row=>row.item_id)]).size;
@@ -1184,7 +1189,7 @@ async function loadProgress() {
     }));
     if(!current() || !list)return;
     list.replaceChildren();
-    if(!rows.length){list.textContent='Chưa có mục cần ôn.';return;}
+    if(!rows.length){list.textContent='Chưa có câu nào trong danh sách cần ôn.';return;}
     for(const {record,match,error} of rows){
       const card=document.createElement('article');card.className='review-task-card';
       const title=document.createElement('h4'),question=document.createElement('p'),status=document.createElement('p');
@@ -1202,7 +1207,7 @@ async function loadProgress() {
       };
       card.append(title,question,button,status);list.append(card);
     }
-  }catch(error){if(current() && list)list.textContent=error.message || 'Chưa tải được tiến độ. Em hãy mở lại trang để thử lại.';}
+  }catch(error){if(current() && list)list.textContent=error.message || 'Chưa tải được tiến độ. Em tải lại trang để thử lại nhé.';}
 }
 
 // ==========================================
@@ -1495,7 +1500,7 @@ function setupEventListeners() {
   if (btnClearChat) {
     btnClearChat.addEventListener("click", async () => {
       if(sendingMessage || clearingChat || !chatHistoryReady)return;
-      if (confirm("Xóa tin nhắn trong cuộc trò chuyện này? Các bài học khác và lịch sử lưu trữ vẫn được giữ lại.")) {
+      if (confirm("Xóa tin nhắn trong cuộc trò chuyện này? Tin nhắn ở các cuộc trò chuyện khác vẫn được giữ.")) {
         clearingChat=true;btnClearChat.disabled=true;document.getElementById("btn-send-message").disabled=true;chatError("",null);
         try {
           const response=await apiFetch(chatHistoryPath(), { method: "DELETE" });
@@ -1605,7 +1610,7 @@ function setupEventListeners() {
       displayFlashcard();
     } else {
       soundEngine.playCheer();
-      alert("🎉 Bạn đã hoàn thành toàn bộ thẻ trong bộ này!");
+      alert("Em đã xem hết các thẻ trong lượt này.");
     }
   };
 
@@ -1637,7 +1642,7 @@ function setupEventListeners() {
     if(!response.ok)throw new Error('save');
     pendingCardAnswers.delete(card.id);
     if(fcIdx===fcDeck.length-1)await renderFlashcards(activeFcLevel);else nextCard();
-    } catch {document.getElementById('fc-counter').textContent='Chưa lưu được. Hãy bấm đánh giá để thử lại.';} finally {savingCard=false;}
+    } catch {document.getElementById('fc-counter').textContent='Chưa lưu được mức ghi nhớ. Em bấm lại nút vừa chọn để thử nhé.';} finally {savingCard=false;}
 
   }
 
@@ -1688,7 +1693,7 @@ function setupEventListeners() {
       const speech = kaiwaInput.value.trim();
       if (!speech) {
         const error = document.getElementById('kaiwa-error');
-        error.textContent = 'Nói hoặc nhập câu trả lời trước khi nhận xét. Nothing has been graded.'; error.hidden = false;
+        error.textContent = 'Em hãy nói hoặc nhập câu trả lời trước nhé.'; error.hidden = false;
         kaiwaInput.focus();
         return;
       }
@@ -1739,7 +1744,7 @@ function setupEventListeners() {
           if (scoreVal) scoreVal.textContent = estimated ? `${evalData.estimated_score}/100 (ước tính)` : 'Chưa chấm';
           if (feedbackText) feedbackText.textContent = evalData.feedback;
           if (modelText) modelText.textContent = evalData.model_answer;
-          const labels = {met: 'Met', partial: 'Partly met', not_met: 'Not met', uncertain: 'Uncertain'};
+          const labels = {met: 'Đáp ứng', partial: 'Đáp ứng một phần', not_met: 'Chưa đáp ứng', uncertain: 'Chưa rõ'};
           for (const item of evalData.criteria) {
             const row = document.createElement('li');
             row.textContent = `${item.label}: ${labels[item.verdict]}${item.evidence.length ? ' — ' + item.evidence.join(' / ') : ''}`;
@@ -1747,12 +1752,12 @@ function setupEventListeners() {
           }
         } else {
           if (feedbackText) feedbackText.textContent = !resp.ok && typeof evalData?.detail === 'string'
-            ? evalData.detail : "Chưa có đánh giá được kiểm chứng. Chưa có gì được chấm.";
+            ? evalData.detail : "Chưa nhận được nhận xét cho câu này. Em thử lại nhé.";
         }
         if (resultCard) resultCard.hidden = false;
       } catch {
         if (!stillCurrent()) return;
-        if (feedbackText) feedbackText.textContent = "Không lấy được nhận xét của AI. Chưa có gì được chấm.";
+        if (feedbackText) feedbackText.textContent = "Chưa nhận được nhận xét cho câu này. Em thử lại nhé.";
         if (resultCard) resultCard.hidden = false;
       } finally {
         btnEvalKaiwa.disabled=false;
@@ -1867,7 +1872,7 @@ async function startReversedLesson(item,level,skill,owner=null){
   const host=document.getElementById('chat-lesson-context');host.hidden=false;host.replaceChildren();
   const title=document.createElement('strong');title.textContent=`${level} · ${item.title || item.jp}`;
   const back=document.createElement('button');back.className='stage-btn';back.textContent='Về bài học';back.onclick=()=>showLessonDetail(item,level,skill,false,owner);
-  const general=document.createElement('button');general.className='stage-btn';general.textContent='Chat chung';
+  const general=document.createElement('button');general.className='stage-btn';general.textContent='Trò chuyện chung';
   general.onclick=async()=>{if(sendingMessage || clearingChat || chatHistoryLoading || failedChatMessage)return;chatLessonContext=null;globalThis.clearTeacherContext?.();host.hidden=true;await loadChatHistory();};
   const restart=document.createElement('button');restart.type='button';restart.className='stage-btn';restart.textContent='Bắt đầu lại buổi học';restart.onclick=restartTutorConversation;
   const control=document.createElement('div');host.append(title,back,general,restart,control);mountCompletion(control,{activity_id:`chat:${chatLessonContext.id}`,kind:'chat',level,title:`Giải thích lại: ${item.title || item.jp}`});

@@ -1,4 +1,4 @@
-const featureNames={flashcards:'Thẻ nhớ',kaiwa:'Luyện nói',kanji:'Kanji',quiz:'Luyện thi JLPT'};
+const featureNames={flashcards:'Thẻ nhớ',kaiwa:'Luyện nói',kanji:'Hán tự',quiz:'Luyện thi JLPT'};
 let featureVersion=0,activeAppHash='#landing';
 function confirmWorkspaceNavigation(tab,route){
   const target=appRouteHash(tab,route);
@@ -42,7 +42,7 @@ async function renderFeaturePage(feature,route){
     return renderFeatureLessonList(feature,route.level);
   }
   if(feature==='quiz')return renderExamCatalog(route);
-  work.innerHTML='<button class="feature-back" id="kanji-back">← Chọn cấp độ</button><h1>Kanji '+route.level+'</h1><div id="kanji-library" class="kanji-library" aria-live="polite">Đang tải…</div>';
+  work.innerHTML='<button class="feature-back" id="kanji-back">← Chọn cấp độ</button><h1>Hán tự '+route.level+'</h1><div id="kanji-library" class="kanji-library" aria-live="polite">Đang tải…</div>';
   document.getElementById('kanji-back').onclick=()=>switchTab('kanji');
   const host=document.getElementById('kanji-library');
   try{
@@ -56,7 +56,7 @@ async function renderFeaturePage(feature,route){
       button.append(chars,label);button.onclick=()=>{showLessonDetail(lesson,route.level,'kanji');currentLesson.returnTab='kanji';};host.append(button);
     }
     setupLessonFilter(work,lessons,'.kanji-set',lessons.map(lesson=>completionRecords.has(activityId(lesson,route.level,'kanji'))));
-  }catch{host.textContent='Chưa tải được Kanji. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeaturePage(feature,route);host.append(retry);}
+  }catch{host.textContent='Chưa tải được bài Hán tự. Em thử lại nhé. ';const retry=document.createElement('button');retry.textContent='Thử lại';retry.onclick=()=>renderFeaturePage(feature,route);host.append(retry);}
 }
 async function renderDashboard(){
   const version=featureVersion;
@@ -95,7 +95,12 @@ function addPracticeSets(level){
   for(let set=0;set<10;set++){
     const drills=pools.flatMap(pool=>pool.slice(set*5,set*5+5));
     if(!drills.length)continue;
-    exams.push({id:`mixed:${level}:${set+1}`,title:`Ôn tổng hợp ${set+1}`,source:'VJBot · nhận diện từ OpenJLPT · giải nghĩa EN',duration_minutes:20,questions:drills.map(d=>({id:d.item_id,sentence:d.q,options:d.opts,answer:d.answer_index ?? d.opts.indexOf(d.ans),explanation:d.explanation || '',passage:d.passage,script_jp:d.script_jp,source_language:d.source_language,type:d.skill,plain:true}))});
+    exams.push({id:`mixed:${level}:${set+1}`,title:`Ôn tổng hợp ${set+1}`,source:'VJBot · ôn từ vựng, chữ Hán, ngữ pháp và đọc hiểu từ OpenJLPT',duration_minutes:20,questions:drills.map(d=>({id:d.item_id,sentence:d.q,options:d.opts,answer:d.answer_index ?? d.opts.indexOf(d.ans),explanation:d.explanation || '',passage:d.passage,script_jp:d.script_jp,source_language:d.source_language,type:d.skill,plain:true,
+      ...(d.unavailable_reason?{unavailable_reason:d.unavailable_reason}:{}),
+      ...(d.localization?{localization:d.localization}:{}),
+      ...(d.processing_allowed!==undefined?{processing_allowed:d.processing_allowed}:{}),
+      ...(d.option_sources?{option_sources:d.option_sources}:{}),
+      ...(d.source_identity?{source_identity:d.source_identity}:{})}))});
   }
 }
 async function renderExamCatalog(route){
@@ -147,7 +152,11 @@ function featureLessons(feature,level){
         q:(q.sentence || q.sentence_jp || '').replace(/<[^>]+>/g,''),instruction:q.instruction || '',
         passage:q.passage || '',script_jp:q.script_jp || '',target:q.target || '',parts:q.parts || [],
         opts:q.options,answer_index:q.answer,explanation:q.explain || q.explanation || '',
-        item_id:quizProgressId(level,index,q,i),source_identity:`${level}:${exam.id}:${q.id}`,
+        item_id:quizProgressId(level,index,q,i),source_identity:q.source_identity || `${level}:${exam.id}:${q.id}`,
+        ...(q.unavailable_reason?{unavailable_reason:q.unavailable_reason}:{}),
+        ...(q.localization?{localization:q.localization}:{}),
+        ...(q.processing_allowed!==undefined?{processing_allowed:q.processing_allowed}:{}),
+        ...(q.option_sources?{option_sources:q.option_sources}:{}),
         source_language:q.source_language || 'vi',example_indexes:q.example_indexes || [],
         skill:q.item_type || ({kanji:'kanji',vocab:'vocabulary',star_grammar:'grammar'}[q.type]) || q.type || 'reading',
         requires_passage:q.type==='reading' && !q.plain,requires_script:q.type==='listening'

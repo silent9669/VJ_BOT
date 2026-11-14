@@ -7,6 +7,15 @@ function createRecordedJapaneseInput({button,input,status,playbackButton,onError
   let phase='idle',generation=0,stream=null,recorder=null,abort=null,timer=null,url=null,urlRun=null,playback=null;
   const owns=run=>run.generation===generation && run.owner===owner() && run.route===route();
   const announce=message=>{if(status){status.textContent=message;status.hidden=!message || message==='Micro sẵn sàng';}};
+  const describe=error=>{
+    if(error.userFacing)return error.message;
+    if(['NotAllowedError','SecurityError'].includes(error.name))return 'Cho phép micro trong trình duyệt rồi thử lại hoặc nhập câu trả lời.';
+    if(['NotFoundError','DevicesNotFoundError'].includes(error.name))return 'Không tìm thấy micro. Kết nối micro hoặc nhập câu trả lời.';
+    if(error.name==='NotReadableError')return 'Micro đang bận hoặc không khả dụng. Đóng ứng dụng đang dùng micro rồi thử lại hoặc nhập câu trả lời.';
+    if(error.name==='SyntaxError')return 'Phản hồi chép lời không hợp lệ. Nhập câu trả lời hoặc thử lại.';
+    if(error.name==='TypeError')return 'Không kết nối được dịch vụ chép lời. Kiểm tra mạng rồi thử lại hoặc nhập câu trả lời.';
+    return 'Không xử lý được âm thanh. Kiểm tra thiết bị rồi thử lại hoặc nhập câu trả lời.';
+  };
   function draw(next) {
     phase=next;button.setAttribute('aria-pressed',String(next==='recording'));
     button.setAttribute('aria-busy',String(next==='checking'||next==='transcribing'));
@@ -30,17 +39,17 @@ function createRecordedJapaneseInput({button,input,status,playbackButton,onError
   }
   function reset() {
     ++generation;abort?.abort();abort=null;fallback.reset();
-    try {release();} catch(error){onError?.(error.message);}
+    try {release();} catch(error){onError?.(describe(error));}
     recorder=null;draw('idle');discardReplay();announce('Micro sẵn sàng');
   }
   async function request(body,signal) {
     const response=await apiFetch('/api/stt',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const data=await response.json();if(!response.ok)throw new Error(data.detail || 'Chưa chép được bản ghi. Hãy thử lại hoặc nhập câu trả lời.');return data;
+    const data=await response.json();if(!response.ok)throw Object.assign(new Error(data.detail || 'Chưa chép được bản ghi. Hãy thử lại hoặc nhập câu trả lời.'),{userFacing:true});return data;
   }
   async function transcribe(blob,run) {
     if(!owns(run))return;
     if(!blob.size){draw('idle');announce('Chưa có âm thanh. Ghi lại hoặc nhập câu trả lời.');return;}
-    draw('transcribing');announce('Đang chép lời tiếng Nhật… AI chỉ đánh giá văn bản, không chấm phát âm âm học.');
+    draw('transcribing');announce('Đang chép lời tiếng Nhật…');
     try {
       const bytes=new Uint8Array(await blob.arrayBuffer());let binary='';
       for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
@@ -50,14 +59,14 @@ function createRecordedJapaneseInput({button,input,status,playbackButton,onError
       if(!result.text){announce('Chưa nghe rõ lời nói. Ghi lại hoặc nhập câu trả lời.');return;}
       input.value=[input.value.trim(),result.text].filter(Boolean).join(' ').slice(0,6000);
       input.dispatchEvent?.(new Event('input',{bubbles:true}));input.focus();
-      announce('Đã chép lời. Kiểm tra câu trả lời trước khi gửi; AI chỉ đánh giá văn bản, không chấm phát âm âm học.');
-    } catch(error){if(owns(run)){announce(error.message);onError?.(error.message);}}
+      announce('Đã chép lời. Em xem lại câu trước khi gửi nhé.');
+    } catch(error){if(owns(run)){const message=describe(error);announce(message);onError?.(message);}}
     finally {if(owns(run))draw('idle');}
   }
   async function toggle() {
     if(fallback.active){await fallback.toggle();return;}
     if(phase==='recording'){
-      try {release();} catch(error){reset();announce(`Không dừng được bản ghi: ${error.message}. Nhập câu trả lời hoặc thử lại.`);onError?.(error.message);}
+      try {release();} catch(error){reset();const message=`Không dừng được bản ghi. ${describe(error)}`;announce(message);onError?.(message);}
       return;
     }
     if(phase!=='idle'){reset();return;}
@@ -91,13 +100,13 @@ function createRecordedJapaneseInput({button,input,status,playbackButton,onError
             if(playbackButton.style)playbackButton.style.display='inline-flex';
           }
           transcribe(blob,run);
-        } catch(error){if(owns(run)){reset();announce(`Không lưu được bản ghi: ${error.message}. Nhập câu trả lời hoặc thử lại.`);onError?.(error.message);}}
+        } catch(error){if(owns(run)){reset();const message=`Không lưu được bản ghi. ${describe(error)}`;announce(message);onError?.(message);}}
       };
       capture.start(1000);draw('recording');announce('Đang ghi âm · Nhấn Dừng để chép lời · tối đa 60 giây');
       timer=setTimeout(()=>{if(owns(run))toggle();},60000);
     }catch(error){if(owns(run)){
       reset();
-      const message=error.name==='NotAllowedError'?'Cho phép micro trong trình duyệt rồi thử lại hoặc nhập câu trả lời.':`${error.message} Nhập câu trả lời hoặc thử lại.`;
+      const message=describe(error);
       announce(message);onError?.(message);
     }}
   }
@@ -112,7 +121,7 @@ function createRecordedJapaneseInput({button,input,status,playbackButton,onError
       entry.audio.onended=()=>{if(current()){pauseReplay();announce('Đã phát xong bản ghi.');}};
       entry.audio.onerror=()=>{if(current()){pauseReplay();announce('Không phát được bản ghi. Ghi lại hoặc nhập câu trả lời.');}};
       await entry.audio.play();
-    } catch(error){if(current()){pauseReplay();announce(`Không phát được bản ghi: ${error.message}. Ghi lại hoặc nhập câu trả lời.`);}}
+    } catch(error){if(current()){pauseReplay();announce(error.name==='NotAllowedError'?'Trình duyệt đã chặn phát bản ghi. Nhấn Nghe lại lần nữa.':'Không phát được bản ghi. Ghi lại hoặc nhập câu trả lời.');}}
   }
   button.addEventListener('click',toggle);
   playbackButton?.addEventListener('click',replay);

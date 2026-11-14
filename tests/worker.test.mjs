@@ -1189,7 +1189,7 @@ test('Kaiwa rejects forged scenarios before inference and empty input is explici
   assert.equal(result.status,'ungraded');assert.equal(result.reason,'empty_submission');
   assert.equal(result.score,null);assert.equal(result.rating,null);
   assert.equal(result.model_answer,'');assert.equal(result.user_text,'');assert.deepEqual(result.criteria,[]);assert.equal(result.estimated_score,null);
-  assert.match(result.feedback,/No answer.*Nothing has been assessed/);
+  assert.equal(typeof result.feedback,'string');assert.ok(result.feedback.trim());
   assert.equal(calls,0);
 });
 
@@ -1630,7 +1630,7 @@ test('feedback accepts bounded full-length current and actual prior writing with
 test('authored open rewrites bind different raw answers to the same rubric without creating a source-key verdict',async()=>{
   const {env,request}=await authenticated(),original=globalThis.fetch;await withApi(env,request);
   const lesson=teacherCatalogs.N1.lessons['teaching:v1:N1:argument'],index=lesson.questions.findIndex(task=>task.task_id==='teaching:v1:N1:argument:task:3'),task=lesson.questions[index];
-  assert.equal(task.mode,'writing');assert.deepEqual(task.accepted_answers,[]);assert.equal(task.answer_index,null);
+  assert.equal(task.mode,'writing');assert.deepEqual(task.accepted_answers??[],[]);assert.equal(task.answer_index,null);
   const answers=['  手続きが統一されているからといって、必ずしも全員に最善とはいえない。  ','手続きを統一したからといって、必ずしも皆にとって最善だとはいえない。'],calls=[];
   globalThis.fetch=async(_url,options)=>{
     const wire=JSON.parse(options.body),evidence=JSON.parse(wire.messages.at(-1).content);calls.push(evidence);

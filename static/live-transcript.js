@@ -12,8 +12,8 @@
         name.textContent=segment.role==='user'?'Em':'Thầy Lâm';meta.append(name,time);
         segment.original=document.createElement('p');segment.original.className='live-original';
         segment.translation=document.createElement('p');segment.translation.className='live-translation';segment.translation.lang='vi';
-        segment.retry=document.createElement('button');segment.retry.type='button';segment.retry.className='live-translation-retry';segment.retry.textContent='Dịch lại';segment.retry.hidden=true;
-        segment.retry.addEventListener('click',()=>{segment.failed=false;segment.translatedText=null;schedule();render(segment);});
+        segment.retry=document.createElement('button');segment.retry.type='button';segment.retry.className='live-translation-retry';segment.retry.textContent='Thử dịch lại';segment.retry.hidden=true;
+        segment.retry.addEventListener('click',()=>{segment.failed=false;segment.cancelled=false;segment.translatedText=null;schedule();render(segment);});
         row.append(meta,segment.original,segment.translation,segment.retry);
         const next=segments.find(s=>s.start>segment.start && s.row?.parentNode===host);host.insertBefore(row,next?.row || null);
         host.dataset.empty='false';
@@ -21,7 +21,7 @@
       segment.time.textContent=clock(segment.start)+' – '+clock(segment.end);
       segment.time.setAttribute('aria-label','Mốc thời gian xấp xỉ '+clock(segment.start)+' đến '+clock(segment.end));
       segment.original.textContent=segment.text;
-      segment.translation.textContent=segment.translatedText===segment.text?segment.vi:segment.failed?'Chưa dịch được đoạn này.':'Đang dịch…';
+      segment.translation.textContent=segment.translatedText===segment.text?segment.vi:segment.cancelled?'Chưa dịch đoạn này.':segment.failed?'Chưa dịch được đoạn này. Em thử lại nhé.':'Đang dịch…';
       segment.retry.hidden=!segment.failed;
       group();
       if(follow)host.scrollTop=host.scrollHeight;
@@ -68,7 +68,7 @@
       }finally{if(run===generation){busy=false;abort=null;schedule();}}
     }
     function stop(){++generation;clearTimeout(timer);timer=null;abort?.abort();abort=null;busy=false;accepting=false;
-      for(const segment of segments)if(segment.translatedText!==segment.text){segment.failed=true;render(segment);}}
+      for(const segment of segments)if(segment.translatedText!==segment.text && !segment.failed){segment.cancelled=true;segment.failed=true;render(segment);}}
     return {
       reset(){stop();owner=signedInUser?.user_id;segments=[];sequence=0;last={user:null,assistant:null};seen=new Set();lastRequest=0;accepting=true;host.replaceChildren();host.dataset.empty='true';},
       add(event){

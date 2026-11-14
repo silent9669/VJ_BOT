@@ -963,9 +963,9 @@
         "prompt": "Viết hai câu mô tả một triệu chứng giả định và thời điểm bắt đầu; hỏi nghĩa của 食後.",
         "model": "今朝から頭が痛いです。「食後」はどういう意味ですか。",
         "criteria": [
-          "Có triệu chứng rõ ràng",
-          "Có triệu chứng và thời điểm",
-          "Có câu hỏi làm rõ hướng dẫn"
+          "Nêu rõ triệu chứng giả định",
+          "Nói rõ triệu chứng bắt đầu khi nào",
+          "Hỏi lại phần hướng dẫn em chưa hiểu, không tự đoán"
         ],
         "question_jp": "今日はどうしましたか。いつからですか。"
       }
@@ -1721,7 +1721,7 @@
       "id": "practical:v1:N2:comparison",
       "level": "N2",
       "title": "So sánh hai phương án bằng chứng",
-      "goal": "Chọn phương án theo ràng buộc, không chỉ nhìn giá.",
+      "goal": "Chọn nhà in kịp hạn 4 ngày và không vượt ngân sách 22.000 yên cho 200 bản.",
       "minutes": 25,
       "prerequisites": [
         "practical:v1:N2:policy"
@@ -1813,7 +1813,7 @@
         "criteria": [
           "Nêu phương án rõ ràng",
           "Dẫn thời gian và tổng chi phí",
-          "Giải thích ràng buộc mà bên kia không đáp ứng"
+          "Nêu yêu cầu về hạn giao hoặc tổng chi phí mà nhà in còn lại chưa đáp ứng"
         ],
         "question_jp": "どちらの印刷会社を選びますか。数字を使って理由を説明してください。"
       }

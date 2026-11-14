@@ -4,9 +4,9 @@
   const KIND = {google: 'Google', email: 'Email', guest: 'Khách cũ'};
   const ROLE = {owner: 'Chủ sở hữu', admin: 'Quản trị viên', free: 'Miễn phí'};
   const ACTIONS = [
-    ['clear_chat', 'Xóa lịch sử chat', 'Xóa toàn bộ lịch sử chat của người này?'],
-    ['reset_progress', 'Đặt lại tiến độ', 'Xóa toàn bộ tiến độ, bài hoàn thành và bài thi của người này?'],
-    ['remove_api', 'Xóa API đã lưu', 'Xóa API key đã lưu của người này?'],
+    ['clear_chat', 'Xóa lịch sử trò chuyện', 'Xóa toàn bộ lịch sử trò chuyện của người này?'],
+    ['reset_progress', 'Đặt lại tiến độ', 'Xóa toàn bộ tiến độ, bài đã đánh dấu và bài thi của người này?'],
+    ['remove_api', 'Xóa API đã lưu', 'Xóa khóa API đã lưu của người này?'],
     ['revoke_sessions', 'Đăng xuất mọi thiết bị', 'Đăng xuất người này khỏi mọi thiết bị?'],
     ['delete', 'Xóa tài khoản', 'Xóa vĩnh viễn tài khoản và mọi dữ liệu của người này? Không thể hoàn tác.']
   ];
@@ -14,7 +14,7 @@
 
   async function call(path, options) {
     const response = await apiFetch(path, options);
-    const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => { throw new Error('Máy chủ trả về dữ liệu không đọc được. Tải lại danh sách người dùng rồi thử lại.'); });
     if (!response.ok) throw new Error(data.detail || 'Không thực hiện được.');
     return data;
   }
@@ -55,7 +55,7 @@
       const user = current = await call('/api/admin/user?id=' + encodeURIComponent(id));
       el('admin-user-name').textContent = user.name || 'Học viên ' + user.user_id.slice(-4);
       el('admin-user-meta').textContent = [KIND[user.kind], user.email, user.admin ? 'Quản trị' : ''].filter(Boolean).join(' · ');
-      const stats = [['Tin nhắn', user.messages], ['Mục đã học', user.items], ['Bài hoàn thành', user.completed], ['Phiên đang mở', user.sessions], ['Đăng nhập gần nhất', day(user.last_login)], ['API', user.api || 'Chưa có']];
+      const stats = [['Tin nhắn', user.messages], ['Mục đã luyện', user.items], ['Bài đã đánh dấu', user.completed], ['Phiên đang mở', user.sessions], ['Đăng nhập gần nhất', day(user.last_login)], ['API', user.api || 'Chưa có']];
       el('admin-user-stats').replaceChildren(...stats.map(([label, value]) => { const cell = node('div'); cell.append(node('dt', label), node('dd', String(value))); return cell; }));
       el('admin-level').value = user.level;
       el('admin-role-label').textContent = ROLE[user.role] || 'Miễn phí';

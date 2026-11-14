@@ -18,7 +18,7 @@ export function validFocusReference(focus) {
 export async function teacherCatalog(env, level) {
   if (!LEVELS.has(level) || !env.ASSETS) return null;
   if(latestCatalog?.assets===env.ASSETS && latestCatalog.level===level)return latestCatalog.promise;
-  // Retain one public level at most; N1 alone is 13 MB before parsing. No learner data is cached.
+  // Retain one public level at most; localized level catalogs are large before parsing. No learner data is cached.
   const entry={assets:env.ASSETS,level,promise:null};
   entry.promise=(async()=>{
     try {
@@ -62,7 +62,7 @@ export function resolveTaskReference(lesson, focus, view, reference, capability 
   const task = focus?.kind === 'question' && validFocusReference(focus) && ['checks','exam'].includes(view)
     ? lesson?.[view === 'exam' ? 'exam_questions' : 'questions']?.[focus.index] : null;
   if (!task || !validTaskReference(reference) || task.task_id !== reference.id || task.revision !== reference.revision) {
-    return {error:'Bài tập đã đổi. Hãy mở lại bài tập trước khi tiếp tục.',status:409};
+    return {error:'Bài tập đã đổi. Em mở lại câu này trước khi tiếp tục nhé.',status:409};
   }
   if (!processingAllowed(lesson) || !processingAllowed(task) || task.capabilities?.[capability] === false
     || typeof task.item_id !== 'string' || !task.item_id || typeof task.q !== 'string' || !task.q.trim()
@@ -73,7 +73,7 @@ export function resolveTaskReference(lesson, focus, view, reference, capability 
       || !Number.isInteger(task.answer_index) || task.answer_index < 0 || task.answer_index >= task.opts.length)
     || ['recall','dictation'].includes(task.mode) && (!Array.isArray(task.accepted_answers)
       || !task.accepted_answers.length || !task.accepted_answers.every(answer => typeof answer === 'string' && answer.trim()))) {
-    return {error:task.unavailable_reason || 'Bài tập này không dùng để giảng hoặc chấm.',status:409};
+    return {error:task.unavailable_reason || 'Câu này chưa dùng được để giảng hoặc chấm. Em chọn câu khác nhé.',status:409};
   }
   return {task,reference:{id:task.task_id,revision:task.revision}};
 }

@@ -191,7 +191,7 @@ test('persists scoped local/server choices without storing keys and deletes with
   await b.api.remove(owner, profile.id);
   assert.deepEqual(plain(b.api.active(owner)), {scope: 'none', id: ''});
   assert.deepEqual(plain(await b.api.list(owner)), []);
-  await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), /No API profile selected/i);
+  await assert.rejects(b.api.prepareRequest('/api/chat', {method: 'POST', body: '{}'}, owner), {code: 'invalid', message: /.+/});
   assert.deepEqual(plain(browser({storage: b.storage}).api.active(owner)), {scope: 'none', id: ''});
   b.api.setActive(owner, null);
   assert.equal(b.api.active(owner), null);
@@ -267,7 +267,7 @@ test('corrupt schema and missing account encryption keys fail without exposing s
 test('explicit none selection blocks inference but never injects into unrelated endpoints', async () => {
   const b = browser({idb: null}), options = {method: 'POST', body: '{}'};
   b.api.setActive(owner, {scope: 'none', id: ''});
-  await assert.rejects(b.api.prepareRequest('/api/chat', options, owner), /No API profile selected/i);
+  await assert.rejects(b.api.prepareRequest('/api/chat', options, owner), {code: 'invalid', message: /.+/});
   assert.deepEqual(plain(await b.api.prepareRequest('/api/ai/models', options, owner)), options);
 });
 
@@ -314,7 +314,7 @@ test('voice references persist per owner independently of chat and inject only a
   b.api.setActive(owner, {scope: 'none', id: ''});
   assert.equal(JSON.parse((await b.api.prepareRequest('/api/tts', options, owner)).body).api_connection.api_key, 'synthetic-voice-key');
   assert.equal(JSON.stringify([...b.storage]).includes('synthetic-voice-key'), false);
-  await assert.rejects(b.api.prepareRequest('/api/chat', {method:'POST',body:'{}'}, owner), /No API profile/i);
+  await assert.rejects(b.api.prepareRequest('/api/chat', {method:'POST',body:'{}'}, owner), {code: 'invalid', message: /.+/});
 });
 
 test('recorded transcription keeps the active OpenAI key while read-aloud uses its independent Gemini key', async () => {
@@ -334,26 +334,26 @@ test('recorded transcription keeps the active OpenAI key while read-aloud uses i
 test('missing, corrupt, deleted, unsupported and inaccessible voice choices never borrow chat', async () => {
   const b = browser(), chat = await b.api.save(owner, {...draft(),base_url:'https://chat-proxy.example/v1'}), options = {method:'POST',body:'{}'};
   b.api.setActive(owner, {scope:'local',id:chat.id});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), {code: 'invalid', message: /.+/});
   b.api.setVoice(owner, {scope:'local',id:chat.id});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /Gemini gốc|OpenAI chính thức/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), {code: 'invalid', message: /.+/});
   const proxy = await b.api.save(owner, {...draft(),protocol:'gemini',base_url:'https://proxy.example.com'});
   b.api.setVoice(owner, {scope:'local',id:proxy.id});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /Gemini gốc|OpenAI chính thức/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), {code: 'invalid', message: /.+/});
   const voice = await b.api.save(owner, {...draft(),protocol:'gemini',model:''});
   b.api.setVoice(owner, {scope:'local',id:voice.id});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, other), /voice/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, other), {code: 'invalid', message: /.+/});
   await b.api.remove(owner, voice.id);
   assert.deepEqual(plain(b.api.voice(owner)), {scope:'none',id:''});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), {code: 'invalid', message: /.+/});
   b.storage.set('vjbot_voice_profile_v1:' + owner, '{corrupt');
-  assert.throws(() => b.api.voice(owner), /không dùng được/i);
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /không dùng được/i);
+  assert.throws(() => b.api.voice(owner), {code: 'unavailable', message: /.+/});
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), {code: 'unavailable', message: /.+/});
   b.api.setVoice(owner, {scope:'local',id:'missing'});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /không dùng được/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), {code: 'unavailable', message: /.+/});
   const blocked = browser({storage:b.storage,brokenStorage:true});
-  assert.throws(() => blocked.api.setVoice(owner, {scope:'server',id:'voice'}), /bộ nhớ/i);
-  await assert.rejects(blocked.api.prepareRequest('/api/tts', options, owner), /bộ nhớ/i);
+  assert.throws(() => blocked.api.setVoice(owner, {scope:'server',id:'voice'}), {code: 'storage', message: /.+/});
+  await assert.rejects(blocked.api.prepareRequest('/api/tts', options, owner), {code: 'storage', message: /.+/});
 });
 
 test('server voice is explicitly pinned and clear does not borrow another owner or chat selection', async () => {
@@ -365,7 +365,7 @@ test('server voice is explicitly pinned and clear does not borrow another owner 
   await b.api.clear(owner);
   assert.deepEqual(plain(b.api.voice(owner)), {scope:'none',id:''});
   assert.deepEqual(plain(b.api.voice(other)), {scope:'server',id:'other-voice'});
-  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), /voice/i);
+  await assert.rejects(b.api.prepareRequest('/api/tts', options, owner), {code: 'invalid', message: /.+/});
 });
 
 test('voice changes invalidate in-flight encrypted loads, including changing away and back', async () => {

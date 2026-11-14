@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {practiceCoach} from '../src/practice-coach.js';
 import {buildTeacherCatalog} from '../scripts/build_teacher_catalog.mjs';
+import {TEACHER_REPLY_STYLE} from '../src/prompt.js';
 
 const connection={protocol:'openai',base_url:'https://synthetic.example.com/v1',model:'selected-chat',api_key:'synthetic-not-a-real-key'};
 const lesson={id:'lesson-test',level:'N4'};
@@ -37,6 +38,7 @@ test('teaching translates every choice without sending the answer key, overview 
   assert.doesNotMatch(JSON.stringify(calls[0].evidence),/SECRET_|"ans"|"correct"|"explanation"/);
   assert.deepEqual(data.fields.filter(f=>f.key.startsWith('question:option:')).map(f=>[f.source,f.text]),question.opts.map(s=>[s,translations[s]]));
   assert.equal(data.answer,undefined);assert.equal(data.correct,undefined);assert.equal(JSON.stringify(canonical),before);
+  assert.ok(calls[0].wire.messages[0].content.includes(TEACHER_REPLY_STYLE));
 });
 
 test('word, example and reference teaching stay canonical and retain Japanese; duplicate numbered exam segments retain their positions',async t=>{
@@ -149,4 +151,13 @@ test('missing glosses request explicit Japanese-source translation fields withou
   assert.ok(calls[2].evidence.fields.some(field=>field.key==='translation'&&field.source==='私は学生です。'));
   assert.ok(calls[2].evidence.fields.some(field=>field.key==='script_translation'&&field.source==='こんにちは。'));
   assert.equal(source.words[0].vi,undefined);assert.equal(source.examples[0].vi,undefined);
+});
+
+test('shared teacher presentation changes only reply prose and preserves the exact translated-field contract',async t=>{
+  const prose='Ở đây は nêu chủ đề.\n\n私は学生です。\n\nEm thử nêu chủ đề của câu nhé.';
+  await provider(t,value=>({...value,reply:prose}));
+  const response=await practiceCoach(request({focus:{kind:'word',index:0}}),env),data=await response.json();
+  assert.equal(response.status,200);assert.equal(data.reply,prose);
+  assert.equal(data.fields.find(field=>field.key==='word:vi').source,'student');
+  assert.equal(data.fields.find(field=>field.key==='word:vi').text,'học sinh');
 });

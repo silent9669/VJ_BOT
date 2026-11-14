@@ -16,7 +16,7 @@
     return area;
   };
   const option=(value,label=value)=>{const node=document.createElement('option');node.value=value;node.textContent=label;return node;};
-  const efforts={'':'Không áp dụng',none:'Tắt',low:'Thấp · nhanh',medium:'Vừa',high:'Cao',xhigh:'Rất cao',max:'Tối đa'};
+  const efforts={'':'Không áp dụng',none:'Tắt',low:'Thấp',medium:'Vừa',high:'Cao',xhigh:'Rất cao',max:'Tối đa'};
   function reasoning(value='') {
     const available=models.find(model=>model.id===el('admin-text-model').value)?.efforts || [];
     el('admin-reasoning').replaceChildren(...(available.length?available:['']).map(effort=>option(effort,efforts[effort])));
@@ -38,7 +38,7 @@
     el('admin-live-voice').replaceChildren();
     const current=()=>run===loading && owner===signedInUser?.user_id && signedInUser?.is_admin===true;
     try {
-      const response=await apiFetch('/api/admin/ai'),data=await response.json();
+      const response=await apiFetch('/api/admin/ai'),data=await response.json().catch(()=>{throw new Error('Máy chủ trả về dữ liệu không đọc được. Tải lại cài đặt mô hình quản trị rồi thử lại.');});
       if(!current())return;
       if(!response.ok)throw new Error(data.detail);
       models=data.models;
@@ -48,8 +48,8 @@
       el('admin-live-voice').value=data.settings.live_voice;
       reasoning(data.settings.reasoning_effort);
       el('admin-ai-message').textContent=data.configured
-        ? 'OpenAI máy chủ tự động cho chat, đọc thành tiếng và GPT-Live. Lưu model riêng cho tài khoản này.'
-        : 'Chưa cấu hình OPENAI_API_KEY trên máy chủ. Chat, đọc thành tiếng và GPT-Live sẽ báo lỗi; không dùng API cá nhân thay thế.';
+        ? 'Tự động dùng OpenAI máy chủ cho trò chuyện, đọc thành tiếng và GPT-Live. Lưu mô hình riêng cho tài khoản này.'
+        : 'Chưa cấu hình OPENAI_API_KEY trên máy chủ. Trò chuyện, đọc thành tiếng và GPT-Live sẽ báo lỗi; không dùng API cá nhân thay thế.';
       window.renderVoiceProfiles?.(owner,[],false,{configured:data.configured});
     } catch(error) {
       if(current())el('admin-ai-message').textContent=error.message || 'Không tải được cấu hình OpenAI quản trị. Kiểm tra quyền quản trị và cấu hình máy chủ.';
@@ -67,8 +67,8 @@
     try {
       const response=await apiFetch('/api/admin/ai',{method:'PUT',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:el('admin-text-model').value,reasoning_effort:el('admin-reasoning').value,live_voice:el('admin-live-voice').value})});
-      const data=await response.json();if(!current())return;
-      if(!response.ok)throw new Error(data.detail);
+      const data=await response.json().catch(()=>{throw new Error('Máy chủ trả về dữ liệu không đọc được. Tải lại cài đặt để kiểm tra đã lưu hay chưa trước khi thử lại.');});if(!current())return;
+      if(!response.ok)throw new Error(data.detail || 'Không lưu được cài đặt mô hình quản trị.');
       el('admin-ai-message').textContent='Đã lưu. Áp dụng cho tin nhắn và cuộc gọi mới.';
       globalThis.aiConnectionChanged?.();
     } catch(error){if(current())el('admin-ai-message').textContent=error.message || 'Không lưu được cài đặt.';}

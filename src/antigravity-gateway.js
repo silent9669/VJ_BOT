@@ -28,7 +28,7 @@ export function gatewayConfiguration(env) {
       || env.ANTIGRAVITY_MANAGEMENT_KEY === env.ANTIGRAVITY_API_KEY
       || !['ANTIGRAVITY_MANAGEMENT_KEY', 'ANTIGRAVITY_API_KEY'].every(key => /^[\x21-\x7e]{16,512}$/.test(env[key]))) throw new Error();
     return {missing:[], baseUrl:url.href.replace(/\/$/, ''), managementKey:env.ANTIGRAVITY_MANAGEMENT_KEY, apiKey:env.ANTIGRAVITY_API_KEY};
-  } catch { return {missing:['valid dedicated Antigravity gateway configuration']}; }
+  } catch { return {missing:['cấu hình cổng kết nối Antigravity riêng hợp lệ']}; }
 }
 
 async function boundedJson(response, limit = 1048576) {
@@ -141,7 +141,7 @@ async function removeCredential(env, authId, owner) {
   const bound = await env.DB.prepare('SELECT user_id FROM ai_antigravity_connections WHERE auth_id=?').bind(authId).first();
   if (bound && bound.user_id !== owner) throw oauthError('Tài khoản Google này đã liên kết với một tài khoản VJBot khác.');
   const removed = await gatewayRequest(env, '/credentials?name=' + encodeURIComponent(authId), {method:'DELETE', allowMissing:true});
-  if (removed !== null && removed?.status !== 'ok') throw oauthError('The gateway did not confirm account removal. Retry removal before using this connection.', 503);
+  if (removed !== null && removed?.status !== 'ok') throw oauthError('Cổng kết nối chưa xác nhận việc gỡ tài khoản. Hãy thử gỡ lại trước khi dùng kết nối này.', 503);
 }
 
 export async function cancelPending(env, pending) {
@@ -155,7 +155,7 @@ export async function cancelPending(env, pending) {
   const cancelled = await gatewayRequest(env, '/oauth/session?state=' + encodeURIComponent(payload.state), {method:'DELETE'});
   if (cancelled.cancelled !== true) {
     const status = await gatewayRequest(env, '/oauth/status?state=' + encodeURIComponent(payload.state));
-    if (status.status === 'wait') throw oauthError('Sign-in is finishing. Wait for its result before disconnecting.');
+    if (status.status === 'wait') throw oauthError('Lượt đăng nhập đang hoàn tất. Hãy đợi kết quả trước khi ngắt kết nối.');
     if (status.saved === true && typeof status.auth_id === 'string' && status.auth_id.length > 0 && status.auth_id.length <= 512) {
       const bound = await env.DB.prepare('SELECT user_id,login_id FROM ai_antigravity_connections WHERE auth_id=?').bind(status.auth_id).first();
       if (!bound) await removeCredential(env, status.auth_id, pending.user_id);

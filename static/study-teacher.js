@@ -24,7 +24,7 @@
   }
 
   globalThis.studyTarget = (key,element,source) => ({key,element,source:String(source ?? '')});
-  globalThis.mountTeacherConversation = (host,{trigger,lesson,focus=null,view='checks',task=null,isCurrent=()=>true}) => {
+  globalThis.mountTeacherConversation = (host,{trigger,lesson,focus=null,view='checks',task=null,isCurrent=()=>true,operation={current:null}}) => {
     const box=document.createElement('section');box.className='study-teacher-chat';box.hidden=true;
     box.setAttribute('aria-label','Hỏi thầy Lâm');box.setAttribute('data-teacher-exclude','');
     const heading=document.createElement('strong');heading.textContent='Em muốn hỏi thầy điều gì?';
@@ -50,7 +50,7 @@
       retry.hidden=!failed;edit.hidden=!failed;edit.disabled=busy;form.setAttribute('aria-busy',String(busy));
     }
     function clear(){
-      controller?.abort();controller=null;failed=null;ticket=null;box.hidden=true;
+      controller?.abort();if(operation.current===controller)operation.current=null;controller=null;failed=null;ticket=null;box.hidden=true;
       log.replaceChildren();input.value='';status.textContent='';controls();trigger.setAttribute('aria-expanded','false');
     }
     function open(){
@@ -65,11 +65,11 @@
       row.scrollIntoView?.({block:'nearest'});
     }
     async function submit(retrying=false){
-      if(controller || !live() || retrying && !failed || !retrying && failed)return;
+      if(controller || operation.current || !live() || retrying && !failed || !retrying && failed)return;
       const text=input.value.trim();if(!retrying && !text){input.focus();return;}
       if(text.length>6000){status.textContent='Em viết câu hỏi trong 6.000 ký tự nhé.';return;}
       const request=retrying?failed:{body:null,text};
-      const owner=ticket,requestController=new AbortController();controller=requestController;controls(true);
+      const owner=ticket,requestController=new AbortController();controller=requestController;operation.current=requestController;controls(true);
       status.textContent='Thầy đang đọc câu hỏi của em…';
       const current=()=>controller===requestController && !requestController.signal.aborted && live() && owner===ticket;
       try{
@@ -77,7 +77,7 @@
           const body={message:request.text,lesson,focus,view,channel:'quick',intent:'message',
             screen:{route,title:'Hỏi thầy Lâm',level:lesson.level,text:''},request_id:crypto.randomUUID()};
           if(focus?.kind==='question'){
-            if(!attempt)throw new Error('Chưa xác định đúng phiên bản câu hỏi. Mở lại bài.');
+            if(!attempt)throw new Error('Bài đã thay đổi. Em mở lại câu này trước khi hỏi nhé.');
             await recordTaskEvent(attempt,'assist',{help:'chat'});
             body.task=await taskReference(attempt.task);request.task=body.task;
           }
@@ -90,11 +90,12 @@
         if(!response.ok)throw new Error(data.detail || 'Chưa gửi được câu hỏi. Em gửi lại cho thầy nhé.');
         const reply=data.reply || data.response;
         if(typeof reply!=='string' || !reply.trim())throw new Error('Chưa nhận được câu trả lời. Em gửi lại cho thầy nhé.');
-        if(request.task && (data.task?.id!==request.task.id || data.task?.revision!==request.task.revision))throw new Error('Phản hồi thuộc phiên bản câu hỏi khác. Mở lại bài.');
+        if(request.task && (data.task?.id!==request.task.id || data.task?.revision!==request.task.revision))throw new Error('Bài đã thay đổi. Em mở lại câu này trước khi hỏi nhé.');
         message('Em',request.text);message('Thầy Lâm',reply);failed=null;input.value='';status.textContent='';
       }catch(error){
         if(current()){failed=request;status.textContent=error.name==='TimeoutError'?'Kết nối hơi lâu. Em bấm gửi lại cho thầy nhé.':error.message || 'Chưa kết nối được với thầy.';}
       }finally{
+        if(operation.current===requestController)operation.current=null;
         if(controller===requestController){controller=null;if(!live())clear();else controls();}
       }
     }
@@ -108,16 +109,17 @@
     };
     const entry={refresh(){
       if(!box.isConnected){cleanup();return;}
+      if(!isCurrent())operation.current?.abort();
       if(ticket && (!isCurrent() || ticket!==identity()))clear();
     }};
     function cleanup(){if(disposed)return;clear();disposed=true;active.delete(entry);box.remove();}
     active.add(entry);
     return {open,clear,cleanup};
   };
-  globalThis.mountStudyTeacher = (host,{lesson,focus=null,view='checks',task=null,targets=[],isCurrent=()=>true,revealWhen=()=>true,onApply=()=>{}}) => {
+  globalThis.mountStudyTeacher = (host,{lesson,focus=null,view='checks',task=null,targets=[],isCurrent=()=>true,revealWhen=()=>true,onApply=()=>{},onFollowup=null,operation={current:null}}) => {
     const panel=document.createElement('aside');panel.className='study-teacher';panel.setAttribute('aria-label','Học cùng thầy Lâm');panel.setAttribute('data-teacher-exclude','');
     const heading=document.createElement('strong');heading.className='study-teacher-title';heading.textContent='Cùng thầy Lâm hiểu bài';
-    const button=teacherButton('Nhờ thầy giảng bài');
+    const button=teacherButton('Nhờ thầy giải thích');
     const status=document.createElement('p');status.className='study-teacher-status';status.setAttribute('role','status');
     const output=document.createElement('p');output.className='study-teacher-reply';output.hidden=true;
     const generated=document.createElement('section');generated.className='study-generated-fields';generated.hidden=true;
@@ -128,7 +130,7 @@
     let controller=null,ticket=null,translated=null,disposed=false,showingGenerated=false;
     const attempt=focusedTaskAttempt(lesson,focus,view,task);
     const live=()=>!disposed && panel.isConnected && !panel.hidden && isCurrent();
-    const conversation=mountTeacherConversation(panel,{trigger:button,lesson,focus,view,task,isCurrent:live});
+    const conversation=onFollowup?null:mountTeacherConversation(panel,{trigger:button,lesson,focus,view,task,isCurrent:live,operation});
     function restore() {
       for(const target of bindings)if(translated && target.element.textContent===translated.get(target.key))target.element.textContent=target.source;
       onApply(null);
@@ -136,11 +138,11 @@
       generated.hidden=true;
     }
     function clear(message='') {
-      controller?.abort();controller=null;ticket=null;
-      restore();translated=null;conversation.clear();
+      controller?.abort();if(operation.current===controller)operation.current=null;controller=null;ticket=null;
+      restore();translated=null;conversation?.clear();
       output.textContent='';output.hidden=true;status.textContent=message;
       generated.replaceChildren();generated.hidden=true;
-      button.disabled=false;button.setAttribute('aria-busy','false');button.textContent='Nhờ thầy giảng bài';
+      button.disabled=false;button.setAttribute('aria-busy','false');button.textContent='Nhờ thầy giải thích';
       compare.hidden=true;
     }
     const entry={refresh(){
@@ -148,7 +150,7 @@
       if(panel.hidden===Boolean(revealWhen()))panel.hidden=!revealWhen();
       if(ticket && (!live() || identity()!==ticket))clear('Bài hoặc tài khoản đã đổi. Em có thể hỏi lại.');
     }};
-    function cleanup(){if(disposed)return;clear();conversation.cleanup();disposed=true;active.delete(entry);panel.remove();}
+    function cleanup(){if(disposed)return;clear();conversation?.cleanup();disposed=true;active.delete(entry);panel.remove();}
     compare.onclick=()=>{
       if(!translated || !live())return;
       if(showingGenerated){restore();status.textContent='Đang xem nội dung gốc.';}
@@ -160,18 +162,18 @@
       }
     };
     button.onclick=async()=>{
-      if(controller || !live())return;
-      if(translated){conversation.open();return;}
+      if(controller || operation.current || !live())return;
+      if(translated){if(onFollowup)onFollowup();else conversation.open();return;}
       const owner=identity();
-      if(owner===null){status.textContent='Không đọc được tài khoản chat. Mở Cài đặt để chọn lại.';return;}
+      if(owner===null){status.textContent='Chưa kết nối được với AI. Em mở Cài đặt để chọn lại nhé.';return;}
       clear();ticket=owner;
-      const request=new AbortController();controller=request;
+      const request=new AbortController();controller=request;operation.current=request;
       button.disabled=true;button.setAttribute('aria-busy','true');status.textContent='Thầy đang xem bài của em…';
       const current=()=>controller===request && !request.signal.aborted && live() && identity()===owner;
       try {
         let reference=null;
         if(focus?.kind==='question'){
-          if(!attempt)throw new Error('Chưa xác định đúng phiên bản câu hỏi. Mở lại bài.');
+          if(!attempt)throw new Error('Bài đã thay đổi. Em mở lại câu này trước khi hỏi nhé.');
           await recordTaskEvent(attempt,'assist',{help:'translation'});
           reference=await taskReference(attempt.task);
         }
@@ -183,7 +185,7 @@
         if(!response.ok)throw new Error(data.detail || 'Chưa nhận được lời giải thích. Bài gốc vẫn được giữ nguyên.');
         if(data.action!=='teach' || !same(data.lesson,lesson) || !same(data.focus,focus) || data.view!==view
           || typeof data.reply!=='string' || !data.reply.trim() || data.reply.length>2000 || !Array.isArray(data.fields) || data.fields.length>64)throw new Error('Phản hồi không khớp bài đang mở. Em thử lại nhé.');
-        if(reference && (data.task?.id!==reference.id || data.task?.revision!==reference.revision))throw new Error('Bài đã đổi phiên bản. Mở lại trước khi dùng AI.');
+        if(reference && (data.task?.id!==reference.id || data.task?.revision!==reference.revision))throw new Error('Bài đã thay đổi. Em mở lại câu này trước khi hỏi nhé.');
         const fields=new Map();
         for(const field of data.fields){
           if(!field || typeof field.key!=='string' || typeof field.source!=='string' || typeof field.text!=='string'
@@ -192,7 +194,7 @@
         }
         for(const target of bindings){
           const field=fields.get(target.key);
-          if(!field || field.source!==target.source || target.element.textContent!==target.source)throw new Error('Bài gốc đã thay đổi. Mở lại đúng mục trước khi dùng AI.');
+          if(!field || field.source!==target.source || target.element.textContent!==target.source)throw new Error('Bài gốc đã thay đổi. Em mở lại câu này trước khi hỏi nhé.');
         }
         translated=new Map([...fields].map(([key,field])=>[key,field.text]));
         for(const target of bindings)target.element.textContent=translated.get(target.key);
@@ -207,11 +209,12 @@
         generated.hidden=!generated.children.length;
         showingGenerated=true;compare.hidden=false;compare.textContent='Xem bản gốc';
         onApply(translated);
-        output.textContent=data.reply;output.hidden=false;status.textContent='AI giải thích để em tham khảo, không chấm lại đáp án.';
-        button.textContent='Em vẫn chưa hiểu';
+        output.textContent=data.reply;output.hidden=false;status.textContent='';
+        button.textContent='Hỏi thêm';
       } catch(error) {
         if(current()){status.textContent=error.name==='TimeoutError'?'Kết nối hơi lâu. Em nhờ thầy thử lại nhé.':error.message || 'Chưa nhận được phần giảng bài.';button.textContent='Nhờ thầy thử lại';}
       } finally {
+        if(operation.current===request)operation.current=null;
         if(controller===request){
           controller=null;button.disabled=false;button.setAttribute('aria-busy','false');
           if(!live() || identity()!==owner)clear('Bài hoặc tài khoản đã đổi. Em có thể hỏi lại.');

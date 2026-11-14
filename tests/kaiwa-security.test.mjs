@@ -47,7 +47,8 @@ test('real Kaiwa callback shows estimated points and criterion evidence without 
   assert.equal(sent.length, 1);assert.equal(sent[0][0], '/api/kaiwa/evaluate');
   assert.deepEqual(sent[0][1], {scenario_id: 'intro', prompt_index: 0, user_speech: speech, level: 'N5'});
   assert.equal(b.element('kaiwa-score-val').textContent, '100/100 (ước tính)');
-  assert.match(b.element('kaiwa-feedback-text').textContent, /không phải điểm được kiểm chứng độc lập/i);
+  assert.equal(b.element('kaiwa-feedback-text').textContent, assessment(speech).feedback);
+  assert.equal(assessment(speech).score, null);assert.equal(assessment(speech).rating, null);
   assert.equal(b.element('kaiwa-criteria').children.length, 4);
   assert.ok(b.element('kaiwa-criteria').children[0].textContent.includes(speech));
   assert.equal(b.element('kaiwa-model-text').textContent, assessment(speech).model_answer);
@@ -72,7 +73,8 @@ test('Kaiwa UI never invents a successful grade, praise or model answer for inva
   await b.submit();
   assert.equal(b.element('kaiwa-model-text').textContent, '');
   assert.equal(b.element('kaiwa-score-val').textContent, 'Chưa chấm');
-  assert.match(b.element('kaiwa-feedback-text').textContent, /Chưa có gì được chấm/);
+  assert.ok(b.element('kaiwa-feedback-text').textContent.trim());
+  assert.equal(b.element('kaiwa-result-card').hidden, false);
 });
 
 test('empty Kaiwa UI input never sends inference or triggers success callbacks', async () => {
@@ -97,9 +99,11 @@ test('Kaiwa result markup labels the entire advice and example as unverified ins
   const html = readFileSync('static/index.html', 'utf8');
   const panel = html.slice(html.indexOf('id="kaiwa-result-card"'), html.indexOf('<!-- TAB 5:'));
   assert.match(panel, /aria-describedby="kaiwa-advisory-notice"/);
-  assert.match(panel, /Điểm ước tính từ nhận xét của AI, không phải điểm chính thức/);
+  const notice = panel.match(/<p id="kaiwa-advisory-notice">([^<]+)<\/p>/)?.[1] || '';
+  assert.match(notice, /AI.*có thể nhầm/i);
+  assert.match(notice, /điểm.*tham khảo/i);
   assert.match(panel, /id="kaiwa-feedback-text" role="status" aria-live="polite"/);
-  assert.match(panel, /Ví dụ của AI \(chưa kiểm chứng\)/);
+  assert.match(panel, /<h4>[^<]*AI[^<]*gợi ý[^<]*<\/h4>/);
   assert.doesNotMatch(panel, /100 Điểm|>90<|Câu trả lời rất tự nhiên và chính xác/);
 });
 
@@ -164,9 +168,19 @@ test('uncertain criterion results show no numeric grade and retain transparent c
   const result = parseKaiwaEvaluation(JSON.stringify(kaiwaJudgment(testRubric, speech, {grammar: {verdict: 'uncertain', evidence: []}})), speech, testRubric);
   const b = kaiwaUI(async () => Response.json({...result, user_text: speech}));
   b.element('kaiwa-manual-input').value = speech;await b.submit();
-  assert.equal(b.element('kaiwa-score-val').textContent, 'Chưa chấm');
-  assert.match(b.element('kaiwa-feedback-text').textContent, /Chưa đủ bằng chứng nhất quán/i);
-  assert.equal(b.element('kaiwa-criteria').children.length, 4);
+  assert.ok(b.element('kaiwa-score-val').textContent.trim());
+  assert.doesNotMatch(b.element('kaiwa-score-val').textContent, /\d/);
+  assert.equal(result.reason, 'insufficient_evidence');
+  assert.equal(result.estimated_score, null);
+  assert.equal(b.element('kaiwa-feedback-text').textContent, result.feedback);
+  const rows = b.element('kaiwa-criteria').children;
+  assert.equal(rows.length, result.criteria.length);
+  result.criteria.forEach((criterion, index) => {
+    assert.ok(rows[index].textContent.startsWith(criterion.label + ': '));
+    criterion.evidence.forEach(span => assert.ok(rows[index].textContent.includes(span)));
+  });
+  assert.equal(b.effects.cheers, 0);
+  assert.equal(b.effects.completions, 0);
 });
 
 test('an edit followed by restoring the same text cannot reclaim a pending assessment', {timeout: 1000}, async () => {

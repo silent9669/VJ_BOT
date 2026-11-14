@@ -81,6 +81,21 @@ function settings({consent = true, models = ['paid', 'denied', 'working'], saved
   return {context, element, requests, scanRuns, storage, deviceProfiles, activeChoice};
 }
 
+test('malformed catalog JSON stays a visible failure without probes, selectable models or automatic retry', async () => {
+  const ui = settings();
+  const api = ui.context.apiFetch;let catalogs = 0;
+  ui.context.apiFetch = (path, options) => path === '/api/ai/models'
+    ? (catalogs++, new Response('{broken', {status:200})) : api(path, options);
+  await ui.context.renderAiPanels('settings');
+  await ui.element('ai-fetch-models').click();
+  assert.equal(catalogs,1);
+  assert.equal(ui.requests.some(request => request.path === '/api/ai/models/test'),false);
+  assert.equal(ui.element('ai-model-list').options.length,0);
+  assert.equal(ui.element('ai-save').disabled,true);
+  assert.ok(ui.element('ai-model-status').textContent.trim());
+  assert.equal(ui.element('ai-fetch-models').disabled,false);
+});
+
 test('catalog entries needing credits or denied by the key are never selectable after automatic verification', async () => {
   const ui = settings();
   await ui.context.renderAiPanels('settings');
@@ -565,7 +580,10 @@ test('unified chooser groups API and OAuth accounts without duplicating profile 
   ui.context.savedOAuthConnections = () => [{id:'oauth-first', name:'Personal Google', model:'native-chat'}];
   await ui.context.renderAiPanels('settings');
   const groups = ui.element('ai-profile-list').children.filter(child => child.label);
-  assert.deepEqual(groups.map(group => group.label), ['API key · Máy chủ', 'Antigravity OAuth']);
+  assert.equal(groups.length, 2);
+  assert.ok(groups.every(group => group.label.trim()));
+  assert.equal(new Set(groups.map(group => group.label)).size, 2);
+  assert.deepEqual(groups.map(group => group.children.map(option => option.value)), [['server:saved-profile'], ['oauth:oauth-first']]);
   assert.equal(groups[1].children[0].value, 'oauth:oauth-first');
   assert.match(groups[1].children[0].textContent, /Personal Google/);
   assert.equal(ui.requests.some(request => request.path.includes('/models')), false);

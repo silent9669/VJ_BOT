@@ -315,3 +315,51 @@ test('all authored cycles keep open text unkeyed, retain actual-prior ownership 
     }
   }
 });
+
+test('compound formula recall accepts the formula actually displayed in the lesson',async()=>{
+  const c=context();
+  for(const level of ['N5','N4','N3','N2','N1']){
+    await c.ensureLessons(level);
+    const originals=JSON.parse(readFileSync(`static/openjlpt/grammar-${level.toLowerCase()}.json`,'utf8'));
+    for(const source of originals.filter(source=>/potential of the same verb|Question word/.test(source.formation))){
+      const lesson=c.window.JLPT_DATA.curriculum[level].skills.grammar.find(lesson=>lesson.id===`openjlpt:${level}:grammar:${source.id}`);
+      const task=c.lessonQuestions(lesson,level,'grammar').find(task=>task.mode==='recall');
+      assert.deepEqual(plain(task.accepted_answers),[lesson.formula]);
+      assert.doesNotMatch(lesson.formula,/Từ để hỏi từ|potential of the same verb|Question word/);
+      assert.equal(task.task_id,`${lesson.id}:question:recall:formation`);
+    }
+  }
+});
+
+test('reading directions name the actual accepted script without stripping Japanese stimuli or broadening keys',()=>{
+  const c=context(),words=[
+    {id:'latin',jp:'私 (わたし)',ro:'watashi'},
+    {id:'hiragana',jp:'学校',reading:'がっこう'},
+    {id:'katakana',jp:'アイスクリーム',reading:'アイスクリーム'},
+    {id:'mixed',jp:'読み',reading:'よミ'},
+    {id:'notation',jp:'今日',reading:'今日'}
+  ];
+  const before=plain(words),tasks=c.lessonQuestions({id:'scripts',items:words},'N5','vocabulary');
+  assert.deepEqual(plain(words),before);
+  for(const [index,task] of tasks.entries()){
+    assert.deepEqual(plain(task.accepted_answers),[words[index].reading || words[index].ro]);
+    assert.ok(task.q.includes(words[index].jp));assert.equal(task.instruction,'');
+  }
+  assert.match(tasks[0].q,/romaji/);assert.match(tasks[1].q,/hiragana/);assert.match(tasks[2].q,/katakana/);assert.match(tasks[3].q,/kana/);
+  assert.doesNotMatch(tasks[4].q,/hiragana|katakana|romaji|bằng kana/);
+});
+
+test('mixed generated questions retain blocked context, original candidate identities and numeric answer position',async()=>{
+  const c=context();await c.loadPracticalCourse();await c.ensureLessons('N3');c.createStudyPlan('N3');
+  const localization=[{source_identity:'word:bad',field:'meanings[0]',disposition:'unavailable'}];
+  const drill={q:'Q',item_id:'word:bad',source_identity:'word:bad',opts:['nghĩa A','nghĩa B'],answer_index:1,
+    unavailable_reason:'Câu này đang được kiểm tra lại.',processing_allowed:false,localization,
+    option_sources:['word:other','word:bad']};
+  c.window.JLPT_DATA.curriculum.N3.skills={vocabulary:[{source:'OpenJLPT',language:'en',drills:[drill]}],kanji:[],grammar:[],reading:[]};
+  const lesson=c.featureLessons('quiz','N3').find(lesson=>lesson.id==='quiz-lesson:N3:mixed:N3:1'),[task]=c.lessonQuestions(lesson,'N3','quiz');
+  assert.equal(task.source_identity,drill.source_identity);assert.equal(task.answer_index,1);assert.deepEqual(plain(task.opts),drill.opts);
+  assert.deepEqual(plain(task.option_sources),drill.option_sources);assert.deepEqual(plain(task.localization),localization);
+  assert.equal(task.unavailable_reason,drill.unavailable_reason);assert.equal(task.capabilities.processing,false);
+  assert.equal(task.capabilities.answer,false);assert.equal(task.source_position,0);
+  assert.notEqual(hash(c,task),hash(c,{...task,option_sources:[...task.option_sources].reverse()}));
+});

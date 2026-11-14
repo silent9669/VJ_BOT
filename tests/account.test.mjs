@@ -47,7 +47,24 @@ test('failed logout keeps the page and explains that the session was not closed'
   const b=browser(async path=>path.endsWith('/session')?Response.json({user:{name:'Learner'}}):new Response('',{status:503}));
   await b.context.setupAccount();await b.element('auth-logout').events.click();
   assert.equal(b.reloads(),0);assert.match(b.element('auth-status').textContent,/Chưa đăng xuất/);
+  assert.equal(b.element('auth-dialog').open,true);
+  assert.equal(vm.runInContext('signedInUser.name',b.context),'Learner');
 });
+test('network failures are actionable without retries and intentional cancellation keeps its AbortError',async()=>{
+  let calls=0, failure=new TypeError('Failed to fetch');
+  const b=browser(async path=>{
+    if(path.endsWith('/session'))return Response.json({user:{name:'Learner',user_id:'owner'}});
+    calls++;throw failure;
+  });
+  await b.context.setupAccount();
+  await assert.rejects(b.context.apiFetch('/api/progress'),error=>error.userFacing===true && error.message!==failure.message);
+  assert.equal(calls,1);
+  failure=Object.assign(new Error('cancelled'),{name:'AbortError'});
+  await assert.rejects(b.context.apiFetch('/api/progress'),error=>error===failure);
+  assert.equal(calls,2);
+  assert.equal(vm.runInContext('signedInUser.user_id',b.context),'owner');
+});
+
 test('signed-out learners cannot write progress through the former guest fallback',async()=>{
   const b=browser(async path=>path.endsWith('/session')?Response.json({user:null}):Response.json({client_id:'public-client',nonce:'fresh'}));
   await b.context.setupAccount();

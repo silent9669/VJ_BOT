@@ -15,6 +15,7 @@ const taskQuarantines={
 function taskRevisionSource(task){
   const fields=['task-v1',task.task_id,task.item_id,task.mode,task.q,task.instruction||'',task.passage||'',task.script_jp||'',task.target||'',task.parts||[],task.opts||[],task.answer_index??null,task.accepted_answers||[],task.explanation||'',task.review_status,task.unavailable_reason||'',task.criteria||[],task.model||'',task.skill||'',task.source_language||''];
   if(task.objective!==undefined || task.exchange)fields.push('assessment-v1',task.objective || '',task.exchange || null);
+  if(task.localization || task.option_sources)fields.push('localization-v1',task.localization || [],task.option_sources || []);
   return JSON.stringify(fields);
 }
 function normalizedLessonTasks(item,level,skill){
@@ -54,6 +55,8 @@ function normalizedLessonTasks(item,level,skill){
       example_indexes:Array.isArray(source.example_indexes)?[...source.example_indexes]:[],
       source_language:source.source_language || item.language || 'vi',
       ...(source.source_identity?{source_identity:source.source_identity}:{}),
+      ...(source.option_sources?{option_sources:[...source.option_sources]}:{}),
+      ...(source.localization?{localization:source.localization.map(entry=>({...entry}))}:{}),
       ...(source.criteria?{criteria:[...source.criteria]}:{}),
       ...(source.model?{model:source.model}:{}),
       ...(source.objective!==undefined?{objective:source.objective}:{}),
@@ -92,7 +95,7 @@ function normalizedLessonTasks(item,level,skill){
   if(item.dictation){
     for(const [index,example] of (item.examples || []).entries())add({
       mode:'dictation',q:`Nghe và chép câu ${index+1} bằng tiếng Nhật.`,
-      instruction:'Nghe câu trước khi đối chiếu bản chép nguồn.',item_id:`${id}:${index}`,
+      instruction:'',item_id:`${id}:${index}`,
       accepted_answers:example.jp?[example.jp]:[],example_indexes:[index],
       // Transcript is reveal-only; never put it in the pre-answer stimulus.
       passage:'',script_jp:''
@@ -107,12 +110,13 @@ function normalizedLessonTasks(item,level,skill){
       const reading=word.reading || word.ro;
       if(!word.jp || !reading)continue;
       const key=`recall:reading:${word.id || word.jp}`;
-      add({mode:'recall',q:`Tự viết cách đọc của ${word.jp}.`,instruction:skill==='kana' || !word.reading?'Viết cách đọc bằng romaji theo nguồn.':'Viết cách đọc bằng kana theo nguồn.',
-        accepted_answers:[reading],item_id:`${id}:${key}`,skill,passage:'',script_jp:''},tasks.length,key);
+      const format=/[A-Za-z]/.test(reading)?'chữ Latin (romaji)':/^[ぁ-ゖー・\s]+$/.test(reading)?'hiragana':/^[ァ-ヺー・\s]+$/.test(reading)?'katakana':/^[ぁ-ゖァ-ヺー・\s]+$/.test(reading)?'kana':'cách ghi trong bài';
+      add({mode:'recall',q:`Em ghi lại cách đọc của ${word.jp} bằng ${format} nhé.`,instruction:'',
+        accepted_answers:[reading],item_id:`${id}:${key}`,source_identity:word.id,skill,passage:'',script_jp:''},tasks.length,key);
     }
     if(!item.editorial && skill==='grammar' && item.formula && !tasks.some(task=>task.mode==='recall')){
       const key='recall:formation';
-      add({mode:'recall',q:`Viết lại cấu trúc nguồn của mẫu ${item.title}.`,instruction:'Nhớ lại cấu trúc đã học; đối chiếu theo đúng ký hiệu của nguồn.',
+      add({mode:'recall',q:`Em ghi lại công thức của mẫu ${item.title} trong bảng “Cách ghép câu” nhé.`,instruction:'Giữ nguyên các dấu +, /, | và dấu ngoặc trong công thức.',
         accepted_answers:[item.formula],item_id:`${id}:${key}`,skill,passage:'',script_jp:''},tasks.length,key);
     }
   }

@@ -151,11 +151,11 @@
     accounts.disabled = !user;
     select.disabled = test.disabled = !key || !selectedRow;
     refresh.disabled = select.disabled || Boolean(pending);
-    hint.textContent = 'Giọng nói dùng tài khoản Gemini gốc hoặc OpenAI chính thức đã lưu riêng, độc lập với chat.';
+    hint.textContent = 'Giọng nói dùng tài khoản Gemini gốc hoặc OpenAI chính thức đã lưu riêng, độc lập với trò chuyện.';
     modelLabel.textContent = selectedRow ? `Model giọng nói · ${selectedRow.protocol === 'openai' ? 'alloy' : 'Charon'}` : 'Model giọng nói';
     status.textContent = invalid ? 'Không lưu được hoặc dữ liệu lựa chọn giọng nói bị lỗi. Hãy bật lại bộ nhớ hoặc chọn lại tài khoản giọng nói.' : key && !selectedRow
       ? 'Tài khoản giọng nói đã chọn không dùng được hoặc không được hỗ trợ. Hệ thống không tự thay thế.'
-      : selectedRow ? '' : 'Hãy thêm hoặc chọn tài khoản giọng nói để dùng giọng nói.';
+      : selectedRow ? '' : 'Em chọn kết nối giọng nói hoặc thêm khóa mới nhé.';
     draw(catalogModels, choice(key));
     if (preserveRequest) status.textContent = message;
   }
@@ -168,7 +168,7 @@
     pending = controller;
     const current = () => !controller.signal.aborted && request === version && key === identity();
     draw(catalogIdentity === key ? catalogModels : [], choice(key));
-    status.textContent = `Đang tải model giọng nói ${provider() === 'openai' ? 'OpenAI' : 'Gemini'} tương thích. Không gửi thử âm thanh.`;
+    status.textContent = `Đang tải danh sách model giọng nói ${provider() === 'openai' ? 'OpenAI' : 'Gemini'}… Không tạo âm thanh.`;
     refresh.disabled = true;
     try {
       const response = await apiFetch('/api/tts', {method:'POST', signal:controller.signal,
@@ -179,7 +179,7 @@
       if (!Array.isArray(data.models) || data.models.length > 1000 || !data.models.every(model => compatible(model))) throw new Error('Danh sách model giọng nói không hợp lệ.');
       catalogIdentity = key; catalogModels = data.models;
       draw(data.models, choice(key));
-      status.textContent = `${data.models.length} model giọng nói trong danh sách${data.truncated ? ' (danh sách một phần)' : ''}. Quyền truy cập được kiểm tra khi em nghe.`;
+      status.textContent = `${data.models.length} model giọng nói trong danh sách${data.truncated ? ' (danh sách một phần)' : ''}. Bấm Nghe thử để kiểm tra.`;
     } catch (error) {
       if (!current()) return;
       status.textContent = error.message || 'Không tải lại được model giọng nói. Lựa chọn của em không đổi.';
@@ -212,7 +212,7 @@
     if (!owner() || managed() || saving) return;
     formOwner = owner(); formRevision++;
     form.hidden = false; keyProvider.value = 'gemini'; keyName.value = 'Tài khoản giọng nói'; storage.value = 'local';
-    formStatus.textContent = 'Việc lưu không tạo âm thanh và không đổi tài khoản chat.';
+    formStatus.textContent = 'Việc lưu không tạo âm thanh và không đổi kết nối trò chuyện.';
     addKey.setAttribute('aria-expanded', 'true'); keyName.focus();
   });
   document.getElementById('speech-key-cancel').addEventListener('click', () => { closeKeyForm(); addKey.focus(); });

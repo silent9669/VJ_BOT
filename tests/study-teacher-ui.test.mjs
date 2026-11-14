@@ -16,6 +16,8 @@ class Node {
   setAttribute(key,value){this.attributes[key]=value;}
   replaceChildren(...children){for(const child of this.children)child.parent=null;this.children=[];this.append(...children);}
   focus(){this.focused=true;}
+  addEventListener(type,listener){(this.listeners??={})[type]??=[];this.listeners[type].push(listener);}
+  emit(type){for(const listener of this.listeners?.[type] || [])listener({type});}
 }
 const descendants=node=>node.children.flatMap(child=>[child,...descendants(child)]);
 const byClass=(node,name)=>descendants(node).find(child=>child.className?.split(' ').includes(name));
@@ -23,7 +25,7 @@ const byText=(node,text)=>descendants(node).find(child=>child.tagName==='button'
 function panelControls(panel){
   const chat=byClass(panel,'study-teacher-chat'),form=byClass(chat,'study-teacher-compose');
   const actions=byClass(form,'study-teacher-chat-actions');
-  return {panel,button:byText(panel,'Nhờ thầy giảng bài'),compare:byText(panel,'Xem bản gốc'),
+  return {panel,button:panel.children.find(child=>child.tagName==='button' && child.className==='study-teacher-button'),compare:byText(panel,'Xem bản gốc'),
     status:panel.children.find(child=>child.attributes.role==='status'),reply:byClass(panel,'study-teacher-reply'),chat,
     log:byClass(chat,'study-teacher-messages'),form,input:descendants(form).find(child=>child.tagName==='textarea'),
     send:byText(actions,'Gửi thầy'),close:byText(actions,'Để em thử lại'),retry:byText(actions,'Gửi lại cho thầy'),edit:byText(actions,'Hỏi câu khác'),
@@ -241,13 +243,18 @@ test('follow-up cannot contact the provider until its assistance record succeeds
 });
 
 test('teaching ignores a response for a different task revision without changing the original presentation',async()=>{
-  const b=page(async(_path,options)=>{
+  const calls=[],b=page(async(_path,options)=>{
     const body=JSON.parse(options.body);
+    calls.push(body);
     return Response.json(result(body,{task:{...body.task,revision:'0'.repeat(64)}}));
   });
   await b.button.onclick();
   assert.equal(b.label.textContent,'someone helps me');assert.equal(b.reply.hidden,true);assert.equal(b.compare.hidden,true);
-  assert.match(b.status.textContent,/phiên bản/);assert.equal(b.button.disabled,false);
+  assert.equal(b.status.attributes.role,'status');assert.notEqual(b.status.textContent.trim(),'');
+  assert.equal(b.button.disabled,false);assert.equal(b.button.attributes['aria-busy'],'false');
+  assert.equal(calls.length,1);assert.equal(b.progressCalls.length,1);
+  assert.deepEqual(b.options.map(option=>option.label.textContent),['someone helps me','someone helps me','I help someone']);
+  assert.deepEqual(b.options.map(option=>option.button.value),['0','1','2']);assert.equal(b.task.answer_index,1);
 });
 
 test('follow-up ignores a different task revision and retains the draft for an exact explicit retry',async()=>{
@@ -259,7 +266,9 @@ test('follow-up ignores a different task revision and retains the draft for an e
   });
   await b.button.onclick();await b.button.onclick();b.input.value='Người nhận là ai?';await submit(b);
   assert.equal(b.log.children.length,0);assert.equal(b.input.value,'Người nhận là ai?');
-  assert.match(b.chatStatus.textContent,/phiên bản/);assert.equal(b.retry.hidden,false);
+  assert.equal(b.chatStatus.attributes.role,'status');assert.notEqual(b.chatStatus.textContent.trim(),'');
+  assert.equal(b.retry.hidden,false);assert.equal(b.send.disabled,true);assert.equal(b.input.readOnly,true);
+  assert.equal(sent.length,1,'a rejected response never triggers an automatic provider retry');
   wrong=false;await b.retry.onclick();
   assert.equal(sent.length,2);assert.equal(sent[0],sent[1]);assert.equal(b.log.children.length,2);
   assert.deepEqual(b.progressCalls.map(call=>call.help),['translation','chat']);
@@ -411,4 +420,159 @@ test('a practical speaking production prompt has a canonical teaching panel with
   const canonical=b.catalogs.N5.lessons[descriptor.completionId];
   assert.equal(canonical.examples[unit.dialogue.length].jp,prompt.jp);
   assert.deepEqual(canonical.examples.slice(0,unit.dialogue.length).map(example=>example.jp),Array.from(unit.dialogue,example=>example.jp));
+});
+
+function practiceHelpPage(api,{progress,writing=false,saved=false}={}){
+  const b=page(api,'checks',{progress,mount:false});
+  vm.runInContext(readFileSync('static/practice.js','utf8'),b.c);
+  const section=new Node('section'),actions=new Node('div');actions.className='practice-actions';
+  section.append(actions);b.host.append(section);
+  section.querySelector=selector=>selector==='.practice-actions'?actions:null;
+  actions.before=element=>{element.parent=section;section.children.splice(section.children.indexOf(actions),0,element);};
+  const task=writing?{...b.task,mode:'writing',opts:[],answer_index:null,criteria:['Viết lời mời phù hợp.']}:b.task;
+  let current=true;
+  const answer=writing?{correct:null,selected:'いっしょに公園へ行きませんか。',saved}:null;
+  const cleanup=b.c.mountPracticeCoach(section,b.host,b.lesson,task,b.focus.index,answer,{
+    targets:[b.c.studyTarget('question:option:0',b.label,task.opts[0] || b.label.textContent)],isCurrent:()=>current});
+  const area=byClass(section,'practice-coach'),content=byClass(area,'practice-help-content');
+  area.open=true;
+  const teaching=byClass(area,'practice-teaching'),panel=byClass(teaching,'study-teacher');
+  teaching.open=true;
+  const chat=byClass(area,'study-teacher-chat'),form=byClass(chat,'study-teacher-compose');
+  const chatActions=byClass(form,'study-teacher-chat-actions');
+  return {...b,section,area,content,task,answer,teaching,panel,chat,form,
+    coachButton:content.children.find(child=>child.tagName==='button'),
+    coachStatus:content.children.find(child=>child.attributes.role==='status'),
+    coachReply:byClass(content,'practice-coach-reply'),
+    teachButton:panel.children.find(child=>child.tagName==='button' && child.className==='study-teacher-button'),
+    ask:content.children.filter(child=>child.tagName==='button').at(-1),
+    input:descendants(form).find(child=>child.tagName==='textarea'),
+    close:byText(chatActions,'Để em thử lại'),send:byText(chatActions,'Gửi thầy'),
+    log:byClass(chat,'study-teacher-messages'),
+    cleanup,changeTask:()=>{current=false;vm.runInContext('practiceCoachRefresh?.()',b.c);b.mutate();},
+    collapse:()=>{area.open=false;area.emit('toggle');b.mutate();}};
+}
+
+const coachResult=(body,change={})=>({action:body.action,item_id:body.item_id,task:body.task,
+  reply:'Em chú ý người nhận hành động nhé.',...change});
+const pendingLines=area=>descendants(area).filter(node=>node.attributes.role==='status'
+  && !node.hidden && /Thầy đang/.test(node.textContent));
+
+test('practice mounts one composer and serializes hint, teaching and chat operations for the current task',async()=>{
+  const calls=[],started=deferred(),pending=deferred();let hintBody;
+  const b=practiceHelpPage(async(path,options)=>{
+    const body=JSON.parse(options.body);calls.push({path,body});
+    if(body.action==='hint'){hintBody=body;started.resolve();return pending.promise;}
+    return Response.json(path==='/api/chat'?chatResult(body,'Ở đây は nêu chủ đề.\n\n私は学生です。'):result(body));
+  });
+  try{
+    assert.equal(descendants(b.area).filter(node=>node.className==='study-teacher-compose').length,1);
+    const hint=b.coachButton.onclick();await started.promise;
+    await b.coachButton.onclick();await b.teachButton.onclick();
+    b.ask.onclick();b.input.value='Thầy giải thích đề giúp em nhé.';await submit(b);
+    assert.equal(calls.length,1);assert.equal(b.progressCalls.length,1);
+    assert.equal(b.progressCalls[0].help,'hint');assert.equal(pendingLines(b.area).length,1);
+    assert.equal(b.log.children.length,0);
+    pending.resolve(Response.json(coachResult(hintBody)));await hint;
+    assert.equal(b.coachReply.textContent,'Em chú ý người nhận hành động nhé.');
+    assert.equal(pendingLines(b.area).length,0);
+    await b.teachButton.onclick();assert.equal(calls.length,2);
+    assert.equal(b.progressCalls.at(-1).help,'translation');
+    await b.teachButton.onclick();assert.equal(calls.length,2,'follow-up opens the existing composer without regenerating teaching');
+    await submit(b);assert.equal(calls.length,3);assert.equal(b.progressCalls.at(-1).help,'chat');
+    assert.deepEqual(b.progressCalls.map(call=>call.help),['hint','translation','chat']);
+    assert.ok(b.progressCalls.every(call=>call.attempt_id===b.progressCalls[0].attempt_id));
+    assert.equal(b.log.children[1].children[1].textContent,'Ở đây は nêu chủ đề.\n\n私は学生です。');
+    assert.equal(b.log.children[1].children[1].children.length,0);
+  }finally{pending.resolve(Response.json(coachResult(hintBody || {})));b.cleanup();}
+});
+
+test('practice teaching holds the shared operation lock before its assistance receipt and during inference',async()=>{
+  const receipt=deferred(),recording=deferred(),pending=deferred(),started=deferred(),calls=[];
+  const b=practiceHelpPage(async(path,options)=>{
+    const body=JSON.parse(options.body);calls.push({path,body});started.resolve();return pending.promise;
+  },{progress:async(_path,options)=>{
+    const body=JSON.parse(options.body);assert.equal(body.help,'translation');recording.resolve();return receipt.promise;
+  }});
+  try{
+    const teaching=b.teachButton.onclick();await recording.promise;
+    await b.coachButton.onclick();b.ask.onclick();b.input.value='Em hỏi thêm nhé.';await submit(b);
+    assert.equal(calls.length,0);assert.equal(b.progressCalls.length,1);assert.equal(pendingLines(b.area).length,1);
+    receipt.resolve(Response.json({recorded:true}));await started.promise;
+    await b.coachButton.onclick();await submit(b);
+    assert.equal(calls.length,1);assert.equal(b.progressCalls.length,1);
+    pending.resolve(Response.json(result(calls[0].body)));await teaching;
+    assert.equal(pendingLines(b.area).length,0);
+  }finally{receipt.resolve(Response.json({recorded:true}));pending.resolve(Response.json({}));b.cleanup();}
+});
+
+for(const transition of ['collapse','owner','task'])test(`practice ${transition} invalidation aborts help and hides late private output`,async()=>{
+  const started=deferred(),pending=deferred();let signal,body;
+  const b=practiceHelpPage(async(_path,options)=>{
+    signal=options.signal;body=JSON.parse(options.body);started.resolve();return pending.promise;
+  });
+  try{
+    const hint=b.coachButton.onclick();await started.promise;
+    if(transition==='collapse')b.collapse();
+    else if(transition==='owner'){b.c.signedInUser={user_id:'second'};b.fire('vjbot-account-ready');b.mutate();}
+    else b.changeTask();
+    assert.equal(signal.aborted,true);
+    pending.resolve(Response.json(coachResult(body,{reply:'PRIVATE LATE RESPONSE'})));await hint;
+    assert.equal(b.coachReply.hidden,true);assert.doesNotMatch(b.area.textContent,/PRIVATE LATE RESPONSE/);
+    assert.equal(b.log.children.length,0);
+  }finally{pending.resolve(Response.json({}));b.cleanup();}
+});
+
+test('saved writing starts advisory feedback once and retains the exact submitted text',async()=>{
+  const started=deferred(),pending=deferred(),calls=[];
+  const b=practiceHelpPage(async(path,options)=>{
+    const body=JSON.parse(options.body);calls.push({path,body});started.resolve();return pending.promise;
+  },{writing:true,saved:true});
+  try{
+    await started.promise;await b.coachButton.onclick();await b.teachButton.onclick();b.mutate();
+    assert.equal(calls.length,1);assert.equal(calls[0].body.action,'feedback');
+    assert.equal(calls[0].body.response_text,b.answer.selected);
+    assert.equal(pendingLines(b.area).length,1);
+    pending.resolve(Response.json(coachResult(calls[0].body,{source_correct:null,assessment:{comparison:'unassessed'},basis:'self_report',verified:false})));
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(b.coachReply.hidden,false);assert.equal(calls.length,1);
+    assert.deepEqual(b.progressCalls.map(call=>call.help),['chat']);
+    assert.equal(b.coachReply.textContent,'Em chú ý người nhận hành động nhé.');
+    assert.doesNotMatch(b.content.textContent,/Đối chiếu với đáp án|Nhận xét của AI, để em tham khảo/);
+  }finally{pending.resolve(Response.json({}));b.cleanup();}
+  const unsavedCalls=[],unsaved=practiceHelpPage(async(path)=>{unsavedCalls.push(path);return Response.json({});},{writing:true,saved:false});
+  try{await new Promise(resolve=>setImmediate(resolve));assert.equal(unsavedCalls.length,0);assert.equal(unsaved.progressCalls.length,0);}
+  finally{unsaved.cleanup();}
+});
+
+test('an in-flight practice follow-up prevents competing coach and translation requests',async()=>{
+  const started=deferred(),pending=deferred(),calls=[];
+  const b=practiceHelpPage(async(path,options)=>{
+    const body=JSON.parse(options.body);calls.push({path,body});
+    if(path==='/api/chat'){started.resolve();return pending.promise;}
+    return Response.json(coachResult(body));
+  });
+  try{
+    b.ask.onclick();b.input.value='Em chưa rõ yêu cầu.';const chat=submit(b);await started.promise;
+    await b.coachButton.onclick();await b.teachButton.onclick();await submit(b);
+    assert.equal(calls.length,1);assert.equal(pendingLines(b.area).length,1);
+    assert.deepEqual(b.progressCalls.map(call=>call.help),['chat']);
+    pending.resolve(Response.json(chatResult(calls[0].body,'Em tìm người nhận hành động trước nhé.')));await chat;
+    assert.equal(b.log.children.length,2);assert.equal(pendingLines(b.area).length,0);
+    await b.coachButton.onclick();assert.equal(calls.length,2);
+    assert.deepEqual(b.progressCalls.map(call=>call.help),['chat','hint']);
+  }finally{pending.resolve(Response.json({}));b.cleanup();}
+});
+
+test('same-account task invalidation clears completed practice help and refuses another request',async()=>{
+  let calls=0;
+  const b=practiceHelpPage(async(_path,options)=>{
+    calls++;return Response.json(coachResult(JSON.parse(options.body)));
+  });
+  try{
+    await b.coachButton.onclick();assert.equal(b.coachReply.hidden,false);assert.equal(calls,1);
+    b.changeTask();
+    assert.equal(b.coachReply.hidden,true);assert.equal(b.coachReply.textContent,'');
+    await b.coachButton.onclick();assert.equal(calls,1);
+  }finally{b.cleanup();}
 });

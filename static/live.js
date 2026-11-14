@@ -27,7 +27,7 @@
     el('live-stage').dataset.turn=live?(teacherSpeaking?'teacher':userMuted?'muted':'you'):'';
     el('live-commands').hidden=!live;
     for(const button of el('live-commands').querySelectorAll?.('button')||[])button.disabled=!mine || !commands[button.dataset.command];
-    if(live)status(teacherSpeaking?'Thầy đang nói · Em đợi thầy nói xong nhé':userMuted?'Micro đang tắt':'Đến lượt em · Em nói đi');
+    if(live)status(teacherSpeaking?'Thầy đang nói. Em đợi một chút nhé.':userMuted?'Micro đang tắt':'Đến lượt em nói nhé.');
   }
   // Safari cannot tap a remote WebRTC track with Web Audio, so the teacher's level comes from the connection stats.
   async function pollRemoteLevel() {
@@ -186,17 +186,23 @@
       const result=await response.json();
       if(run!==version)return;
       if(owner!==signedInUser?.user_id){cleanup('Tài khoản đã thay đổi.');return;}
-      if(!response.ok)throw new Error(result.detail || 'Không mở được cuộc gọi.');
+      if(!response.ok)throw Object.assign(new Error(result.detail || 'Không mở được cuộc gọi.'),{userFacing:true});
       greeting=result.greeting;commands=result.commands && typeof result.commands==='object'?result.commands:{};
       await connection.setRemoteDescription({type:'answer',sdp:result.sdp});
     } catch(error) {
       if(run!==version)return;
-      cleanup(error.name==='NotAllowedError'?'Micro chưa được cho phép. Bật quyền micro rồi thử lại.':error.message || 'Không kết nối được. Hãy thử lại.');
+      cleanup(error.userFacing?error.message
+        : ['NotAllowedError','SecurityError'].includes(error.name)?'Micro chưa được cho phép. Bật quyền micro rồi thử lại.'
+        : ['NotFoundError','DevicesNotFoundError'].includes(error.name)?'Không tìm thấy micro. Kết nối micro rồi thử lại.'
+        : error.name==='NotReadableError'?'Micro đang bận hoặc không khả dụng. Đóng ứng dụng đang dùng micro rồi thử lại.'
+        : error.name==='SyntaxError'?'Phản hồi kết nối không hợp lệ. Hãy thử lại.'
+        : 'Không kết nối được cuộc trò chuyện trực tiếp. Kiểm tra mạng và thiết bị rồi thử lại.');
     }
   }
   function mode(live) {
     if(!live && (peer || el('live-start').disabled))end();
     if(!live)timeline.stop();
+    if(live && !callOwner && !peer && !closing && !el('live-start').disabled)status('Em bấm Bắt đầu nói khi sẵn sàng nhé.');
     el('classroom-voice').hidden=!live;
     el('classroom-text').hidden=live;
     document.querySelector('.classroom-chat-window').dataset.mode=live?'live':'text';
@@ -206,7 +212,7 @@
   el('live-end').addEventListener('click',()=>end());
   el('live-play-audio').addEventListener('click',async()=>{
     const run=version;
-    try{await el('live-audio').play();if(run===version){el('live-play-audio').hidden=true;status('Đang nghe · Em có thể nói ngay');}}
+    try{await el('live-audio').play();if(run===version){el('live-play-audio').hidden=true;status('Đã bật âm thanh.');turn();}}
     catch{if(run===version)status('Chưa phát được âm thanh. Kiểm tra thiết bị rồi thử lại.');}
   });
   el('live-commands').addEventListener('click',event=>{
@@ -231,6 +237,6 @@
   };
   window.addEventListener('vjbot-account-ready',window.checkLiveAccount);
   window.stopLiveConversation=()=>{end();timeline.stop();timeline.accountChanged();};
-  window.openLiveConversation=()=>{if(!signedInUser?.is_admin)return;mode(true);return start();};
+  window.openLiveConversation=()=>{if(!signedInUser?.is_admin)return;mode(true);};
   paint(new Float32Array(BARS),0);
 })();

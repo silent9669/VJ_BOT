@@ -25,13 +25,13 @@ const VERDICTS = ['met', 'partial', 'not_met', 'uncertain'];
 const VALUES = {met: 1, partial: 0.5, not_met: 0};
 const WEIGHTS = {task: 50, grammar: 30, expression: 20};
 const PASSING_SCORE = 75;
-const LABELS = {grammar: 'Grammar and meaning', expression: 'Vocabulary and situational expression'};
+const LABELS = {grammar: 'Ngữ pháp và ý nghĩa', expression: 'Từ vựng và cách diễn đạt theo tình huống'};
 const SUMMARIES = {
-  meets_requirements: 'Kết quả ước tính: đã đáp ứng yêu cầu của câu hỏi hiện tại. Đây không phải điểm được kiểm chứng độc lập.',
-  incomplete: 'Estimated result: one or more requested details are missing or incomplete.',
-  needs_practice: 'Kết quả ước tính: câu trả lời cần cải thiện ở các tiêu chí bên dưới.',
-  off_topic: 'Kết quả ước tính: câu trả lời chưa đúng với câu hỏi hiện tại.',
-  uncertain: 'Chưa đủ bằng chứng nhất quán để ước tính điểm.'
+  meets_requirements: 'Câu trả lời của em đã có đủ các ý được hỏi. Đây là nhận xét tham khảo của AI.',
+  incomplete: 'Câu trả lời của em còn thiếu một vài ý được hỏi. Đây là nhận xét tham khảo của AI.',
+  needs_practice: 'Em luyện thêm những điểm bên dưới nhé. Đây là nhận xét tham khảo của AI.',
+  off_topic: 'Câu trả lời của em chưa đi vào điều câu hỏi đang hỏi. Đây là nhận xét tham khảo của AI.',
+  uncertain: 'AI chưa đủ thông tin để nhận xét chắc chắn.'
 };
 
 function validRubric(rubric) {

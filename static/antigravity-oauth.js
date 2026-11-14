@@ -7,10 +7,14 @@
   let rows = [], rowsOwner = null, rendering = 0, revision = 0, busy = false;
   let pending = null, timer = null, polling = 0, panel = null, panelOwner = null;
   let loaded = '', usageRequest = 0, catalogRequest = 0;
+  const errorText = error => ['SecurityError', 'QuotaExceededError'].includes(error.name)
+    ? 'Không truy cập được bộ nhớ trình duyệt. Cho phép lưu dữ liệu trang web hoặc giải phóng dung lượng rồi thử lại.'
+    : error.name === 'TypeError' ? 'Chưa kết nối được Antigravity. Em kiểm tra mạng rồi thử lại nhé. Chi tiết kết nối: ' + error.message
+    : error.message;
   async function api(path = '', method = 'GET', body) {
     const response = await apiFetch(root + path, {method, headers:{'Content-Type':'application/json'},
       ...(body === undefined ? {} : {body:JSON.stringify(body)})});
-    const data = await response.json();
+    const data = await response.json().catch(() => { throw new Error('Chưa đọc được phản hồi Antigravity. Em tải lại trạng thái để kiểm tra trước khi thử lại.'); });
     if (!response.ok) throw new Error(data.detail || 'Kết nối Antigravity không dùng được.');
     return data;
   }
@@ -75,7 +79,7 @@
         }
         timer = setTimeout(tick, 2000);
       } catch (error) {
-        if (version === polling && owner() === id) { stopPolling(); el('ai-oauth-status').textContent = error.message; }
+        if (version === polling && owner() === id) { stopPolling(); el('ai-oauth-status').textContent = errorText(error); }
       }
     }
     timer = setTimeout(tick, 1000);
@@ -95,7 +99,7 @@
     const id = owner(), version = revision, request = ++catalogRequest;
     const data = await api('/models?connection_id=' + encodeURIComponent(connection));
     if (!current(id, connection, version) || request !== catalogRequest) return;
-    if (!Array.isArray(data.models) || data.models.some(model => typeof model !== 'string')) throw new Error('Danh sách tài khoản Antigravity không hợp lệ.');
+    if (!Array.isArray(data.models) || data.models.some(model => typeof model !== 'string')) throw new Error('Chưa đọc được danh sách model Antigravity. Em tải lại danh sách nhé.');
     const select = el('ai-oauth-model'); select.replaceChildren();
     const models = savedModel && !data.models.includes(savedModel) ? [savedModel, ...data.models] : data.models;
     for (const model of models) {
@@ -120,15 +124,15 @@
       if (!current(id, connection, version) || request !== usageRequest) return;
       if (data.connection_id !== connection) throw new Error('Phản hồi mức dùng không khớp với kết nối đã chọn.');
       const checked = typeof data.checked_at === 'string' && Number.isFinite(Date.parse(data.checked_at))
-        ? new Date(data.checked_at).toLocaleString() : 'unknown';
-      const checkedTime = checked === 'unknown' ? checked : new Date(data.checked_at).toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
-      status.textContent = data.available ? `Cập nhật ${checkedTime}` : `Chưa có mức dùng · ${checkedTime}`;
+        ? new Date(data.checked_at).toLocaleString() : 'chưa rõ thời gian';
+      const checkedTime = checked === 'chưa rõ thời gian' ? checked : new Date(data.checked_at).toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
+      status.textContent = data.available ? `Cập nhật ${checkedTime}` : `Chưa nhận được thông tin hạn mức · ${checkedTime}`;
       status.title = `Mức dùng do nhà cung cấp báo. Kiểm tra: ${checked}.`;
       const fractions = (Array.isArray(data.models) ? data.models : []).map(row => row.remaining_fraction)
         .filter(value => Number.isFinite(value) && value >= 0 && value <= 1);
-      const percent = value => (value * 100).toLocaleString(undefined, {maximumFractionDigits:1}) + '%';
+      const percent = value => (value * 100).toLocaleString('vi-VN', {maximumFractionDigits:1}) + '%';
       const low = Math.min(...fractions);
-      el('ai-oauth-usage-overview').textContent = fractions.length ? `còn ${percent(low)}` : 'Chưa có hạn mức';
+      el('ai-oauth-usage-overview').textContent = fractions.length ? `còn ${percent(low)}` : 'Chưa nhận được thông tin hạn mức';
       el('ai-oauth-usage-overview').title = fractions.length ? 'Hạn mức thấp nhất của các model, không phải số dư của cả tài khoản.' : '';
       overviewMeter.hidden = !fractions.length;
       if (fractions.length) {
@@ -146,23 +150,23 @@
           : 'Chưa rõ hạn mức còn lại';
         const reset = typeof row.reset_at === 'string' ? Date.parse(row.reset_at) : NaN;
         detail.textContent = remaining + (Number.isFinite(reset)
-          ? ` · ${reset < Date.now() ? 'Historical reset' : 'Resets'}: ${new Date(reset).toLocaleString()}` : ' · Reset unknown');
+          ? ` · ${reset < Date.now() ? 'Mốc khôi phục đã qua' : 'Khôi phục lúc'}: ${new Date(reset).toLocaleString('vi-VN')}` : ' · Chưa rõ thời điểm khôi phục');
         item.append(name, detail);
         if (known) {
           const meter = document.createElement('meter');
           meter.className = 'ai-quota-meter';
           meter.min = 0; meter.max = 1; meter.value = fraction;
-          meter.setAttribute('aria-label', row.model + ' remaining quota');
+          meter.setAttribute('aria-label', 'Hạn mức còn lại của ' + row.model);
           meter.setAttribute('aria-valuetext', remaining);
           item.append(meter);
         }
         el('ai-oauth-usage-models').append(item);
       }
-      if (!data.models?.length) status.textContent += ' No model quota reported.';
+      if (!data.models?.length) status.textContent += ' Nhà cung cấp chưa báo cáo hạn mức của mô hình nào.';
     } catch (error) {
       if (current(id, connection, version) && request === usageRequest) {
-        status.textContent = 'Chưa có mức dùng. ' + error.message;
-        el('ai-oauth-usage-overview').textContent = 'Chưa có hạn mức';
+        status.textContent = 'Chưa nhận được thông tin hạn mức. ' + error.message;
+        el('ai-oauth-usage-overview').textContent = 'Chưa nhận được thông tin hạn mức';
       }
     } finally {
       if (current(id, connection, version) && request === usageRequest) {
@@ -176,7 +180,7 @@
       stopPolling(); revision++; loaded = ''; rows = []; rowsOwner = null;
       el('ai-oauth-model').replaceChildren(); el('ai-oauth-usage-models').replaceChildren();
       el('ai-oauth-usage-status').textContent = ''; el('ai-oauth-usage').hidden = true;
-      el('ai-oauth-usage-overview').textContent = 'Chưa có hạn mức';
+      el('ai-oauth-usage-overview').textContent = 'Chưa nhận được thông tin hạn mức';
       showPending(null);
     }
     if (!id) { paint(); window.refreshSavedConnections?.(); return; }
@@ -220,7 +224,7 @@
     } catch (error) {
       if (id === owner() && version === rendering) {
         el('ai-oauth-status').textContent = error.message;
-        el('ai-connection-status').textContent = 'Chưa có tài khoản OAuth. ' + error.message;
+        el('ai-connection-status').textContent = 'Chưa tải được các kết nối Antigravity. Em thử tải lại nhé. ' + error.message;
       }
     }
   }
@@ -236,7 +240,7 @@
     const previous = controls.map(control => control.disabled);
     controls.forEach(control => { control.disabled = true; }); el('ai-oauth-panel').setAttribute('aria-busy', 'true');
     try { await task(id, connection, version); if (id === owner()) el('ai-connection-status').textContent = ''; }
-    catch (error) { if (id === owner() && version === revision) { el('ai-oauth-status').textContent = error.message; el('ai-connection-status').textContent = error.message; } }
+    catch (error) { if (id === owner() && version === revision) { el('ai-oauth-status').textContent = errorText(error); el('ai-connection-status').textContent = errorText(error); } }
     finally {
       controls.forEach((control, index) => { control.disabled = previous[index]; });
       busy = false; el('ai-oauth-panel').setAttribute('aria-busy', 'false');
@@ -282,7 +286,7 @@
     const data = await api('/model', 'PUT', {connection_id:connection, model});
     if (!current(id, connection, version)) return;
     rows = rows.map(row => row.id === connection ? {...row, model:data.model} : row);
-    el('ai-oauth-status').textContent = `${data.model} đã trả lời. Đọc thành tiếng vẫn dùng kết nối API key riêng.`;
+    el('ai-oauth-status').textContent = `Đã thử và lưu ${data.model}.`;
     window.refreshSavedConnections?.(); window.checkAiReady?.();
   });
   el('ai-oauth-cancel').onclick = () => action(async id => {
