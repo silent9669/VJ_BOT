@@ -650,25 +650,43 @@ function lessonExampleHtml(ex,index,{listenFirst=false,nested=false}={}) {
 }
 
 function grammarFormulaHtml(formula) {
-  // Keep the source operator order; slash notation does not establish new bracket groups.
+  const split=(value,separators,keep=false)=>{
+    const parts=[];let text='',depth=0;
+    for(const char of value){
+      if('([（［{｛「『'.includes(char))depth++;
+      if(')]）］}｝」』'.includes(char))depth=Math.max(0,depth-1);
+      if(depth===0 && separators.includes(char)){
+        if(keep)text+=char;
+        if(text.trim())parts.push(text.trim());
+        text='';
+      }else text+=char;
+    }
+    if(text.trim())parts.push(text.trim());
+    return parts;
+  };
+  const isForm=value=>/^(?:Động từ|Tính từ|Danh từ|Câu(?:\s|$)|Từ để hỏi|V(?:[-\s]|$)|A[-いな]|N(?:[-\s]|$)|\[)/u.test(value);
   const rows=[];
-  let text='',depth=0;
-  const flush=()=>{if(text.trim())rows.push(`<span class="grammar-part">${escapeHtml(text.trim())}</span>`);text='';};
-  for(const char of String(formula)){
-    if('([（［{｛「『'.includes(char))depth++;
-    if(')]）］}｝」』'.includes(char))depth=Math.max(0,depth-1);
-    if(depth===0 && '+＋/／'.includes(char)){
-      flush();
-      rows.push(char==='+' || char==='＋'?'<span class="grammar-plus" aria-label="cộng">+</span>':'<span class="grammar-or">hoặc</span>');
-    }else if(depth===0 && (char==='|' || char==='\n')){
-      flush();rows.push('<span class="grammar-break" aria-hidden="true"></span>');
-    }else{
-      text+=char;
-      if(depth===0 && char==='。'){flush();rows.push('<span class="grammar-break" aria-hidden="true"></span>');}
+  for(const block of split(String(formula),'|\n')){
+    for(const clause of split(block,'。',true)){
+      const choices=split(clause,'/／'),terms=choices.map(choice=>split(choice,'+＋'));
+      if(choices.length===1 || terms.every(parts=>parts.length>1) || terms.every(parts=>parts.length===1)){
+        rows.push(...choices);
+      }else if(terms.slice(0,-1).every(parts=>parts.length===1) && terms.at(-1).length===2
+        && terms.every(parts=>isForm(parts[0]))){
+        const suffix=terms.at(-1).slice(1).join(' + ');
+        rows.push(...terms.map(parts=>`${parts[0]} + ${suffix}`));
+      }else if(terms[0].length>1 && isForm(terms[0][0])
+        && terms.slice(1).every(parts=>parts.length===1 && /^[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー・…]+$/u.test(parts[0]))){
+        const prefix=terms[0].slice(0,-1).join(' + ');
+        rows.push(...terms.map((parts,index)=>`${prefix} + ${index===0?parts.at(-1):parts[0]}`));
+      }else{
+        // Mixed shorthand does not reliably identify a shared suffix. Do not invent one.
+        rows.push(clause);
+      }
     }
   }
-  flush();
-  return rows.join('');
+  return rows.map(row=>`<div class="grammar-row">${split(row,'+＋').map((part,index)=>
+    `<span class="grammar-chunk">${index?'<span class="grammar-plus" aria-label="cộng">+</span>':''}<span class="grammar-part">${escapeHtml(part)}</span></span>`).join(' ')}</div>`).join('');
 }
 
 function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {

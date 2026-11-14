@@ -889,18 +889,28 @@ test('writing self-check criteria stay concealed until the actual answer is save
   accept=true;await section.querySelector('.practice-primary').click();assert.equal(criteria.hidden,false);
 });
 
-test('grammar notation preserves operator order, bracketed groups and escaped text without adding suffixes',()=>{
-  const b=lesson();
-  for(const formula of ['Danh từ + に + 行く / 来る / 帰る','Danh từ + です / Tính từ な + です',
-    'Động từ / tính từ い / danh từ + でしょう','Danh từ (+ の) + いかんで','Danh từ + です | この + danh từ','<img src=x onerror=attack()> + です']){
+test('grammar formulas show complete compact alternatives without changing optional groups or inventing ambiguous suffixes',()=>{
+  const b=lesson(),rows=()=>b.document.querySelectorAll('.grammar-row').map(row=>row.querySelectorAll('.grammar-part').map(part=>part.textContent).join(' + '));
+  for(const [formula,expected]of [
+    ['Động từ thân ます / Tính từ い thân từ / Tính từ な + そうだ',['Động từ thân ます + そうだ','Tính từ い thân từ + そうだ','Tính từ な + そうだ']],
+    ['Động từ thể た + ら / Tính từ い thân từ + かったら / Tính từ な + だったら / Danh từ + だったら',['Động từ thể た + ら','Tính từ い thân từ + かったら','Tính từ な + だったら','Danh từ + だったら']],
+    ['Danh từ + に + 行く / 来る / 帰る',['Danh từ + に + 行く','Danh từ + に + 来る','Danh từ + に + 帰る']],
+    ['Danh từ + です / Tính từ な + です',['Danh từ + です','Tính từ な + です']],
+    ['Danh từ (+ の) + いかんで',['Danh từ (+ の) + いかんで']],
+    ['Danh từ + です | この + danh từ',['Danh từ + です','この + danh từ']],
+    ['Động từ thể từ điển / Danh từ + の + ために',['Động từ thể từ điển / Danh từ + の + ために']],
+    ['Động từ / Tính từ な + な / Danh từ + の + とき',['Động từ / Tính từ な + な / Danh từ + の + とき']],
+    ['Danh từ + にあって(は / も)',['Danh từ + にあって(は / も)']]
+  ]){
     b.c.showLessonDetail({id:'notation',title:'Cách ghép câu',formula},'N4','grammar');
-    const raw=b.document.querySelector('.lesson-formula code'),layout=b.document.querySelector('.grammar-layout');
+    const raw=b.document.querySelector('.lesson-formula code');
     assert.equal(raw.hidden,true);assert.equal(raw.textContent,formula);
-    assert.equal(layout.querySelector('img'),null);
-    const expected=formula.replaceAll(' / ',' hoặc ').replaceAll(' + ','+').replaceAll(' hoặc ','hoặc').replaceAll(' | ','');
-    assert.equal(layout.textContent.replaceAll(' + ','+'),expected);
-    if(formula.includes('|'))assert.equal(layout.querySelectorAll('.grammar-break').length,1);
+    assert.deepEqual(rows(),expected);
+    assert.equal(b.document.querySelector('.grammar-or'),null);
   }
+  b.c.showLessonDetail({id:'escaped',title:'Literal notation',formula:'<img src=x onerror=attack()> + です'},'N4','grammar');
+  assert.equal(b.document.querySelector('.grammar-layout img'),null);
+  assert.match(b.document.querySelector('.grammar-layout').textContent,/<img src=x onerror=attack\(\)>/);
 });
 
 test('lesson teaching reformats both AI and original formulas and restores them on account invalidation',async()=>{
@@ -1185,4 +1195,35 @@ test('recall save retry replaces the error with visible source comparison withou
   assert.equal(feedback.dataset.correct,'unknown');
   assert.equal(sent.length,2);assert.equal(sent[0].attempt_id,sent[1].attempt_id);
   assert.equal(sent[0].response_text,' こんにちは ');assert.deepEqual(sent[1],sent[0]);
+});
+
+test('all N5–N1 curriculum and plan formulas use compact rows without modifying source or formation answers',async()=>{
+  const corpus=vm.createContext({window:{},fetch:async path=>({ok:true,json:async()=>JSON.parse(readFileSync(`static/${path}`,'utf8'))})});
+  for(const file of ['jlpt-data.js','vi-labels.js','learning.js','lesson-checks.js','study-plan.js','workspace.js'])
+    vm.runInContext(readFileSync(`static/${file}`,'utf8'),corpus);
+  await corpus.loadPracticalCourse();
+  const b=lesson();
+  for(const level of ['N5','N4','N3','N2','N1']){
+    await corpus.ensureLessons(level);
+    const entries=Object.entries(corpus.window.JLPT_DATA.curriculum[level].skills)
+      .flatMap(([skill,items])=>items.map(item=>({skill,item})));
+    for(const unit of corpus.createStudyPlan(level))for(const step of unit.steps || [])
+      if(step.lesson)entries.push({skill:step.skill,item:step.lesson});
+    let rendered=false;
+    for(const {skill,item}of entries.filter(entry=>entry.item.formula)){
+      const before=JSON.stringify(item),answers=JSON.stringify(b.c.lessonQuestions(item,level,skill).map(task=>task.accepted_answers));
+      b.c.showLessonDetail(item,level,skill);
+      const raw=b.document.querySelector('.lesson-formula code'),layout=b.document.querySelector('.grammar-layout');
+      assert.equal(raw.textContent,item.formula,`${level}:${item.id}`);
+      assert.equal(raw.hidden,true);assert.equal(layout.querySelector('.grammar-or'),null);
+      for(const row of layout.querySelectorAll('.grammar-row')){
+        assert.ok(row.textContent.trim() && row.textContent.trim()!=='+',`${level}:${item.id}`);
+        assert.ok(row.children.every(child=>child.className==='grammar-chunk'));
+      }
+      assert.equal(JSON.stringify(item),before,`${level}:${item.id} source changed`);
+      assert.equal(JSON.stringify(b.c.lessonQuestions(item,level,skill).map(task=>task.accepted_answers)),answers);
+      rendered=true;
+    }
+    assert.ok(rendered,`No actual formula coverage for ${level}`);
+  }
 });
