@@ -746,3 +746,39 @@ Verification: `node --test --test-timeout=20000 --test-concurrency=2 tests/chat-
 
 Actual local desktop 1280×900 and mobile 390×844 pages exercised the first preset by click, the second by native Enter, and the third by mobile click. Each sent its distinct message and rendered a response. The final voice control measured 119.14×44 on desktop and 44×44 on mobile, without clipping or horizontal overflow. Replies had three paragraphs with an 8px gap, 10px bottom padding and no empty header; the actual lesson still rendered with no metadata disclosure and retained its source-browser links. API responses were process-local synthetic fixtures, not real model quality, authenticated production or microphone acceptance. No dependencies were installed, and no production data, accounts, providers or history were changed.
 
+## 22. Whole-app compact grammar formula presentation
+
+The user subsequently requested implementation across all lessons, after another screenshot showed the unchanged shared renderer. The application audit ran before product edits on deployed main `3ed0239`.
+
+### Inventory and responsible paths
+
+Actual curriculum plus study-plan traversal found **804 formula occurrences and 599 distinct source strings**. Counts include repeated addressable references, not 804 independently authored formulas:
+
+| Level | Occurrences | Distinct strings within level |
+| --- | ---: | ---: |
+| N5 | 184 | 121 |
+| N4 | 147 | 110 |
+| N3 | 146 | 110 |
+| N2 | 165 | 130 |
+| N1 | 162 | 128 |
+
+The five per-level distinct counts overlap; their sum is not a global unique count. All slash-bearing strings and operator shapes were inspected. The shared `grammarFormulaHtml` renderer is called by initial lesson rendering and by the study-teacher callback that reapplies an AI presentation, restores the original, or invalidates it on account changes. The problem was shared tokenization plus CSS: each term, plus sign and “hoặc” became an independent grid row.
+
+### Presentation contract
+
+- Each explicit alternative is a compact row. A plus sign stays paired with its following term when a row wraps.
+- A single shared suffix across form categories, as in the reported appearance `そうだ`, is displayed on each applicable row. A shared prefix before plain Japanese verb alternatives is similarly repeated. No source data is edited.
+- Parenthesized/bracketed optional groups remain intact. A category-specific chain such as `V / N + の + ために` is not blindly expanded into an incorrect `V + の + ために`.
+- Compound shorthand whose scope cannot be determined without grammatical interpretation remains original notation on a compact wrapping row. **96 of 599 distinct strings retain a slash somewhere**, including protected optional groups and compound notation; they no longer render standalone vertical “hoặc” or plus-sign towers. This is not a claim that every source shorthand has been independently resolved into separate grammatical branches.
+- Hidden raw formulas, Japanese source strings, all source records, task IDs/revisions and formation accepted answers remain unchanged. AI/original comparison uses the same renderer; no provider, schema or system-prompt changes are included.
+
+The 599 distinct strings produce 1,101 compact display rows in this snapshot. This count describes display projection, not new exercises or verified grammar.
+
+### Verification and limits
+
+`node --test --test-timeout=30000 --test-concurrency=2 tests/tutor-ui.test.mjs tests/lesson-flow.test.mjs tests/study-teacher-ui.test.mjs tests/chat-ui.test.mjs` initially passed 79 checks, including actual rendering of every formula occurrence and unchanged source/formation answers. The separate study-teacher UI file could not load `@noble/hashes` in the new worktree. An ignored junction reused the already installed dependency directory; no installation or tracked dependency change occurred. Running only `node --test --test-timeout=30000 tests/study-teacher-ui.test.mjs` then passed 32/32. Combined evidence: **111 passing checks across two commands**, not a second full-suite run.
+
+Actual 1280×900 desktop and 390×844 mobile pages covered six original lessons across all five levels: N5 に行く; N4 appearance そうだ and たら; N3 わけがない compound notation; N2 に際して; N1 optional の with いかんで. All twelve surfaces retained exact raw formulas, had no horizontal/layout overflow, no old “hoặc” rows and no unpaired operators. Appearance そうだ occupies three 26px rows; たら occupies four 26px rows. The retained N3 compound wraps to 83px on mobile rather than inventing suffix scope. Screenshots were inspected.
+
+The local preview serves real source assets and static lessons with synthetic process-local account/API responses. No AI teaching request was made for this visual check; no live-model, independent Japanese approval, production learner writes or deployment is implied. The previous user-requested local preview address now points at this isolated formula branch.
+

@@ -64,11 +64,11 @@
 #lesson-page .lesson-formula{display:grid;gap:14px;padding:20px;min-width:0}
 #lesson-page .lesson-formula>span{font-size:15px;letter-spacing:0;text-transform:none}
 .lesson-formula code[hidden]{display:none}
-.grammar-layout{display:grid;justify-items:start;gap:8px;min-width:0;max-width:100%}
-.lesson-formula .grammar-part{font:500 17px/1.7 var(--font-sans);letter-spacing:0;text-transform:none;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
-.lesson-formula .grammar-plus{font:600 22px/1.2 var(--font-sans);color:var(--practice-green);margin-left:16px;letter-spacing:0}
-.lesson-formula .grammar-or{font:500 15px/1.5 var(--font-sans);color:var(--ink);padding:4px 0;letter-spacing:0;text-transform:none}
-.grammar-break{height:8px}
+.grammar-layout{display:grid;gap:8px;min-width:0;max-width:100%}
+.grammar-row{display:flex;flex-wrap:wrap;gap:4px 8px;min-width:0;max-width:100%;font:500 16px/1.65 var(--font-sans);overflow-wrap:anywhere}
+.grammar-chunk{display:inline-flex;align-items:baseline;gap:6px;min-width:0;max-width:100%}
+.lesson-formula .grammar-part{min-width:0;font:inherit;letter-spacing:0;text-transform:none;color:var(--ink);white-space:normal}
+.lesson-formula .grammar-plus{flex:none;font:600 16px/1.65 var(--font-sans);color:var(--practice-green);margin:0;letter-spacing:0}
 .lesson-explain{font-size:16px;line-height:1.85;white-space:pre-line;max-inline-size:68ch}
 .lesson-prerequisites{font-size:15px;line-height:1.7;margin:0}
 .lesson-support,.lesson-info{margin:24px 0}
