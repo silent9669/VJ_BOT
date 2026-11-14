@@ -212,7 +212,7 @@ async function removeProfile(env, userId, id) {
 // /api/ai/* (a learner's own API) and /api/admin/* (platform settings, admins only).
 export async function aiRoute(request, env, url) {
   const user = await sessionUser(request, env);
-  if (!user) return json({detail: 'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'}, 401);
+  if (!user) return json({detail: 'Đăng nhập để học với thầy Lâm và đồng bộ tiến độ.'}, 401);
   const expectedAccount = request.headers.get('X-VJBot-Account');
   if (expectedAccount !== null && expectedAccount !== user.user_id) return json({detail: 'Tài khoản đăng nhập đã đổi. Hãy tải lại trang trước khi dùng kết nối API.', code: 'account_changed'}, 409);
   const path = url.pathname, method = request.method, admin = await isAdmin(env, user.user_id);
@@ -322,7 +322,7 @@ export async function aiRoute(request, env, url) {
   if (path === '/api/ai/test' && method === 'POST') {
     const data = await body(request);
     if (!data) return json({detail: 'Dữ liệu không hợp lệ.'}, 400);
-    if (await rateLimited(env, user.user_id)) return json({detail: 'Bạn hãy đợi một phút rồi thử lại.'}, 429);
+    if (await rateLimited(env, user.user_id)) return json({detail: 'Em hãy đợi một phút rồi thử lại.'}, 429);
     const provider = await resolveProvider(env, user.user_id, data.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
     const response = providerFailure(provider);
     if (response) return response;

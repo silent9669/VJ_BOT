@@ -748,7 +748,7 @@ test('unconfigured managed OpenAI fails readiness without using a saved personal
   await ui.context.checkAiReady();
   assert.equal(ui.element('chat-input').disabled,true);
   assert.match(ui.element('chat-gate-title').textContent,/OPENAI_API_KEY/);
-  assert.equal(ui.element('chat-gate-open').textContent,'Model quản trị');
+  assert.equal(ui.element('chat-gate-open').textContent,'Chọn model');
   assert.deepEqual(ui.requests.map(request=>request.path),['/api/ai/settings']);
 });
 

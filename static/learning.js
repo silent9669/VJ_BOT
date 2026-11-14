@@ -43,7 +43,7 @@ async function loadTeachingDrafts(level){
   }
   const titles=new Map(source.lessons.map(lesson=>[lesson.id,lesson.title]));
   return [...source.lessons].sort((a,b)=>a.order-b.order).map(lesson=>({
-    ...lesson,lesson:lesson.order,editorial:true,source:`AI-authored ${level} study drafts`,sourceLabel:'VJBot · AI biên soạn · chờ bạn duyệt',language:'vi',
+    ...lesson,lesson:lesson.order,editorial:true,source:`AI-authored ${level} study drafts`,sourceLabel:'VJBot · AI biên soạn · chờ em duyệt',language:'vi',
     meaning_vi:lesson.goal,summary:lesson.goal,prerequisite_titles:lesson.prerequisites.map(id=>titles.get(id)),
     examples:lesson.examples.map(example=>({...example,ro:example.reading})),
     drills:lesson.tasks.map(task=>({

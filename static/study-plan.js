@@ -24,7 +24,7 @@ function createStudyPlan(level){
   const step=(lesson,skill)=>({lesson,skill,ids:lessonProgressIds(lesson,level,skill)});
   if(level==='N5')units.push({id:'practical:kana',title:'Làm quen bảng chữ cái',goal:'Nhận diện cách đọc các chữ cơ bản trước khi bắt đầu hội thoại.',minutes:60,optional:true,steps:skills.kana.map(l=>step(l,'kana'))});
   const editorial=skills.grammar.filter(lesson=>lesson.editorial);
-  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chờ bạn duyệt',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Đọc ví dụ theo tình huống rồi tự viết câu. Bài do AI biên soạn, chưa được duyệt; chỉ dùng để tham khảo.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
+  if(editorial.length)units.push({id:`${level.toLowerCase()}-teaching:v1`,type:'grammar',sourceLabel:'AI biên soạn · chờ em duyệt',title:`${level} Việt–Nhật: hiểu và tự vận dụng`,goal:'Đọc ví dụ theo tình huống rồi tự viết câu. Bài do AI biên soạn, chưa được duyệt; chỉ dùng để tham khảo.',minutes:editorial.length*10,steps:editorial.map(lesson=>step(lesson,'grammar'))});
   for(const chapter of courseChapters.chapters.filter(c=>c.level===level)){
     const lessons=chapter.grammar_ids.map(id=>skills.grammar.find(l=>l.id===`openjlpt:${level}:grammar:${id}`));
     if(lessons.some(l=>!l))throw new Error('Thiếu nguồn của chương');

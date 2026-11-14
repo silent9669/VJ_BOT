@@ -3,6 +3,7 @@
   const el = id => document.getElementById(id);
   let peer=null, stream=null, channel=null, abort=null, version=0, ready=false, closing=false;
   let timer=null, closeTimer=null, connectTimer=null, disconnectedTimer=null, startedAt=0;
+  const BARS=33;
   let audioContext=null,analyser=null,waveFrame=null,callOwner=null;
   const audioSources=[];
   let wakeLock=null,commands={},teacherAnalyser=null,teacherHeardAt=0,teacherExpectedUntil=0,teacherSpeaking=false,userMuted=false;
@@ -48,7 +49,7 @@
     audioSources.splice(0).forEach(source=>source.disconnect());
     audioContext?.close().catch(()=>{});audioContext=null;analyser=null;teacherAnalyser=null;
     teacherHeardAt=0;teacherExpectedUntil=0;teacherSpeaking=false;userMuted=false;commands={};
-    const canvas=el('live-wave');canvas?.getContext?.('2d')?.clearRect(0,0,canvas.width,canvas.height);
+    paint(new Float32Array(BARS),0);
     el('live-audio').srcObject=null;letSleep();
     el('live-play-audio').hidden=true;
     el('live-mute').setAttribute('aria-pressed','false');el('live-mute').textContent='Tắt micro';
@@ -67,15 +68,30 @@
     audioContext=new AudioContext();audioContext.resume().catch(()=>{});
     analyser=audioContext.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.65;
     teacherAnalyser=audioContext.createAnalyser();teacherAnalyser.fftSize=512;
-    const samples=new Uint8Array(analyser.fftSize);
+    const samples=new Uint8Array(analyser.fftSize),levels=new Float32Array(BARS);
     const draw=()=>{
       if(!analyser)return;
       teacherPulse();
-      analyser.getByteTimeDomainData(samples);ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.strokeStyle=getComputedStyle(canvas).color;ctx.lineWidth=3;ctx.beginPath();
-      for(let i=0;i<samples.length;i++){const x=i/(samples.length-1)*canvas.width,y=canvas.height/2+(samples[i]-128)/128*canvas.height*.46;if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);}
-      ctx.stroke();waveFrame=requestAnimationFrame(draw);
+      analyser.getByteTimeDomainData(samples);
+      const span=Math.floor(samples.length/BARS);let sum=0;
+      for(let i=0;i<BARS;i++){
+        let energy=0;for(let j=0;j<span;j++)energy+=Math.abs(samples[i*span+j]-128);
+        const envelope=.3+.7*Math.sin(Math.PI*(i+.5)/BARS);
+        levels[i]+=(Math.min(1,energy/span/36*envelope)-levels[i])*.35;sum+=levels[i];
+      }
+      paint(levels,sum/BARS);waveFrame=requestAnimationFrame(draw);
     };draw();
+  }
+  // Mirrored capsule bars (Siri / Voice Memos style) drawn with one stroked path.
+  function paint(levels,level) {
+    const canvas=el('live-wave'),ctx=canvas?.getContext?.('2d');
+    if(!ctx)return;
+    const gap=canvas.width/BARS,mid=canvas.height/2,max=canvas.height*.86;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.lineCap='round';ctx.lineWidth=gap*.46;ctx.strokeStyle=getComputedStyle(canvas).color;ctx.beginPath();
+    for(let i=0;i<BARS;i++){const x=(i+.5)*gap,half=Math.max(.01,levels[i]*max/2);ctx.moveTo(x,mid-half);ctx.lineTo(x,mid+half);}
+    ctx.stroke();
+    el('live-stage')?.style?.setProperty?.('--level',level.toFixed(3));
   }
   function end(immediate=false) {
     stream?.getTracks().forEach(track=>{track.enabled=false;});
@@ -132,10 +148,10 @@
           },1000);
         } else if(event.type==='session.closed')cleanup('Đã kết thúc cuộc trò chuyện.');
         else if(['session.input_transcript.delta','session.output_transcript.delta'].includes(event.type)){if(event.type==='session.output_transcript.delta')teacherHeardAt=Date.now();timeline.add(event);}
-        else if(event.type==='error')cleanup('GPT-Live báo lỗi. Kết thúc phiên; hãy thử lại.');
+        else if(event.type==='error')cleanup('Cuộc gọi gặp lỗi và đã kết thúc. Hãy thử lại.');
       });
       events.addEventListener('close',()=>{if(run===version)cleanup('Kết nối đã đóng.');});
-      status('Đang mở GPT-Live…');
+      status('Đang kết nối với thầy…');
       connectTimer=setTimeout(()=>{if(run===version)cleanup('Kết nối hết thời gian. Hãy thử lại.');},35000);
       await connection.setLocalDescription(await connection.createOffer());
       if(connection.iceGatheringState!=='complete')await new Promise(resolve=>{
@@ -153,9 +169,8 @@
       const result=await response.json();
       if(run!==version)return;
       if(owner!==signedInUser?.user_id){cleanup('Tài khoản đã thay đổi.');return;}
-      if(!response.ok)throw new Error(result.detail || 'Không mở được GPT-Live.');
+      if(!response.ok)throw new Error(result.detail || 'Không mở được cuộc gọi.');
       greeting=result.greeting;commands=result.commands && typeof result.commands==='object'?result.commands:{};
-      el('live-model-name').textContent=result.model+' · '+result.voice;
       await connection.setRemoteDescription({type:'answer',sdp:result.sdp});
     } catch(error) {
       if(run!==version)return;
@@ -200,4 +215,5 @@
   window.addEventListener('vjbot-account-ready',window.checkLiveAccount);
   window.stopLiveConversation=()=>{end();timeline.stop();timeline.accountChanged();};
   window.openLiveConversation=()=>{if(!signedInUser?.is_admin)return;mode(true);return start();};
+  paint(new Float32Array(BARS),0);
 })();

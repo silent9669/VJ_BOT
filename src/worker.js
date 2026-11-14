@@ -78,7 +78,7 @@ export default {
       const privateRoutes = ['/api/exam-attempts','/api/completions','/api/profile','/api/progress','/api/progress/record','/api/next-topic','/api/history','/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach','/api/account/delete'];
       if(privateRoutes.includes(url.pathname)) {
         const user = await sessionUser(request,env);
-        if(!user) return jsonResponse({detail:'Đăng nhập để dùng Sensei và đồng bộ tiến độ.'},401);
+        if(!user) return jsonResponse({detail:'Đăng nhập để học với thầy Lâm và đồng bộ tiến độ.'},401);
         const expectedAccount=request.headers.get('X-VJBot-Account');
         if(expectedAccount!==null&&expectedAccount!==user.user_id)return jsonResponse({detail:'Tài khoản đăng nhập đã đổi. Hãy tải lại trang trước khi dùng kết nối API.',code:'account_changed'},409);
         if(url.pathname==='/api/progress/record' || url.pathname==='/api/practice/coach'){
@@ -106,7 +106,7 @@ export default {
           request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
         }
         if(['/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach'].includes(url.pathname) && request.method==='POST') {
-          if(await rateLimited(env,user.user_id)) return jsonResponse({detail:'Bạn hãy đợi một phút rồi thử lại.'},429);
+          if(await rateLimited(env,user.user_id)) return jsonResponse({detail:'Em hãy đợi một phút rồi thử lại.'},429);
         }
       }
       if(url.pathname==='/api/exam-attempts')return await examRoute(request,url,env,url.searchParams.get('user_id'));
@@ -500,13 +500,13 @@ export default {
           const indexRes = await env.ASSETS.fetch(new Request(indexUrl, request));
           if (indexRes.ok) {
             const h = new Headers(indexRes.headers);
-            h.set("Cache-Control", "no-cache, no-store, must-revalidate");
+            h.set("Cache-Control", "no-cache");
             return new Response(indexRes.body, { status: 200, headers: h });
           }
         }
         if (res.status < 400 && (url.pathname === "/" || url.pathname.endsWith(".html"))) {
           const newHeaders = new Headers(res.headers);
-          newHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+          newHeaders.set("Cache-Control", "no-cache");
           return new Response(res.body, {
             status: res.status,
             statusText: res.statusText,
