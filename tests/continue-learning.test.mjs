@@ -52,9 +52,9 @@ test('opening another lesson replaces the resume target; accounts and levels rem
   const p=await page();remember(p,lesson(p,'openjlpt:N4:grammar:te-morau'));remember(p,lesson(p,'openjlpt:N4:grammar:te-kureru'));
   assert.equal((await nextCard(p)).title,'〜てくれる');
   const other=await page({storage:p.storage,owner:'learner:b'});
-  assert.equal((await nextCard(other)).title,'あげる / くれる / もらう');
+  assert.equal((await nextCard(other)).title,'Báo trễ có lý do và phương án tiếp theo');
   const n5=await page({storage:p.storage,level:'N5'});
-  assert.equal((await nextCard(n5)).title,'〜は');
+  assert.equal((await nextCard(n5)).title,'Nêu chủ đề bằng は');
 });
 
 test('completed resume target advances to the next unfinished lesson without marking previous lessons complete',async()=>{
@@ -71,7 +71,7 @@ test('removed, malformed and external resume targets fall back to canonical curr
     JSON.stringify({id:'https://evil.example/',skill:'grammar',owner:null}),JSON.stringify({id:'openjlpt:N4:grammar:te-morau',skill:'fake',owner:null})]) {
     p.storage.set(key,value);
     const reloaded=await page({storage:p.storage});
-    assert.equal((await nextCard(reloaded)).title,'あげる / くれる / もらう');
+    assert.equal((await nextCard(reloaded)).title,'Báo trễ có lý do và phương án tiếp theo');
   }
 });
 

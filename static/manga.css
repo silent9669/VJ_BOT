@@ -8,6 +8,8 @@ html[data-ui=manga] {
   --line:#b8b8ad;--border-dark:#181818;--accent:#181818;--accent-hover:#393933;
   --yellow:#f7e34e;--coral:#9b3525;--radius-card:3px;--radius-control:3px;
   --r-1:3px;--r-2:4px;--control-height:44px;
+  --glass:#fff;--glass-strong:#fff;--glass-blur:none;--glass-hair:#181818;
+  --glass-rim:none;--glass-lift:3px 3px 0 #181818;
   --font-sans:'Be Vietnam Pro','Noto Sans JP',sans-serif;
   --font-display:'Barlow Condensed','Be Vietnam Pro',sans-serif;
 }
@@ -19,7 +21,10 @@ html[data-ui=manga] :is(p,li) {text-wrap:pretty}
 html[data-ui=manga] .app-shell {min-height:calc(100dvh - 62px)}
 html[data-ui=manga] .sketch-canvas {background:var(--paper);background-image:none;padding:30px 36px 56px!important}
 html[data-ui=manga] .tab-panel {max-width:1200px;padding:0}
-html[data-ui=manga] .main-topbar {background:#fff;border-bottom:2px solid var(--ink);box-shadow:none;height:64px!important;min-height:64px;padding:8px 32px!important}
+html[data-ui=manga] .main-topbar {background:#fff!important;border-bottom:2px solid var(--ink)!important;box-shadow:none!important;height:64px!important;min-height:64px;padding:8px 32px!important}
+html[data-ui=manga] .mobile-bottom-bar {background:#fff!important;border-top:2px solid var(--ink)!important;box-shadow:none!important}
+html[data-ui=manga] .mobile-bottom-item {border-radius:2px}
+html[data-ui=manga] .mobile-bottom-item.active {background:var(--yellow)!important;color:var(--ink)!important;box-shadow:none}
 html[data-ui=manga] .breadcrumb-current {font-size:13px;font-weight:700}
 html[data-ui=manga] .topbar-summon-btn {border:1.5px solid var(--ink);border-radius:3px;min-height:44px;box-shadow:2px 2px 0 var(--ink);background:var(--yellow)!important}
 html[data-ui=manga] .topbar-account-btn {border:1px solid var(--ink);border-radius:3px;min-height:44px}
@@ -134,7 +139,7 @@ html[data-ui=manga] .public-levels button[aria-pressed=true] {background:var(--y
 html[data-ui=manga] .public-steps {border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
 html[data-ui=manga] .public-steps button {font-weight:700;min-height:60px}
 html[data-ui=manga] .public-footer {border-color:var(--ink)}
-html[data-ui=manga] :is(#auth-dialog,.admin-user-dialog,#simulation-confirm) {border:2px solid var(--ink);border-radius:4px;box-shadow:7px 7px 0 var(--ink);background:#fff}
+html[data-ui=manga] :is(#auth-dialog,.admin-user-dialog,#simulation-confirm)[open] {border:2px solid var(--ink)!important;border-radius:4px!important;box-shadow:7px 7px 0 var(--ink)!important;background:#fff!important}
 html[data-ui=manga] .auth-aside {background:var(--yellow);border-right:2px solid var(--ink)}
 html[data-ui=manga] #auth-dialog h2 {font-family:var(--font-display);font-size:32px;font-weight:800}
 html[data-ui=manga] .auth-tabs button[aria-pressed=true] {background:var(--yellow);color:var(--ink)}
@@ -149,7 +154,7 @@ html[data-ui=manga] :is(.sidebar-companion,.mascot-breathing,.lam-idle) {animati
   html[data-ui=manga] #manga-nav a[aria-current] {border-color:var(--ink);background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
   html[data-ui=manga] body:not([data-page=landing]) .app-shell #app-sidebar {display:none}
   html[data-ui=manga] .app-main {width:100%}
-  html[data-ui=manga] .main-topbar {width:100%;max-width:1272px;margin:0 auto;border-bottom:0;background:var(--paper);flex-shrink:0}
+  html[data-ui=manga] .main-topbar {width:100%;max-width:1272px;margin:0 auto;border-bottom:0!important;background:var(--paper)!important;flex-shrink:0}
   html[data-ui=manga] .main-topbar .breadcrumb-current {white-space:nowrap}
   html[data-ui=manga] .sketch-canvas {padding-top:16px!important}
   html[data-ui=manga] body[data-page=landing] #manga-nav {display:none}
