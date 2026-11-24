@@ -1016,6 +1016,7 @@ test('Mistral Live creates and closes LiveKit sessions billed to the caller\'s o
     assert.equal((await worker.fetch(make({level:'N5',...patch}),env)).status,400);
   }
   const seen=[];
+  const wireSession={id:'sess_test1',participant_token:'pt-test',server_url:'https://lk.test',created_at:'2030-01-01T00:00:00Z',expires_at:'2030-01-01T00:10:00Z'};
   globalThis.fetch=async(url,options)=>{
     seen.push(url);
     assert.equal(options.headers.Authorization,'Bearer sk-test-12345678');
@@ -1024,15 +1025,23 @@ test('Mistral Live creates and closes LiveKit sessions billed to the caller\'s o
     const body=JSON.parse(options.body);
     assert.equal(body.llm.model,'m1');assert.equal(body.stt.model,'voxtral-mini-transcribe-realtime-3');
     assert.equal(body.tts.model,'voxtral-mini-tts-3');assert.ok(body.instructions&&body.welcome_message);
-    return Response.json({id:'sess_test1',participant_token:'pt-test',server_url:'wss://lk.test',expires_at:'2030-01-01'});
+    return Response.json(wireSession);
   };
   try {
     const response=await worker.fetch(make({level:'N5'}),env);assert.equal(response.status,201);
     const value=await response.json();
-    assert.equal(value.id,'sess_test1');assert.equal(value.participantToken,'pt-test');assert.equal(value.serverUrl,'wss://lk.test');
+    assert.equal(value.id,'sess_test1');assert.equal(value.participantToken,'pt-test');assert.equal(value.serverUrl,'https://lk.test');
     assert.ok(!JSON.stringify(value).includes('sk-test-12345678'));
     assert.equal((await worker.fetch(close('sess_test1'),env)).status,200);
     assert.equal((await worker.fetch(close('../etc'),env)).status,400);
+    globalThis.fetch=async()=>Response.json({...wireSession,server_url:'wss://lk.test'});
+    const wss=await worker.fetch(make({level:'N5'}),env);
+    assert.equal(wss.status,201);
+    assert.equal((await wss.json()).serverUrl,'wss://lk.test');
+    for(const patch of [{server_url:'http://lk.test'},{server_url:'wss://'},{server_url:'https://user:password@lk.test'},{participant_token:''}]){
+      globalThis.fetch=async()=>Response.json({...wireSession,...patch});
+      assert.equal((await worker.fetch(make({level:'N5'}),env)).status,502);
+    }
     globalThis.fetch=async()=>new Response('error sk-test-12345678',{status:403});
     const denied=await worker.fetch(make({level:'N5'}),env);assert.equal(denied.status,503);
     assert.ok(!(await denied.text()).includes('sk-test-12345678'));

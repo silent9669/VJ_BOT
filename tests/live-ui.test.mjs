@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 
-function liveUI({microphone,reply,settings,geminiReply,mistralReply}={}) {
+function liveUI({microphone,reply,settings,geminiReply,mistralReply,mistralConnect}={}) {
   const elements=new Map(),windowEvents={},tracks=[{enabled:true,stopped:false,stop(){this.stopped=true;}}],requests=[];
   const stream={getTracks:()=>tracks,getAudioTracks:()=>tracks};
   const element=id=>{
@@ -20,7 +20,7 @@ function liveUI({microphone,reply,settings,geminiReply,mistralReply}={}) {
   class FakeRoom {
     constructor(){room=this;this.events={};this.published=false;this.localParticipant={publishTrack:async()=>{this.published=true;}};}
     on(name,fn){this.events[name]=fn;}
-    async connect(url,token){this.url=url;this.token=token;}
+    async connect(url,token){this.url=url;this.token=token;if(mistralConnect)await mistralConnect();}
     disconnect(){this.closed=true;}
     emit(name,...args){this.events[name]?.(...args);}
   }
@@ -110,13 +110,18 @@ test('learners with a Gemini connection open a websocket session with timed capt
   } finally {ui.windowEvents.pagehide();}
 });
 
-test('learners with a Mistral key open a LiveKit room with cumulative captions and a session delete on close',async()=>{
+test('learners with a Mistral key open a LiveKit room with cumulative captions and a session delete on close',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
   const ui=liveUI({settings:{is_admin:false,source:'own',own:{protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'m'}}});
   try {
     await ui.element('live-start').events.click();
     assert.equal(ui.requests.length,1);assert.equal(ui.requests[0].path,'/api/live/mistral');
     assert.deepEqual(ui.requests[0].body,{level:'N5',lesson:null});
     const room=ui.room();assert.equal(room.url,'wss://lk.test');assert.equal(room.token,'pt-test');assert.equal(room.published,true);
+    t.mock.timers.tick(35000);
+    assert.equal(ui.element('live-stage').dataset.active,'true');
+    assert.match(ui.element('live-status').textContent,/lượt em nói/i);
+    assert.equal(ui.tracks[0].stopped,false);
     const segment=content=>({type:'transcription.segment',id:'s1',role:'assistant',content,final:true});
     room.emit('dr',new TextEncoder().encode(JSON.stringify(segment('こんにちは'))),null,null,'voice_agent.events');
     room.emit('dr',new TextEncoder().encode(JSON.stringify(segment('こんにちは！'))),null,null,'voice_agent.events');
@@ -125,6 +130,38 @@ test('learners with a Mistral key open a LiveKit room with cumulative captions a
     ui.element('live-end').events.click();
     assert.equal(room.closed,true);assert.equal(ui.tracks[0].stopped,true);assert.equal(ui.element('live-start').disabled,false);
     assert.equal(ui.requests.at(-1).path,'/api/live/mistral');assert.deepEqual(ui.requests.at(-1).body,{id:'sess_test1'});
+  } finally {ui.windowEvents.pagehide();}
+});
+
+test('Mistral Live times out while the room is still connecting',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  let joined,release;
+  const connecting=new Promise(resolve=>{joined=resolve;});
+  const ui=liveUI({settings:{is_admin:false,own:{protocol:'openai',base_url:'https://api.mistral.ai/v1'}},
+    mistralConnect:()=>new Promise(resolve=>{release=resolve;joined();})});
+  const start=ui.element('live-start').events.click();
+  try {
+    await connecting;
+    t.mock.timers.tick(35000);
+    assert.match(ui.element('live-status').textContent,/hết thời gian/i);
+    assert.equal(ui.element('live-start').disabled,false);
+    assert.equal(ui.tracks[0].stopped,true);
+    assert.deepEqual(ui.requests.at(-1).body,{id:'sess_test1'});
+  } finally {
+    release?.();await start;ui.windowEvents.pagehide();
+  }
+});
+
+test('Live uses the latest saved provider when starting a Mistral call',async()=>{
+  const settings={is_admin:false,own:{protocol:'openai',base_url:'https://openrouter.ai/api/v1'}};
+  const ui=liveUI({settings});
+  try {
+    await ui.element('live-start').events.click();
+    assert.equal(ui.requests.length,0);
+    settings.own.base_url='https://api.mistral.ai/v1';
+    await ui.element('live-start').events.click();
+    assert.equal(ui.requests[0]?.path,'/api/live/mistral');
+    assert.equal(ui.element('live-stage').dataset.active,'true');
   } finally {ui.windowEvents.pagehide();}
 });
 

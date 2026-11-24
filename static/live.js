@@ -5,7 +5,7 @@
   let timer=null, closeTimer=null, connectTimer=null, disconnectedTimer=null, startedAt=0;
   const BARS=33,SILENCE='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
   let audioContext=null,analyser=null,waveFrame=null,callOwner=null,statsTimer=null,remoteLevel=0;
-  let liveSocket=null,captureNode=null,captureSource=null,nextPlayTime=0,liveEngineCached=null;
+  let liveSocket=null,captureNode=null,captureSource=null,nextPlayTime=0;
   let mistralRoom=null,mistralSessionId=null,mistralSegments={};
   const audioSources=[];
   let wakeLock=null,commands={},teacherAnalyser=null,teacherHeardAt=0,teacherExpectedUntil=0,teacherSpeaking=false,userMuted=false;
@@ -143,6 +143,8 @@
       if(run!==version || owner!==signedInUser?.user_id){microphone.getTracks().forEach(track=>track.stop());if(run===version)cleanup('Tài khoản đã thay đổi.');return;}
       stream=microphone;
       const engine=await liveEngine();
+      if(run!==version)return;
+      if(owner!==signedInUser?.user_id){cleanup('Tài khoản đã thay đổi.');return;}
       if(engine==='gemini'){await startGemini(run,microphone);return;}
       if(engine==='mistral'){await startMistral(run,microphone);return;}
       if(engine!=='openai'){cleanup('Nói trực tiếp cần kết nối OpenAI chính thức, Gemini gốc hoặc Mistral gốc trong Cài đặt.');return;}
@@ -212,17 +214,15 @@
   }
   // The learner's saved connection decides the engine; admin stays on the server-keyed OpenAI path.
   async function liveEngine() {
-    if(liveEngineCached)return liveEngineCached;
     try {
       const settings=await (await apiFetch('/api/ai/settings')).json(),own=settings?.own;
       const host=protocol=>new URL((own?.base_url||'').trim()||settings?.bases?.[protocol]||'https://x').hostname;
-      if(settings?.is_admin)liveEngineCached='openai';
-      else if(own?.protocol==='gemini' && /(^|\.)generativelanguage\.googleapis\.com$/.test(host('gemini')))liveEngineCached='gemini';
-      else if(own?.protocol==='openai' && /(^|\.)mistral\.ai$/.test(host('openai')))liveEngineCached='mistral';
-      else if(own?.protocol==='openai' && /(^|\.)openai\.com$/.test(host('openai')))liveEngineCached='openai';
-      else liveEngineCached='none';
-    } catch { liveEngineCached='none'; }
-    return liveEngineCached;
+      if(settings?.is_admin)return'openai';
+      if(own?.protocol==='gemini' && /(^|\.)generativelanguage\.googleapis\.com$/.test(host('gemini')))return'gemini';
+      if(own?.protocol==='openai' && /(^|\.)mistral\.ai$/.test(host('openai')))return'mistral';
+      if(own?.protocol==='openai' && /(^|\.)openai\.com$/.test(host('openai')))return'openai';
+    } catch {}
+    return'none';
   }
   // Gemini Live: mic PCM 16kHz over a WebSocket, server audio 24kHz queued for playback.
   async function startGemini(run,microphone) {
@@ -300,6 +300,7 @@
     return loadLiveKit.promise;
   }
   async function startMistral(run,microphone) {
+    status('Đang kết nối với thầy…');
     const context=globalThis.teacherContext?.();
     const lesson=(typeof chatLessonContext!=='undefined'?chatLessonContext:null) || context?.lesson;
     abort=new AbortController();
@@ -333,6 +334,7 @@
       if(event.role==='assistant')teacherHeardAt=Date.now();
     });
     room.on(RoomEvent.Disconnected,()=>{if(run===version)cleanup('Kết nối đã đóng.');});
+    connectTimer=setTimeout(()=>{if(run===version)cleanup('Kết nối hết thời gian. Hãy thử lại.');},35000);
     await room.connect(result.serverUrl,result.participantToken);
     if(run!==version){room.disconnect();return;}
     await room.localParticipant.publishTrack(microphone.getAudioTracks()[0],{source:Track.Source.Microphone});
@@ -342,8 +344,6 @@
     timer=setInterval(()=>{const seconds=Math.floor((Date.now()-startedAt)/1000);
       el('live-duration').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
       if(seconds>=600)end();},1000);
-    status('Đang kết nối với thầy…');
-    connectTimer=setTimeout(()=>{if(run===version)cleanup('Kết nối hết thời gian. Hãy thử lại.');},35000);
   }
   function mode(live) {
     if(!live && (peer || el('live-start').disabled))end();
@@ -379,7 +379,6 @@
   window.addEventListener('pagehide',()=>{end(true);timeline.stop();});
   window.addEventListener('hashchange',()=>{if(!location.hash.startsWith('#classroom')){end();timeline.stop();}});
   window.checkLiveAccount=()=>{
-    liveEngineCached=null;
     timeline.accountChanged();
     if(!signedInUser || callOwner && callOwner!==signedInUser?.user_id)mode(false);
   };

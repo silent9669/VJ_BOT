@@ -147,9 +147,11 @@ export async function mistralLiveRoute(request,env) {
     if(!response.ok)return json({detail:response.status===429?'Mistral đang giới hạn lượt dùng. Thử lại sau.'
       :'Không mở được cuộc gọi Mistral. Kiểm tra quyền truy cập và hạn mức trong Cài đặt.',code:'live_unavailable'},response.status===429?429:503);
     const result=await response.json();
-    if(typeof result.id!=='string'||!/^[\w.\-]{4,128}$/.test(result.id)
-      || typeof result.participant_token!=='string'||typeof result.server_url!=='string'
-      || !result.server_url.startsWith('wss://'))return json({detail:'Mistral trả về phiên không hợp lệ.'},502);
+    const roomUrl=typeof result?.server_url==='string' && /^(https|wss):\/\//.test(result.server_url)
+      ? URL.parse(result.server_url) : null;
+    if(typeof result?.id!=='string'||!/^[\w.\-]{4,128}$/.test(result.id)
+      || typeof result.participant_token!=='string'||!result.participant_token.trim()
+      || !roomUrl||roomUrl.username||roomUrl.password)return json({detail:'Mistral trả về phiên không hợp lệ.'},502);
     return json({id:result.id,participantToken:result.participant_token,serverUrl:result.server_url,
       model:'mistral-live',greeting:GREETING,commands:{}},201);
   }catch{return json({detail:'Kết nối cuộc gọi hết thời gian. Hãy thử lại.'},504);}
