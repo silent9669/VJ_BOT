@@ -1025,6 +1025,7 @@ test('Mistral Live creates and closes LiveKit sessions billed to the caller\'s o
     const body=JSON.parse(options.body);
     assert.equal(body.llm.model,'m1');assert.equal(body.stt.model,'voxtral-mini-transcribe-realtime-3');
     assert.equal(body.tts.model,'voxtral-mini-tts-3');assert.ok(body.instructions&&body.welcome_message);
+    assert.ok(body.welcome_message.includes('thầy Lâm')&&!body.welcome_message.includes('Dừng lại'),'welcome_message is spoken aloud, not an instruction');
     return Response.json(wireSession);
   };
   try {

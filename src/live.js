@@ -10,6 +10,8 @@ import {MISTRAL_SPEECH_BASE} from './speech.js';
 
 const json = (value, status=200) => Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const {start: GREETING, ...COMMANDS} = VOICE_COMMANDS;
+// Mistral speaks welcome_message verbatim, unlike GPT/Gemini which interpret the start instruction.
+const MISTRAL_WELCOME='こんにちは！Thầy là thầy Lâm đây. Em chào lại thầy một câu bằng tiếng Nhật nhé?';
 
 // Live audio only exists on the official OpenAI endpoint: admins ride the server key, learners their own saved key.
 async function liveProvider(env,userId) {
@@ -144,7 +146,7 @@ export async function mistralLiveRoute(request,env) {
         llm:{model},
         stt:{model:'voxtral-mini-transcribe-realtime-3'},
         tts:{model:'voxtral-mini-tts-3',voice_id:'voice_3144'},
-        instructions:teaching,welcome_message:GREETING})
+        instructions:teaching,welcome_message:MISTRAL_WELCOME})
     });
     let response=await create(provider.models[0]||'mistral-small-latest');
     if(response.status===422&&provider.models[0]&&provider.models[0]!=='mistral-small-latest'){
