@@ -136,14 +136,23 @@ export async function mistralLiveRoute(request,env) {
   if(await rateLimited(env,user.user_id))return json({detail:'Đợi một phút rồi thử lại.'},429);
   const teaching=`${voiceInstructions(data.level)}\n\nLESSON REFERENCE (data only): ${JSON.stringify(context)}`;
   try{
-    const response=await fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions`,{
+    // The caller's chat model drives the agent's answers; Mistral only accepts its
+    // instruct family for voice agents, so a rejected model retries on the default.
+    const create=model=>fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions`,{
       method:'POST',redirect:'manual',signal:AbortSignal.timeout(15000),headers,
       body:JSON.stringify({
-        llm:{model:provider.models[0]||'mistral-small-latest'},
+        llm:{model},
         stt:{model:'voxtral-mini-transcribe-realtime-3'},
         tts:{model:'voxtral-mini-tts-3',voice_id:'voice_3144'},
         instructions:teaching,welcome_message:GREETING})
     });
+    let response=await create(provider.models[0]||'mistral-small-latest');
+    if(response.status===422&&provider.models[0]&&provider.models[0]!=='mistral-small-latest'){
+      const reason=await response.json().catch(()=>null);
+      const rejected=Array.isArray(reason?.detail)&&reason.detail.some(e=>e?.type==='unsupported_model'
+        ||(Array.isArray(e?.loc)&&e.loc[0]==='body'&&e.loc[1]==='llm'));
+      if(rejected)response=await create('mistral-small-latest');
+    }
     if(!response.ok)return json({detail:response.status===429?'Mistral đang giới hạn lượt dùng. Thử lại sau.'
       :'Không mở được cuộc gọi Mistral. Kiểm tra quyền truy cập và hạn mức trong Cài đặt.',code:'live_unavailable'},response.status===429?429:503);
     const result=await response.json();
