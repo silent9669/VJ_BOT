@@ -57,7 +57,7 @@ function liveUI({microphone,reply,settings,geminiReply,mistralReply,mistralConne
     location:{hash:'#classroom'},navigator:{mediaDevices:{getUserMedia:()=>{permissions++;return microphone?microphone():Promise.resolve(stream);}}},
     apiFetch:async(path,options)=>{
       if(path==='/api/ai/settings')return Response.json(settings??{is_admin:true,source:'platform'});
-      requests.push({path,body:JSON.parse(options.body),signal:options.signal});
+      requests.push({path,method:options.method,redirect:options.redirect,body:JSON.parse(options.body),signal:options.signal});
       if(path==='/api/live/gemini')return geminiReply?geminiReply():Response.json({token:'auth_tokens/test-token',ws:'wss://test/ws',model:'gemini-live',greeting:'こんにちは',commands:{repeat:'lặp lại'}},{status:201});
       if(path==='/api/live/mistral')return options.method==='DELETE'?Response.json({ok:true})
         :mistralReply?mistralReply():Response.json({id:'sess_test1',participantToken:'pt-test',serverUrl:'wss://lk.test',model:'mistral-live',greeting:'こんにちは',commands:{}},{status:201});
@@ -130,6 +130,46 @@ test('learners with a Mistral key open a LiveKit room with cumulative captions a
     ui.element('live-end').events.click();
     assert.equal(room.closed,true);assert.equal(ui.tracks[0].stopped,true);assert.equal(ui.element('live-start').disabled,false);
     assert.equal(ui.requests.at(-1).path,'/api/live/mistral');assert.deepEqual(ui.requests.at(-1).body,{id:'sess_test1'});
+  } finally {ui.windowEvents.pagehide();}
+});
+
+test('Mistral Live opens with the selected device profile and closes with the same key',async()=>{
+  const ui=liveUI({settings:{is_admin:false,source:'none',own:null}});
+  ui.context.signedInUser={user_id:'email:learner',is_admin:false};
+  const connection={protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'mistral-small-latest',api_key:'synthetic-device-mistral-key'};
+  const {api_key,...metadata}=connection;
+  let selection={scope:'local',id:'mistral-device'};
+  ui.context.VJProfiles={active:()=>selection,list:async()=>[{id:'mistral-device',...metadata}],load:async(owner,id)=>{
+    assert.equal(owner,'email:learner');assert.equal(id,'mistral-device');return connection;
+  }};
+  try {
+    ui.context.openLiveConversation();
+    await ui.element('live-start').events.click();
+    assert.equal(ui.requests.length,1);
+    assert.equal(ui.requests[0].path,'/api/live/mistral');assert.equal(ui.requests[0].method,'POST');
+    assert.equal(ui.requests[0].redirect,'error');
+    assert.deepEqual(ui.requests[0].body,{level:'N5',lesson:null,api_connection:connection});
+    assert.equal(ui.room().published,true);assert.equal(ui.element('live-stage').dataset.active,'true');
+    selection={scope:'local',id:'other-device'};
+    ui.element('live-end').events.click();
+    assert.equal(ui.requests.at(-1).method,'DELETE');assert.equal(ui.requests.at(-1).redirect,'error');
+    assert.deepEqual(ui.requests.at(-1).body,{id:'sess_test1',api_connection:connection});
+    assert.equal(ui.tracks[0].stopped,true);
+  } finally {ui.windowEvents.pagehide();}
+});
+
+test('Mistral Live does not send a device key after the selected connection changes',async()=>{
+  const ui=liveUI({settings:{is_admin:false,own:null}});
+  ui.context.signedInUser={user_id:'email:learner',is_admin:false};
+  const profile={id:'mistral-device',protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'mistral-small-latest'};
+  let selection={scope:'local',id:profile.id};
+  ui.context.VJProfiles={active:()=>selection,list:async()=>[profile],load:async()=>{
+    selection={scope:'none',id:''};return {...profile,api_key:'synthetic-device-mistral-key'};
+  }};
+  try {
+    await ui.element('live-start').events.click();
+    assert.equal(ui.requests.length,0);assert.equal(ui.tracks[0].stopped,true);
+    assert.match(ui.element('live-status').textContent,/Kết nối Mistral không còn dùng được/);
   } finally {ui.windowEvents.pagehide();}
 });
 

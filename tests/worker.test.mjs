@@ -1048,6 +1048,36 @@ test('Mistral Live creates and closes LiveKit sessions billed to the caller\'s o
   } finally {globalThis.fetch=original;}
 });
 
+test('Mistral Live uses the supplied official device connection for create and close',async()=>{
+  const {env,request}=await authenticated(),original=globalThis.fetch;
+  const api_connection={protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'mistral-small-latest',api_key:'synthetic-device-mistral-key'};
+  const send=(method,body,account='google:qa')=>{
+    const url='https://vjbot.test/api/live/mistral',headers=request('/api/live/mistral').headers;
+    headers.set('X-VJBot-Account',account);
+    return worker.fetch(new Request(url,{method,headers,body:JSON.stringify(body)}),env);
+  };
+  const calls=[];
+  globalThis.fetch=async(url,options)=>{
+    assert.equal(options.headers.Authorization,'Bearer synthetic-device-mistral-key');
+    assert.equal(options.redirect,'manual');
+    calls.push([options.method,url]);
+    if(options.method==='DELETE')return new Response(null,{status:204});
+    assert.equal(JSON.parse(options.body).llm.model,api_connection.model);
+    return Response.json({id:'sess_device1',participant_token:'pt-device',server_url:'https://lk.test'});
+  };
+  try {
+    const created=await send('POST',{level:'N5',api_connection});assert.equal(created.status,201);
+    const result=await created.json();assert.equal(result.id,'sess_device1');
+    assert.equal(result.participantToken,'pt-device');assert.ok(!JSON.stringify(result).includes(api_connection.api_key));
+    const closed=await send('DELETE',{id:result.id,api_connection});assert.equal(closed.status,200);
+    assert.equal((await send('DELETE',{id:result.id,api_connection},'google:other')).status,409);
+    assert.equal((await send('POST',{level:'N5',api_connection:{...api_connection,base_url:'https://api.example.com/v1'}})).status,403);
+    await asAdmin(env);
+    assert.equal((await send('POST',{level:'N5',api_connection})).status,400);
+    assert.deepEqual(calls,[['POST','https://api.mistral.ai/v1/audio/sessions'],['DELETE','https://api.mistral.ai/v1/audio/sessions/sess_device1']]);
+  } finally {globalThis.fetch=original;}
+});
+
 test('practice hints omit the authored key and feedback resolves the exact canonical selected option without changing progress',async()=>{
   const {env,request}=await authenticated(),original=globalThis.fetch;
   await withApi(env,request);

@@ -112,7 +112,7 @@ export async function mistralLiveRoute(request,env) {
   const raw=await request.text();
   if(new TextEncoder().encode(raw).length>16000)return json({detail:'Yêu cầu quá dài.'},413);
   let data;try{data=JSON.parse(raw||'{}');}catch{return json({detail:'Dữ liệu không hợp lệ.'},400);}
-  const provider=await resolveProvider(env,user.user_id);
+  const provider=await resolveProvider(env,user.user_id,data?.api_connection);
   const failure=providerFailure(provider);
   if(failure)return failure;
   if(provider.protocol!=='openai'||provider.baseUrl!==MISTRAL_SPEECH_BASE)return json({detail:'Nói trực tiếp bằng Mistral cần kết nối Mistral gốc trong Cài đặt.'},403);
@@ -120,7 +120,7 @@ export async function mistralLiveRoute(request,env) {
   if(request.method==='DELETE'){
     if(typeof data?.id!=='string'||!/^[\w.\-]{4,128}$/.test(data.id))return json({detail:'Phiên không hợp lệ.'},400);
     try{
-      await fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions/${data.id}`,{method:'DELETE',headers,signal:AbortSignal.timeout(10000)});
+      await fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions/${data.id}`,{method:'DELETE',redirect:'manual',headers,signal:AbortSignal.timeout(10000)});
       return json({ok:true});
     }catch{return json({detail:'Không đóng được phiên. Hãy thử lại.'},504);}
   }
