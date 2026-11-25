@@ -12,6 +12,10 @@ const json = (value, status=200) => Response.json(value,{status,headers:{'Cache-
 const {start: GREETING, ...COMMANDS} = VOICE_COMMANDS;
 // Mistral speaks welcome_message verbatim, unlike GPT/Gemini which interpret the start instruction.
 const MISTRAL_WELCOME='こんにちは！Thầy là thầy Lâm đây. Em chào lại thầy một câu bằng tiếng Nhật nhé?';
+// Cloned male voice saved in the owner's Mistral workspace. Learners connecting their own
+// Mistral key do not have it, so an unknown-voice rejection retries on the Haruto preset.
+const MISTRAL_VOICE='01a21304-460a-74d3-b2b1-663e27cc1caf';
+const MISTRAL_VOICE_FALLBACK='voice_3133';
 // Context bias steers Voxtral toward the words the learner actually practices. Entries count
 // against the model's context window, and restricted content must never leave the server.
 const MISTRAL_STT_STAPLES=['thầy Lâm','こんにちは','ありがとうございます','すみません','はい','いいえ','わかりました','もう一度お願いします'];
@@ -154,7 +158,7 @@ export async function mistralLiveRoute(request,env) {
     // The caller's chat model drives the agent's answers; Mistral only accepts its
     // instruct family for voice agents, so a rejected model retries on the default.
     // A rejected STT tuning retries bare rather than failing the call.
-    const create=(model,tuned)=>fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions`,{
+    const create=(model,tuned,voice)=>fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions`,{
       method:'POST',redirect:'manual',signal:AbortSignal.timeout(15000),headers,
       body:JSON.stringify({
         llm:{model},
@@ -162,15 +166,14 @@ export async function mistralLiveRoute(request,env) {
         // needs the extra context before Voxtral commits to a transcript; lesson terms bias it further.
         stt:tuned?{model:'voxtral-mini-transcribe-realtime-3',target_streaming_delay_ms:1200,context_bias:bias}
           :{model:'voxtral-mini-transcribe-realtime-3'},
-        // Haruto is the male Japanese preset, so the teacher keeps one male voice.
-        tts:{model:'voxtral-mini-tts-3',voice_id:'voice_3133'},
+        tts:{model:'voxtral-mini-tts-3',voice_id:voice},
         instructions:teaching,welcome_message:MISTRAL_WELCOME})
     });
     // Voice answers are short, so the LLM is a small share of session cost: prefer the
     // much stronger instruction following of mistral-medium when the chosen model is rejected.
     const chain=['mistral-medium-latest','mistral-small-latest'];
-    let model=provider.models[0]||chain[0],tuned=true;
-    let response=await create(model,tuned);
+    let model=provider.models[0]||chain[0],tuned=true,voice=MISTRAL_VOICE;
+    let response=await create(model,tuned,voice);
     for(let attempt=0;response.status===422&&attempt<3;attempt++){
       const reason=await response.json().catch(()=>null);
       const detail=Array.isArray(reason?.detail)?reason.detail:[];
@@ -178,9 +181,10 @@ export async function mistralLiveRoute(request,env) {
         ||(Array.isArray(e?.loc)&&e.loc[0]==='body'&&e.loc[1]===path));
       const at=chain.indexOf(model);
       if(hits('llm')&&at<chain.length-1)model=chain[at+1];
+      else if(hits('tts')&&voice!==MISTRAL_VOICE_FALLBACK)voice=MISTRAL_VOICE_FALLBACK;
       else if(hits('stt')&&tuned)tuned=false;
       else break;
-      response=await create(model,tuned);
+      response=await create(model,tuned,voice);
     }
     if(!response.ok)return json({detail:response.status===429?'Mistral đang giới hạn lượt dùng. Thử lại sau.'
       :'Không mở được cuộc gọi Mistral. Kiểm tra quyền truy cập và hạn mức trong Cài đặt.',code:'live_unavailable'},response.status===429?429:503);

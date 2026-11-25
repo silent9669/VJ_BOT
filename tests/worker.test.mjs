@@ -1026,7 +1026,7 @@ test('Mistral Live creates and closes LiveKit sessions billed to the caller\'s o
     assert.equal(body.llm.model,'m1');assert.equal(body.stt.model,'voxtral-mini-transcribe-realtime-3');
     assert.equal(body.stt.target_streaming_delay_ms,1200);
     assert.ok(Array.isArray(body.stt.context_bias)&&body.stt.context_bias.includes('こんにちは')&&body.stt.context_bias.includes('thầy Lâm'));
-    assert.equal(body.tts.model,'voxtral-mini-tts-3');assert.equal(body.tts.voice_id,'voice_3133');
+    assert.equal(body.tts.model,'voxtral-mini-tts-3');assert.equal(body.tts.voice_id,'01a21304-460a-74d3-b2b1-663e27cc1caf');
     assert.ok(body.instructions&&body.welcome_message);
     assert.ok(body.welcome_message.includes('thầy Lâm')&&!body.welcome_message.includes('Dừng lại'),'welcome_message is spoken aloud, not an instruction');
     return Response.json(wireSession);
@@ -1099,7 +1099,7 @@ test('Mistral Live falls back to a supported agent model only when Mistral rejec
       return Response.json({detail:[{loc:['body','tts','voice_id'],msg:'unknown voice',type:'value_error'}]},{status:422});};
     models.length=0;
     assert.equal((await send({level:'N5',api_connection})).status,503);
-    assert.deepEqual(models,['magistral-small-latest']);
+    assert.deepEqual(models,['magistral-small-latest','magistral-small-latest']);
   } finally {globalThis.fetch=original;}
 });
 
