@@ -249,36 +249,20 @@ function initLoadingScreen() {
   const loadingOverlay = document.getElementById("app-loading-screen");
   if (!loadingOverlay) return;
 
-  const progressFill = document.getElementById("loading-progress-fill");
-  const percentText = document.getElementById("loading-percent-text");
-  const statusText = document.getElementById("loading-status-text");
-
-  const steps = [
-    [18, "Đang mở lớp học…"],
-    [48, "Đang xếp bài học…"],
-    [76, "Thầy Lâm đang vào lớp…"],
-    [100, "Sẵn sàng"]
-  ];
-  steps.forEach(([percent, text], index) => {
+  setTimeout(() => {
+    if (!document.getElementById("app-loading-screen")) return;
+    loadingOverlay.classList.add("is-complete");
     setTimeout(() => {
-      if (!document.getElementById("app-loading-screen")) return;
-      if (progressFill) progressFill.style.width = `${percent}%`;
-      if (percentText) percentText.textContent = `${percent}%`;
-      if (statusText) statusText.textContent = text;
-      if (percent === 100) {
-        setTimeout(() => {
-          loadingOverlay.classList.add("fade-out");
-          setTimeout(() => loadingOverlay.remove(), 360);
-        }, 220);
-      }
-    }, 130 + index * 180);
-  });
+      loadingOverlay.classList.add("fade-out");
+      setTimeout(() => loadingOverlay.remove(), 320);
+    }, 180);
+  }, 1150);
 
   // Hard safety timeout: the overlay must never trap the application.
   setTimeout(() => {
     const el = document.getElementById("app-loading-screen");
     if (el) el.remove();
-  }, 1600);
+  }, 1900);
 }
 
 // ==========================================

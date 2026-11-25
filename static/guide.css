@@ -1,0 +1,37 @@
+#app-guide-overlay{position:fixed;inset:0;z-index:12000;background:rgba(19,31,24,.28);backdrop-filter:blur(2px)}
+#app-guide-overlay[hidden]{display:none!important}
+.guide-spotlight{
+  position:fixed;border:3px solid var(--sk-acc,#55a861);border-radius:18px;pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(19,31,24,.45),0 0 0 6px rgba(255,255,255,.24),5px 7px 0 rgba(28,42,34,.2);
+  transition:left .24s ease,top .24s ease,width .24s ease,height .24s ease;
+  animation:guide-pulse 1.35s ease-in-out infinite;
+}
+.guide-card{
+  position:fixed;display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 16px;padding:18px;
+  border:3px solid var(--border-dark,#1c2a22);border-radius:22px;background:var(--sheet,#fffef8);color:var(--ink,#1c2a22);
+  box-shadow:9px 10px 0 rgba(28,42,34,.18);opacity:0;transform:translateY(12px) scale(.97);
+  transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1);
+}
+.guide-step-in .guide-card{opacity:1;transform:none}
+.guide-mascot{width:62px;height:auto;align-self:end;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 rgba(28,42,34,.14));animation:guide-mascot-bob 2.3s ease-in-out infinite}
+.guide-copy{min-width:0}.guide-count{color:var(--accent,#326446);font-size:12px;font-weight:900;font-variant-numeric:tabular-nums}
+.guide-copy h2{margin:4px 0 7px;font-size:24px;line-height:1.1;letter-spacing:-.045em}
+.guide-copy p{margin:0;color:var(--pencil,#3d4b42);font-size:14px;line-height:1.55;font-weight:650}
+.guide-actions{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto auto;gap:9px;align-items:center}
+.guide-actions button{min-height:42px;padding:8px 13px;border:2px solid var(--border-dark,#1c2a22);border-radius:13px;background:var(--sheet,#fffef8);color:var(--ink,#1c2a22);box-shadow:2px 3px 0 rgba(28,42,34,.15);font-weight:850}
+.guide-actions .guide-next{background:var(--accent,#326446);color:var(--on-accent,#fffef8)}
+.guide-actions .guide-skip{border-color:transparent;background:transparent;box-shadow:none;color:var(--muted,#53625a)}
+.guide-actions button:disabled{opacity:.45}
+#btn-app-guide{position:relative}
+#btn-app-guide::after{content:"";position:absolute;right:8px;top:8px;width:8px;height:8px;border-radius:50%;background:var(--sk-acc,#55a861);box-shadow:0 0 0 3px color-mix(in srgb,var(--sk-acc,#55a861) 22%,transparent)}
+@keyframes guide-pulse{0%,100%{filter:drop-shadow(0 0 0 rgba(85,168,97,0))}50%{filter:drop-shadow(0 0 9px rgba(85,168,97,.52))}}
+@keyframes guide-mascot-bob{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@media(max-width:739px){
+  .guide-card{grid-template-columns:1fr;padding:15px;max-height:calc(100dvh - 24px);overflow:auto}
+  .guide-mascot{display:none}
+  .guide-copy h2{font-size:21px}
+  .guide-copy p{font-size:13px}
+  .guide-actions{grid-template-columns:auto 1fr auto auto;gap:7px}
+  .guide-actions button{min-height:40px;padding:7px 10px;font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){.guide-spotlight,.guide-mascot{animation:none!important}.guide-card,.guide-spotlight{transition:none!important}}

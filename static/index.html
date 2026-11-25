@@ -48,21 +48,21 @@
   <link rel="stylesheet" href="dark.css">
   <link rel="stylesheet" href="loading.css">
   <link rel="stylesheet" href="sakuga.css">
+  <link rel="stylesheet" href="guide.css">
 </head>
 <body data-page="landing">
   <div id="app-loading-screen" class="retro-loading-overlay" role="status" aria-live="polite" aria-label="Đang tải VJBot">
-    <div class="loading-paper-card">
-      <div class="loading-header">
-        <img src="favicon.svg?v=3" width="48" height="48" alt="" class="loading-logo-8bit">
-        <div><h2 class="loading-title">VJBot</h2><span class="loading-sub">Lớp học tiếng Nhật</span></div>
+    <div class="loading-scene">
+      <div class="loading-book" aria-hidden="true">
+        <span class="book-spark spark-one"></span><span class="book-spark spark-two"></span><span class="book-spark spark-three"></span>
+        <div class="book-cover left"></div><div class="book-cover right"></div>
+        <div class="book-page page-left"><span></span><span></span><span></span></div>
+        <div class="book-page page-right"><span lang="ja">学</span><i></i><i></i><i></i></div>
+        <div class="book-flip-page"></div>
+        <div class="loading-pencil"></div>
+        <div class="book-shadow"></div>
       </div>
-      <div class="loading-mascot-stage" aria-hidden="true">
-        <div class="pixel-runner-box"><img id="loading-mascot-img" src="assets/lam/pixel/display/south.png" width="56" height="56" alt="" class="running-sprite"><span class="runner-shadow"></span></div>
-      </div>
-      <div class="loading-progress-section">
-        <div class="pixel-progress-bar" aria-hidden="true"><div id="loading-progress-fill" class="pixel-progress-fill"></div></div>
-        <div class="loading-status-row"><span id="loading-status-text">Đang mở lớp học…</span><span id="loading-percent-text">0%</span></div>
-      </div>
+      <div class="loading-copy"><strong>VJBot</strong><span>Thầy Lâm đang mở sổ bài…</span></div>
     </div>
   </div>
   <a href="#main-content" class="skip-link">Đến nội dung chính</a>
@@ -79,7 +79,7 @@
       <div class="sidebar-user-card"><button id="level-chip" data-level="N5" type="button" aria-label="Đổi trình độ JLPT"><span id="level-chip-text">JLPT N5</span><span aria-hidden="true">⌄</span></button><span id="streak-counter" class="sidebar-streak">0 ngày</span></div>
       <nav class="sidebar-nav" aria-label="Điều hướng chính"><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Bài học</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="dashboard" id="tab-btn-dashboard"><span class="nav-label">Học tập</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="curriculum" id="tab-btn-curriculum"><span class="nav-label">Khóa học</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="classroom" id="tab-btn-classroom"><span class="nav-label">Thầy Lâm</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="mastery" id="tab-btn-mastery"><span class="nav-label">Tiến độ</span></button></section><section class="sidebar-nav-section"><h2 class="sidebar-group-label">Luyện tập</h2><button type="button" class="sidebar-nav-item sketch-tab" data-tab="flashcards" id="tab-btn-flashcards"><span class="nav-label">Thẻ nhớ</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kanji" id="tab-btn-kanji"><span class="nav-label">Hán tự</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="kaiwa" id="tab-btn-kaiwa"><span class="nav-label">Luyện nói</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="quiz" id="tab-btn-quiz"><span class="nav-label">Luyện thi</span></button></section></nav>
       <div class="sidebar-companion" id="sidebar-companion"></div>
-      <footer class="sidebar-footer"><div class="sidebar-utilities"><button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden><span class="nav-label">Quản trị</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings"><span class="nav-label">Cài đặt</span></button></div><a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn học liệu ↗</a><button type="button" class="sidebar-account" id="sidebar-account"><span class="sidebar-account-initial" id="sidebar-account-initial" aria-hidden="true">A</span><span class="sidebar-account-copy"><strong id="sidebar-account-name">Tài khoản</strong><span id="sidebar-account-role"></span></span></button></footer>
+      <footer class="sidebar-footer"><div class="sidebar-utilities"><button type="button" class="sidebar-nav-item sketch-tab" data-tab="admin" id="tab-btn-admin" hidden><span class="nav-label">Quản trị</span></button><button type="button" class="sidebar-nav-item" id="btn-app-guide" aria-label="Mở hướng dẫn sử dụng" title="Hướng dẫn sử dụng"><svg class="rail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9a2.7 2.7 0 0 1 5.2 1c0 1.8-2.1 2.2-2.6 3.5M12 17h.01"></path></svg><span class="nav-label">Hướng dẫn</span></button><button type="button" class="sidebar-nav-item sketch-tab" data-tab="settings" id="tab-btn-settings"><span class="nav-label">Cài đặt</span></button></div><a class="sidebar-sources" href="sources.html" target="_blank" rel="noopener">Nguồn học liệu ↗</a><button type="button" class="sidebar-account" id="sidebar-account"><span class="sidebar-account-initial" id="sidebar-account-initial" aria-hidden="true">A</span><span class="sidebar-account-copy"><strong id="sidebar-account-name">Tài khoản</strong><span id="sidebar-account-role"></span></span></button></footer>
     </aside>
 
     <!-- Mobile Drawer Overlay -->
@@ -140,25 +140,73 @@
             <a href="#landing" class="public-brand"><img src="favicon.svg?v=3" width="40" height="40" alt="">VJBot</a>
             <div class="public-nav-actions"><button class="public-login" data-enter="dashboard">Đăng nhập</button><button class="public-cta" data-register>Bắt đầu</button></div>
           </nav>
-          <div class="public-hero">
-            <div class="public-hero-copy">
-              <h1>Tiếng Nhật,<br>từng ngày.</h1>
-              <p class="public-intro">Học N5–N1, luyện nói và hội thoại cùng thầy Lâm.</p>
-              <div class="public-levels" role="group" aria-label="Chọn cấp độ"><button type="button" data-level="N5">N5</button><button type="button" data-level="N4">N4</button><button type="button" data-level="N3">N3</button><button type="button" data-level="N2">N2</button><button type="button" data-level="N1">N1</button></div>
-              <div class="public-account-actions"><button class="public-cta" data-register>Tạo tài khoản <span aria-hidden="true">↗</span></button><button class="public-signin" data-enter="dashboard">Đăng nhập</button></div>
-            </div>
-            <div class="public-demo">
-              <div class="demo-teacher-heading"><img src="assets/lam/pixel/south.png" alt="Thầy Lâm" width="184" height="184"><div><h2>Thử cùng thầy nhé.</h2><p lang="ja">こんにちは！</p></div></div>
-              <div class="demo-chat">
-                <p class="demo-question">Trong câu「私は学生です」,<br>trợ từ「は」được đọc là gì?</p>
-                <div class="demo-answers" role="group" aria-label="Chọn cách đọc của は"><button type="button" data-demo-answer="ha" lang="ja">は · ha</button><button type="button" data-demo-answer="wa" lang="ja">わ · wa</button></div>
-                <p id="demo-feedback" role="status">Chọn câu trả lời của em.</p>
+          <div class="landing-scroll">
+            <section class="landing-section landing-hero-section" aria-labelledby="landing-title" data-parallax-speed="0.34">
+              <div class="public-hero">
+                <div class="public-hero-copy" data-reveal>
+                  <h1 id="landing-title">Tiếng Nhật,<br>từng ngày.</h1>
+                  <p class="public-intro">Học N5–N1, luyện nói và hội thoại cùng thầy Lâm.</p>
+                  <div class="public-levels" role="group" aria-label="Chọn cấp độ"><button type="button" data-level="N5">N5</button><button type="button" data-level="N4">N4</button><button type="button" data-level="N3">N3</button><button type="button" data-level="N2">N2</button><button type="button" data-level="N1">N1</button></div>
+                  <div class="public-account-actions"><button class="public-cta" data-register>Tạo tài khoản <span aria-hidden="true">↗</span></button><button class="public-signin" data-enter="dashboard">Đăng nhập</button></div>
+                </div>
+                <div class="public-demo" data-reveal>
+                  <span class="landing-orbit landing-orbit-one" aria-hidden="true"></span>
+                  <span class="landing-orbit landing-orbit-two" aria-hidden="true"></span>
+                  <div class="demo-teacher-heading"><img src="assets/lam/pixel/south.png" alt="Thầy Lâm" width="184" height="184"><div><h2>Thử cùng thầy nhé.</h2><p lang="ja">こんにちは！</p></div></div>
+                  <div class="demo-chat">
+                    <p class="demo-question">Trong câu「私は学生です」,<br>trợ từ「は」được đọc là gì?</p>
+                    <div class="demo-answers" role="group" aria-label="Chọn cách đọc của は"><button type="button" data-demo-answer="ha" lang="ja">は · ha</button><button type="button" data-demo-answer="wa" lang="ja">わ · wa</button></div>
+                    <p id="demo-feedback" role="status">Chọn câu trả lời của em.</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            </section>
+            <section class="landing-section landing-method" aria-labelledby="landing-method-title" data-parallax-speed="0.22">
+              <div class="landing-section-head" data-reveal>
+                <span class="landing-kicker">Cách học</span>
+                <h2 id="landing-method-title">Một vòng học, ba bước.</h2>
+              </div>
+              <ol class="public-steps">
+                <li data-reveal><button type="button" data-enter="curriculum"><span class="step-index" aria-hidden="true">01</span><span class="step-title">Đọc bài học</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>
+                <li data-reveal><button type="button" data-enter="classroom"><span class="step-index" aria-hidden="true">02</span><span class="step-title">Thầy hỏi, em trả lời</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>
+                <li data-reveal><button type="button" data-enter="kaiwa"><span class="step-index" aria-hidden="true">03</span><span class="step-title">Nhận xét rồi thử lại</span><span class="step-arrow" aria-hidden="true">↗</span></button></li>
+              </ol>
+            </section>
+            <section class="landing-section landing-features" aria-labelledby="landing-features-title" data-parallax-speed="0.16">
+              <div class="landing-section-head" data-reveal>
+                <span class="landing-kicker">Trong lớp</span>
+                <h2 id="landing-features-title">Đủ bài học, luyện tập và phản hồi.</h2>
+              </div>
+              <div class="landing-feature-grid">
+                <article class="landing-feature-card" data-reveal>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3zM12 6v16"/></svg>
+                  <h3>Lộ trình N5–N1</h3>
+                  <p>Bài học theo chương, mở đúng lúc.</p>
+                  <button type="button" data-enter="curriculum">Xem lộ trình <span aria-hidden="true">↗</span></button>
+                </article>
+                <article class="landing-feature-card" data-reveal>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H9l-5 5zM8 8h8M8 12h5"/></svg>
+                  <h3>Lớp học đảo ngược</h3>
+                  <p>Thầy hỏi, em tự trả lời từng câu.</p>
+                  <button type="button" data-enter="classroom">Vào lớp <span aria-hidden="true">↗</span></button>
+                </article>
+                <article class="landing-feature-card" data-reveal>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h10v9H8l-4 4zM20 3v10h-4M8 19h7l5 4v-9"/></svg>
+                  <h3>Hội thoại Kaiwa</h3>
+                  <p>Nói theo tình huống, nhận xét rõ ràng.</p>
+                  <button type="button" data-enter="kaiwa">Luyện nói <span aria-hidden="true">↗</span></button>
+                </article>
+              </div>
+              <div class="landing-cta-panel" data-reveal>
+                <span class="landing-kicker">Hôm nay</span>
+                <h2>Vào lớp cùng thầy Lâm.</h2>
+                <div class="landing-cta-actions"><button class="public-cta" type="button" data-register>Tạo tài khoản <span aria-hidden="true">↗</span></button><button class="public-signin" type="button" data-enter="dashboard">Đăng nhập</button></div>
+              </div>
+            </section>
           </div>
-          <ol class="public-steps"><li><button type="button" data-enter="curriculum">Đọc bài học <span aria-hidden="true">↗</span></button></li><li><button type="button" data-enter="classroom">Thầy hỏi, em trả lời <span aria-hidden="true">↗</span></button></li><li><button type="button" data-enter="kaiwa">Nhận xét rồi thử lại <span aria-hidden="true">↗</span></button></li></ol>
           <footer class="public-footer"><span>VJBot · 日本語</span><a href="sources.html">Nguồn & quyền riêng tư ↗</a></footer>
         </section>
+
         <section class="tab-panel workspace-panel" id="panel-dashboard" hidden><header class="workspace-heading"><div><h1>Học tập</h1><p id="dashboard-greeting"></p></div><a class="stage-btn" href="#curriculum">Chọn bài học ↗</a></header><div id="dashboard-content" aria-live="polite"></div></section>
         <section class="tab-panel workspace-panel" id="panel-kanji" hidden><div class="skill-hub" id="kanji-hub"></div><div id="kanji-workspace" hidden></div></section>
         <!-- TAB 1: SENSEI CLASSROOM (REVERSED QUIZ & CHAT) -->
@@ -1024,6 +1072,7 @@
   <script src="navigation.js"></script>
   <script src="exam-engine.js"></script><script src="workspace.js"></script><script src="recorded-input.js"></script><script src="speech-input.js"></script><script src="app.js"></script>
   <script src="mascot.js"></script>
+  <script src="guide.js"></script>
   <script src="refinements.js"></script>
   <script src="admin-ai.js"></script>
   <script src="chat-history.js"></script>

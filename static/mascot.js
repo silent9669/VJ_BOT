@@ -42,7 +42,7 @@
   document.body.append(float);
   const main = float.querySelector('.lam-float-main'), toggle = float.querySelector('.lam-float-toggle'), hint = float.querySelector('.lam-float-hint'), face = main.querySelector('img');
   let hintTimer;
-  const store = { get() { try { return localStorage.getItem('vjbot_lam_float') === 'min' ? 'min' : 'open'; } catch { return 'open'; } }, set(value) { try { localStorage.setItem('vjbot_lam_float', value); } catch {} } };
+  const store = { get() { try { const saved = localStorage.getItem('vjbot_lam_float'); if (saved === 'min' || saved === 'open') return saved; return matchMedia('(max-width: 739px)').matches ? 'min' : 'open'; } catch { return 'open'; } }, set(value) { try { localStorage.setItem('vjbot_lam_float', value); } catch {} } };
   function setState(state) {
     float.dataset.state = state;
     toggle.textContent = state === 'min' ? '+' : '–';

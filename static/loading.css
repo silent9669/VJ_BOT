@@ -1,23 +1,53 @@
-/* Loading screen: quick, honest progress with the existing mascot intact. */
+/* Loading: a compact anime beat — thầy Lâm's study book opens and a pencil writes. */
 .retro-loading-overlay{
-  background-color:var(--paper);background-image:radial-gradient(var(--screen-tone) 1px,transparent 1.2px);background-size:22px 22px;
-  color:var(--ink);
+  position:fixed;inset:0;z-index:20000;display:grid;place-items:center;
+  background:
+    radial-gradient(circle at 50% 36%,color-mix(in srgb,var(--accent,#326446) 11%,transparent),transparent 34%),
+    radial-gradient(var(--screen-tone,#d9e2d7) 1px,transparent 1.2px) 0 0/22px 22px,
+    var(--paper,#f6f5ef);
+  color:var(--ink,#1c2a22);
 }
-.loading-paper-card{
-  position:relative;width:min(460px,94%);padding:30px 28px;background:var(--sheet);border:3px solid var(--border-dark);
-  border-radius:26px;box-shadow:9px 10px 0 var(--sk-soft);color:var(--ink);overflow:visible;
+.loading-scene{display:grid;justify-items:center;gap:22px;padding:28px;text-align:center}
+.loading-book{
+  position:relative;width:188px;height:132px;transform-style:preserve-3d;perspective:620px;
+  animation:book-enter .46s cubic-bezier(.2,.9,.25,1.2) both;
 }
-.loading-paper-card::before{content:"ドン" / "";position:absolute;right:22px;top:-31px;font:900 36px/1 var(--font-jp);color:var(--sk-acc);rotate:8deg;text-shadow:2px 2px 0 var(--sheet)}
-.loading-title{font-weight:950;letter-spacing:-.035em;color:var(--ink)}
-.loading-sub{color:var(--muted);font-weight:700}
-.loading-logo-8bit{border-color:var(--border-dark);background:var(--surface-2);box-shadow:2px 3px 0 var(--sk-soft)}
-.loading-mascot-stage{background:linear-gradient(180deg,var(--surface-2),var(--sheet));border:2px dashed var(--line);border-radius:20px}
-.pixel-runner-box{animation:loading-bob .58s infinite alternate ease-in-out}
-.running-sprite{image-rendering:pixelated;filter:drop-shadow(3px 4px 0 var(--sk-soft))}
-@keyframes loading-bob{from{transform:translateY(0) rotate(-1deg)}to{transform:translateY(-8px) rotate(1deg)}}
-.pixel-progress-bar{height:22px;border:2px solid var(--border-dark);background:var(--surface-2);box-shadow:inset 2px 2px 0 rgba(28,42,34,.1)}
-.pixel-progress-fill{background:linear-gradient(90deg,var(--sk-pri),var(--sk-acc));border-radius:999px;position:relative}
-.pixel-progress-fill::after{content:"";position:absolute;right:-5px;top:-9px;width:18px;height:28px;border-radius:50% 50% 45% 45%;background:var(--sheet);border:2px solid var(--border-dark);box-shadow:2px 2px 0 var(--sk-soft)}
-.loading-status-row{font-family:var(--font-sans);font-weight:800;color:var(--muted)}
-#loading-percent-text{color:var(--accent);font-variant-numeric:tabular-nums}
-.loading-tips{display:none}
+.book-shadow{position:absolute;left:21px;right:21px;bottom:3px;height:14px;border-radius:50%;background:rgba(28,42,34,.16);filter:blur(2px);animation:book-shadow 1.5s ease-in-out infinite}
+.book-cover{position:absolute;top:15px;width:82px;height:96px;background:var(--accent,#326446);border:3px solid var(--border-dark,#1c2a22);box-shadow:4px 5px 0 var(--sk-soft,rgba(28,42,34,.16))}
+.book-cover.left{left:11px;border-radius:8px 2px 2px 8px;transform:skewY(-2deg)}
+.book-cover.right{right:11px;border-radius:2px 8px 8px 2px;transform:skewY(2deg)}
+.book-page{position:absolute;top:10px;width:78px;height:96px;background:var(--sheet,#fffef8);border:3px solid var(--border-dark,#1c2a22);overflow:hidden}
+.page-left{left:15px;border-radius:8px 2px 2px 8px;transform:rotate(-2deg)}
+.page-right{right:15px;border-radius:2px 8px 8px 2px;transform:rotate(2deg)}
+.book-page span,.book-page i{display:block;height:5px;border-radius:999px;background:color-mix(in srgb,var(--ink,#1c2a22) 22%,transparent);margin:13px 13px 0}
+.book-page span:first-child{margin-top:18px;width:48px}
+.book-page span:nth-child(2){width:38px}.book-page span:nth-child(3){width:45px}
+.page-right span{display:grid;place-items:center;width:38px;height:38px;margin:13px auto 8px;border:2px solid var(--accent,#326446);border-radius:11px;background:var(--surface-2,#e4ebdf);color:var(--accent,#326446);font:900 22px/1 var(--font-jp,serif)}
+.page-right i{margin:8px 17px 0;height:4px}.page-right i:nth-of-type(2){width:35px}.page-right i:nth-of-type(3){width:25px}
+.book-flip-page{
+  position:absolute;left:93px;top:12px;width:74px;height:94px;border:3px solid var(--border-dark,#1c2a22);border-radius:2px 8px 8px 2px;background:linear-gradient(90deg,#f4f1e5,var(--sheet,#fffef8));
+  transform-origin:left center;animation:page-flip 1.5s cubic-bezier(.45,0,.2,1) infinite;box-shadow:3px 4px 0 rgba(28,42,34,.12);
+}
+.loading-pencil{
+  position:absolute;width:56px;height:11px;left:92px;top:74px;border:2px solid var(--border-dark,#1c2a22);border-radius:3px;background:linear-gradient(90deg,var(--sk-acc,#55a861) 0 72%,#f3d493 72% 86%,var(--ink,#1c2a22) 86%);
+  transform:rotate(-18deg);transform-origin:right center;animation:pencil-write 1.5s ease-in-out infinite;box-shadow:2px 3px 0 rgba(28,42,34,.15);
+}
+.book-spark{position:absolute;width:12px;height:12px;background:var(--sk-acc,#55a861);clip-path:polygon(50% 0,63% 37%,100% 50%,63% 63%,50% 100%,37% 63%,0 50%,37% 37%);opacity:0;animation:spark-pop 1.5s ease-in-out infinite}
+.spark-one{left:14px;top:2px}.spark-two{right:14px;top:12px;animation-delay:.18s}.spark-three{right:6px;bottom:24px;animation-delay:.36s}
+.loading-copy{display:grid;gap:5px;animation:copy-enter .5s .12s ease both}
+.loading-copy strong{font-size:22px;letter-spacing:-.04em;font-weight:950}
+.loading-copy span{color:var(--muted,#53625a);font-size:14px;font-weight:750}
+.retro-loading-overlay.is-complete .loading-book{animation:book-complete .32s ease both}
+.retro-loading-overlay.fade-out{opacity:0;transition:opacity .3s ease}
+@keyframes book-enter{from{opacity:0;transform:translateY(18px) scale(.86) rotate(-3deg)}to{opacity:1;transform:none}}
+@keyframes copy-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes page-flip{0%,18%{transform:rotateY(0)}52%,76%{transform:rotateY(-168deg)}100%{transform:rotateY(-168deg)}}
+@keyframes pencil-write{0%,100%{transform:translate(0,0) rotate(-18deg)}28%{transform:translate(-19px,-5px) rotate(-13deg)}54%{transform:translate(-31px,1px) rotate(-21deg)}76%{transform:translate(-9px,4px) rotate(-16deg)}}
+@keyframes book-shadow{0%,100%{transform:scaleX(.9);opacity:.8}50%{transform:scaleX(1.04);opacity:.55}}
+@keyframes spark-pop{0%,22%,100%{opacity:0;transform:scale(.4) rotate(0)}38%,58%{opacity:1;transform:scale(1) rotate(24deg)}}
+@keyframes book-complete{to{transform:translateY(-6px) scale(1.03)}}
+@media(max-width:520px){.loading-book{scale:.86}.loading-scene{gap:14px}.loading-copy strong{font-size:20px}}
+@media(prefers-reduced-motion:reduce){
+  .loading-book,.loading-copy,.book-flip-page,.loading-pencil,.book-shadow,.book-spark{animation:none!important}
+  .book-spark{opacity:.7}.book-flip-page{transform:rotateY(-130deg)}
+}
