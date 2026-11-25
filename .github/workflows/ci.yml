@@ -1,10 +1,15 @@
 name: CI
 
-on: push
+on:
+  push:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 # Deploys are done by Cloudflare Workers Builds (see docs/DEPLOYMENT_CICD.md); this only gates changes.
 jobs:
@@ -12,13 +17,19 @@ jobs:
     # Name matches the required status check in the "Protect main branch" ruleset.
     name: Test & Quality Checks
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Build lesson catalog once
+        run: npm run teacher:catalog
+      - name: Test
+        run: npm test
+      - name: Validate Worker build
+        run: npm run build:worker

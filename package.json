@@ -18,7 +18,8 @@
     "data:import": "python3 scripts/import_lessons.py",
     "deploy": "cf deploy",
     "migrate": "cf d1 migrations apply eb0d49a5-7a90-4219-968c-5fcb04390859 --dir migrations",
-    "release": "npm run migrate && npm run deploy"
+    "release": "npm run migrate && npm run deploy",
+    "build:worker": "cf deploy --dry-run"
   },
   "repository": {
     "type": "git",
