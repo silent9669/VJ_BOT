@@ -14,7 +14,7 @@ const {start: GREETING, ...COMMANDS} = VOICE_COMMANDS;
 const MISTRAL_WELCOME='こんにちは！Thầy là thầy Lâm đây. Em chào lại thầy một câu bằng tiếng Nhật nhé?';
 // Cloned male voice saved in the owner's Mistral workspace. Learners connecting their own
 // Mistral key do not have it, so an unknown-voice rejection retries on the Haruto preset.
-const MISTRAL_VOICE='01a21304-460a-74d3-b2b1-663e27cc1caf';
+const MISTRAL_VOICE='voice_3133';
 const MISTRAL_VOICE_FALLBACK='voice_3133';
 // Context bias steers Voxtral toward the words the learner actually practices. Entries count
 // against the model's context window, and restricted content must never leave the server.
