@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#f7f8f6">
-  <script>try{var t=localStorage.getItem('vjbot_theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;if(t==='dark')document.querySelector('meta[name=theme-color]').content='#121413'}catch(e){}</script>
+  <meta name="theme-color" content="#f7f8f3">
+  <script>try{var t=localStorage.getItem('vjbot_theme');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;if(t==='dark')document.querySelector('meta[name=theme-color]').content='#0f1813'}catch(e){}</script>
   <meta name="apple-mobile-web-app-title" content="VJBot">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="format-detection" content="telephone=no">
@@ -14,7 +14,7 @@
   <meta name="author" content="VJBot Team">
 
   <!-- Open Graph & Social Cards -->
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="VJBot · Học tiếng Nhật cùng thầy Lâm">
   <meta property="og:description" content="Luyện JLPT N5–N1: thầy Lâm hỏi, em tự trả lời. Dùng kết nối AI của em.">
   <meta property="og:type" content="website">
@@ -46,8 +46,24 @@
   <link rel="stylesheet" href="compact.css"><link rel="stylesheet" href="workbench.css">
   <link rel="stylesheet" href="ios.css">
   <link rel="stylesheet" href="dark.css">
+  <link rel="stylesheet" href="loading.css">
 </head>
 <body data-page="landing">
+  <div id="app-loading-screen" class="retro-loading-overlay" role="status" aria-live="polite" aria-label="Đang tải VJBot">
+    <div class="loading-paper-card">
+      <div class="loading-header">
+        <img src="favicon.svg?v=3" width="48" height="48" alt="" class="loading-logo-8bit">
+        <div><h2 class="loading-title">VJBot</h2><span class="loading-sub">Lớp học tiếng Nhật</span></div>
+      </div>
+      <div class="loading-mascot-stage" aria-hidden="true">
+        <div class="pixel-runner-box"><img id="loading-mascot-img" src="assets/lam/pixel/display/south.png" width="56" height="56" alt="" class="running-sprite"><span class="runner-shadow"></span></div>
+      </div>
+      <div class="loading-progress-section">
+        <div class="pixel-progress-bar" aria-hidden="true"><div id="loading-progress-fill" class="pixel-progress-fill"></div></div>
+        <div class="loading-status-row"><span id="loading-status-text">Đang mở lớp học…</span><span id="loading-percent-text">0%</span></div>
+      </div>
+    </div>
+  </div>
   <a href="#main-content" class="skip-link">Đến nội dung chính</a>
   <!-- APP SHELL: TWO-COLUMN SIDEBAR + MAIN CONTENT (APPLE / SKETCH HYBRID) -->
   <div class="app-shell">

@@ -1,0 +1,23 @@
+/* Loading screen: quick, honest progress with the existing mascot intact. */
+.retro-loading-overlay{
+  background-color:var(--paper);background-image:radial-gradient(var(--screen-tone) 1px,transparent 1.2px);background-size:22px 22px;
+  color:var(--ink);
+}
+.loading-paper-card{
+  position:relative;width:min(460px,94%);padding:30px 28px;background:var(--sheet);border:3px solid var(--border-dark);
+  border-radius:26px;box-shadow:9px 10px 0 var(--sk-soft);color:var(--ink);overflow:visible;
+}
+.loading-paper-card::before{content:"ドン" / "";position:absolute;right:22px;top:-31px;font:900 36px/1 var(--font-jp);color:var(--sk-acc);rotate:8deg;text-shadow:2px 2px 0 var(--sheet)}
+.loading-title{font-weight:950;letter-spacing:-.035em;color:var(--ink)}
+.loading-sub{color:var(--muted);font-weight:700}
+.loading-logo-8bit{border-color:var(--border-dark);background:var(--surface-2);box-shadow:2px 3px 0 var(--sk-soft)}
+.loading-mascot-stage{background:linear-gradient(180deg,var(--surface-2),var(--sheet));border:2px dashed var(--line);border-radius:20px}
+.pixel-runner-box{animation:loading-bob .58s infinite alternate ease-in-out}
+.running-sprite{image-rendering:pixelated;filter:drop-shadow(3px 4px 0 var(--sk-soft))}
+@keyframes loading-bob{from{transform:translateY(0) rotate(-1deg)}to{transform:translateY(-8px) rotate(1deg)}}
+.pixel-progress-bar{height:22px;border:2px solid var(--border-dark);background:var(--surface-2);box-shadow:inset 2px 2px 0 rgba(28,42,34,.1)}
+.pixel-progress-fill{background:linear-gradient(90deg,var(--sk-pri),var(--sk-acc));border-radius:999px;position:relative}
+.pixel-progress-fill::after{content:"";position:absolute;right:-5px;top:-9px;width:18px;height:28px;border-radius:50% 50% 45% 45%;background:var(--sheet);border:2px solid var(--border-dark);box-shadow:2px 2px 0 var(--sk-soft)}
+.loading-status-row{font-family:var(--font-sans);font-weight:800;color:var(--muted)}
+#loading-percent-text{color:var(--accent);font-variant-numeric:tabular-nums}
+.loading-tips{display:none}

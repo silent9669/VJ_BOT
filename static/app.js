@@ -253,21 +253,32 @@ function initLoadingScreen() {
   const percentText = document.getElementById("loading-percent-text");
   const statusText = document.getElementById("loading-status-text");
 
-  setTimeout(() => {
-    if (progressFill) progressFill.style.width = "100%";
-    if (percentText) percentText.textContent = "100%";
-    if (statusText) statusText.textContent = "Thầy Lâm đã sẵn sàng!";
+  const steps = [
+    [18, "Đang mở lớp học…"],
+    [48, "Đang xếp bài học…"],
+    [76, "Thầy Lâm đang vào lớp…"],
+    [100, "Sẵn sàng"]
+  ];
+  steps.forEach(([percent, text], index) => {
     setTimeout(() => {
-      loadingOverlay.classList.add("fade-out");
-      setTimeout(() => loadingOverlay.remove(), 350);
-    }, 180);
-  }, 220);
+      if (!document.getElementById("app-loading-screen")) return;
+      if (progressFill) progressFill.style.width = `${percent}%`;
+      if (percentText) percentText.textContent = `${percent}%`;
+      if (statusText) statusText.textContent = text;
+      if (percent === 100) {
+        setTimeout(() => {
+          loadingOverlay.classList.add("fade-out");
+          setTimeout(() => loadingOverlay.remove(), 360);
+        }, 220);
+      }
+    }, 130 + index * 180);
+  });
 
-  // Hard safety timeout: guaranteed removal in 600ms
+  // Hard safety timeout: the overlay must never trap the application.
   setTimeout(() => {
     const el = document.getElementById("app-loading-screen");
     if (el) el.remove();
-  }, 600);
+  }, 1600);
 }
 
 // ==========================================
@@ -588,7 +599,7 @@ async function renderCurriculum(level = "N5", skill = "grammar") {
 
   // Update skill tab buttons
   document.querySelectorAll("#skill-tabs-row .skill-tab-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.skill === skill);
+    const active=btn.dataset.skill===skill;btn.classList.toggle("active",active);btn.setAttribute("aria-pressed",String(active));
   });
 
   const listEl = document.getElementById("curriculum-list");
@@ -877,7 +888,7 @@ async function renderFlashcards(level = "N5",lessonId=null) {
   if(request!==fcRequest)return;
   activeFcLevel = level;
   document.querySelectorAll("#fc-level-picker .fc-lvl-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.lvl === level);
+    const active=btn.dataset.lvl===level;btn.classList.toggle("active",active);btn.setAttribute("aria-pressed",String(active));
   });
 
   const vocabularyLessons = window.JLPT_DATA?.curriculum?.[level]?.skills?.vocabulary || [];
@@ -1024,7 +1035,7 @@ async function renderQuiz(level = "N5", testIdx = 0) {
   activeQuizTestIdx = testIdx;
 
   document.querySelectorAll("#quiz-level-picker .quiz-lvl-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.lvl === level);
+    const active=btn.dataset.lvl===level;btn.classList.toggle("active",active);btn.setAttribute("aria-pressed",String(active));
   });
 
   const examList = window.JLPT_DATA?.exams?.[level] || [];
