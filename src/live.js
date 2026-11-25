@@ -166,14 +166,18 @@ export async function mistralLiveRoute(request,env) {
         tts:{model:'voxtral-mini-tts-3',voice_id:'voice_3133'},
         instructions:teaching,welcome_message:MISTRAL_WELCOME})
     });
-    let model=provider.models[0]||'mistral-small-latest',tuned=true;
+    // Voice answers are short, so the LLM is a small share of session cost: prefer the
+    // much stronger instruction following of mistral-medium when the chosen model is rejected.
+    const chain=['mistral-medium-latest','mistral-small-latest'];
+    let model=provider.models[0]||chain[0],tuned=true;
     let response=await create(model,tuned);
-    for(let attempt=0;response.status===422&&attempt<2;attempt++){
+    for(let attempt=0;response.status===422&&attempt<3;attempt++){
       const reason=await response.json().catch(()=>null);
       const detail=Array.isArray(reason?.detail)?reason.detail:[];
       const hits=path=>detail.some(e=>path==='llm'&&e?.type==='unsupported_model'
         ||(Array.isArray(e?.loc)&&e.loc[0]==='body'&&e.loc[1]===path));
-      if(hits('llm')&&model!=='mistral-small-latest')model='mistral-small-latest';
+      const at=chain.indexOf(model);
+      if(hits('llm')&&at<chain.length-1)model=chain[at+1];
       else if(hits('stt')&&tuned)tuned=false;
       else break;
       response=await create(model,tuned);

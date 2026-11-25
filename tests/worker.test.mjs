@@ -1094,7 +1094,7 @@ test('Mistral Live falls back to a supported agent model only when Mistral rejec
   };
   try {
     const response=await send({level:'N5',api_connection});assert.equal(response.status,201);
-    assert.deepEqual(models,['magistral-small-latest','mistral-small-latest']);
+    assert.deepEqual(models,['magistral-small-latest','mistral-medium-latest','mistral-small-latest']);
     globalThis.fetch=async(url,options)=>{models.push(JSON.parse(options.body).llm.model);
       return Response.json({detail:[{loc:['body','tts','voice_id'],msg:'unknown voice',type:'value_error'}]},{status:422});};
     models.length=0;
