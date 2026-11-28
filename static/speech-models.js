@@ -6,6 +6,7 @@
   const accounts = document.getElementById('speech-profile');
   const hint = document.getElementById('ai-oauth-voice-hint');
   const form = document.getElementById('speech-key-form'), addKey = document.getElementById('speech-key-add');
+  const keyDialog = document.getElementById('speech-key-dialog');
   const key = document.getElementById('speech-key'), keyName = document.getElementById('speech-key-name');
   const keyProvider = document.getElementById('speech-key-provider'), modelLabel = document.getElementById('speech-model-label');
   const storage = document.getElementById('speech-key-storage'), save = document.getElementById('speech-key-save');
@@ -79,6 +80,7 @@
     keyToggle.setAttribute('aria-pressed', 'false');
     keyToggle.setAttribute('aria-label', 'Hiện API key giọng nói');
     addKey.setAttribute('aria-expanded', 'false');
+    if (keyDialog.open) keyDialog.close();
   }
   async function saveKey(event) {
     event.preventDefault();
@@ -218,12 +220,12 @@
     formOwner = owner(); formRevision++;
     form.hidden = false; keyProvider.value = 'gemini'; keyName.value = 'Tài khoản giọng nói'; storage.value = 'local';
     formStatus.textContent = 'Việc lưu không tạo âm thanh và không đổi kết nối trò chuyện.';
-    addKey.setAttribute('aria-expanded', 'true'); keyName.focus();
+    addKey.setAttribute('aria-expanded', 'true'); keyDialog.showModal(); keyName.focus();
   });
   document.getElementById('speech-key-cancel').addEventListener('click', () => { closeKeyForm(); addKey.focus(); });
   form.addEventListener('submit', saveKey);
-  form.addEventListener('keydown', event => {
-    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeKeyForm(); addKey.focus(); }
+  keyDialog.addEventListener('cancel', event => {
+    event.preventDefault(); closeKeyForm(); addKey.focus();
   });
   keyToggle.addEventListener('click', () => {
     const show = key.type === 'password';
@@ -234,10 +236,13 @@
   test.addEventListener('click', () => {
     if (test.disabled) return;
     if (typeof window.playGeminiTTS !== 'function') { status.textContent = 'Điều khiển âm thanh chưa tải được. Hãy tải lại Cài đặt.'; return; }
-    return window.playGeminiTTS('こんにちは。日本語をいっしょに練習しましょう。', {japaneseOnly:true});
+    return window.playGeminiTTS('こんにちは。日本語をいっしょに練習しましょう。', {japaneseOnly:true,legacyVoice:true});
   });
   window.addEventListener('pagehide', closeKeyForm);
-  window.addEventListener('vjbot-voice-changed', () => { formRevision++; sync(); });
+  window.addEventListener('hashchange', closeKeyForm);
+  window.addEventListener('vjbot-voice-changed', event => {
+    if (event?.detail?.source !== 'routing-v2') {formRevision++;sync();}
+  });
   window.addEventListener('storage', event => {
     if (managed()) return;
     if (identity() && event.key === preference(identity())) window.dispatchEvent(new Event('vjbot-voice-changed'));

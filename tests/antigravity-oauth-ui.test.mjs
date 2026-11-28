@@ -64,7 +64,9 @@ test('malformed OAuth metadata remains a visible failure without clearing the ch
   await ui.context.renderAntigravityOAuth();
   assert.equal(ui.storage.get('vjbot_ai_oauth:test:owner'),'first');
   assert.equal(ui.storage.get('vjbot_ai_method:test:owner'),'antigravity');
-  assert.ok(ui.element('ai-connection-status').textContent.trim());
+  assert.equal(ui.element('ai-oauth-panel').hidden,false);
+  assert.match(ui.element('ai-oauth-status').textContent,/Chưa đọc được phản hồi/);
+  assert.equal(ui.element('ai-connection-status').textContent,'');
   assert.equal(ui.requests.length,1);assert.equal(ui.requests[0].path,root);
   assert.equal(ui.element('ai-oauth-model').options.length,0);
 });

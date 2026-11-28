@@ -369,7 +369,7 @@ function switchTab(tabId, route={}) {
 // ==========================================
 // 8. CHAT & REVERSED QUIZ CONTROLLER
 // ==========================================
-function renderBubble(role, content) {
+function renderBubble(role, content, voiceContext) {
   const container = document.getElementById("chat-messages");
   if (!container) return;
 
@@ -391,8 +391,21 @@ function renderBubble(role, content) {
     </div>
     <div class="bubble-speech-card ${role}">
       <div class="bubble-body-text">${formattedContent}</div>
+      ${role === 'user' ? '' : '<button type="button" class="bubble-tts-btn" data-message-listen aria-label="Nghe tin nhắn song ngữ" title="Có thể bôi đen một đoạn để chỉ nghe đoạn đó">Nghe</button>'}
     </div>
   `;
+  const listen = row.querySelector?.('[data-message-listen]');
+  if (listen) {
+    const body = row.querySelector('.bubble-body-text');
+    const selectedText = () => {
+      const selection = window.getSelection?.();
+      return selection && body.contains(selection.anchorNode) && body.contains(selection.focusNode) ? selection.toString().trim() : '';
+    };
+    listen.onmousedown = event => {
+      if (event.button === 0 && selectedText()) event.preventDefault();
+    };
+    listen.onclick = () => playGeminiTTS(selectedText() || content,{...voiceContext,mode:'bilingual',privateAudio:true});
+  }
 
   container.appendChild(row);
   container.scrollTop = container.scrollHeight;
@@ -427,7 +440,8 @@ async function loadChatHistory() {
     const messages=await response.json();
     for(const row of document.querySelectorAll('#chat-messages .chat-bubble-row'))row.remove();
     document.getElementById('chat-welcome').style.display=messages.length?'none':'';
-    for(const message of messages)renderBubble(message.role,message.content);
+    const lesson=chatLessonContext || globalThis.teacherContext?.()?.lesson;
+    for(const message of messages)renderBubble(message.role,message.content,{lesson,focus:null});
     chatHistoryReady=true;chatError('',null);
     chatHistoryScope=path;
     globalThis.checkAiReady?.();
@@ -486,7 +500,7 @@ async function sendMessage(text,retry=false,options={}) {
     if(reference && (data.task?.id!==reference.id || data.task?.revision!==reference.revision))throw new Error('Phản hồi thuộc phiên bản câu hỏi khác. Mở lại bài.');
     const reply=data.reply || data.response;
     if(typeof reply!=='string' || !reply.trim())throw new Error('Thầy chưa trả lời. Hãy thử lại.');
-    renderBubble('bot',reply);failedChatMessage=null;chatError('',null);
+    renderBubble('bot',reply,{lesson,focus,view,task:question});failedChatMessage=null;chatError('',null);
     soundEngine.playReceive();mascotMgr.setState('speaking');
     setTimeout(()=>mascotMgr.setState('idle'),2000);
   }catch(error){
@@ -832,7 +846,7 @@ function showLessonDetail(item, level, skill, fromHistory=false,owner=null) {
       if(word)globalThis.setTeacherFocus?.({kind:'word',index:Number(word.dataset.teacherWord)});
       else if(example)globalThis.setTeacherFocus?.({kind:'example',index:Number(example.dataset.teacherExample)});
       const text = decodeURIComponent(btn.dataset.text);
-      playGeminiTTS(text,{japaneseOnly:true,reading:singleSpeechReading(decodeURIComponent(btn.dataset.reading || ''))});
+      playGeminiTTS(text,{japaneseOnly:true,cacheAudio:true,reading:singleSpeechReading(decodeURIComponent(btn.dataset.reading || ''))});
     });
   });
 
@@ -1097,7 +1111,7 @@ function displayQuizQuestion(){
   }
   if(question.script_jp){
     const listen=document.createElement('button');listen.type='button';listen.textContent='Nghe ngữ cảnh câu hỏi';
-    listen.onclick=()=>playGeminiTTS(question.script_jp,{language:'ja-JP',lesson,focus:{kind:'question',index:examQuestionIdx},view:'exam',task:question});
+    listen.onclick=()=>playGeminiTTS(question.script_jp,{language:'ja-JP',lesson,focus:{kind:'question',index:examQuestionIdx},view:'exam',task:question,cacheAudio:true});
     grid.append(listen);
   }
   for(const [index,option] of question.opts.entries()){
@@ -1336,7 +1350,7 @@ function setupFloatingSensei() {
     if(event.key==='Enter' && !event.isComposing){event.preventDefault();handlePopoverQuery(inputEl.value);}
   });
   retryBtn.onclick=()=>handlePopoverQuery(failed?.body.message,true);
-  ttsBtn?.addEventListener('click',()=>{if(!inFlight && !failed)playGeminiTTS(speechEl.textContent);});
+  ttsBtn?.addEventListener('click',()=>{if(!inFlight && !failed)playGeminiTTS(speechEl.textContent,{privateAudio:true});});
   chips.forEach(chip=>chip.addEventListener('click',()=>handlePopoverQuery(chip.dataset.ask)));
 }
 
@@ -1625,7 +1639,7 @@ function setupEventListeners() {
     btnFcAudioFront.addEventListener("click", (e) => {
       e.stopPropagation();
       const txt = document.getElementById("fc-front-text")?.textContent;
-      if (txt) playGeminiTTS(txt,{japaneseOnly:true,reading:singleSpeechReading(fcDeck[fcIdx]?.reading)});
+      if (txt) playGeminiTTS(txt,{japaneseOnly:true,cacheAudio:true,reading:singleSpeechReading(fcDeck[fcIdx]?.reading)});
     });
   }
 
@@ -1634,7 +1648,7 @@ function setupEventListeners() {
     btnFcAudioBack.addEventListener("click", (e) => {
       e.stopPropagation();
       const txt = document.getElementById("fc-example-jp")?.textContent;
-      if (txt) playGeminiTTS(txt,{japaneseOnly:true});
+      if (txt) playGeminiTTS(txt,{japaneseOnly:true,cacheAudio:true});
     });
   }
 
@@ -1695,7 +1709,7 @@ function setupEventListeners() {
   if (btnKaiwaPlay) {
     btnKaiwaPlay.addEventListener("click", () => {
       const jp = document.getElementById("kaiwa-prompt-jp")?.textContent;
-      if (jp) playGeminiTTS(jp,{japaneseOnly:true});
+      if (jp) playGeminiTTS(jp,{japaneseOnly:true,cacheAudio:true});
     });
   }
 
@@ -1805,7 +1819,7 @@ function setupEventListeners() {
   if (btnModelTTS) {
     btnModelTTS.addEventListener("click", () => {
       const txt = document.getElementById("kaiwa-model-text")?.textContent;
-      if (txt) playGeminiTTS(txt,{japaneseOnly:true});
+      if (txt) playGeminiTTS(txt,{japaneseOnly:true,privateAudio:true});
     });
   }
 

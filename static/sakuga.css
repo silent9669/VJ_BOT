@@ -84,7 +84,7 @@ button,.stage-btn,.public-cta,a.stage-btn{touch-action:manipulation}
 .fc-lvl-btn,.quiz-lvl-btn,.skill-tab-btn,.srs-btn,.fc-nav-btn,.picker-opt-btn,.delete-account-btn,.feature-back,
 .auth-tabs button,.curriculum-view-switch button,.segmented button,.room-controls button,.lesson-footer button,.practice-actions button,
 .practice-primary,.modal-practice-btn,.bookmark-review-btn,.rec-action-btn,.sketch-action-chip,.ai-form .stage-btn,.ai-form .public-cta,.ai-actions button,
-.ai-actions a,.ai-platform button,.ai-platform a,.settings-card .stage-btn,.settings-card .public-cta,.settings-card .delete-account-btn,.settings-nav button){
+.ai-actions a,.ai-platform button,.ai-platform a,.settings-card .stage-btn,.settings-card .public-cta,.settings-card .delete-account-btn){
   position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--control-height);padding:8px 14px;
   border:2px solid var(--border-dark)!important;border-radius:var(--radius-control);background:var(--sheet);color:var(--ink);
   box-shadow:var(--shadow-sketch-sm);font-weight:700;line-height:1.2;text-decoration:none;cursor:pointer;

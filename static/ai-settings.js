@@ -8,6 +8,7 @@
   let activeScan = null, readiness = 0;
   let profileRows = [], selectedProfile = null, profileKey = '', rendering = 0;
   let profilesOwner = null, loadedProfile = null;
+  let editOpener = null, editState = null;
   const methodKey = owner => 'vjbot_ai_method:' + owner;
   const managed = () => signedInUser?.is_admin === true;
   const accountIdentity = () => JSON.stringify([signedInUser?.user_id || null, managed()]);
@@ -32,7 +33,7 @@
     const empty = document.createElement('option');
     empty.value = ''; empty.textContent = 'Chọn kết nối đã lưu'; list.append(empty);
     for (const [label, scope] of [['Khóa API · Thiết bị này', 'local'], ['Khóa API · Máy chủ', 'server'], ['Antigravity OAuth', 'oauth']]) {
-      const rows = scope === 'oauth' ? window.savedOAuthConnections?.() || [] : profilesOwner === owner ? profileRows.filter(row => row.scope === scope) : [];
+      const rows = scope === 'oauth' ? window.savedOAuthConnections?.() || [] : profilesOwner === owner ? profileRows.filter(row => row.scope === scope && Object.hasOwn(BASES,row.protocol)) : [];
       if (!rows.length) continue;
       const group = document.createElement('optgroup'); group.label = label;
       for (const row of rows) {
@@ -59,6 +60,7 @@
     el('ai-current-hint').textContent = currentProfile ? '' : 'Chọn kết nối đã lưu hoặc thêm kết nối.';
     el('ai-card').dataset.connected = String(Boolean(currentProfile?.model));
     el('ai-chat').hidden = !currentProfile?.model;
+    el('ai-edit-connection').hidden = !currentProfile;
     window.renderVoiceProfiles?.(owner, profilesOwner === owner ? profileRows : [], profilesOwner === owner && storageEnabled);
   }
   window.refreshSavedConnections = refreshSavedConnections;
@@ -71,15 +73,21 @@
       ? 'Được mã hóa trong trình duyệt này và không đồng bộ. Máy chủ chỉ nhận khóa khi gửi yêu cầu AI. Trình duyệt bị xâm nhập vẫn có thể đọc được khóa.'
       : 'Được mã hóa và lưu trên máy chủ theo tài khoản của em. Các thiết bị khác đăng nhập tài khoản này dùng được kết nối này.';
   }
+  function showApiKey(show) {
+    const toggle = el('ai-key-toggle');
+    el('ai-key').type = show ? 'text' : 'password';
+    toggle.textContent = show ? 'Ẩn' : 'Hiện';
+    toggle.setAttribute('aria-label', show ? 'Ẩn khóa API' : 'Hiện khóa API');
+    toggle.setAttribute('aria-pressed', String(show));
+  }
   function fillProfile(profile, cache = null, key = '') {
     el('ai-form').hidden = false;
     selectedProfile = profile;
     savedConnection = Boolean(profile);
     el('ai-form').dataset.draft = String(!profile);
     el('ai-api-editor-title').textContent = profile ? 'Sửa kết nối dùng khóa API' : 'Thêm kết nối API';
-    el('ai-api-back').hidden = Boolean(profile);
-    el('ai-api-manage').open = !profile;
-    el('ai-api-scan').open = Boolean(profile && !profile.model);
+    el('ai-edit-invalidation').hidden = !profile;
+    el('ai-api-scan').open = false;
     profileKey = key;
     el('ai-profile-name').value = profile?.name || '';
     el('ai-profile-storage').value = profile?.scope || 'local';
@@ -90,10 +98,7 @@
     el('ai-model').value = profile?.model || '';
     el('ai-key').value = '';
     el('ai-key').placeholder = profile ? '••••' + profile.key_last4 : 'sk-…';
-    el('ai-key').type = 'password';
-    el('ai-key-toggle').textContent = 'Hiện';
-    el('ai-key-toggle').setAttribute('aria-label', 'Hiện khóa API');
-    el('ai-key-toggle').setAttribute('aria-pressed', 'false');
+    showApiKey(false);
     el('ai-key').required = !profile;
     el('ai-key-hint').textContent = profile ? 'Để trống để dùng lại khóa của kết nối này. Đổi URL hoặc loại API thì cần khóa mới.' : 'Chọn nơi lưu. Đừng dán khóa vào khung trò chuyện.';
     el('ai-remove').hidden = !profile;
@@ -102,14 +107,16 @@
   async function saveProfile(useModel) {
     const owner = signedInUser?.user_id, scope = el('ai-profile-storage').value;
     if (!owner || managed()) throw new Error('API cá nhân chỉ dành cho tài khoản học viên.');
-    const model = el('ai-models').hidden ? '' : el('ai-model-list').value;
+    // The connection editor saves metadata, not a new chat model for unchanged credentials.
+    const metadataOnly = !useModel && editState && !editState.credentialsDirty && editState.profile === selectedProfile;
+    const model = metadataOnly ? selectedProfile.model : el('ai-models').hidden ? '' : el('ai-model-list').value;
     if (useModel && !model) throw new Error('Hãy kiểm tra model và chọn một kết quả phản hồi được trước.');
     const snapshot = modelSnapshot;
     const draft = {name: el('ai-profile-name').value.trim(), protocol: el('ai-protocol').value,
       base_url: el('ai-base').value, model, api_key: draftKey(),
-      models: [...el('ai-model-list').options].map(option => option.value),
-      checked_at: snapshot?.checkedAt || selectedProfile?.checked_at || null,
-      connection_id: snapshot?.identity || selectedProfile?.connection_id || null};
+      models: metadataOnly ? selectedProfile.models : [...el('ai-model-list').options].map(option => option.value),
+      checked_at: (metadataOnly ? selectedProfile.checked_at : snapshot?.checkedAt || selectedProfile?.checked_at) ?? null,
+      connection_id: (metadataOnly ? selectedProfile.connection_id : snapshot?.identity || selectedProfile?.connection_id) ?? null};
     if (!draft.name) throw new Error('Nhập tên kết nối.');
     const id = selectedProfile?.scope === scope ? selectedProfile.id : null;
     let profile;
@@ -128,47 +135,80 @@
     return `Đã lưu ${profile.name} ${scope === 'local' ? 'trên thiết bị này' : 'vào tài khoản của em'}. ${model ? 'Đã chọn model đã lưu. Không gửi yêu cầu thử mới.' : 'Bấm Tìm model dùng được khi sẵn sàng.'}`;
   }
   window.saveVoiceProfile = async (owner, input, scope) => {
-    if (!owner || signedInUser?.user_id !== owner || managed()) throw new Error('API cá nhân chỉ dành cho tài khoản học viên.');
+    const admin = managed();
+    if (!owner || signedInUser?.user_id !== owner || admin && input.version !== 2) throw new Error('Chọn hồ sơ giọng nói cá nhân trước khi lưu.');
     if (!['local', 'server'].includes(scope)) throw new Error('Chọn nơi lưu hợp lệ.');
     if (scope === 'server' && !storageEnabled) throw new Error('Máy chủ chưa lưu được khóa. Hãy chọn lưu trên thiết bị này.');
     const protocol = input.protocol || 'gemini';
-    if (!['gemini', 'openai', 'mistral'].includes(protocol)) throw new Error('Chọn Gemini gốc, OpenAI chính thức hoặc Mistral chính thức.');
-    // Mistral speech is pinned to the official OpenAI-compatible base; the label stays 'mistral' only in the UI.
-    const connection = protocol === 'mistral' ? {protocol:'openai', base_url:'https://api.mistral.ai/v1'} : {protocol, base_url:BASES[protocol]};
-    const draft = {name:input.name, api_key:input.api_key, ...connection, model:''};
+    const kinds=input.version===2 ? ['gemini','openai','mistral','elevenlabs','openai_compatible'] : ['gemini','openai','mistral'];
+    if (!kinds.includes(protocol)) throw new Error('Chọn nhà cung cấp giọng nói hợp lệ, như Gemini, OpenAI hoặc Mistral.');
+    const draft = {name:input.name,api_key:input.api_key,protocol,base_url:input.base_url,model:''};
+    if (Object.hasOwn(BASES,protocol)) {
+      if (input.version === 2 && input.base_url && input.base_url.replace(/\/+$/,'') !== BASES[protocol])
+        throw new Error('Dùng URL chính thức hoặc chọn loại Custom OpenAI-compatible.');
+      draft.base_url=BASES[protocol];
+    }
+    if (input.version !== 2 && protocol === 'mistral') Object.assign(draft,{protocol:'openai',base_url:'https://api.mistral.ai/v1'});
     const profile = scope === 'local' ? await VJProfiles.save(owner, draft)
       : (await send('/api/ai/profiles', 'POST', draft)).profile;
-    if (signedInUser?.user_id !== owner || managed()) throw new Error('Tài khoản hoặc quyền đăng nhập đã thay đổi.');
+    if (signedInUser?.user_id !== owner || managed() !== admin) throw new Error('Tài khoản hoặc quyền đăng nhập đã thay đổi.');
     rendering++;
     const previous = profilesOwner === owner ? profileRows : [];
     profileRows = [...previous, {...profile, scope}];
     profilesOwner = owner;
-    refreshSavedConnections();
+    if (admin) window.renderVoiceProfiles?.(owner,profileRows,storageEnabled,undefined,true);
+    else refreshSavedConnections();
     return {scope, id:profile.id, name:profile.name};
+  };
+  window.removeVoiceProfile = async (owner,scope,id) => {
+    const admin=managed();
+    const profile=profilesOwner===owner && profileRows.find(row=>row.scope===scope && row.id===id);
+    if (!owner || owner!==signedInUser?.user_id || !profile || profile.model)
+      throw new Error('Chỉ xóa được kết nối giọng nói riêng tại đây.');
+    if (scope==='local') await VJProfiles.remove(owner,id);
+    else if (scope==='server') await send(`/api/ai/profiles/${encodeURIComponent(id)}`,'DELETE');
+    else throw new Error('Kết nối giọng nói không hợp lệ.');
+    if (owner!==signedInUser?.user_id || admin!==managed()) return;
+    rendering++;
+    profileRows=profileRows.filter(row=>row.scope!==scope || row.id!==id);
+    if (admin) window.renderVoiceProfiles?.(owner,profileRows,storageEnabled,undefined,true);
+    else refreshSavedConnections();
   };
 
   async function profileAction(action) {
     if (testing || managed()) return;
     stopModels();
     testing = true;
-    el('ai-connection-status').textContent = 'Đang cập nhật kết nối đã lưu…';
+    const editor = el('ai-edit-dialog');
+    const progress = editor.open ? el('ai-edit-status') : el('ai-connection-status');
+    progress.textContent = 'Đang cập nhật kết nối đã lưu…';
     el('ai-profile-list').setAttribute('aria-busy', 'true');
     const owner = signedInUser?.user_id;
-    const controls = [...el('ai-form').querySelectorAll('input, select, button'), el('ai-profile-list'), el('ai-profile-new'), el('ai-method-oauth'), el('ai-add-connection'), el('ai-chat')];
-    const disabled = controls.map(control => control.disabled);
-    controls.forEach(control => { control.disabled = true; });
+    const controls = new Set([...el('ai-form').querySelectorAll('input, select, button'), ...editor.querySelectorAll('input, select, button'),
+      ...['ai-profile-list', 'ai-profile-new', 'ai-method-oauth', 'ai-add-connection', 'ai-edit-connection', 'ai-chat'].map(el)]);
+    const fields = [...controls];
+    const disabled = fields.map(control => control.disabled);
+    fields.forEach(control => { control.disabled = true; });
     let message, succeeded = false;
     try { message = await action(owner); succeeded = true; }
     catch (error) { message = errorText(error); }
     finally {
-      controls.forEach((control, index) => { control.disabled = disabled[index]; });
+      fields.forEach((control, index) => { control.disabled = disabled[index]; });
       testing = false;
       el('ai-profile-list').setAttribute('aria-busy', 'false');
     }
     if (signedInUser?.user_id !== owner || managed()) return;
-    if (succeeded) loadedProfile = null;
-    if (succeeded) await renderSettings();
-    el('ai-status').textContent = message || '';
+    if (!succeeded && editor.open) {
+      el('ai-connection-status').textContent = '';
+      el('ai-edit-status').textContent = message || '';
+      return;
+    }
+    if (succeeded) {
+      closeApiEditor();
+      loadedProfile = null;
+      await renderSettings();
+      if (signedInUser?.user_id !== owner || managed()) return;
+    }
     el('ai-connection-status').textContent = message || '';
     window.checkAiReady();
   }
@@ -207,7 +247,7 @@
     catch (error) { el('ai-resume-hint').textContent = error.message; return; }
     const dispatched = new Set(scan?.entries.map(entry => entry.model));
     const remaining = scan?.catalog.filter(model => !dispatched.has(model)).length || 0;
-    el('ai-fetch-models').textContent = el('ai-recheck-all').checked || !scan ? 'Tìm model dùng được'
+    el('ai-fetch-models').textContent = el('ai-recheck-all').checked || !scan ? 'Quét model'
       : remaining ? `Tiếp tục ${remaining} model chưa kiểm tra` : 'Hiện kết quả đã kiểm tra';
     el('ai-resume-hint').textContent = scan
       ? `${scan.entries.filter(entry => entry.state !== 'sent').length}/${scan.catalog.length} đã kiểm tra · ${remaining} chưa gửi. Yêu cầu bị gián đoạn không tự thử lại.`
@@ -240,7 +280,7 @@
     }
     publishModels();
     el('ai-model-status').textContent = `${cache.models.length} model từng phản hồi · kiểm tra lần cuối ${new Date(cache.checkedAt).toLocaleString()}. `;
-    el('ai-selection-hint').textContent = 'Danh sách gồm các model từng phản hồi. Quyền truy cập và hạn mức có thể đã đổi. Muốn thử lại model cũ, chọn ‘Kiểm tra lại mọi model’; việc thử có thể tính phí.';
+    el('ai-selection-hint').textContent = 'Model đã phản hồi trước đó; hạn mức và quyền truy cập có thể đổi.';
   }
   const KIND = {google: 'Google', email: 'Email'};
   async function call(path, options) {
@@ -298,7 +338,7 @@
     el('ai-model-list').disabled = true;
     el('ai-save').disabled = true;
     el('ai-model-status').textContent = '';
-    el('ai-fetch-models').textContent = 'Tìm model dùng được';
+    el('ai-fetch-models').textContent = 'Quét model';
     el('ai-resume-hint').textContent = '';
     el('ai-selection-hint').textContent = 'Chỉ chọn được model đã phản hồi thật. Hạn mức và tình trạng sau này có thể đổi.';
   }
@@ -495,23 +535,23 @@
   window.renderAccountSettings = renderAccountCard;
 
   // Restore voice metadata at sign-in without opening editors or discovering/generating models.
-  window.loadVoiceProfiles = async () => {
-    const owner = signedInUser?.user_id, version = rendering;
-    if (!owner || managed()) return;
+  window.loadVoiceProfiles = async ({personalVoice=false}={}) => {
+    const owner = signedInUser?.user_id, version = rendering, admin = managed();
+    if (!owner || admin && !personalVoice) return;
     let local = [];
     try { local = await VJProfiles.list(owner); } catch { /* Server references may still be usable. */ }
-    if (signedInUser?.user_id !== owner || managed() || version !== rendering) return;
+    if (signedInUser?.user_id !== owner || managed() !== admin || version !== rendering) return;
     try {
       const data = await call('/api/ai/profiles');
-      if (signedInUser?.user_id !== owner || managed() || version !== rendering) return;
+      if (signedInUser?.user_id !== owner || managed() !== admin || version !== rendering) return;
       profileRows = [...data.profiles.map(profile => ({...profile,scope:'server'})), ...local.map(profile => ({...profile,scope:'local'}))];
       profilesOwner = owner; storageEnabled = data.can_store;
-      window.renderVoiceProfiles?.(owner, profileRows, storageEnabled);
+      window.renderVoiceProfiles?.(owner, profileRows, storageEnabled, data.platform, true);
     } catch {
-      if (signedInUser?.user_id !== owner || managed() || version !== rendering) return;
+      if (signedInUser?.user_id !== owner || managed() !== admin || version !== rendering) return;
       profileRows = local.map(profile => ({...profile,scope:'local'}));
       profilesOwner = owner; storageEnabled = false;
-      window.renderVoiceProfiles?.(owner, profileRows);
+      window.renderVoiceProfiles?.(owner, profileRows, false, undefined, true);
     }
   };
   async function renderSettings() {
@@ -563,12 +603,13 @@
       modelSnapshot = pending;
       scanHint();
       if (!window.usesAntigravityOAuth?.(owner)) {
-        el('ai-source').hidden = Boolean(profile);
-        el('ai-source').textContent = choice && choice.scope !== 'none' && !profile ? 'Kết nối API đã chọn không khả dụng. Hãy chọn kết nối khác; không tự động dùng kết nối thay thế.' : 'Em thêm kết nối AI để trò chuyện với thầy nhé.';
+        const warning = el('ai-source'), unavailable = Boolean(choice && choice.scope !== 'none' && !profile);
+        warning.hidden = !unavailable;
+        warning.textContent = unavailable ? 'Kết nối API đã chọn không khả dụng. Hãy chọn kết nối khác; không tự động dùng kết nối thay thế.' : '';
         pill(profile ? 'saved' : 'none', profile ? `Đang dùng ${profile.name}` : 'Chưa chọn API');
       }
-      if (!profile && !pending) el('ai-form').hidden=true;
-      if (deviceError) status.textContent = deviceError;
+      if (!profile && !pending && !el('ai-edit-dialog').open) el('ai-form').hidden=true;
+      if (deviceError) (el('ai-form').hidden ? el('ai-connection-status') : status).textContent = deviceError;
     } catch (error) {
       if (version === rendering && signedInUser?.user_id === owner && !managed()) {
         if (!metadataLoaded) {
@@ -578,7 +619,8 @@
           if (version !== rendering || signedInUser?.user_id !== owner || managed()) return;
           window.renderVoiceProfiles?.(owner, local.map(profile => ({...profile, scope:'local'})));
         }
-        resetModels(); status.textContent = errorText(error);
+        resetModels();
+        el('ai-connection-status').textContent = errorText(error);
       }
     }
     await oauthRendering;
@@ -619,7 +661,7 @@
         const owner = signedInUser?.user_id;
         const data = await call('/api/ai/settings');
         if (owner !== signedInUser?.user_id || !managed()) return 'none';
-        window.renderVoiceProfiles?.(owner, [], false, data.platform);
+        window.renderVoiceProfiles?.(owner, profilesOwner === owner ? profileRows : [], profilesOwner === owner && storageEnabled, data.platform);
         return data.source === 'platform' && data.platform?.configured ? 'platform' : 'none';
       }
       if (window.usesAntigravityOAuth?.(signedInUser?.user_id)) {
@@ -679,25 +721,118 @@
   for (const id of ['ai-profile-new', 'ai-method-oauth']) {
     el(id).addEventListener('click', () => el('ai-add-dialog').close(), {capture:true});
   }
-  async function returnToSavedConnection() {
+  function returnToSavedConnection() {
     loadedProfile = null;
     modelSnapshot = null;
     window.aiConnectionChanged?.();
-    await renderSettings();
-    el('ai-profile-list').focus();
+    return renderSettings();
   }
-  el('ai-api-back').addEventListener('click', returnToSavedConnection);
-  el('ai-oauth-back').addEventListener('click', returnToSavedConnection);
+  function closeApiEditor() {
+    const dialog = el('ai-edit-dialog');
+    if (!dialog.open) return;
+    el('ai-key').value = '';
+    showApiKey(false);
+    el('ai-edit-status').textContent = '';
+    editOpener = null;
+    editState = null;
+    dialog.close();
+  }
+  function captureCredentialsEdit() {
+    if (!editState || editState.credentialsDirty) return;
+    Object.assign(editState, {
+      credentialsDirty: true,
+      snapshot: modelSnapshot,
+      models: [...el('ai-model-list').options].map(option => option.value),
+      selectedModel: el('ai-models').hidden ? el('ai-model').value : el('ai-model-list').value,
+      status: activeScan ? 'Đã dừng. Chỉ giữ các model đã phản hồi trước khi sửa kết nối.' : el('ai-model-status').textContent,
+      hint: el('ai-selection-hint').textContent,
+      aiStatus: el('ai-status').textContent,
+      scanOpen: el('ai-api-scan').open
+    });
+  }
+  function dismissApiEditor() {
+    if (testing) return;
+    const opener = editOpener, prior = editState;
+    closeApiEditor();
+    (opener && !opener.hidden ? opener : el('ai-profile-list')).focus();
+    if (prior && savedConnection && prior.profile === selectedProfile) {
+      if (!prior.credentialsDirty) {
+        el('ai-profile-name').value = prior.name;
+        el('ai-profile-storage').value = prior.storage;
+        storageHint();
+        if (!activeScan) publishModels();
+        return;
+      }
+      fillProfile(prior.profile, {models: prior.models, checkedAt: prior.snapshot?.checkedAt ?? prior.profile.checked_at}, prior.key);
+      modelSnapshot = prior.snapshot;
+      el('ai-api-scan').open = prior.scanOpen;
+      el('ai-model').value = prior.selectedModel;
+      el('ai-model-status').textContent = prior.status;
+      el('ai-selection-hint').textContent = prior.hint;
+      el('ai-status').textContent = prior.aiStatus;
+      publishModels();
+      scanHint();
+      return;
+    }
+    return returnToSavedConnection();
+  }
+  el('ai-api-back').addEventListener('click', dismissApiEditor);
+  el('ai-edit-dialog').addEventListener('cancel', event => {
+    event.preventDefault();
+    void dismissApiEditor();
+  });
+  window.addEventListener('hashchange', () => {
+    if (el('ai-confirm-dialog').open) {
+      stopModels();
+      publishModels();
+      el('ai-model-status').textContent = 'Đã hủy xác nhận. Không gửi thêm lượt kiểm tra nào.';
+      scanHint();
+    }
+    if (el('ai-add-dialog').open) el('ai-add-dialog').close();
+    if (!el('ai-edit-dialog').open) return;
+    closeApiEditor();
+    loadedProfile = null;
+    resetModels();
+    window.aiConnectionChanged?.();
+  });
+  el('ai-edit-connection').addEventListener('click', () => {
+    if (testing || managed()) return;
+    if (window.usesAntigravityOAuth?.(signedInUser?.user_id)) {
+      const details = el('ai-oauth-manage');
+      details.open = true;
+      details.querySelector('summary').focus();
+    } else if (selectedProfile) {
+      if (el('ai-form').hidden) window.showAiConnectionForm?.('key');
+      editOpener = el('ai-edit-connection');
+      editState = {
+        profile: selectedProfile,
+        key: profileKey,
+        name: el('ai-profile-name').value,
+        storage: el('ai-profile-storage').value,
+        credentialsDirty: false
+      };
+      el('ai-edit-dialog').showModal();
+    }
+  });
+  el('ai-oauth-back').addEventListener('click', () => {
+    el('ai-profile-list').focus();
+    return returnToSavedConnection();
+  });
 
   document.querySelectorAll('#ai-segments button').forEach(button => button.addEventListener('click', () => {
+    if (el('ai-protocol').value === button.dataset.protocol) return;
+    captureCredentialsEdit();
     el('ai-protocol').value = button.dataset.protocol;
     invalidateSelection();
     syncProtocol();
   }));
   for (const id of ['ai-base', 'ai-key']) {
-    el(id).addEventListener('input', () => { resetModels(); invalidateSelection(); });
+    el(id).addEventListener('input', () => { captureCredentialsEdit(); resetModels(); invalidateSelection(); });
   }
-  el('ai-fetch-models').addEventListener('click', () => loadModels());
+  el('ai-fetch-models').addEventListener('click', () => {
+    el('ai-api-scan').open = true;
+    return loadModels();
+  });
   el('ai-stop-models').addEventListener('click', () => {
     stopModels();
     publishModels();
@@ -710,13 +845,7 @@
     invalidateSelection();
     publishModels();
   });
-  el('ai-key-toggle').addEventListener('click', () => {
-    const show = el('ai-key').type === 'password';
-    el('ai-key').type = show ? 'text' : 'password';
-    el('ai-key-toggle').textContent = show ? 'Ẩn' : 'Hiện';
-    el('ai-key-toggle').setAttribute('aria-label', show ? 'Ẩn khóa API' : 'Hiện khóa API');
-    el('ai-key-toggle').setAttribute('aria-pressed', String(show));
-  });
+  el('ai-key-toggle').addEventListener('click', () => showApiKey(el('ai-key').type === 'password'));
   el('auth-logout').addEventListener('click', () => {
     resetModels();
     syncProbeBudget(null);
@@ -725,7 +854,7 @@
   document.querySelectorAll('.settings-nav button').forEach(button => button.addEventListener('click', () => {
     switchTab('settings',{view:button.dataset.settings});
   }));
-  el('ai-profile-storage').addEventListener('change', () => { storageHint(); publishModels(); });
+  el('ai-profile-storage').addEventListener('change', () => { storageHint(); if (!activeScan) publishModels(); });
   el('ai-profile-new').addEventListener('click', () => {
     if (testing || managed()) return;
     ++rendering;
@@ -734,6 +863,9 @@
     savedConnection = false;
     refreshSavedConnections();
     invalidateSelection();
+    editOpener = el('ai-add-connection');
+    editState = null;
+    el('ai-edit-dialog').showModal();
     el('ai-profile-name').focus();
   });
   el('ai-profile-list').addEventListener('change', async () => {
@@ -745,7 +877,7 @@
       refreshSavedConnections();
       return;
     }
-    const profile = profileRows.find(row => profileChoice(row) === value);
+    const profile = profileRows.find(row => Object.hasOwn(BASES,row.protocol) && profileChoice(row) === value);
     if (value && !profile) return;
     await profileAction(async owner => {
       if (profile?.scope === 'server') await send(`/api/ai/profiles/${encodeURIComponent(profile.id)}/activate`, 'POST', {});
@@ -760,6 +892,11 @@
     refreshSavedConnections();
   });
   el('ai-profile-save').addEventListener('click', () => profileAction(() => saveProfile(false)));
+  el('ai-edit-dialog').addEventListener('keydown', event => {
+    if (event.key !== 'Enter' || event.isComposing || event.target.tagName !== 'INPUT' || !['text', 'url', 'password'].includes(event.target.type)) return;
+    event.preventDefault();
+    el('ai-profile-save').click();
+  });
   el('ai-form').addEventListener('submit', event => {
     event.preventDefault();
     return profileAction(() => saveProfile(true));
@@ -792,8 +929,11 @@
     el('ai-profile-list').replaceChildren();
     el('ai-current-model').textContent = 'Chưa chọn kết nối';
     el('ai-current-hint').textContent = '';
+    el('ai-source').hidden = true;
+    el('ai-source').textContent = '';
     el('ai-card').dataset.connected = 'false';
     el('ai-form').hidden = el('ai-oauth-panel').hidden = true;
+    closeApiEditor();
     if (el('ai-add-dialog').open) el('ai-add-dialog').close();
   });
 })();

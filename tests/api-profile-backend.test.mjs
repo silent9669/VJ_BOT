@@ -59,6 +59,39 @@ async function fixture(DB = database()) {
 const profileBody = (profile, patch = {}) => ({name: profile.name, protocol: profile.protocol, base_url: profile.base_url, model: profile.model, ...patch});
 const activate = (send, owner, profile) => send(owner, '/api/ai/profiles/' + profile.id + '/activate', 'POST', {});
 
+test('stored ElevenLabs voice is owner-bound and cannot replace the active chat profile', async t => {
+  const {env,request,send,view,create}=await fixture();
+  const user='google:alice', other='google:bob';
+  const chat=await create(user);
+  assert.equal((await activate(send,user,chat)).status,200);
+  const voice=await create(user,{protocol:'elevenlabs',base_url:undefined,model:'',api_key:'synthetic-eleven-key'});
+  assert.equal((await activate(send,user,voice)).status,404);
+  assert.equal((await view(user)).active_id,chat.id);
+  const routing={version:2,mode:'single',primary:{provider:'elevenlabs',voice_id:'test_voice',profile:{scope:'server',id:voice.id}}};
+  const speak=owner=>{
+    const req=request(owner,'/api/tts','POST',{stream:true,text:'こんにちは。',routing});
+    req.headers.set('X-VJBot-Account',owner);
+    return worker.fetch(req,env);
+  };
+  const original=globalThis.fetch;
+  t.after(()=>{globalThis.fetch=original;});
+  let calls=0;
+  globalThis.fetch=async (url,options)=>{
+    calls++;
+    assert.match(url,/^https:\/\/api\.elevenlabs\.io\/v1\/text-to-speech\/test_voice\?/);
+    assert.equal(options.headers['xi-api-key'],'synthetic-eleven-key');
+    return new Response(Uint8Array.of(73,68,51,4),{headers:{'Content-Type':'audio/mpeg'}});
+  };
+  assert.equal((await speak(other)).status,403);
+  assert.equal(calls,0);
+  const response=await speak(user);
+  assert.match(response.headers.get('Content-Type'),/^application\/x-ndjson/);
+  const records=(await response.text()).trim().split('\n').map(JSON.parse);
+  assert.equal(records[0].lang,'ja');
+  assert.equal(records.at(-1).type,'done');
+  assert.equal(calls,1);
+});
+
 async function oldCiphertext(secret, owner, key) {
   const text = new TextEncoder();
   const aes = await crypto.subtle.importKey('raw', await crypto.subtle.digest('SHA-256', text.encode(secret)), 'AES-GCM', false, ['encrypt']);

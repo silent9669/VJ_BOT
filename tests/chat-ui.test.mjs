@@ -163,3 +163,26 @@ test('reply paragraphs preserve Japanese and single line breaks without blank-li
   assert.ok(body.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
   assert.ok(!body.includes('<br><br>'));assert.ok(!body.includes('<script>'));
 });
+
+test('the message Listen button preserves an in-bubble selection and otherwise reads only its own message',()=>{
+  const listened=[];
+  const button={}, inside={}, outside={}, body={contains:node=>node===inside};
+  const row={querySelector:selector=>selector==='.bubble-body-text'?body:button};
+  let selected={anchorNode:inside,focusNode:inside,toString:()=> ' 学校 '};
+  const c=vm.createContext({window:{getSelection:()=>selected},playGeminiTTS:(text,options)=>listened.push([text,options.privateAudio]),
+    document:{getElementById:id=>id==='chat-welcome'?{style:{}}:{appendChild(){}},createElement:()=>row},
+    MASCOTS:{teacher:{avatar:'teacher.svg'}},mascotMgr:{current:'teacher'},escapeHtml:text=>text});
+  vm.runInContext(source.slice(source.indexOf('function renderBubble('),source.indexOf('function markLevel(')),c);
+  c.renderBubble('bot','Thử nói 学校 nhé.');
+  let prevented=false;
+  const clickDown={button:0,preventDefault(){prevented=true;}};
+  button.onmousedown(clickDown);
+  if (!prevented) selected=null;
+  button.onclick();
+  selected={anchorNode:inside,focusNode:outside,toString:()=> 'other content'};
+  prevented=false;
+  button.onmousedown(clickDown);
+  button.onclick();
+  assert.deepEqual(listened,[['学校',true],['Thử nói 学校 nhé.',true]]);
+  assert.equal(prevented,false);
+});

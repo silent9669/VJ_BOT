@@ -244,6 +244,7 @@ test('restart clears model dialogue and teaching state without deleting UI histo
   assert.deepEqual(calls.at(-1).envelope.reference.history, []);
   assert.equal(calls.at(-1).envelope.reference.teaching.state, null);
   assert.equal(calls.at(-1).envelope.reference.teaching.intent, 'restart');
+  assert.match(calls.at(-1).body.messages[0].content, /^TURN OPENING: You may give .*welcome/m);
   const restarted = await saved(env);
   assert.deepEqual(restarted.conversations.slice(0, old.conversations.length), old.conversations);
   assert.equal(restarted.session.history_after, old.conversations.at(-1).id);
@@ -742,14 +743,40 @@ test('explicit start creates a durable greeting probe in the normal chat session
     : structured('Em bắt đầu với 私 nhé.', 'hint', null)));
   await successful(await send({intent: 'start', message: ''}), 'Chào em, hãy thử tự giới thiệu.');
   assert.equal(calls[0].envelope.reference.teaching.intent, 'start');
+  assert.match(calls[0].body.messages[0].content, /^TURN OPENING: You may give .*welcome/m);
+  assert.deepEqual(calls[0].body.response_format.json_schema.schema.properties.action.enum, ['probe', 'clarify']);
   assert.equal(teachingState(await saved(env)).probe, probe);
   await successful(await send({intent: 'hint', message: 'Gợi ý cho em'}), 'Em bắt đầu với 私 nhé.');
   assert.equal(calls[1].envelope.reference.teaching.state.probe, probe);
+  assert.match(calls[1].body.messages[0].content, /^TURN OPENING: Continue\b/m);
+  assert.match(calls[1].body.messages[0].content, /^CURRENT CHAT ACTION \(hint\):/m);
+  assert.doesNotMatch(calls[1].body.messages[0].content, /^CURRENT CHAT ACTION \(start\):/m);
   const snapshot = await saved(env);
   assert.equal(teachingState(snapshot).probe, probe);
   assert.equal(teachingState(snapshot).hint_stage, 1);
   assert.equal(snapshot.conversations.length, 4);
   assert.equal(snapshot.session.revision, 2);
+});
+
+test('a bare greeting or change of focus cannot start a new session opening', async t => {
+  const {send} = await authenticated(t);
+  let result = structured('Thầy nghe đây.');
+  const calls = provider(t, () => providerResponse(result));
+  const lesson = {lesson: WORD_LESSON};
+  await successful(await send({...lesson, message: 'hi'}), result.reply);
+  assert.doesNotMatch(calls[0].body.messages[0].content, /^TURN OPENING: You may give .*welcome/m);
+  assert.equal(calls[0].envelope.reference.teaching.intent, 'message');
+  assert.doesNotMatch(calls[0].body.messages[0].content, /^CURRENT CHAT ACTION/m);
+
+  await successful(await send({...lesson, message: 'hi'}), result.reply);
+  assert.match(calls[1].body.messages[0].content, /^TURN OPENING: Continue\b/m);
+
+  result = structured('Em thử đặt một câu nhé.', 'probe', ORIGINAL_PROBE);
+  await successful(await send({...lesson, intent: 'start', message: 'Thầy hỏi em từ này nhé.',
+    focus: {kind: 'word', index: 5}}), result.reply);
+  assert.deepEqual(calls[2].envelope.reference.history, [], 'changing focus drops dialogue, not the ongoing session');
+  assert.match(calls[2].body.messages[0].content, /^TURN OPENING: Continue\b/m);
+  assert.match(calls[2].body.messages[0].content, /^CURRENT CHAT ACTION \(start\):/m);
 });
 
 test('the retired greeting endpoint cannot append history or bypass an active chat generation', async t => {

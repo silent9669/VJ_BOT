@@ -71,6 +71,23 @@ function browser({idb = database(), storage = new Map(), brokenStorage = false} 
   return {api: context.VJProfiles, context, idb, storage};
 }
 
+test('ElevenLabs device profiles canonicalize /v1 and expose no key in replay metadata',async()=>{
+  const {api,idb}=browser();
+  const saved=await api.save(owner,{...draft(),protocol:'elevenlabs',base_url:'https://api.elevenlabs.io/v1/',model:''});
+  assert.deepEqual(plain(await api.metadata(owner,saved.id)),
+    {protocol:'elevenlabs',base_url:'https://api.elevenlabs.io',revision:saved.revision});
+  await assert.rejects(api.metadata(other,saved.id));
+  const oldRow=[...idb.stores.get('profiles').values()][0];
+  oldRow.base_url='https://api.elevenlabs.io/v1';
+  const {key}=idb.stores.get('keys').get(JSON.stringify(owner));
+  const aad=new TextEncoder().encode(JSON.stringify(['vjbot-device-key-v1',owner,saved.id,'elevenlabs',oldRow.base_url,null]));
+  oldRow.ciphertext=await webcrypto.subtle.encrypt({name:'AES-GCM',iv:oldRow.iv,additionalData:aad},key,new TextEncoder().encode(draft().api_key));
+  assert.equal((await api.load(owner,saved.id)).api_key,draft().api_key);
+  assert.equal((await api.metadata(owner,saved.id)).base_url,'https://api.elevenlabs.io');
+  const proxy=await api.save(owner,{...draft(),protocol:'elevenlabs',base_url:'https://voice.example/gateway/v1/',model:''});
+  assert.equal((await api.metadata(owner,proxy.id)).base_url,'https://voice.example/gateway/v1');
+});
+
 test('saves encrypted credentials, public metadata, and reloads the same account key', async () => {
   const b = browser(), profile = await b.api.save(owner, draft());
   assert.equal(profile.api_key, undefined);
@@ -211,18 +228,22 @@ test('only exact intended same-origin inference POST paths receive an immutable 
   const b = browser(), profile = await b.api.save(owner, draft());
   b.api.setActive(owner, {scope: 'local', id: profile.id});
   const options = Object.freeze({method: 'POST', headers: Object.freeze({'X-CSRF-Token': 'synthetic-csrf'}), body: JSON.stringify({message: 'Hello'})});
-  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/stt', '/api/ai/test', 'https://tutor.example/api/chat']) {
+  for (const path of ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/stt', '/api/live/turn', '/api/ai/test', 'https://tutor.example/api/chat', 'https://tutor.example/api/live/turn']) {
     const prepared = await b.api.prepareRequest(path, options, owner), body = JSON.parse(prepared.body);
     assert.notEqual(prepared, options);
     assert.equal(body.api_connection.api_key, draft().api_key);
     assert.equal(body.api_connection.model, draft().model);
     assert.equal(body.message, 'Hello');
+    assert.equal(prepared.redirect, 'error');
     assert.equal(options.body, '{"message":"Hello"}');
   }
   for (const path of ['/api/chat?x=1', '/api/chat#x', '/api/chat/', '/api/ai/models', '/api/ai/models/test',
-    '//other.example/api/chat', 'https://other.example/api/chat', '/other/../api/chat', '/api/%63hat']) {
+    '//other.example/api/chat', 'https://other.example/api/chat', '/other/../api/chat', '/api/%63hat',
+    '/api/live/turn?x=1', '/api/live/turn/', 'https://other.example/api/live/turn']) {
+    // The exact live turn endpoint is the only live path that receives Chat credentials.
     const prepared = await b.api.prepareRequest(path, options, owner);
     assert.equal(JSON.parse(prepared.body).api_connection, undefined);
+    assert.equal(prepared.redirect, undefined);
   }
   const get = await b.api.prepareRequest('/api/chat', {method: 'GET'}, owner);
   assert.equal(get.body, undefined);
@@ -247,10 +268,61 @@ test('an explicit server selection pins the intended profile instead of silently
   const b = browser({idb: null}), options = {method: 'POST', body: '{}'};
   assert.deepEqual(plain(await b.api.prepareRequest('/api/chat', options, owner)), options);
   b.api.setActive(owner, {scope: 'server', id: 'server-profile'});
-  const prepared = await b.api.prepareRequest('/api/chat', options, owner);
-  assert.equal(new Headers(prepared.headers).get('X-VJBot-Profile'), 'server-profile');
-  assert.equal(prepared.body, '{}');
-  assert.equal(options.headers, undefined);
+  for (const path of ['/api/chat','/api/live/turn']) {
+    const prepared = await b.api.prepareRequest(path, options, owner);
+    assert.equal(new Headers(prepared.headers).get('X-VJBot-Profile'), 'server-profile');
+    assert.equal(prepared.body, '{}');
+    assert.equal(prepared.redirect, 'error');
+    assert.equal(options.headers, undefined);
+  }
+});
+
+test('live turn preparation fails closed on removal, rotation and a selection that changes back',async()=>{
+  const b = browser(), options = {method:'POST',body:'{}'};
+  b.context.signedInUser={user_id:owner};
+  const profile = await b.api.save(owner,draft());
+  b.api.setActive(owner,{scope:'local',id:profile.id});
+  const pending=b.api.prepareRequest('/api/live/turn',options,owner);
+  b.api.setActive(owner,{scope:'server',id:'different'});
+  b.api.setActive(owner,{scope:'local',id:profile.id});
+  await assert.rejects(pending,/không dùng được/i);
+  await b.api.save(owner,{...draft(),id:profile.id,api_key:'rotated-chat-credential'});
+  const prepared=await b.api.prepareRequest('/api/live/turn',options,owner);
+  assert.equal(JSON.parse(prepared.body).api_connection.api_key,'rotated-chat-credential');
+  await b.api.remove(owner,profile.id);
+  await assert.rejects(b.api.prepareRequest('/api/live/turn',options,owner),/chưa chọn/i);
+});
+
+test('Cascaded requests use a pinned local Chat revision and reject a rotated or switched connection',async()=>{
+  const b=browser(), options={method:'POST',body:'{}'};
+  const profile=await b.api.save(owner,draft());
+  const pin={scope:'local',id:profile.id,revision:profile.revision};
+  b.api.setActive(owner,{scope:'local',id:profile.id});
+  for(const path of ['/api/live/turn','/api/stt']){
+    const prepared=await b.api.prepareRequest(path,options,owner,pin);
+    assert.equal(JSON.parse(prepared.body).api_connection.api_key,draft().api_key);
+  }
+  await b.api.save(owner,{...draft(),id:profile.id,api_key:'rotated-chat-credential'});
+  for(const path of ['/api/live/turn','/api/stt'])await assert.rejects(b.api.prepareRequest(path,options,owner,pin),{code:'unavailable'});
+  b.api.setActive(owner,{scope:'server',id:'other-chat'});
+  await assert.rejects(b.api.prepareRequest('/api/live/turn',options,owner,pin),{code:'unavailable'});
+});
+
+test('Chat connection notifications track actual owned reference and local credential changes',async()=>{
+  const b=browser(), events=[];
+  b.context.signedInUser={user_id:owner};
+  b.context.addEventListener('vjbot-chat-connection-changed',event=>events.push(event.detail));
+  const profile=await b.api.save(owner,draft()), ref={scope:'local',id:profile.id};
+  assert.deepEqual(events,[]);
+  b.api.setActive(owner,ref);
+  b.api.setActive(owner,ref);
+  b.api.setActive(other,{scope:'server',id:'other-chat'});
+  b.api.active(owner);
+  await b.api.save(owner,{...draft(),id:profile.id,name:'Renamed'});
+  assert.deepEqual(events,[undefined]);
+  await b.api.save(owner,{...draft(),id:profile.id,model:'new-chat-model'});
+  await b.api.save(owner,{...draft(),id:profile.id,model:'new-chat-model',api_key:'rotated-chat-credential'});
+  assert.deepEqual(events,[undefined,undefined,undefined]);
 });
 
 test('corrupt schema and missing account encryption keys fail without exposing stored details', async () => {

@@ -224,7 +224,7 @@
     } catch (error) {
       if (id === owner() && version === rendering) {
         el('ai-oauth-status').textContent = error.message;
-        el('ai-connection-status').textContent = 'Chưa tải được các kết nối Antigravity. Em thử tải lại nhé. ' + error.message;
+        if (el('ai-oauth-panel').hidden) el('ai-connection-status').textContent = 'Chưa tải được các kết nối Antigravity. Em thử tải lại nhé. ' + error.message;
       }
     }
   }
@@ -240,7 +240,12 @@
     const previous = controls.map(control => control.disabled);
     controls.forEach(control => { control.disabled = true; }); el('ai-oauth-panel').setAttribute('aria-busy', 'true');
     try { await task(id, connection, version); if (id === owner()) el('ai-connection-status').textContent = ''; }
-    catch (error) { if (id === owner() && version === revision) { el('ai-oauth-status').textContent = errorText(error); el('ai-connection-status').textContent = errorText(error); } }
+    catch (error) {
+      if (id === owner() && version === revision) {
+        (el('ai-oauth-panel').hidden ? el('ai-connection-status') : el('ai-oauth-status')).textContent = errorText(error);
+        if (!el('ai-oauth-panel').hidden) el('ai-connection-status').textContent = '';
+      }
+    }
     finally {
       controls.forEach((control, index) => { control.disabled = previous[index]; });
       busy = false; el('ai-oauth-panel').setAttribute('aria-busy', 'false');

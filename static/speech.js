@@ -25,7 +25,7 @@ function speechText(text, {reading = '', japaneseOnly = false} = {}) {
 function audioDataUrl(data) {
   const mime = data.mimeType || 'audio/wav';
   if (!/^audio\/l16(?:;|$)/i.test(mime)) {
-    if (!/^audio\/(?:wav|x-wav|mpeg|mp3|ogg)(?:;|$)/i.test(mime)) throw new Error('Định dạng âm thanh giọng nói không được hỗ trợ.');
+    if (!/^audio\/(?:wav|x-wav|mpeg|mp3|ogg|opus)(?:;|$)/i.test(mime)) throw new Error('Định dạng âm thanh giọng nói không được hỗ trợ.');
     return `data:${mime};base64,${data.audioBase64}`;
   }
   const rate = Number(mime.match(/;\s*rate=(\d+)(?:;|$)/i)?.[1] || 24000);
@@ -51,6 +51,7 @@ function speechStatus(message, active = false) {
 }
 
 function stopSpeech() {
+  window.VJVoice?.stop();
   const previous = speechPlayback;
   speechPlayback = null;
   previous?.controller.abort();
@@ -72,7 +73,11 @@ function speechIdentity() {
 }
 
 
-async function playGeminiTTS(text, options = {}) {
+function playGeminiTTS(text, options = {}) {
+  return window.VJVoice ? window.VJVoice.speak(text,options) : playLegacyTTS(text,options);
+}
+
+async function playLegacyTTS(text, options = {}) {
   stopSpeech();
   globalThis.stopJapaneseInputs?.();
   window.speechSynthesis?.cancel();
@@ -97,7 +102,7 @@ async function playGeminiTTS(text, options = {}) {
   speechStatus(`Đang chuẩn bị âm thanh ${language}…`, true);
   try {
     let reference={};
-    const context=options.lesson?options:globalThis.teacherContext?.();
+    const context=options.preview ? null : options.lesson ? options : globalThis.teacherContext?.();
     if(context?.lesson){
       reference={lesson:context.lesson,focus:context.focus || null,view:context.view || 'checks'};
       if(context.task)reference.task=await taskReference(context.task);

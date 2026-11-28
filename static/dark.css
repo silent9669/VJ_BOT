@@ -19,7 +19,7 @@
 :root[data-theme=dark] .mobile-bottom-item.active { background: rgba(124, 199, 154, .16) !important; }
 :root[data-theme=dark] .sidebar-nav-item.active, :root[data-theme=dark] #app-sidebar .sidebar-nav-item.active { background: rgba(124, 199, 154, .16) !important; }
 :root[data-theme=dark] .live-orb { background: radial-gradient(circle at 35% 30%, #3a403c, color-mix(in srgb, currentColor 22%, #1b1e1c) 70%); }
-:root[data-theme=dark] .segmented button[aria-pressed=true], :root[data-theme=dark] .curriculum-view-switch button[aria-pressed=true] { background: var(--raised) !important; }
+:root[data-theme=dark] .segmented button[aria-pressed=true], :root[data-theme=dark] .curriculum-view-switch button[aria-pressed=true] { background: var(--raised) !important; color:var(--ink) !important; }
 :root[data-theme=dark] .account-menu-theme button[aria-checked=true] { background: var(--raised); }
 :root[data-theme=dark] img.pixel-sprite, :root[data-theme=dark] .topbar-logo-8bit { background: transparent; }
 :root[data-theme=dark] dialog, :root[data-theme=dark] .picker-card, :root[data-theme=dark] .lesson-detail-modal { color: var(--ink); }

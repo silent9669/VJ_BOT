@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: VJBot tutor output checks — offline only; semantic review required
+prompts:
+  - '{{candidate}}'
+providers:
+  - echo
+sharing: false
+defaultTest:
+  assert:
+    - type: is-json
+    - type: javascript
+      value: file://./assert-turn.mjs
+tests: file://./replay.mjs

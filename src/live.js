@@ -19,7 +19,7 @@ const MISTRAL_VOICE_FALLBACK='voice_3133';
 // Context bias steers Voxtral toward the words the learner actually practices. Entries count
 // against the model's context window, and restricted content must never leave the server.
 const MISTRAL_STT_STAPLES=['thầy Lâm','こんにちは','ありがとうございます','すみません','はい','いいえ','わかりました','もう一度お願いします'];
-function lessonVocabulary(lesson){
+export function lessonVocabulary(lesson){
   const terms=[];
   for(const word of lesson?.words||[])if(processingAllowed(word)&&typeof word?.jp==='string'&&word.jp.length<=40)terms.push(word.jp);
   return [...new Set([...terms,...MISTRAL_STT_STAPLES])].slice(0,40);
@@ -92,7 +92,10 @@ export async function mistralLiveRoute(request,env) {
   const raw=await request.text();
   if(new TextEncoder().encode(raw).length>16000)return json({detail:'Yêu cầu quá dài.'},413);
   let data;try{data=JSON.parse(raw||'{}');}catch{return json({detail:'Dữ liệu không hợp lệ.'},400);}
-  const provider=await resolveProvider(env,user.user_id,data?.api_connection);
+  const profileId=request.headers.get('X-VJBot-Profile') ?? undefined;
+  // Native Live accepts saved server profiles, not an OAuth gateway selection.
+  if(profileId!==undefined && !/^[A-Za-z0-9_-]{1,128}$/.test(profileId))return providerFailure({error:'invalid_connection'});
+  const provider=await resolveProvider(env,user.user_id,data?.api_connection,profileId);
   const failure=providerFailure(provider);
   if(failure)return failure;
   if(provider.protocol!=='openai'||provider.baseUrl!==MISTRAL_SPEECH_BASE)return json({detail:'Nói trực tiếp bằng Mistral cần kết nối Mistral gốc trong Cài đặt.'},403);
@@ -100,7 +103,9 @@ export async function mistralLiveRoute(request,env) {
   if(request.method==='DELETE'){
     if(typeof data?.id!=='string'||!/^[\w.\-]{4,128}$/.test(data.id))return json({detail:'Phiên không hợp lệ.'},400);
     try{
-      await fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions/${data.id}`,{method:'DELETE',redirect:'manual',headers,signal:AbortSignal.timeout(10000)});
+      const closed=await fetch(`${MISTRAL_SPEECH_BASE}/audio/sessions/${data.id}`,{method:'DELETE',redirect:'manual',headers,signal:AbortSignal.timeout(10000)});
+      void closed.body?.cancel().catch(()=>{});
+      if(!closed.ok)return json({detail:'Mistral chưa xác nhận đóng phiên.',code:'live_close_failed'},502);
       return json({ok:true});
     }catch{return json({detail:'Không đóng được phiên. Hãy thử lại.'},504);}
   }
@@ -132,18 +137,16 @@ export async function mistralLiveRoute(request,env) {
         tts:{model:'voxtral-mini-tts-3',voice_id:voice},
         instructions:teaching,welcome_message:MISTRAL_WELCOME})
     });
-    // Voice answers are short, so the LLM is a small share of session cost: prefer the
-    // much stronger instruction following of mistral-medium when the chosen model is rejected.
-    const chain=['mistral-medium-latest','mistral-small-latest'];
-    let model=provider.models[0]||chain[0],tuned=true,voice=MISTRAL_VOICE;
+    const selectedModel=provider.models[0];
+    const fallbackModels=['mistral-small-latest','mistral-medium-latest'].filter(model=>model!==selectedModel);
+    let model=selectedModel||fallbackModels.shift(),tuned=true,voice=MISTRAL_VOICE;
     let response=await create(model,tuned,voice);
     for(let attempt=0;response.status===422&&attempt<3;attempt++){
       const reason=await response.json().catch(()=>null);
       const detail=Array.isArray(reason?.detail)?reason.detail:[];
       const hits=path=>detail.some(e=>path==='llm'&&e?.type==='unsupported_model'
         ||(Array.isArray(e?.loc)&&e.loc[0]==='body'&&e.loc[1]===path));
-      const at=chain.indexOf(model);
-      if(hits('llm')&&at<chain.length-1)model=chain[at+1];
+      if(hits('llm')&&fallbackModels.length)model=fallbackModels.shift();
       else if(hits('tts')&&voice!==MISTRAL_VOICE_FALLBACK)voice=MISTRAL_VOICE_FALLBACK;
       else if(hits('stt')&&tuned)tuned=false;
       else break;

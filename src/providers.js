@@ -6,6 +6,7 @@ import {antigravityProvider, ANTIGRAVITY_PROFILE, connectionIdOk} from './antigr
 import {rateLimited} from './ai-usage.js';
 import {ADMIN_MODELS, LIVE_VOICES, adminAISettings, saveAdminAISettings} from './admin-ai.js';
 import {MISTRAL_SPEECH_BASE} from './speech.js';
+import {voiceBase} from './voice/tts-route.js';
 
 const json = (data, status = 200) => Response.json(data, {status, headers: {'Cache-Control': 'no-store'}});
 const text = new TextEncoder();
@@ -27,21 +28,22 @@ const activeProfile = (env, userId) => env.DB.prepare(`SELECT p.* FROM ai_provid
 const connectionBase = (protocol, raw) => typeof protocol === 'string' && Object.hasOwn(DEFAULT_BASES, protocol)
   && (raw === undefined || typeof raw === 'string') ? cleanBaseUrl(protocol, raw) : {error: 'Kết nối API không hợp lệ.'};
 const ownedProfile = (env, userId, id) => env.DB.prepare('SELECT * FROM ai_providers WHERE user_id=? AND id=?').bind(userId, id).first();
+const voiceOnly = protocol => ['elevenlabs','mistral','openai_compatible'].includes(protocol);
 
 // Admin inference is server-managed; supplied private selections are never repurposed.
-export async function resolveProvider(env, userId, override, profileId) {
+export async function resolveProvider(env, userId, override, profileId, {signal} = {}) {
   if (await isAdmin(env, userId)) {
     if (override !== undefined || (profileId !== undefined && profileId !== 'platform_openai')) return {error:'invalid_connection'};
     return platformProvider(env, userId);
   }
   if (profileId === 'platform_openai') return {error:'invalid_connection'};
-  return resolveConnection(env, userId, override, profileId);
+  return resolveConnection(env, userId, override, profileId, false, signal);
 }
-async function resolveConnection(env, userId, override, profileId, speech = false) {
+async function resolveConnection(env, userId, override, profileId, speech = false, signal) {
   if (typeof profileId === 'string' && (profileId === ANTIGRAVITY_PROFILE || profileId.startsWith(ANTIGRAVITY_PROFILE + ':'))) {
     const id = profileId.slice(ANTIGRAVITY_PROFILE.length + 1);
     if (override !== undefined || !connectionIdOk(id)) return {error:'invalid_connection'};
-    return antigravityProvider(env, userId, id);
+    return antigravityProvider(env, userId, id, signal);
   }
   if (profileId !== undefined && (typeof profileId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(profileId)
     || override !== undefined)) return {error: 'invalid_connection'};
@@ -153,7 +155,17 @@ async function publicProfile(env, userId, row) {
 }
 
 async function saveProfile(env, userId, data, existing, requireModel = false) {
-  const base = connectionBase(data.protocol, data.base_url);
+  let base;
+  if (voiceOnly(data.protocol)) {
+    if (requireModel || data.model !== '' || data.models !== undefined || data.checked_at !== undefined
+      || (existing && existing.protocol !== data.protocol))
+      return {response:json({detail:'Kết nối này chỉ dùng trong Cài đặt Âm thanh.'},400)};
+    try {base={url:voiceBase(data.protocol,data.base_url,env)};}
+    catch (error) {return {response:json({detail:error.message},error.status || 400)};}
+  } else {
+    if (existing && voiceOnly(existing.protocol)) return {response:json({detail:'Kết nối này chỉ dùng trong Cài đặt Âm thanh.'},400)};
+    base = connectionBase(data.protocol,data.base_url);
+  }
   if (base.error) return {response: json({detail: base.error}, 400)};
   if (!(modelOk(data.model) || (!requireModel && data.model === ''))) return {response: json({detail: 'Tên mô hình không hợp lệ.'}, 400)};
   const name = data.name === undefined ? existing?.name || 'API' : data.name;
@@ -200,7 +212,7 @@ async function saveProfile(env, userId, data, existing, requireModel = false) {
 }
 
 const activateProfile = (env, userId, id) => env.DB.prepare(`INSERT INTO ai_active_profiles(user_id,profile_id)
-  SELECT user_id,id FROM ai_providers WHERE user_id=? AND id=?
+  SELECT user_id,id FROM ai_providers WHERE user_id=? AND id=? AND protocol IN ('openai','anthropic','gemini')
   ON CONFLICT(user_id) DO UPDATE SET profile_id=excluded.profile_id RETURNING profile_id`).bind(userId, id).first();
 
 async function removeProfile(env, userId, id) {

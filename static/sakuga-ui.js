@@ -164,7 +164,7 @@
     const el = event.target;
     const isText = el instanceof HTMLTextAreaElement ||
       (el instanceof HTMLInputElement && /^(text|search|email|password|url|tel)$/.test(el.type));
-    if (!isText) return;
+    if (!isText || isSilent(el)) return;
     const now = performance.now();
     if ((typedAt.get(el) || 0) + 115 > now) return;
     typedAt.set(el, now);
@@ -177,6 +177,7 @@
     if (!event.isTrusted) return;
     const el = event.target;
     if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLSelectElement)) return;
+    if (isSilent(el)) return;
     const c = fx.at(el);
     if (el instanceof HTMLInputElement && el.type === 'checkbox') {
       fx.slash(c.x, c.y, { len: 36, ang: -0.4, thick: 7, life: 0.42 });
@@ -195,7 +196,7 @@
 
   document.addEventListener('toggle', (event) => {
     const el = event.target;
-    if (!(el instanceof HTMLDetailsElement) || !el.open) return;
+    if (!(el instanceof HTMLDetailsElement) || !el.open || isSilent(el)) return;
     const c = fx.at(el, 0.08, 0.2);
     fx.puff(c.x, c.y, { size: 8, n: 3, vx: -18, vy: -12, life: 0.38 });
     fx.slash(c.x + 24, c.y + 8, { len: 24, ang: 0.4, thick: 5, life: 0.34 });
@@ -204,7 +205,7 @@
 
   document.addEventListener('invalid', (event) => {
     const el = event.target;
-    if (!(el instanceof HTMLElement)) return;
+    if (!(el instanceof HTMLElement) || isSilent(el)) return;
     const c = fx.at(el, 0.5, 0);
     fx.wob(c.x - c.w * 0.38, c.y - 4, { dir: 1, r: 11, life: 0.42 });
     fx.wob(c.x + c.w * 0.38, c.y - 4, { dir: -1, r: 11, life: 0.42 });

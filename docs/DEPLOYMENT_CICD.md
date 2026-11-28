@@ -25,6 +25,7 @@ flowchart LR
 - Cấu hình (Worker `vjbot` > Settings > Builds, hoặc `cf builds workers get <script-tag>`): nhánh `main`, build `npm run build` (sinh catalog giáo viên rồi `cf deploy --dry-run` để bắt lỗi cấu hình sớm), deploy `npm run release`, bật build caching, thư mục gốc `/`. Token build cần Workers Scripts Write và D1 Write. **Preview đã tắt**: lệnh mặc định `npx wrangler preview` không chạy được với project `cf`, và preview sẽ dùng chung D1 production (xem [ROADMAP](ROADMAP.md) mục staging).
 - Node: `.nvmrc` và `engines` ghim 22 (test dùng `node:sqlite`, cần 22.13+).
 - Chỉ giữ một lockfile (`package-lock.json`); lockfile thứ hai làm Workers Builds đổi trình quản lý gói.
+- **Custom TTS:** Operators set the Worker text variable `VOICE_ALLOWED_ORIGINS` under **Settings → Variables and Secrets** for the intended environment. Use a comma-separated list of trusted HTTPS origins only, for example `https://tts.example.com,https://voice.example.org`; omit paths, trailing slashes and API keys. A profile URL can still include its API base path. An empty list rejects custom endpoints and non-native proxy origins with `403 tts_profile_unavailable`. Native provider origins do not need an entry. Review ownership and DNS before approving an origin; outbound redirects remain blocked.
 
 Xem log build bằng CLI:
 

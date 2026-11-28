@@ -175,7 +175,7 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
 
 /* Bottom sheets on phones */
 @media (max-width: 768px) {
-  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open] {
+  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open], #voice-v2-confirm-dialog[open] {
     margin: auto 0 0;
     width: 100% !important;
     max-width: none;
@@ -187,7 +187,7 @@ dialog::backdrop, #auth-dialog::backdrop, .picker-overlay {
 }
 @media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
   @keyframes sheet-up { from { transform: translateY(100%); } }
-  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open] { animation: sheet-up .32s var(--ios-ease); }
+  #admin-user-dialog[open], #ai-add-dialog[open], #ai-confirm-dialog[open], #voice-v2-confirm-dialog[open] { animation: sheet-up .32s var(--ios-ease); }
 }
 
 /* Voice: a call owns the screen. The tab bar goes away so a stray tap cannot end it. */

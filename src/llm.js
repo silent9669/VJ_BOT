@@ -95,6 +95,13 @@ function incomplete(protocol, data) {
       || candidate?.safetyRatings?.some(rating => rating.blocked));
 }
 
+function retryDelay(response) {
+  const raw = response.headers.get('Retry-After');
+  const delay = raw && (/^\d+(?:\.\d+)?$/.test(raw.trim())
+    ? Number(raw) * 1000 : Date.parse(raw) - Date.now());
+  return raw && Number.isFinite(delay) ? Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(delay))) : undefined;
+}
+
 // Tries provider.models in order (fallback on 404/429/5xx) inside one budget below the browser's 35s timeout.
 // Returns {text} or {status}; provider error bodies are never returned because proxies can echo headers back.
 export async function callLLM(provider, {system, turns, schema, schemaName}, {budgetMs = 28000, attemptMs = provider.reasoningEffort && provider.reasoningEffort!=='none' ? 27000 : 15000} = {}) {
@@ -120,13 +127,7 @@ export async function callLLM(provider, {system, turns, schema, schemaName}, {bu
         continue;
       }
       status = response.status >= 300 && response.status < 400 ? 502 : response.status;
-      retryAfterMs = undefined;
-      if (status === 429) {
-        const raw = response.headers.get('Retry-After');
-        const delay = raw && (/^\d+(?:\.\d+)?$/.test(raw.trim())
-          ? Number(raw) * 1000 : Date.parse(raw) - Date.now());
-        if (raw && Number.isFinite(delay)) retryAfterMs = Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(delay)));
-      }
+      retryAfterMs = status === 429 ? retryDelay(response) : undefined;
       console.warn('AI', provider.source, model, status);
       if (!RETRYABLE.has(status)) break;
     } catch (error) {
@@ -135,6 +136,225 @@ export async function callLLM(provider, {system, turns, schema, schemaName}, {bu
     }
   }
   return {status, ...(status === 429 && retryAfterMs !== undefined ? {retryAfterMs} : {})};
+}
+
+function deltaText(protocol, data, streaming) {
+  let parts;
+  if (protocol === 'openai') {
+    const content = data.choices?.[0]?.[streaming ? 'delta' : 'message']?.content;
+    if (typeof content === 'string') return content;
+    parts = Array.isArray(content) ? content.filter(part => part && (!part.type || part.type === 'text'
+      || part.type === 'output_text')) : null;
+  } else if (protocol === 'anthropic') {
+    if (streaming) {
+      const block = data.type === 'content_block_start' && data.content_block?.type === 'text' ? data.content_block
+        : data.type === 'content_block_delta' && data.delta?.type === 'text_delta' ? data.delta : null;
+      return typeof block?.text === 'string' ? block.text : '';
+    }
+    parts = Array.isArray(data.content) ? data.content.filter(part => part?.type === 'text') : null;
+  } else {
+    parts = data.candidates?.[0]?.content?.parts;
+  }
+  return Array.isArray(parts) ? parts.filter(part => typeof part?.text === 'string' && !part.thought)
+    .map(part => part.text).join('') : '';
+}
+
+const streamRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+
+class StreamFailure extends Error {
+  constructor(code) { super(code); this.code = code; }
+}
+
+function streamFinish(protocol, data, streaming) {
+  if (!streamRecord(data)) throw new StreamFailure('invalid_response');
+  if (data.error || data.type === 'error') throw new StreamFailure('upstream_error');
+  if (incomplete(protocol, data)) {
+    const reason = data.choices?.[0]?.finish_reason ?? data.stop_reason ?? data.candidates?.[0]?.finishReason;
+    throw new StreamFailure(['length','max_tokens','MAX_TOKENS'].includes(reason) ? 'incomplete' : 'blocked');
+  }
+  let reason;
+  if (protocol === 'openai') {
+    const {choices} = data, choice = choices?.[0], message = choice?.[streaming ? 'delta' : 'message'];
+    reason = choice?.finish_reason;
+    if (reason === 'refusal' || (typeof message?.refusal === 'string' && message.refusal.trim() !== '')
+      || (Array.isArray(message?.content) && message.content.some(part => part?.type === 'refusal')))
+      throw new StreamFailure('blocked');
+    if (!Array.isArray(choices) || (choices.length && (!streamRecord(choice)
+      || (message == null ? !reason : !streamRecord(message)))))
+      throw new StreamFailure('invalid_response');
+  } else if (protocol === 'anthropic') {
+    reason = data.delta?.stop_reason ?? data.stop_reason;
+    if (data.content_block?.type === 'refusal' || reason === 'refusal') throw new StreamFailure('blocked');
+    if (reason === 'max_tokens' || reason === 'model_context_window_exceeded') throw new StreamFailure('incomplete');
+    if (streaming ? typeof data.type !== 'string' : !Array.isArray(data.content))
+      throw new StreamFailure('invalid_response');
+  } else {
+    const {candidates, promptFeedback, usageMetadata} = data, candidate = candidates?.[0];
+    reason = candidate?.finishReason;
+    if (candidates === undefined ? !streamRecord(promptFeedback) && !streamRecord(usageMetadata)
+      : !Array.isArray(candidates) || (candidates.length && !streamRecord(candidate))) {
+      throw new StreamFailure('invalid_response');
+    }
+  }
+  if (reason != null && typeof reason !== 'string') throw new StreamFailure('invalid_response');
+  return reason && reason !== 'FINISH_REASON_UNSPECIFIED' ? reason : null;
+}
+
+// Race one pending operation at a time; remove its listener rather than accumulating
+// handlers on a single unresolved abort promise for the lifetime of the stream.
+function untilAbort(pending, signal) {
+  let abort;
+  const stopped = new Promise(resolve => {
+    abort = () => resolve(null);
+    signal.addEventListener('abort', abort, {once: true});
+    if (signal.aborted) abort();
+  });
+  return Promise.race([pending, stopped]).finally(() => signal.removeEventListener('abort', abort));
+}
+
+async function readGeneration(protocol, reader, contentType, wait, emit, allowEOF) {
+  const decoder = new TextDecoder('utf-8', {fatal: true});
+  let mode = /(?:\/|\+)json\b/i.test(contentType || '') ? 'json' : '';
+  let bytes = 0, buffer = '', scan = 0, skipLF = false;
+  let event = '', data = [], seen = false, text = '', finishReason = null;
+  const result = () => ({ok: true, text, finishReason});
+  const apply = async (raw, streaming) => {
+    const generation = JSON.parse(raw);
+    const reason = streamFinish(protocol, generation, streaming);
+    const delta = deltaText(protocol, generation, streaming);
+    if (delta) {
+      await emit(delta);
+      text += delta;
+    }
+    seen = true;
+    finishReason = reason ?? finishReason;
+    return protocol === 'anthropic' ? generation.type === 'message_stop' : reason !== null;
+  };
+  for (;;) {
+    const {done, value} = await wait(reader.read());
+    if (value && (bytes += value.byteLength) > 256 * 1024) throw new StreamFailure('response_limit');
+    let chunk = done ? decoder.decode() : decoder.decode(value, {stream: true});
+    if (skipLF && chunk) {
+      if (chunk[0] === '\n') chunk = chunk.slice(1);
+      skipLF = false;
+    }
+    buffer += chunk;
+    if (!mode) {
+      const start = buffer.trimStart()[0];
+      if (start) mode = start === '{' || start === '[' ? 'json' : 'sse';
+    }
+    if (mode === 'sse') {
+      let start = 0, i = scan;
+      for (; i < buffer.length; i++) {
+        const delimiter = buffer[i];
+        if (delimiter !== '\n' && delimiter !== '\r') continue;
+        const line = buffer.slice(start, i);
+        if (delimiter === '\r') {
+          if (buffer[i + 1] === '\n') i++;
+          else if (i === buffer.length - 1) skipLF = true;
+        }
+        start = i + 1;
+        if (line) {
+          const colon = line.indexOf(':'), field = colon < 0 ? line : line.slice(0, colon);
+          const value = colon < 0 ? '' : line.slice(colon + 1).replace(/^ /, '');
+          if (field === 'event') event = value;
+          else if (field === 'data') data.push(value);
+          continue;
+        }
+        if (event === 'error') throw new StreamFailure('upstream_error');
+        if (data.length) {
+          const raw = data.join('\n');
+          if (raw.trim() === '[DONE]' || await apply(raw, true)) return result();
+          data = [];
+        }
+        event = '';
+      }
+      buffer = buffer.slice(start);
+      scan = i - start;
+    }
+    if (done) {
+      if (mode === 'json') await apply(buffer, false);
+      // Some compatible proxies signal completion with EOF at a complete event boundary.
+      if (!seen || data.length || event || (mode === 'sse' && (!allowEOF || buffer.trim()))) {
+        throw new StreamFailure('incomplete');
+      }
+      return result();
+    }
+  }
+}
+
+// Live makes one request to the selected model. A failed turn never silently changes models.
+export async function streamLLM(provider, {system, turns, signal, onDelta}, {budgetMs = 28000} = {}) {
+  const controller = new AbortController(), abort = () => controller.abort(), deadline = Date.now() + budgetMs;
+  const timeout = () => {
+    if (Date.now() >= deadline) abort();
+    return controller.signal.aborted;
+  };
+  const wait = async pending => {
+    const value = await untilAbort(pending, controller.signal);
+    if (timeout()) throw new StreamFailure(signal?.aborted ? 'cancelled' : 'timeout');
+    return value;
+  };
+  const {protocol, baseUrl, apiKey, models, reasoningEffort} = provider, history = normalizeTurns(turns);
+  const allowEOF = protocol === 'openai' && ![DEFAULT_BASES.openai, 'https://api.mistral.ai/v1'].includes(baseUrl);
+  let status = 503, emitted = false, reason = 'network', retryAfterMs, upstreamStatus, response, reader;
+  const failed = () => ({ok:false, status, emitted, reason,
+    ...(upstreamStatus === undefined ? {} : {upstreamStatus}),
+    ...(status === 429 && retryAfterMs !== undefined ? {retryAfterMs} : {})});
+  const emit = async delta => {
+    if (timeout()) throw new StreamFailure(signal?.aborted ? 'cancelled' : 'timeout');
+    emitted = true;
+    try {
+      const pending = onDelta(delta);
+      if (pending?.then) await wait(pending);
+    } catch (error) {
+      if (error instanceof StreamFailure) throw error;
+      throw new StreamFailure('output_rejected');
+    }
+    if (timeout()) throw new StreamFailure(signal?.aborted ? 'cancelled' : 'timeout');
+  };
+  const timer = setTimeout(abort, budgetMs);
+  signal?.addEventListener('abort', abort, {once:true});
+  if (signal?.aborted) abort();
+  try {
+    if (timeout()) throw new StreamFailure(signal?.aborted ? 'cancelled' : 'timeout');
+    const model = models[0];
+    if (!model) throw new StreamFailure('invalid_response');
+    const {headers, body} = request(protocol, apiKey, model, {system, turns:history, reasoningEffort});
+    let url = endpoint(protocol, baseUrl, model);
+    if (protocol === 'gemini') url = url.replace(/:generateContent$/, ':streamGenerateContent?alt=sse');
+    else body.stream = true;
+    await wait(fetch(url, {
+      method:'POST', redirect:'manual', signal:controller.signal,
+      headers:{'Content-Type':'application/json', Accept:'text/event-stream', ...headers},
+      body:JSON.stringify(body)
+    }).then(value => {
+      if (controller.signal.aborted) void value.body?.cancel().catch(() => {});
+      else response = value;
+    }));
+    upstreamStatus = response.status;
+    status = 502;
+    if (!response.ok) {
+      reason = 'http';
+      status = response.status >= 300 && response.status < 400 ? 502 : response.status;
+      retryAfterMs = status === 429 ? retryDelay(response) : undefined;
+      return failed();
+    }
+    reason = 'invalid_response';
+    if (!response.body) return failed();
+    reader = response.body.getReader();
+    return await readGeneration(protocol, reader, response.headers.get('Content-Type'), wait, emit, allowEOF);
+  } catch (error) {
+    if (timeout()) {status = 504; reason = signal?.aborted ? 'cancelled' : 'timeout';}
+    else if (error instanceof StreamFailure) reason = error.code;
+    return failed();
+  } finally {
+    if (reader) void reader.cancel().catch(() => {});
+    else if (response?.body) void response.body.cancel().catch(() => {});
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+    abort();
+  }
 }
 
 // Draft eligibility only: one generation, stopping at the first visible text rather than its final answer.
@@ -169,11 +389,8 @@ export async function probeModel(provider, {signal} = {}) {
     if (controller.signal.aborted) return {status: 504};
     if (!response.ok) {
       status = response.status >= 300 && response.status < 400 ? 502 : response.status;
-      const raw = status === 429 && response.headers.get('Retry-After');
-      const delay = raw && (/^\d+(?:\.\d+)?$/.test(raw.trim())
-        ? Number(raw) * 1000 : Date.parse(raw) - Date.now());
-      return {status, ...(raw && Number.isFinite(delay)
-        ? {retryAfterMs: Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(delay)))} : {})};
+      const retryAfterMs = status === 429 ? retryDelay(response) : undefined;
+      return {status, ...(retryAfterMs !== undefined ? {retryAfterMs} : {})};
     }
     status = 502;
     if (!response.body) return {status};

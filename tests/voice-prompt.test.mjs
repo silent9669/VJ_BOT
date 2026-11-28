@@ -1,27 +1,51 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {VOICE_COMMANDS, voiceInstructions, reversedPrompt} from '../src/prompt.js';
+import {LIVE_MAX_SEGMENTS, VOICE_COMMANDS, reversedPrompt, voiceInstructions, voiceStreamingInstructions} from '../src/prompt.js';
 
-// A learner greeting "こんにちは、ラム先生" was answered "こんにちは、ラム！", and "元気です" with "Em khỏe thật à?".
-test('voice and chat prompts treat the teacher name as a vocative and take answers at face value', () => {
-  for (const prompt of [voiceInstructions('N5'), reversedPrompt('N5')]) {
-    for (const part of ['ラム先生', 'never call the learner by them', 'TAKE ANSWERS AT FACE VALUE', 'Never doubt, challenge or re-ask'])
-      assert.ok(prompt.includes(part), part);
+test('only a fresh explicit start authorizes a voice welcome', () => {
+  const fresh = voiceStreamingInstructions('N5', {command: 'start'});
+  assert.match(fresh, /^TURN OPENING: You may give .*welcome/m);
+  for (const options of [{}, {command: 'hint'}, {command: 'start', preAnswerTask: true},
+    {continuation: true}, {command: 'start', continuation: true}, {command: 'hint', continuation: true}]) {
+    const prompt = voiceStreamingInstructions('N5', options);
+    assert.doesNotMatch(prompt, /^TURN OPENING: You may give .*welcome/m);
+    if (options.continuation) assert.match(prompt, /^TURN OPENING: Continue\b/m);
   }
-  assert.match(voiceInstructions('N5'), /Conversation itself is Japanese practice/);
 });
 
-// The chat chips (start, hint, explain, situation, check, summary) must each have a spoken counterpart.
-test('every fixed chat command has a voice command and the voice prompt documents it', () => {
-  for (const key of ['start', 'hint', 'explain', 'situation', 'check', 'summary']) assert.ok(VOICE_COMMANDS[key], key);
-  const prompt = voiceInstructions('N4');
-  for (const [key, text] of Object.entries(VOICE_COMMANDS)) assert.ok(prompt.includes(`- ${key}: ${text}`), key);
+test('stream instructions include only the selected command; native sessions can still receive each command', () => {
+  const keys = ['start', 'hint', 'explain', 'situation', 'check', 'repeat', 'slower', 'summary'];
+  const native = voiceInstructions('N4');
+  for (const key of keys) {
+    assert.ok(VOICE_COMMANDS[key], key);
+    assert.ok(native.includes(VOICE_COMMANDS[key]), key);
+  }
+  for (const command of [null, ...keys.filter(key => key !== 'repeat')]) {
+    const prompt = voiceStreamingInstructions('N4', {command});
+    assert.deepEqual(keys.filter(key => prompt.includes(VOICE_COMMANDS[key])), command ? [command] : []);
+    assert.doesNotMatch(prompt, /NATIVE COMMANDS:/);
+  }
 });
 
-test('voice prompt keeps the reversed-classroom turn rules, level rules and input boundary', () => {
-  const prompt = voiceInstructions('N5');
-  for (const part of ['reversed classroom', 'ONE short question', 'at most two errors', 'microphone is closed while you speak',
-    'LEVEL N5', 'INPUT BOUNDARY', 'do not grade pronunciation']) assert.ok(prompt.includes(part), part);
-  assert.match(voiceInstructions('N1'), /LEVEL N1/);
-  assert.match(voiceInstructions('bad'), /Hiragana/);
+
+test('stream transport and protection are independent of command and language mode', () => {
+  const protectedStream = voiceStreamingInstructions('N5', {command: 'check', japaneseOnly: true, preAnswerTask: true});
+  assert.match(protectedStream, /^JAPANESE-ONLY TURN: .*<ja>.*<vi>/m);
+  assert.match(protectedStream, /^PRE-ANSWER CANONICAL TASK: .*Never solve the task/m);
+  const ordinary = voiceStreamingInstructions('N5', {command: 'check'});
+  assert.doesNotMatch(ordinary, /JAPANESE-ONLY TURN:|PRE-ANSWER CANONICAL TASK:/);
+  for (const prompt of [protectedStream, ordinary]) {
+    assert.ok(prompt.includes(`Use at most ${LIVE_MAX_SEGMENTS} tagged segments`));
+    assert.match(prompt, /<ja>\.\.\.<\/ja>.*<vi>\.\.\.<\/vi>.*Write nothing outside the tags except separating whitespace/);
+  }
+});
+
+test('a digits-only request changes presentation, not a protected exercise or a quoted phrase',()=>{
+  const message='Mình đã chọn bao nhiêu, chỉ viết một chữ số thôi.';
+  for (const build of [reversedPrompt,voiceStreamingInstructions]) {
+    assert.match(build('N5',{message}),/^REQUESTED FORMAT:/m);
+    assert.doesNotMatch(build('N5',{message:'Em dịch “chỉ viết một chữ số thôi” thế nào?'}),/^REQUESTED FORMAT:/m);
+  }
+  assert.doesNotMatch(voiceStreamingInstructions('N5',{message,preAnswerTask:true}),/^REQUESTED FORMAT:/m);
+  assert.doesNotMatch(reversedPrompt('N5',{message,intent:'hint'}),/^REQUESTED FORMAT:/m);
 });

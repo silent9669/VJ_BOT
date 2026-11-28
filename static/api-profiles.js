@@ -3,14 +3,16 @@
 // This is not an OS credential vault or a guarantee against a compromised browser.
 (function () {
   const DB_NAME = 'vjbot_ai_profiles_v1', ACTIVE = 'vjbot_ai_active_v1:', VOICE = 'vjbot_voice_profile_v1:';
-  const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com'};
-  const SUFFIX = {openai: /\/chat\/completions$/, anthropic: /\/v1\/messages$/, gemini: /\/v1(beta)?$/};
+  const BASES = {openai: 'https://api.openai.com/v1', anthropic: 'https://api.anthropic.com', gemini: 'https://generativelanguage.googleapis.com',
+    elevenlabs:'https://api.elevenlabs.io',mistral:'https://api.mistral.ai/v1',openai_compatible:''};
+  const SUFFIX = {openai: /\/chat\/completions$/, anthropic: /\/v1\/messages$/, gemini: /\/v1(beta)?$/,
+    mistral:/\/audio\/speech$/,openai_compatible:/\/audio\/speech$/};
   const BLOCKED = /(^|\.)(localhost|local|internal|localdomain|home|lan|workers\.dev|dangphuc\.me)$/i;
-  const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/tts', '/api/stt', '/api/ai/test'];
+  const PATHS = ['/api/chat', '/api/kaiwa/evaluate', '/api/practice/coach', '/api/tts', '/api/stt', '/api/live/turn', '/api/ai/test'];
   const encoder = new TextEncoder(), decoder = new TextDecoder('utf-8', {fatal: true});
   const unavailable = () => problem('Kết nối API trên thiết bị không dùng được. Mở cài đặt API để lưu lại hoặc chọn kết nối khác.', 'unavailable');
   const storageError = () => problem('Trình duyệt chưa lưu được kết nối. Em cho phép trang lưu dữ liệu rồi thử lại nhé. Chi tiết lưu trữ: cần IndexedDB và Web Crypto.', 'storage');
-  let opening = null, voiceVersion = 0;
+  let opening = null, voiceVersion = 0, chatVersion = 0;
 
   function problem(message, code = 'invalid') { return Object.assign(new Error(message), {code}); }
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -23,19 +25,22 @@
     return owner;
   }
   function identifier(id) { if (!idOk(id)) throw problem('Mã kết nối không hợp lệ.'); return id; }
+  const elevenOfficialVersion = /^https:\/\/api\.elevenlabs\.io(?:\/v1)+$/;
+  const profileBase = row => row.protocol==='elevenlabs' && elevenOfficialVersion.test(row.base_url) ? BASES.elevenlabs : row.base_url;
   function baseUrl(protocol, raw) {
     if (!Object.hasOwn(BASES, protocol)) throw problem('Loại API không hợp lệ.');
     if (raw !== undefined && typeof raw !== 'string') throw problem('URL API không hợp lệ.');
     const text = raw?.trim() || '';
-    if (!text) return BASES[protocol];
+    if (!text && BASES[protocol]) return BASES[protocol];
     let url;
     try { url = new URL(text); } catch { throw problem('URL API không hợp lệ.'); }
     const host = url.hostname;
     if (text.length > 200 || url.protocol !== 'https:' || url.username || url.password || url.search || url.hash
-      || !host.includes('.') || host.includes(':') || /^[\d.]+$/.test(host) || BLOCKED.test(host)) {
+      || !host.includes('.') || host.includes(':') || /^[\d.]+$/.test(host) || BLOCKED.test(host.replace(/\.$/, ''))) {
       throw problem('Dùng địa chỉ API công khai bắt đầu bằng HTTPS, không kèm thông tin đăng nhập, địa chỉ IP hay phần sau dấu ? hoặc #.');
     }
-    return url.origin + url.pathname.replace(/\/+$/, '').replace(SUFFIX[protocol], '');
+    const path=url.pathname.replace(/\/+$/, '');
+    return profileBase({protocol,base_url:url.origin+(SUFFIX[protocol] ? path.replace(SUFFIX[protocol], '') : path)});
   }
   function fields(profile) {
     if (!object(profile)) throw problem('Kết nối không hợp lệ.');
@@ -50,8 +55,8 @@
     return {connection_id: identity, models: [...new Set(models)], checked_at: checked};
   }
   function publicProfile(row) {
-    return {id: row.id, name: row.name, protocol: row.protocol, base_url: row.base_url, model: row.model,
-      key_last4: row.key_last4, connection_id: row.connection_id, models: [...row.models], checked_at: row.checked_at};
+    return {id: row.id, name: row.name, protocol: row.protocol, base_url: profileBase(row), model: row.model,
+      key_last4: row.key_last4, connection_id: row.connection_id, revision: row.revision, models: [...row.models], checked_at: row.checked_at};
   }
   function record(row, owner, id) {
     try {
@@ -60,7 +65,8 @@
         || !(row.iv instanceof Uint8Array) || row.iv.length !== 12 || !(row.ciphertext instanceof ArrayBuffer)
         || row.ciphertext.byteLength < 24 || row.ciphertext.byteLength > 528) throw unavailable();
       const clean = fields(row), history = historyInput(row);
-      if (clean.name !== row.name || clean.base_url !== row.base_url || !Object.hasOwn(row, 'connection_id')
+      // Keep the legacy URL in the encrypted record: it is authenticated by AES-GCM.
+      if (clean.name !== row.name || clean.base_url !== profileBase(row) || !Object.hasOwn(row, 'connection_id')
         || !Object.hasOwn(row, 'checked_at') || !Array.isArray(row.models)
         || history.connection_id !== row.connection_id || history.checked_at !== row.checked_at
         || (row.models.length && (!history.connection_id || !history.checked_at))) throw unavailable();
@@ -155,6 +161,11 @@
     if (rows.length > 20) throw unavailable();
     return rows.map(row => publicProfile(record(row, owner, row.id)));
   }
+  async function metadata(owner,id) {
+    account(owner);identifier(id);
+    const row=await read(owner,id);
+    return {protocol:row.protocol,base_url:profileBase(row),revision:row.revision};
+  }
   async function load(owner, id) {
     account(owner); identifier(id);
     const row = await read(owner, id), key = await accountKey(owner, false);
@@ -172,7 +183,7 @@
     cryptoReady();
     const id = updating ? profile.id : crypto.randomUUID();
     const previous = updating ? await read(owner, id) : null;
-    const sameEndpoint = previous && previous.protocol === clean.protocol && previous.base_url === clean.base_url;
+    const sameEndpoint = previous && previous.protocol === clean.protocol && profileBase(previous) === clean.base_url;
     if (previous && !hasKey && !sameEndpoint) throw problem('Nhập API key cho địa chỉ và loại API mới.');
     const key = await accountKey(owner, !updating);
     const oldKey = previous ? await decrypt(previous, key) : null;
@@ -202,6 +213,11 @@
     let selectedVoice;
     try { selectedVoice = voice(owner); } catch { /* Saving credentials does not repair a corrupt voice reference. */ }
     if (!sameConnection && selectedVoice?.scope === 'local' && selectedVoice.id === id) voiceChanged(owner);
+    if (!sameConnection || previous.model !== row.model) {
+      let selectedChat;
+      try { selectedChat = active(owner); } catch { /* Saving credentials does not repair a corrupt Chat reference. */ }
+      if (selectedChat?.scope === 'local' && selectedChat.id === id) chatChanged(owner);
+    }
     return publicProfile(row);
   }
   const validSelection = (choice, prefix) => object(choice) && (choice.scope === 'none' ? choice.id === ''
@@ -225,6 +241,11 @@
     voiceVersion++;
     globalThis.dispatchEvent?.(new Event('vjbot-voice-changed'));
   }
+  function chatChanged(owner) {
+    if (typeof signedInUser !== 'undefined' && signedInUser?.user_id !== owner) return;
+    chatVersion++;
+    globalThis.dispatchEvent?.(new Event('vjbot-chat-connection-changed'));
+  }
   function setSelection(owner, choice, prefix) {
     account(owner);
     if (choice !== null && !validSelection(choice, prefix)) throw problem('Lựa chọn kết nối đang dùng không hợp lệ.');
@@ -239,7 +260,12 @@
       }
     } catch { throw storageError(); }
   }
-  const setActive = (owner, choice) => setSelection(owner, choice, ACTIVE);
+  function setActive(owner, choice) {
+    let previous;
+    try { previous = active(owner); } catch { previous = undefined; }
+    setSelection(owner, choice, ACTIVE);
+    if (JSON.stringify(previous) !== JSON.stringify(active(owner))) chatChanged(owner);
+  }
   function setVoice(owner, choice) {
     let previous;
     try { previous = voice(owner); } catch { previous = undefined; }
@@ -271,7 +297,7 @@
     });
     if (selectionError) throw selectionError;
   }
-  async function prepareRequest(path, options = {}, owner) {
+  async function prepareRequest(path, options = {}, owner, binding) {
     const result = {...options};
     // Compare exact strings rather than normalized URLs: queries, aliases, dot segments,
     // encoded paths and external URLs must never acquire a device credential.
@@ -279,20 +305,30 @@
     if (typeof path !== 'string' || !PATHS.some(allowed => path === allowed || (origin && path === origin + allowed))
       || typeof options.method !== 'string' || options.method.toUpperCase() !== 'POST') return result;
     const speech = path === '/api/tts' || path === origin + '/api/tts';
-    const revision = voiceVersion;
+    const liveTurn = path === '/api/live/turn' || path === origin + '/api/live/turn';
+    const revision = speech ? voiceVersion : chatVersion;
     const selected = speech ? voice(owner) : active(owner);
+    let pinnedRevision;
+    if (binding != null) {
+      const stt = path === '/api/stt' || path === origin + '/api/stt';
+      if ((!liveTurn && !stt) || binding.scope !== 'local' || selected?.scope !== 'local' ||
+        binding.id !== selected.id || typeof binding.revision !== 'string' || !binding.revision) throw unavailable();
+      pinnedRevision = binding.revision;
+    }
     if (speech && (!selected || selected.scope === 'none')) throw problem('Chưa chọn kết nối đọc thành tiếng. Hãy chọn tài khoản trong phần Âm thanh của Cài đặt.');
     if (selected?.scope === 'none') throw problem('Chưa chọn kết nối API. Hãy chọn kết nối trong cài đặt API trước khi tiếp tục.');
     if (speech && selected?.scope === 'platform' && selected.id === 'openai') {
       const headers = new Headers(options.headers);
       headers.set('X-VJBot-Profile', 'platform_openai');
       result.headers = Object.fromEntries(headers);
+      result.redirect = 'error';
       return result;
     }
     if (selected?.scope === 'server') {
       const headers = new Headers(options.headers);
       headers.set('X-VJBot-Profile', selected.id);
       result.headers = Object.fromEntries(headers);
+      result.redirect = 'error';
       return result;
     }
     if (selected?.scope !== 'local') return result;
@@ -305,20 +341,24 @@
     let profile;
     try { profile = await load(owner, selected.id); } catch { throw unavailable(); }
     const current = speech ? voice(owner) : active(owner);
-    if (speech && revision !== voiceVersion) throw unavailable();
+    if ((speech && revision !== voiceVersion) || ((liveTurn || pinnedRevision) && revision !== chatVersion) ||
+      (pinnedRevision && profile.revision !== pinnedRevision)) throw unavailable();
     if (current?.scope !== 'local' || current.id !== selected.id) throw unavailable();
     if (speech && !((profile.protocol === 'gemini' && profile.base_url === BASES.gemini)
       || (profile.protocol === 'openai' && [BASES.openai, 'https://api.mistral.ai/v1'].includes(profile.base_url)))) throw problem('Giọng nói cần Gemini gốc, OpenAI chính thức hoặc Mistral chính thức.');
     if (!speech && !profile.model) throw problem('Hãy chọn và kiểm tra một model trong cài đặt API trước khi dùng kết nối này.');
+    if (!speech && !['openai','anthropic','gemini'].includes(profile.protocol)) throw unavailable();
     const headers = new Headers(options.headers);
     headers.delete('X-VJBot-Profile');
     result.headers = Object.fromEntries(headers);
     result.body = JSON.stringify({...body, api_connection: {protocol: profile.protocol, base_url: profile.base_url, model: profile.model, api_key: profile.api_key}});
+    result.redirect = 'error';
     return result;
   }
   globalThis.addEventListener?.('storage', event => {
     const owner = typeof signedInUser === 'undefined' ? null : signedInUser?.user_id;
     if (event.key === null || (owner && event.key === VOICE + owner)) voiceChanged(owner);
+    if (owner && (event.key === null || event.key === ACTIVE + owner)) chatChanged(owner);
   });
-  globalThis.VJProfiles = Object.freeze({list, load, save, remove, clear, active, setActive, voice, setVoice, prepareRequest});
+  globalThis.VJProfiles = Object.freeze({list, metadata, load, save, remove, clear, active, setActive, voice, setVoice, prepareRequest});
 })();

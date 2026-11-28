@@ -12,19 +12,31 @@ function antigravityConnectionId(owner) {
   return typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value)?value:null;
 }
 async function apiFetch(path,options={}) {
+  const {voiceRouting,cascadedStt,chatBinding,...requestOptions}=options;
+  options=requestOptions;
   if(signedInUser) {
     const owner=signedInUser.user_id;
-    const inference=['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/stt','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
+    const inference=['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/stt','/api/live/turn','/api/ai/test'].includes(path)&&options.method?.toUpperCase()==='POST';
     const speech=inference&&path==='/api/tts', voice=speech||path==='/api/stt', revision=voiceRevision;
+    const explicitVoice=voiceRouting===true&&inference&&voice;
+    const chatStt=inference&&path==='/api/stt'&&cascadedStt===true&&!explicitVoice;
+    const chatInference=inference&&(!voice||chatStt);
+    const binding=(inference&&path==='/api/live/turn'||chatStt)?chatBinding:undefined;
     const managed=inference&&signedInUser.is_admin===true;
     let oauth,connectionId,method,voiceChoice,prepared=options;
-    if(managed) {
+    const bindingChanged=()=>Response.json({detail:'Kết nối AI đã đổi. Hãy gửi lại yêu cầu.',code:'api_profile_unavailable'},{status:409});
+    if(binding!=null&&managed)return bindingChanged();
+    if (explicitVoice) {
+      const headers = new Headers(options.headers);
+      headers.delete('X-VJBot-Profile');
+      prepared={...options,headers,redirect:'error'};
+    } else if(managed) {
       const headers=new Headers(options.headers);
       headers.set('X-VJBot-Profile','platform_openai');
       prepared={...options,headers};
     } else {
       try {
-        method=inference&&!voice?usesAntigravityOAuth(owner):false;
+        method=chatInference?usesAntigravityOAuth(owner):false;
         oauth=Boolean(method);
         connectionId=oauth?antigravityConnectionId(owner):null;
         if(oauth&&!connectionId)return Response.json({detail:'Chọn một kết nối Antigravity đã lưu trong Cài đặt.',code:'api_profile_unavailable'},{status:409});
@@ -39,21 +51,24 @@ async function apiFetch(path,options={}) {
       }
       try {
         if(oauth) {
+          if(binding!=null)return bindingChanged();
           const headers=new Headers(options.headers);
           headers.set('X-VJBot-Profile','antigravity_oauth:'+connectionId);
           prepared={...options,headers};
-        } else if(window.VJProfiles)prepared=await VJProfiles.prepareRequest(path,options,owner);
+        } else if(window.VJProfiles)prepared=await VJProfiles.prepareRequest(path,options,owner,binding);
       } catch { return Response.json({detail:'Kết nối API đã chọn không dùng được. Mở Cài đặt để chọn hoặc sửa lại.',code:'api_profile_unavailable'},{status:409}); }
       try {
         if(speech&&(revision!==voiceRevision||voiceChoice!==JSON.stringify(VJProfiles.voice(owner))))
           return Response.json({detail:'Kết nối giọng nói đã đổi. Bấm Nghe lại.',code:'api_profile_unavailable'},{status:409});
-        if(inference&&!voice&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
-          return Response.json({detail:'Kết nối AI đã đổi. Hãy gửi lại yêu cầu.',code:'api_profile_unavailable'},{status:409});
+        if(chatInference&&(usesAntigravityOAuth(owner)!==method||(oauth&&antigravityConnectionId(owner)!==connectionId)))
+          return bindingChanged();
       } catch { return Response.json({detail:'Không lưu được lựa chọn kết nối.',code:'api_profile_unavailable'},{status:409}); }
     }
     if(signedInUser?.user_id!==owner)return Response.json({detail:'Tài khoản đăng nhập đã thay đổi.'},{status:401});
     if(inference&&(signedInUser.is_admin===true)!==managed)
       return Response.json({detail:'Quyền dùng AI đã đổi. Hãy gửi lại yêu cầu.',code:'api_profile_unavailable'},{status:409});
+    if(explicitVoice && revision !== voiceRevision)
+      return Response.json({detail:'Kết nối giọng nói đã đổi. Bấm Nghe lại.',code:'api_profile_unavailable'},{status:409});
     const headers=new Headers(prepared.headers);
     headers.set('X-VJBot-Account',owner);
     const response=await fetch(path,{...prepared,headers}).catch(error=>{

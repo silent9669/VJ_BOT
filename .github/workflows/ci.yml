@@ -35,5 +35,8 @@ jobs:
         run: npm run teacher:catalog
       - name: Test
         run: npm test
+      - name: Voice playback and Cascaded Live in Chromium
+        timeout-minutes: 1
+        run: BROWSER="$(command -v google-chrome)" node tests/voice-v2-browser.mjs
       - name: Validate Worker build
         run: npm run build:worker

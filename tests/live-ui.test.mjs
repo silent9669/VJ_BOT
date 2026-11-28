@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 
-function liveUI({microphone,reply,settings,geminiReply,mistralReply,mistralConnect}={}) {
+function liveUI({microphone,reply,settings,profiles,sttCapabilities,geminiReply,mistralReply,mistralConnect}={}) {
   const elements=new Map(),windowEvents={},tracks=[{enabled:true,stopped:false,stop(){this.stopped=true;}}],requests=[];
   const stream={getTracks:()=>tracks,getAudioTracks:()=>tracks};
   const element=id=>{
@@ -12,7 +12,7 @@ function liveUI({microphone,reply,settings,geminiReply,mistralReply,mistralConne
       insertBefore(node,next){const at=this.children.indexOf(next);if(at<0)this.children.push(node);else this.children.splice(at,0,node);node.parentNode=this;},
       replaceChildren(){this.children=[];},remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);},
       addEventListener(name,handler){this.events[name]=handler;},setAttribute(name,value){this.attributes[name]=value;},getAttribute(name){return this.attributes[name];},
-      play:async()=>{}});
+      play:async()=>{},querySelectorAll:()=>[]});
     return elements.get(id);
   };
   const channel={readyState:'open',events:{},sent:[],closed:false,addEventListener(name,fn){this.events[name]=fn;},send(value){this.sent.push(JSON.parse(value));},close(){this.closed=true;},emit(event){this.events.message({data:JSON.stringify(event)});}};
@@ -34,7 +34,7 @@ function liveUI({microphone,reply,settings,geminiReply,mistralReply,mistralConne
   class FakeAudioContext {
     constructor(){this.sampleRate=48000;this.currentTime=0;this.destination={};}
     resume(){return Promise.resolve();}close(){this.closed=true;return Promise.resolve();}
-    createAnalyser(){return {fftSize:256,smoothingTimeConstant:0,getByteTimeDomainData(){},connect(){}};}
+    createAnalyser(){return {fftSize:256,smoothingTimeConstant:0,getByteTimeDomainData(){},connect(){},disconnect(){}};}
     createMediaStreamSource(){return {connect(){},disconnect(){}};}
     createGain(){return {gain:{value:1},connect(){},disconnect(){}};}
     createScriptProcessor(){return {onaudioprocess:null,connect(){},disconnect(){}};}
@@ -50,21 +50,27 @@ function liveUI({microphone,reply,settings,geminiReply,mistralReply,mistralConne
     createDataChannel(){return channel;}
     close(){this.closed=true;}
   }
-  const context=vm.createContext({console,Date,JSON,setInterval,clearInterval,setTimeout,clearTimeout,AbortController,
-    RTCPeerConnection:Peer,MediaStream:class{},signedInUser:{user_id:'email:admin',is_admin:true},activeCurriculumLevel:'N5',
+  const context=vm.createContext({console,Date,JSON,setInterval,clearInterval,setTimeout,clearTimeout,AbortController,AbortSignal,performance,
+    RTCPeerConnection:Peer,MediaStream:class{},signedInUser:{user_id:'email:admin',is_admin:settings?.is_admin ?? true},activeCurriculumLevel:'N5',
     WebSocket:FakeSocket,AudioContext:FakeAudioContext,atob,btoa,URL,encodeURIComponent,Float32Array,Int16Array,TextDecoder,
     VJLiveKit:{Room:FakeRoom,RoomEvent:{TrackSubscribed:'ts',TrackUnsubscribed:'tu',DataReceived:'dr',Disconnected:'dc'},Track:{Kind:{Audio:'audio'},Source:{Microphone:'microphone'}}},
     location:{hash:'#classroom'},navigator:{mediaDevices:{getUserMedia:()=>{permissions++;return microphone?microphone():Promise.resolve(stream);}}},
+    usesAntigravityOAuth:()=>false,TextEncoder,MediaRecorder:class{},
     apiFetch:async(path,options)=>{
-      if(path==='/api/ai/settings')return Response.json(settings??{is_admin:true,source:'platform'});
-      requests.push({path,method:options.method,redirect:options.redirect,body:JSON.parse(options.body),signal:options.signal});
+      if(path==='/api/ai/settings')return Response.json(settings??{is_admin:true,source:'platform',platform:{configured:true}});
+      if(path==='/api/ai/profiles')return Response.json(profiles);
+      requests.push({path,method:options.method,redirect:options.redirect,body:JSON.parse(options.body),signal:options.signal,
+        profile:new Headers(options.headers).get('X-VJBot-Profile')});
+      if(path==='/api/stt')return sttCapabilities(options);
       if(path==='/api/live/gemini')return geminiReply?geminiReply():Response.json({token:'auth_tokens/test-token',ws:'wss://test/ws',model:'gemini-live',greeting:'こんにちは',commands:{repeat:'lặp lại'}},{status:201});
       if(path==='/api/live/mistral')return options.method==='DELETE'?Response.json({ok:true})
         :mistralReply?mistralReply():Response.json({id:'sess_test1',participantToken:'pt-test',serverUrl:'wss://lk.test',model:'mistral-live',greeting:'こんにちは',commands:{}},{status:201});
       return reply?reply():Response.json({model:'gpt-live-1',voice:'shida',id:'live_test',sdp:'answer',greeting:'こんにちは'});
     },
     document:{getElementById:element,createElement:()=>element('node_'+elements.size),querySelector:element,querySelectorAll:()=>[]},addEventListener:(name,fn)=>{windowEvents[name]=fn;}});
-  context.window=context;vm.runInContext(readFileSync('static/live-transcript.js','utf8'),context);vm.runInContext(readFileSync('static/live.js','utf8'),context);
+  context.window=context;
+  context.VJProfiles={active:()=>null};
+  for(const file of ['live-transcript','voice/live-cascaded','live'])vm.runInContext(readFileSync(`static/${file}.js`,'utf8'),context);
   return {context,element,channel,tracks,requests,stream,peer:()=>peer,socket:()=>socket,room:()=>room,permissions:()=>permissions,windowEvents};
 }
 const captions=(ui,role)=>ui.element('live-transcript').children.filter(row=>row.className==='live-turn '+role).map(row=>row.children[1].textContent).join('');
@@ -174,6 +180,99 @@ test('Mistral Live opens with the selected device profile and closes with the sa
   } finally {ui.windowEvents.pagehide();}
 });
 
+test('native Mistral creates and deletes with the same explicit server selection even after Chat changes',async()=>{
+  const mistral={id:'pinned-mistral',protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'m'};
+  const active={id:'active-openai',protocol:'openai',base_url:'https://api.openai.com/v1',model:'gpt'};
+  const ui=liveUI({settings:{is_admin:false,own:active},profiles:{active_id:active.id,profiles:[active,mistral]}});
+  let selection={scope:'server',id:mistral.id};
+  ui.context.VJProfiles={active:()=>selection};
+  try{
+    ui.context.openLiveConversation();
+    assert.match(ui.element('live-status').textContent,/^Kết nối trực tiếp gốc\./);
+    assert.equal(ui.permissions(),0);
+    await ui.element('live-start').events.click();
+    assert.equal(ui.room().published,true);
+    selection={scope:'server',id:active.id};
+    ui.element('live-end').events.click();
+    assert.deepEqual(ui.requests.map(({path,method,body,profile})=>({path,method,body,profile})),[
+      {path:'/api/live/mistral',method:'POST',body:{level:'N5',lesson:null},profile:mistral.id},
+      {path:'/api/live/mistral',method:'DELETE',body:{id:'sess_test1'},profile:mistral.id}
+    ]);
+    selection={scope:'server',id:'stale'};
+    await ui.element('live-start').events.click();
+    assert.equal(ui.permissions(),1,'stale explicit selection never requests another microphone');
+    assert.equal(ui.requests.length,2);
+    assert.match(ui.element('live-status').textContent,/Cài đặt/);
+  }finally{ui.windowEvents.pagehide();}
+});
+
+test('native Mistral cannot start without a selected Chat model',async()=>{
+  for(const model of [undefined,null,'']){
+    const own={id:'pinned',protocol:'openai',base_url:'https://api.mistral.ai/v1',model,connection_id:'saved'};
+    const ui=liveUI({settings:{is_admin:false,own}});
+    ui.context.VJProfiles={active:()=>({scope:'server',id:own.id})};
+    try {
+      await ui.element('live-start').events.click();
+      assert.equal(ui.permissions(),0);
+      assert.equal(ui.requests.length,0);
+      assert.match(ui.element('live-status').textContent,/Cài đặt/);
+    } finally {ui.windowEvents.pagehide();}
+  }
+});
+
+test('native Live cannot borrow a dormant Mistral profile while OAuth is selected or profile storage is missing',async()=>{
+  const mistral={id:'pinned',protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'mistral-small-latest'};
+  for(const blocked of ['oauth','storage']){
+    const ui=liveUI({settings:{is_admin:false,own:mistral}});
+    if(blocked==='oauth')ui.context.usesAntigravityOAuth=()=>true;
+    else delete ui.context.VJProfiles;
+    try{
+      await ui.element('live-start').events.click();
+      assert.equal(ui.permissions(),0);
+      assert.equal(ui.requests.length,0);
+    }finally{ui.windowEvents.pagehide();}
+  }
+});
+
+test('clearing the Native Mistral server pin during microphone permission prevents session creation',async()=>{
+  const mistral={id:'pinned',protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'mistral-small-latest'};
+  const entered=Promise.withResolvers(), granted=Promise.withResolvers();
+  let selected={scope:'server',id:mistral.id};
+  const ui=liveUI({settings:{is_admin:false,own:mistral},microphone:()=>{entered.resolve();return granted.promise;}});
+  ui.context.VJProfiles={active:()=>selected};
+  const opening=ui.element('live-start').events.click();
+  try{
+    await Promise.race([entered.promise,opening]);
+    assert.equal(ui.permissions(),1);
+    selected={scope:'none'};
+    granted.resolve(ui.stream);await opening;
+    assert.equal(ui.requests.length,0);
+    assert.equal(ui.tracks[0].stopped,true);
+    assert.match(ui.element('live-status').textContent,/Kết nối Mistral không còn dùng được/);
+  }finally{granted.resolve(ui.stream);await opening;ui.windowEvents.pagehide();}
+});
+
+test('ending a Native Mistral call during create closes a late session with the original server pin',async()=>{
+  const mistral={id:'original',protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'mistral-small-latest'};
+  const entered=Promise.withResolvers(), created=Promise.withResolvers();
+  const ui=liveUI({settings:{is_admin:false,own:mistral},mistralReply:()=>{entered.resolve();return created.promise;}});
+  let selected={scope:'server',id:mistral.id};
+  ui.context.VJProfiles={active:()=>selected};
+  const opening=ui.element('live-start').events.click();
+  try{
+    await Promise.race([entered.promise,opening]);
+    assert.equal(ui.requests[0].method,'POST');
+    ui.element('live-end').events.click();
+    assert.equal(ui.tracks[0].stopped,true);
+    assert.equal(ui.requests[0].signal.aborted,false);
+    selected={scope:'server',id:'different'};
+    created.resolve(Response.json({id:'sess_late'}));await opening;
+    assert.equal(ui.room(),undefined);
+    assert.deepEqual(ui.requests.slice(1).map(({method,profile,body})=>[method,profile,body]),
+      [['DELETE',mistral.id,{id:'sess_late'}]]);
+  }finally{created.resolve(Response.json({id:'sess_late'}));await opening;ui.windowEvents.pagehide();}
+});
+
 test('Mistral Live does not send a device key after the selected connection changes',async()=>{
   const ui=liveUI({settings:{is_admin:false,own:null}});
   ui.context.signedInUser={user_id:'email:learner',is_admin:false};
@@ -193,7 +292,7 @@ test('Mistral Live times out while the room is still connecting',async t=>{
   t.mock.timers.enable({apis:['setTimeout']});
   let joined,release;
   const connecting=new Promise(resolve=>{joined=resolve;});
-  const ui=liveUI({settings:{is_admin:false,own:{protocol:'openai',base_url:'https://api.mistral.ai/v1'}},
+  const ui=liveUI({settings:{is_admin:false,own:{protocol:'openai',base_url:'https://api.mistral.ai/v1',model:'m'}},
     mistralConnect:()=>new Promise(resolve=>{release=resolve;joined();})});
   const start=ui.element('live-start').events.click();
   try {
@@ -209,7 +308,7 @@ test('Mistral Live times out while the room is still connecting',async t=>{
 });
 
 test('Live uses the latest saved provider when starting a Mistral call',async()=>{
-  const settings={is_admin:false,own:{protocol:'openai',base_url:'https://openrouter.ai/api/v1'}};
+  const settings={is_admin:false,own:{protocol:'openai',base_url:'https://openrouter.ai/api/v1',model:'m'}};
   const ui=liveUI({settings});
   try {
     await ui.element('live-start').events.click();
@@ -228,6 +327,118 @@ test('a learner without a live-capable key gets a guidance message instead of a 
     assert.equal(ui.requests.length,0);assert.equal(ui.socket(),undefined);assert.equal(ui.peer(),undefined);
     assert.equal(ui.element('live-status').textContent,'Nói trực tiếp cần kết nối OpenAI chính thức, Gemini gốc hoặc Mistral gốc trong Cài đặt.');
   } finally {ui.windowEvents.pagehide();}
+});
+
+function setupCascaded(ui,{source='chat',selection={scope:'server',id:'chat'}}={}){
+  const config={mode:'single',primary:{provider:'mistral'},live:{engine:'cascaded',stt_source:source,turn_mode:'ptt'}};
+  ui.context.VJVoiceRouting={stored:()=>config,liveConfig:config=>config.live,liveIdentity:config=>JSON.stringify(config)};
+  ui.context.VJProfiles={active:()=>selection};
+  return config;
+}
+
+test('idle Live distinguishes bilingual Mistral from native and points missing Chat to Settings before opening the mic',async()=>{
+  const ui=liveUI({settings:{is_admin:false}});
+  const config=setupCascaded(ui,{source:'browser',selection:{scope:'none',id:''}});
+  try{
+    ui.context.openLiveConversation();
+    assert.match(ui.element('live-status').textContent,/Giọng song ngữ · Mistral/);
+    assert.equal(ui.permissions(),0);assert.equal(ui.requests.length,0);
+    await ui.element('live-start').events.click();
+    assert.match(ui.element('live-status').textContent,/kết nối trò chuyện.*Cài đặt/i);
+    assert.equal(ui.permissions(),0);assert.equal(ui.requests.length,0);
+    assert.equal(ui.element('live-start').disabled,false);
+    config.live.engine='native';ui.windowEvents['vjbot-voice-changed']();
+    assert.match(ui.element('live-status').textContent,/^Kết nối trực tiếp gốc\./);
+  }finally{ui.windowEvents.pagehide();}
+});
+
+test('cascaded Live probes STT before the mic and navigation cancels the pending preflight',async()=>{
+  let release, entered;
+  const probing=new Promise(resolve=>{entered=resolve;});
+  const ui=liveUI({settings:{is_admin:false},profiles:{profiles:[{id:'chat',model:'gm'}]},
+    sttCapabilities:()=>new Promise(resolve=>{release=resolve;entered();})});
+  setupCascaded(ui);
+  const opening=ui.element('live-start').events.click();
+  try{
+    await Promise.race([probing,opening]);
+    assert.equal(ui.permissions(),0);
+    assert.deepEqual(ui.requests[0].body,{action:'capabilities',language:'auto'});
+    ui.context.location.hash='#dashboard';ui.windowEvents.hashchange();
+    assert(ui.requests[0].signal.aborted);
+    release(Response.json({supported:true,provider:'openai'}));await opening;
+    assert.equal(ui.permissions(),0);assert.equal(ui.requests.length,1);
+    assert.equal(ui.element('live-start').disabled,false);
+  }finally{release?.(Response.json({supported:false}));await opening;ui.windowEvents.pagehide();}
+});
+
+test('incompatible Chat transcription suggests a concrete STT setting without microphone access',async()=>{
+  const ui=liveUI({settings:{is_admin:false},profiles:{profiles:[{id:'chat',model:'gm'}]},
+    sttCapabilities:()=>Response.json({supported:false,provider:null})});
+  setupCascaded(ui);
+  try{
+    await ui.element('live-start').events.click();
+    assert.equal(ui.permissions(),0);
+    assert.deepEqual(ui.requests.map(({path,body})=>[path,body]),[['/api/stt',{action:'capabilities',language:'auto'}]]);
+    assert.match(ui.element('live-status').textContent,/không hỗ trợ chép lời.*Cài đặt.*Âm thanh.*Nguồn chép lời/i);
+    assert.equal(ui.element('live-start').disabled,false);
+  }finally{ui.windowEvents.pagehide();}
+});
+
+test('valid STT capability is reused after the click resumes audio and only then opens the mic',async()=>{
+  const setup=[];
+  const ui=liveUI({settings:{is_admin:false},profiles:{profiles:[{id:'chat',model:'m'}]},
+    sttCapabilities:()=>{setup.push('stt');return Response.json({supported:true,provider:'openai'});},
+    microphone:()=>{setup.push('mic');return Promise.resolve(ui.stream);},
+    reply:()=>Response.json({detail:'Stop after checking setup'},{status:503})});
+  const resume=ui.context.AudioContext.prototype.resume;
+  ui.context.AudioContext.prototype.resume=function(){setup.push('resume');return resume.call(this);};
+  setupCascaded(ui);
+  try{
+    await ui.element('live-start').events.click();
+    assert.deepEqual(setup,['resume','stt','mic']);
+    assert.deepEqual(ui.requests.map(({path})=>path),['/api/stt','/api/live/turn']);
+  }finally{ui.windowEvents.pagehide();}
+});
+
+test('cascaded Live pins the validated server default on a fresh browser without changing preferences',async()=>{
+  const ui=liveUI({settings:{is_admin:false,own:{id:'server-default',model:'mistral-small-latest'}},
+    sttCapabilities:()=>Response.json({supported:true,provider:'mistral'}),
+    reply:()=>Response.json({detail:'Stop after checking setup'},{status:503})});
+  setupCascaded(ui,{selection:null});
+  try{
+    await ui.element('live-start').events.click();
+    assert.deepEqual(ui.requests.map(({path,profile})=>[path,profile]),
+      [['/api/stt','server-default'],['/api/live/turn','server-default']]);
+    assert.equal(ui.context.VJProfiles.active(),null);
+  }finally{ui.windowEvents.pagehide();}
+});
+
+test('cascaded Live without audio playback permission does not start the microphone',async()=>{
+  const ui=liveUI({settings:{is_admin:false},profiles:{profiles:[{id:'chat',model:'m'}]},
+    sttCapabilities:()=>Response.json({supported:true,provider:'openai'})});
+  setupCascaded(ui);
+  ui.context.AudioContext.prototype.resume=()=>Promise.reject(new DOMException('blocked','NotAllowedError'));
+  try{
+    await ui.element('live-start').events.click();
+    assert.equal(ui.permissions(),0);
+    assert.match(ui.element('live-status').textContent,/chưa cho phát âm thanh/i);
+  }finally{ui.windowEvents.pagehide();}
+});
+
+test('unpinned canonical choice guidance does not require a remote Chat connection',async()=>{
+  const ui=liveUI({settings:{is_admin:false,own:null},reply:()=>Response.json({detail:'Stop after checking setup'},{status:503})});
+  const config=setupCascaded(ui,{source:'browser',selection:null});
+  config.live.stt_language='vi';
+  ui.context.SpeechRecognition=class{};
+  ui.context.teacherContext=()=>({lesson:{id:'grammar:1',level:'N5'},focus:{kind:'question',index:0},task:{mode:'choice'}});
+  ui.context.taskRevisionSource=()=> 'task-stable';
+  ui.context.taskReference=async()=>({id:'task'});
+  try{
+    await ui.element('live-start').events.click();
+    assert.equal(ui.permissions(),1);
+    assert.deepEqual(ui.requests.map(({path})=>path),['/api/live/turn']);
+    assert.equal(ui.requests[0].body.focus.kind,'question');
+  }finally{ui.windowEvents.pagehide();}
 });
 
 test('cancelling microphone permission releases a late microphone without creating a call',async()=>{
@@ -270,7 +481,8 @@ test('opening live shows the panel without requesting a microphone until explici
     ui.context.stopLiveConversation();assert.equal(ui.tracks[0].enabled,false);ui.channel.emit({type:'session.closed'});assert.equal(ui.peer().closed,true);
     const endedStatus=ui.element('live-status').textContent;
     await ui.context.openLiveConversation();
-    assert.equal(ui.element('live-status').textContent,endedStatus);
+    assert.match(endedStatus,/kết thúc/);
+    assert.match(ui.element('live-status').textContent,/^Kết nối trực tiếp gốc\./);
     assert.equal(ui.permissions(),1);assert.equal(ui.requests.length,1);
   }finally{ui.windowEvents.pagehide();}
 });

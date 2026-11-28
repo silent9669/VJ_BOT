@@ -131,6 +131,88 @@ test('OAuth inference pins the chosen opaque connection while read-aloud keeps i
   assert.equal(new Headers(requests[4].options.headers).get('X-VJBot-Profile'),'voice-profile');
 });
 
+test('live turns use the selected Chat connection, without being affected by explicit STT options', async()=>{
+  const calls=[];
+  const b=browser(async(path,options)=>{
+    if(path.endsWith('/session'))return Response.json({user:{user_id:'alice',name:'Learner'}});
+    calls.push(options);return Response.json({});
+  });
+  await b.context.setupAccount();
+  b.context.VJProfiles={prepareRequest:async(path,options,owner)=>{
+    assert.equal(path,'/api/live/turn');
+    assert.equal(owner,'alice');
+    return {...options,headers:{'X-VJBot-Profile':'chat-profile'}};
+  }};
+  const request={method:'POST',body:'{}',voiceRouting:true};
+  await b.context.apiFetch('/api/live/turn',request);
+  b.storage.set('vjbot_ai_method:alice','antigravity');
+  b.storage.set('vjbot_ai_oauth:alice','opaque-live');
+  await b.context.apiFetch('/api/live/turn',request);
+  assert.deepEqual(calls.map(options=>new Headers(options.headers).get('X-VJBot-Profile')),
+    ['chat-profile','antigravity_oauth:opaque-live']);
+  assert.ok(calls.every(options=>new Headers(options.headers).get('X-VJBot-Account')==='alice'));
+});
+
+test('cascaded Chat STT uses the selected OAuth binding, never the retained native key',async()=>{
+  const calls=[];
+  const b=browser(async(path,options)=>{
+    if(path.endsWith('/session'))return Response.json({user:{user_id:'alice',name:'Learner'}});
+    calls.push(options);return Response.json({});
+  });
+  await b.context.setupAccount();
+  const pin={scope:'local',id:'saved-native',revision:'first'};
+  b.context.VJProfiles={prepareRequest:async(_path,options,_owner,binding)=>{
+    assert.equal(binding,pin);
+    assert.equal(options.chatBinding,undefined);
+    return options;
+  }};
+  const request={method:'POST',body:'{"action":"capabilities"}',cascadedStt:true};
+  await b.context.apiFetch('/api/stt',{...request,chatBinding:pin});
+  await b.context.apiFetch('/api/live/turn',{method:'POST',body:'{}',chatBinding:pin});
+  assert.ok(calls.every(options=>options.chatBinding===undefined&&options.cascadedStt===undefined));
+  b.storage.set('vjbot_ai_method:alice','antigravity');
+  assert.equal((await b.context.apiFetch('/api/stt',request)).status,409);
+  assert.equal(calls.length,2);
+  b.storage.set('vjbot_ai_oauth:alice','oauth-chat');
+  assert.equal((await b.context.apiFetch('/api/stt',{...request,chatBinding:pin})).status,409);
+  assert.equal(calls.length,2);
+  assert.equal((await b.context.apiFetch('/api/stt',request)).status,200);
+  const sent=calls.at(-1);
+  assert.equal(new Headers(sent.headers).get('X-VJBot-Profile'),'antigravity_oauth:oauth-chat');
+  assert.equal(sent.body,request.body);
+  assert.equal(sent.cascadedStt,undefined);
+});
+
+test('explicit STT bypasses private and managed Chat injection; legacy STT still uses it',async()=>{
+  for(const is_admin of [false,true]){
+    const calls=[];
+    const b=browser(async(path,options)=>{
+      if(path.endsWith('/session'))return Response.json({user:{user_id:'alice',name:'Learner',is_admin}});
+      calls.push(options);return Response.json({});
+    });
+    await b.context.setupAccount();
+    let prepares=0;
+    b.context.VJProfiles={prepareRequest:async(_path,options)=>{
+      prepares++;return {...options,headers:{'X-VJBot-Profile':'saved-chat'}};
+    }};
+    const body=JSON.stringify({action:'capabilities',stt_routing:{version:2,provider:'openai',
+      admin_override:is_admin,profile:{scope:'server',id:'saved-voice'}}});
+    const headers=Object.freeze({'X-VJBot-Profile':'stale-chat','Content-Type':'application/json'});
+    assert.equal((await b.context.apiFetch('/api/stt',{method:'POST',body,headers,voiceRouting:true})).status,200);
+    assert.equal(prepares,0);
+    const explicit=calls[0];
+    assert.equal(explicit.body,body);
+    assert.equal(explicit.redirect,'error');
+    assert.equal(explicit.voiceRouting,undefined);
+    assert.equal(new Headers(explicit.headers).get('X-VJBot-Profile'),null);
+    assert.equal(new Headers(explicit.headers).get('X-VJBot-Account'),'alice');
+    assert.equal(headers['X-VJBot-Profile'],'stale-chat');
+    await b.context.apiFetch('/api/stt',{method:'POST',body:'{"action":"capabilities"}'});
+    assert.equal(new Headers(calls[1].headers).get('X-VJBot-Profile'),is_admin?'platform_openai':'saved-chat');
+    assert.equal(prepares,is_admin?0:1);
+  }
+});
+
 test('missing, cleared and malformed OAuth choices fail closed instead of borrowing server active', async () => {
   for(const value of [undefined,'','../gateway/auth.json','antigravity_oauth:other']){
     let calls=0;
@@ -264,7 +346,7 @@ test('administrators send managed AI requests without reading private API, OAuth
     prepareRequest(){throw new Error('Managed AI must not read credentials');},
     voice(){throw new Error('Managed voice must not read saved voice');}
   };
-  for(const path of ['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/stt','/api/ai/test']){
+  for(const path of ['/api/chat','/api/kaiwa/evaluate','/api/practice/coach','/api/tts','/api/stt','/api/live/turn','/api/ai/test']){
     const body=JSON.stringify({message:'こんにちは',text:'こんにちは'});
     assert.equal((await b.context.apiFetch(path,{method:'POST',body})).status,200);
     const sent=calls.at(-1),headers=new Headers(sent.options.headers);
@@ -272,7 +354,7 @@ test('administrators send managed AI requests without reading private API, OAuth
     assert.equal(headers.get('X-VJBot-Account'),'alice');
     assert.equal(headers.get('X-VJBot-Profile'),'platform_openai');
   }
-  assert.equal(calls.length,6);assert.deepEqual([...b.storage],before);
+  assert.equal(calls.length,7);assert.deepEqual([...b.storage],before);
 });
 
 test('a role change while private credentials load blocks the stale request before dispatch',async()=>{

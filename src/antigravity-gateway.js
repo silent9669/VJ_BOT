@@ -48,12 +48,14 @@ async function boundedJson(response, limit = 1048576) {
   } finally { await reader.cancel(); }
 }
 
-export async function gatewayRequest(env, path, {method = 'GET', body, allowMissing = false} = {}) {
+export async function gatewayRequest(env, path, {method = 'GET', body, allowMissing = false, signal} = {}) {
   const config = gatewayConfiguration(env);
   if (config.missing.length) throw oauthError('Máy chủ này chưa cấu hình cổng Antigravity.', 503, 'oauth_not_configured');
   try {
+    signal?.throwIfAborted();
+    const deadline = AbortSignal.timeout(15000);
     const response = await fetch(config.baseUrl + '/v8/management' + path, {
-      method, redirect:'manual', signal:AbortSignal.timeout(15000),
+      method, redirect:'manual', signal:signal ? AbortSignal.any([signal, deadline]) : deadline,
       headers:{Authorization:'Bearer ' + config.managementKey, 'Content-Type':'application/json'},
       ...(body === undefined ? {} : {body:JSON.stringify(body)})
     });
@@ -63,8 +65,8 @@ export async function gatewayRequest(env, path, {method = 'GET', body, allowMiss
   } catch { throw oauthError('Cổng Antigravity chưa hoàn tất yêu cầu này. Hệ thống không dùng tài khoản hay API key khác.', 503); }
 }
 
-export async function requireStrictRouting(env) {
-  if (await gatewayRequest(env, '/config/routing/force-model-prefix') !== true) {
+export async function requireStrictRouting(env, signal) {
+  if (await gatewayRequest(env, '/config/routing/force-model-prefix', {signal}) !== true) {
     throw oauthError('Cổng này cần bật force-model-prefix trước khi kết nối hoặc dùng tài khoản.', 503);
   }
 }
@@ -78,19 +80,19 @@ export async function pendingPayload(env, pending) {
   } catch { throw oauthError('Không khôi phục được lần đăng nhập đang chờ. Hãy giữ kết nối và thử lại sau khi máy chủ được cấu hình lại.', 503); }
 }
 
-async function ownedCredential(env, row) {
+async function ownedCredential(env, row, signal) {
   const config = gatewayConfiguration(env);
   if (!row || config.missing.length || row.gateway_url !== config.baseUrl || row.state !== 'active') throw unavailable();
-  await requireStrictRouting(env);
-  const files = await gatewayRequest(env, '/credentials');
+  await requireStrictRouting(env, signal);
+  const files = await gatewayRequest(env, '/credentials', {signal});
   const credential = Array.isArray(files.files) && files.files.find(file => file.id === row.auth_id);
   if (!credential || credential.provider !== 'antigravity' || credential.disabled || credential.requires_sign_in) throw unavailable();
   return credential;
 }
 
-export async function accountCatalog(env, row) {
-  await ownedCredential(env, row);
-  const catalog = await gatewayRequest(env, '/credentials/models?name=' + encodeURIComponent(row.auth_id));
+export async function accountCatalog(env, row, signal) {
+  await ownedCredential(env, row, signal);
+  const catalog = await gatewayRequest(env, '/credentials/models?name=' + encodeURIComponent(row.auth_id), {signal});
   if (!Array.isArray(catalog.models) || catalog.models.length > 1000) throw oauthError('Chưa tải được danh sách tài khoản Antigravity.', 503);
   const routePrefix = row.prefix + '/';
   if (!catalog.models.every(model => model && typeof model.id === 'string' && model.id.length <= routePrefix.length + 100 && model.id.startsWith(routePrefix))) {
@@ -99,10 +101,10 @@ export async function accountCatalog(env, row) {
   return [...new Set(catalog.models.map(model => model.id.slice(routePrefix.length)).filter(modelIdOk))].sort();
 }
 
-export async function antigravityProvider(env, owner, id) {
+export async function antigravityProvider(env, owner, id, signal) {
   try {
     if (!connectionIdOk(id)) throw unavailable();
-    const row = await connectionFor(env, owner, id), models = await accountCatalog(env, row);
+    const row = await connectionFor(env, owner, id), models = await accountCatalog(env, row, signal);
     if (!row.model || !models.includes(row.model)) return {error:'oauth_model'};
     const config = gatewayConfiguration(env);
     return {source:ANTIGRAVITY_PROFILE, protocol:'openai', baseUrl:config.baseUrl + '/v1', apiKey:config.apiKey, models:[row.prefix + '/' + row.model]};

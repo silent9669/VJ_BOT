@@ -1,15 +1,17 @@
 import { examRoute } from './exams.js';
 import { authRoute, sessionUser } from './auth.js';
-import { deleteUserData } from './admin.js';
+import { deleteUserData, isAdmin } from './admin.js';
 import { aiRoute, askAI, resolveSpeechProvider, resolveProvider } from './providers.js';
 import {rateLimited} from './ai-usage.js';
 import { conversationScope, teacherCatalog, validLessonReference } from './tutor-context.js';
 import { kaiwaSchema, KAIWA_SYSTEM, parseKaiwaEvaluation } from './kaiwa.js';
 import {speechResponse, openAISpeechResponse, mistralSpeechResponse, MISTRAL_SPEECH_BASE} from './speech.js';
+import {readVoiceBody, voiceTts} from './voice/tts-route.js';
 import {antigravityOAuthRoute} from './antigravity-oauth.js';
 import { tutorChat } from './tutor-chat.js';
 import { clearTutorConversation } from './tutor-session.js';
 import {liveRoute, geminiLiveRoute, mistralLiveRoute} from './live.js';
+import {liveTurnRoute} from './voice/live-turn.js';
 import {practiceCoach} from './practice-coach.js';
 import {transcriptionRoute} from './transcription.js';
 import {recordTaskAttempt,taskEvidenceSummary} from './task-attempts.js';
@@ -73,6 +75,7 @@ export default {
       if (url.pathname === '/api/live') return await liveRoute(request,env);
       if (url.pathname === '/api/live/gemini') return await geminiLiveRoute(request,env);
       if (url.pathname === '/api/live/mistral') return await mistralLiveRoute(request,env);
+      if (url.pathname === '/api/live/turn') return await liveTurnRoute(request, env);
       if (url.pathname === '/api/stt') return await transcriptionRoute(request,env);
       if (url.pathname.startsWith('/api/ai/oauth/antigravity')) return await antigravityOAuthRoute(request, env);
       if (url.pathname.startsWith('/api/ai/') || url.pathname.startsWith('/api/admin/')) return await aiRoute(request,env,url);
@@ -89,8 +92,8 @@ export default {
         }
         url.searchParams.set('user_id',user.user_id);
         if(['POST','PUT','PATCH'].includes(request.method)) {
-          const raw=await request.text();
-          if(raw.length>20000) return jsonResponse({detail:'Nội dung quá dài.'},413);
+          const raw = url.pathname === '/api/tts' ? await readVoiceBody(request) : await request.text();
+          if(raw === null || raw.length>20000) return jsonResponse({detail:'Nội dung quá dài.'},413);
           let body;
           try { body=JSON.parse(raw || '{}'); } catch { return jsonResponse({detail:'Dữ liệu không hợp lệ'},400); }
           if(!body || Array.isArray(body) || typeof body!=='object') return jsonResponse({detail:'Nội dung gửi lên không hợp lệ'},400);
@@ -104,7 +107,7 @@ export default {
           for(const field of ['message','text','user_speech','prompt_jp','context','scenario_title']) {
             if(body[field] !== undefined && (typeof body[field]!=='string' || body[field].length>6000)) return jsonResponse({detail:'Trường dữ liệu không hợp lệ: '+field},400);
           }
-          request=new Request(request.url,{method:request.method,headers:request.headers,body:JSON.stringify(body)});
+          request=new Request(request.url,{method:request.method,headers:request.headers,signal:request.signal,body:JSON.stringify(body)});
         }
         if(['/api/chat','/api/tts','/api/kaiwa/evaluate','/api/practice/coach'].includes(url.pathname) && request.method==='POST') {
           if(await rateLimited(env,user.user_id)) return jsonResponse({detail:'Em hãy đợi một phút rồi thử lại.'},429);
@@ -427,7 +430,7 @@ export default {
       // 8. TTS API (explicit Gemini or official OpenAI voice connection)
       if (url.pathname === "/api/tts" && request.method === "POST") {
         const body = await request.json();
-        if(body.lesson !== undefined || body.task !== undefined) {
+        if(body.lesson !== undefined || body.task !== undefined || body.focus != null) {
           if(!validLessonReference(body.lesson) || body.focus != null && !validFocusReference(body.focus))return jsonResponse({detail:'Tham chiếu giọng nói không hợp lệ'},400);
           const catalog=await teacherCatalog(env,body.lesson.level),lesson=catalog && catalogLesson(catalog,body.lesson);
           if(!lesson || !processingAllowed(lesson))return jsonResponse({detail:'Nguồn này không được phép gửi cho nhà cung cấp AI xử lý.'},409);
@@ -439,6 +442,12 @@ export default {
             const selected=lesson[{word:'words',example:'examples'}[body.focus.kind]]?.[body.focus.index];
             if(!selected || !processingAllowed(selected))return jsonResponse({detail:'Mục nguồn này không được phép gửi cho nhà cung cấp AI xử lý.'},409);
           }
+        }
+        if (Object.hasOwn(body,'routing') || body.stream === true || body.action === 'catalog') {
+          const userId = url.searchParams.get('user_id');
+          if (request.headers.get('X-VJBot-Account') !== userId) return jsonResponse({detail:'Tài khoản đã đổi. Hãy tải lại trang.',code:'account_changed'},409);
+          if (Object.hasOwn(body,'api_connection') || request.headers.has('X-VJBot-Profile')) return jsonResponse({detail:'Chỉ gửi một cấu hình giọng nói.',code:'tts_invalid_routing'},400);
+          return await voiceTts(body,env,{userId,admin:await isAdmin(env,userId),signal:request.signal});
         }
         const speech = await resolveSpeechProvider(env, url.searchParams.get("user_id"), body.api_connection, request.headers.get('X-VJBot-Profile') ?? undefined);
         if (speech.response) return speech.response;
