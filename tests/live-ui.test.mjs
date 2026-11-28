@@ -362,7 +362,7 @@ test('cascaded Live probes STT before the mic and navigation cancels the pending
   try{
     await Promise.race([probing,opening]);
     assert.equal(ui.permissions(),0);
-    assert.deepEqual(ui.requests[0].body,{action:'capabilities'});
+    assert.deepEqual(ui.requests[0].body,{action:'capabilities',language:'auto'});
     ui.context.location.hash='#dashboard';ui.windowEvents.hashchange();
     assert(ui.requests[0].signal.aborted);
     release(Response.json({supported:true,provider:'openai'}));await opening;
@@ -378,7 +378,7 @@ test('incompatible Chat transcription suggests a concrete STT setting without mi
   try{
     await ui.element('live-start').events.click();
     assert.equal(ui.permissions(),0);
-    assert.deepEqual(ui.requests.map(({path,body})=>[path,body]),[['/api/stt',{action:'capabilities'}]]);
+    assert.deepEqual(ui.requests.map(({path,body})=>[path,body]),[['/api/stt',{action:'capabilities',language:'auto'}]]);
     assert.match(ui.element('live-status').textContent,/không hỗ trợ chép lời.*Cài đặt.*Âm thanh.*Nguồn chép lời/i);
     assert.equal(ui.element('live-start').disabled,false);
   }finally{ui.windowEvents.pagehide();}
@@ -427,7 +427,8 @@ test('cascaded Live without audio playback permission does not start the microph
 
 test('unpinned canonical choice guidance does not require a remote Chat connection',async()=>{
   const ui=liveUI({settings:{is_admin:false,own:null},reply:()=>Response.json({detail:'Stop after checking setup'},{status:503})});
-  setupCascaded(ui,{source:'browser',selection:null});
+  const config=setupCascaded(ui,{source:'browser',selection:null});
+  config.live.stt_language='vi';
   ui.context.SpeechRecognition=class{};
   ui.context.teacherContext=()=>({lesson:{id:'grammar:1',level:'N5'},focus:{kind:'question',index:0},task:{mode:'choice'}});
   ui.context.taskRevisionSource=()=> 'task-stable';
